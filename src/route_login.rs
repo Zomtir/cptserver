@@ -1,4 +1,5 @@
 use rocket_contrib::json::Json;
+use rocket::http::uri::Origin;
 use serde::{Serialize, Deserialize};
 
 use mysql::{PooledConn, params};
@@ -20,13 +21,10 @@ pub struct Credential {
  * METHODS
  */
 
-#[post("/user_login", format = "application/json", data = "<credit>")]
-pub fn user_login(credit: Json<Credential>) -> Option<String> {
-    let bpassword : Vec<u8> = match verify_password(&credit.password){
-        Some(bpassword) => bpassword,
-        None => return None,
-    };
+use crate::api::ApiError;
 
+#[post("/user_login", format = "application/json", data = "<credit>")]
+pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,ApiError> {
     let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
     let stmt = conn.prep("SELECT u.user_id, u.pwd, u.pepper, u.term, u.status, u.firstname, u.lastname, u.email,
                           COALESCE(MAX(admin_users),0) AS admin_users,
@@ -41,21 +39,32 @@ pub fn user_login(credit: Json<Credential>) -> Option<String> {
     let params = mysql::params! { "user_key" => credit.login.to_string() };
 
     let mut row : mysql::Row = match conn.exec_first(&stmt,&params) {
-        Err(..) | Ok(None) => return None,
+        Err(..) | Ok(None) => return Err(ApiError::NO_USER_ENTRY),   //Err(ApiError::user_missing(origin.path())), xxx
         Ok(Some(row)) => row,
+    };
+
+    let bpassword : Vec<u8> = match verify_password(&credit.password){
+        Some(bpassword) => bpassword,
+        None => return Err(ApiError::BAD_USER_PASSWORD),
     };
 
     let user_pepper : Vec<u8> = row.take("pepper").unwrap();
     let user_shapwd : Vec<u8> = hash_sha256(&bpassword, &user_pepper);
-    
+
     let user_pwd : Vec<u8> = row.take("pwd").unwrap();
-    if user_pwd != user_shapwd { return None; };
+    if user_pwd != user_shapwd {
+        return Err(ApiError::BAD_USER_PASSWORD);
+    };
 
     let user_term : chrono::NaiveDate = row.take("term").unwrap();
-    if chrono::Date::<chrono::Utc>::from_utc(user_term, chrono::Utc) < chrono::Utc::today() { return None; }
+    if chrono::Date::<chrono::Utc>::from_utc(user_term, chrono::Utc) < chrono::Utc::today() {
+        return Err(ApiError::USER_EXPIRED);
+    }
 
     let user_status : String = row.take("status").unwrap();
-    if user_status != "ACTIVE".to_string() { return None; }
+    if user_status != "ACTIVE".to_string() {
+        return Err(ApiError::USER_DISABLED);
+    }
 
     let user_token : String = random_string(30);
     let user_expiry = chrono::Utc::now() + chrono::Duration::hours(3);
@@ -80,7 +89,7 @@ pub fn user_login(credit: Json<Credential>) -> Option<String> {
 
     USERSESSIONS.lock().unwrap().insert(user_token.to_string(),session);
 
-    return Some(user_token);
+    return Ok(user_token);
 }
 
 #[post("/slot_login", format = "application/json", data = "<credit>")]

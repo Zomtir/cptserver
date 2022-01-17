@@ -77,7 +77,7 @@ pub fn team_edit(session: UserSession, team: Json<Team>) -> Status {
     };
 
     match conn.exec::<String,_,_>(&stmt,&params) {
-        Err(..) =>  Status::InternalServerError,
+        Err(..) => Status::InternalServerError,
         Ok(..) => Status::Ok
     }
 }

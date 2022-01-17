@@ -3,9 +3,11 @@
 #[macro_use]
 extern crate rocket;
 extern crate rocket_cors;
+use std::collections::HashSet;
 
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 
+mod api;
 mod config;
 mod session;
 mod clock;
@@ -29,17 +31,22 @@ fn main() {
     let allowed_origins = AllowedOrigins::all();
     let allowed_methods = vec![rocket::http::Method::Head,rocket::http::Method::Get,rocket::http::Method::Post,rocket::http::Method::Delete].into_iter().map(From::from).collect();
     let allowed_headers = AllowedHeaders::some(&["Token", "Accept", "Content-Type"]);
+    let expose_headers = HashSet::from(["Error-URI".to_string(), "Error-Message".to_string()]);
 
     let cors = rocket_cors::CorsOptions {
         allowed_origins,
         allowed_methods,
         allowed_headers,
         allow_credentials: true,
+        expose_headers: expose_headers,
         ..Default::default()
     }
     .to_cors().unwrap();
 
+    //cors.expose_headers(&["Error-URI", "Error-Message"]);
+
     rocket::ignite()
+        //.register(catchers![catchers::user_not_found])
         .mount("/", routes![index,
             route_anon::status, route_anon::location_list, route_anon::branch_list, route_anon::access_list,
             route_login::user_login, route_login::slot_login, route_login::slot_autologin,

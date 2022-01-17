@@ -53,18 +53,10 @@ pub mod datetime_format {
 }
 
 pub trait NaiveDurationRound : Sized {
-    // #[cfg(any(feature = "std", test))]
-    // type Err: std::error::Error;
-
-    // #[cfg(not(any(feature = "std", test)))]
-    // type Err: core::fmt::Debug + core::fmt::Display;
-
-    // fn duration_round(self, duration: Duration) -> Result<Self, Self::Err>;
     fn duration_round(self, duration: Duration) -> Result<Self, <DateTime<Utc> as DurationRound>::Err>;
 }
 
 impl NaiveDurationRound for NaiveDateTime {
-
     fn duration_round(self, duration: Duration) -> Result<Self, <DateTime<Utc> as DurationRound>::Err> {
         match DateTime::<Utc>::from_utc(self, Utc).duration_round(duration) {
             Err(e) => Err(e),
