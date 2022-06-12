@@ -15,7 +15,7 @@ use rand::Rng;
 use sha2::{Sha256, Digest};
 
 lazy_static::lazy_static! {
-    pub static ref POOL : Pool = Pool::new(mysql::Opts::from_url("mysql://captain:d00dle@localhost:8003/sportcpt").unwrap()).unwrap();
+    pub static ref POOL : Pool = Pool::new(mysql::Opts::from_url(&load_db_conf()).unwrap()).unwrap();
     pub static ref USERSESSIONS: Mutex<HashMap<String,UserSession>> = Mutex::new(HashMap::new());
     pub static ref SLOTSESSIONS: Mutex<HashMap<String,SlotSession>> = Mutex::new(HashMap::new()); 
 }
@@ -23,6 +23,39 @@ lazy_static::lazy_static! {
 /*
  * STRUCTS
  */
+
+#[derive(Serialize, Deserialize)]
+pub struct DatabaseConfig {
+    pub server: String,
+    pub port: u16,
+    pub user: String,
+    pub password: String,
+    pub database: String,
+}
+
+// This let's us assume that a config is present even if there is none
+impl ::std::default::Default for DatabaseConfig {
+    fn default() -> Self { Self {
+        server: "localhost".into(),
+        port: 3306,
+        user: "db-user".into(),
+        password: "db-password".into(),
+        database: "cpt".into(),
+    } }
+}
+
+fn load_db_conf() -> String {
+    let db_conf : DatabaseConfig = confy::load_path("./Database.toml").unwrap();
+    println!("Connected to DB server: {:?} (Port {:?})", db_conf.server, db_conf.port);
+
+    return format!("mysql://{user}:{password}@{server}:{port}/{database}",
+        server =   db_conf.server,
+        port =     db_conf.port,
+        user =     db_conf.user,
+        password = db_conf.password,
+        database = db_conf.database,
+    );
+}
 
 #[derive(Debug,Clone)]
 pub struct UserSession {

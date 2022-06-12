@@ -23,7 +23,7 @@ mod route_anon;
 
 #[get("/")]
 fn index() -> &'static str {
-    "Welcome to the Sport CPT server."
+    "Welcome to the CPT server."
 }
 
 fn main() {
