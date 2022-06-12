@@ -13,9 +13,9 @@ pub fn user_list(session: UserSession) -> Result<Json<Vec<User>>, Status> {
     if !session.user.admin_users {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
-    let stmt = conn.prep("SELECT user_id, user_key, firstname, lastname, email, term FROM users").unwrap();
-    let map = |(user_id, user_key, firstname, lastname, email, term)| {
-        User::info( user_id, user_key, firstname, lastname, email, term )
+    let stmt = conn.prep("SELECT user_id, user_key, firstname, lastname FROM users").unwrap();
+    let map = |(user_id, user_key, firstname, lastname)| {
+        User::info( user_id, user_key, firstname, lastname )
     };
 
     match conn.exec_map(&stmt,mysql::params::Params::Empty,&map) {
@@ -29,15 +29,14 @@ pub fn user_create(user: Json<User>, session: UserSession) -> Result<String, Sta
     if !session.user.admin_users {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
-    let stmt = conn.prep("INSERT INTO users (user_key, pwd, firstname, lastname, email, term)
-                          VALUES (:user_key, :pwd, :firstname, :lastname, :email, :term)").unwrap();
+    let stmt = conn.prep("INSERT INTO users (user_key, pwd, firstname, lastname, enabled)
+                          VALUES (:user_key, :pwd, :firstname, :lastname, :enabled)").unwrap();
     let params = mysql::params! {
         "user_key" => random_string(6),
         "pwd" => random_string(10),
         "firstname" => &user.firstname,
         "lastname" => &user.lastname,
-        "email" => &user.email.as_ref().unwrap(),
-        "term" => user.term,
+        "enabled" => user.enabled,
     };
 
     match conn.exec::<String,_,_>(&stmt,&params) {
@@ -62,16 +61,14 @@ pub fn user_edit(user: Json<User>, session: UserSession) -> Status {
         user_key = :user_key,
         firstname = :firstname,
         lastname = :lastname,
-        email = :email,
-        term = :term
+        enabled = :enabled
         WHERE user_id = :user_id").unwrap();
     let params = mysql::params! {
         "user_id" => &user.id,
         "user_key" => &user.key,
         "firstname" => &user.firstname,
         "lastname" => &user.lastname,
-        "email" => &user.email.as_ref().unwrap(),
-        "term" => user.term,
+        "enabled" => &user.enabled,
     };
 
     match conn.exec::<String,_,_>(&stmt,&params) {

@@ -1,11 +1,12 @@
 use rocket_contrib::json::Json;
 use rocket::http::Status;
+use crate::api::ApiError;
 
 use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
 use crate::session::{POOL, UserSession, User, Course, Slot, Ranking, Member, Location, Branch, Access,
-    verify_email, random_string, random_bytes, verify_password, hash_sha256};
+    random_string, random_bytes, verify_password, hash_sha256};
 
 /*
  * ROUTES
@@ -14,12 +15,12 @@ use crate::session::{POOL, UserSession, User, Course, Slot, Ranking, Member, Loc
 #[get("/user_info")]
 pub fn user_info(session: UserSession) -> Json<User> {
     let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
-    let stmt = conn.prep("SELECT user_id, user_key, firstname, lastname, email, term FROM users
+    let stmt = conn.prep("SELECT user_id, user_key, firstname, lastname, enabled FROM users
                           WHERE user_id = :user_id").unwrap();
 
     let params = mysql::params! { "user_id" => session.user.id };
-    let map = |(id, key, firstname, lastname, email, term)| {
-        User { id, key, pwd: None, firstname, lastname, email, term,
+    let map = |(id, key, firstname, lastname, enabled)| {
+        User { id, key, pwd: None, firstname, lastname, enabled,
             admin_users: session.user.admin_users,
             admin_rankings: session.user.admin_rankings,
             admin_reservations: session.user.admin_reservations,
@@ -29,19 +30,6 @@ pub fn user_info(session: UserSession) -> Json<User> {
 
     let mut users = conn.exec_map(&stmt, &params, &map).unwrap();
     return Json(users.remove(0));
-}
-
-#[post("/user_email", format = "text/plain", data = "<email>")]
-pub fn user_email(session: UserSession, email: String) {
-    if !verify_email(&email) {return};
-
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
-    let stmt = conn.prep("UPDATE users SET email = :email WHERE user_id = :user_id").unwrap();
-
-    conn.exec::<String,_,_>(
-        &stmt,
-        mysql::params! { "user_id" => &session.user.id, "email" => &email},
-    ).unwrap();
 }
 
 #[post("/user_password", format = "text/plain", data = "<password>")]
@@ -392,36 +380,36 @@ pub fn course_slot_delete(session: UserSession, slot_id: u32) -> Status {
 
 
 #[head("/indi_slot_submit?<slot_id>")]
-pub fn indi_slot_submit(session: UserSession, slot_id: u32) -> Status {
+pub fn indi_slot_submit(session: UserSession, slot_id: u32) -> Result<Status,ApiError> {
     // Perhaps lock the DB during checking and modifying the slot status
 
     let slot : Slot = match crate::session::get_slot_info(&slot_id){
-        None => return Status::InternalServerError,
+        None => return Err(ApiError::SLOT_NO_ENTRY),
         Some(slot) => slot,
     };
 
     // Check that user is responsible for this slot
     if slot.id != session.user.id {
-        return Status::Forbidden;
+        return Err(ApiError::RIGHT_CONFLICT);
     }
 
     // The check is here intentional to be able to return early although it is also checked during is_slot_free
     if !crate::session::is_slot_valid(&slot) {
-        return Status::new(440, "Time window too narrow or negative");
+        return Err(ApiError::SLOT_BAD_TIME);
     }
 
     // Perhaps just leave the slot as draft if the time is not free
     let (status_update, response) = match crate::session::is_slot_free(&slot) {
-        None => return Status::InternalServerError,
-        Some(false) => ("REJECTED", Status::new(441, "Slot rejected because of time overlaps")),
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(false) => ("REJECTED", Err(ApiError::SLOT_OVERLAP_TIME)),
         Some(true) => match crate::config::CONFIG_RESERVATION_AUTO_ACCEPT {
-            false => ("PENDING", Status::Ok),
-            true => ("OCCURRING", Status::Ok),
+            false => ("PENDING", Ok(Status::Ok)),
+            true => ("OCCURRING", Ok(Status::Ok)),
         },
     };
-
+    
     match crate::session::set_slot_status(slot.id, "PENDING", status_update) {
-        None => Status::InternalServerError,
+        None => Err(ApiError::DB_CONFLICT),
         Some(..) => response,
     }
 }

@@ -15,7 +15,7 @@ use rand::Rng;
 use sha2::{Sha256, Digest};
 
 lazy_static::lazy_static! {
-    pub static ref POOL : Pool = Pool::new("mysql://captain:d00dle@localhost:8003/sportcpt").unwrap();
+    pub static ref POOL : Pool = Pool::new(mysql::Opts::from_url("mysql://captain:d00dle@localhost:8003/sportcpt").unwrap()).unwrap();
     pub static ref USERSESSIONS: Mutex<HashMap<String,UserSession>> = Mutex::new(HashMap::new());
     pub static ref SLOTSESSIONS: Mutex<HashMap<String,SlotSession>> = Mutex::new(HashMap::new()); 
 }
@@ -108,9 +108,7 @@ pub struct User {
     pub pwd: Option<String>,
     pub firstname: String,
     pub lastname: String,
-    pub email: Option<String>,
-    #[serde(with = "crate::clock::date_format")]
-    pub term: chrono::NaiveDate,
+    pub enabled: bool,
     pub admin_users: bool,
     pub admin_rankings: bool,
     pub admin_reservations: bool,
@@ -118,15 +116,14 @@ pub struct User {
 }
 
 impl User {
-    pub fn info(id: u32, key: String, firstname: String, lastname: String, email: Option<String>, term: chrono::NaiveDate) -> User {
+    pub fn info(id: u32, key: String, firstname: String, lastname: String) -> User {
         User {
             id: id,
             key: key,
             pwd: None,
             firstname: firstname,
             lastname: lastname,
-            email: email,
-            term: term,
+            enabled: false,
             admin_users: false,
             admin_rankings: false,
             admin_reservations: false,

@@ -26,7 +26,7 @@ use crate::api::ApiError;
 #[post("/user_login", format = "application/json", data = "<credit>")]
 pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,ApiError> {
     let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
-    let stmt = conn.prep("SELECT u.user_id, u.pwd, u.pepper, u.term, u.status, u.firstname, u.lastname, u.email,
+    let stmt = conn.prep("SELECT u.user_id, u.pwd, u.pepper, u.enabled, u.firstname, u.lastname,
                           COALESCE(MAX(admin_users),0) AS admin_users,
                           COALESCE(MAX(admin_rankings),0) AS admin_rankings,
                           COALESCE(MAX(admin_reservations),0) AS admin_reservations,
@@ -39,13 +39,13 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
     let params = mysql::params! { "user_key" => credit.login.to_string() };
 
     let mut row : mysql::Row = match conn.exec_first(&stmt,&params) {
-        Err(..) | Ok(None) => return Err(ApiError::NO_USER_ENTRY),   //Err(ApiError::user_missing(origin.path())), xxx
+        Err(..) | Ok(None) => return Err(ApiError::USER_NO_ENTRY),   //Err(ApiError::user_missing(origin.path())), xxx
         Ok(Some(row)) => row,
     };
 
     let bpassword : Vec<u8> = match verify_password(&credit.password){
         Some(bpassword) => bpassword,
-        None => return Err(ApiError::BAD_USER_PASSWORD),
+        None => return Err(ApiError::USER_BAD_PASSWORD),
     };
 
     let user_pepper : Vec<u8> = row.take("pepper").unwrap();
@@ -53,16 +53,11 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
 
     let user_pwd : Vec<u8> = row.take("pwd").unwrap();
     if user_pwd != user_shapwd {
-        return Err(ApiError::BAD_USER_PASSWORD);
+        return Err(ApiError::USER_BAD_PASSWORD);
     };
 
-    let user_term : chrono::NaiveDate = row.take("term").unwrap();
-    if chrono::Date::<chrono::Utc>::from_utc(user_term, chrono::Utc) < chrono::Utc::today() {
-        return Err(ApiError::USER_EXPIRED);
-    }
-
-    let user_status : String = row.take("status").unwrap();
-    if user_status != "ACTIVE".to_string() {
+    let user_enabled : String = row.take("enabled").unwrap();
+    if user_enabled != "ACTIVE".to_string() {
         return Err(ApiError::USER_DISABLED);
     }
 
@@ -78,8 +73,7 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
             pwd: None,
             firstname: row.take("firstname").unwrap(),
             lastname: row.take("lastname").unwrap(),
-            email: row.take("email").unwrap(),
-            term: user_term,
+            enabled: row.take("enabled").unwrap(),
             admin_users: row.take("admin_users").unwrap(),
             admin_rankings: row.take("admin_rankings").unwrap(),
             admin_reservations: row.take("admin_reservations").unwrap(),

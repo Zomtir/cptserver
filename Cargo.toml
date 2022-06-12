@@ -1,23 +1,23 @@
 [package]
 name = "cptserver"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Moritz Oberhauser <moritz.oberhauser@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mysql = "20.1.0"
+mysql = "22.1.0"
+mysql_common = { version = "*", default-features = false, features = ["time03", "chrono"]}
 http = "0.2"
-rocket = "0.4.7"
+rocket = "0.4.10"
 rocket_cors = "0.5.2"
 rocket_contrib = {version = "0.4.7", default-features = false, features = ["json"]}
 serde = { version = "1.0", features = ["derive"] }
-serde_derive = "1.0"
 serde_json = "1.0"
 lazy_static = "1.4"
-chrono = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
 rand = "0.8"
-regex = "1.4.3"
+regex = "1.5.5"
 hex = "0.4.3"
 sha2 = "0.9.5"

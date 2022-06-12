@@ -57,7 +57,7 @@ fn main() {
             route_admin_reservations::reservation_list, route_admin_reservations::reservation_accept, route_admin_reservations::reservation_deny, 
             route_admin_teams::team_list, route_admin_teams::team_create, route_admin_teams::team_edit, route_admin_teams::team_delete,
             route_admin_teams::team_enrol, route_admin_teams::team_dismiss,
-            route_user::user_info, route_user::user_email, route_user::user_password, route_user::user_info_rankings,
+            route_user::user_info, route_user::user_password, route_user::user_info_rankings,
             route_user::user_member_list, route_user::user_course_list,
             route_user::indi_slot_list, route_user::course_slot_list,
             route_user::indi_slot_create, route_user::course_slot_create,

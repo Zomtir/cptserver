@@ -19,19 +19,17 @@ pub fn slot_info(session: SlotSession) -> Result<Json<Slot>, Status> {
 }
 
 #[get("/slot_candidates")]
-pub fn slot_candidates(session: SlotSession) -> Result<Json<Vec<Member>>,Status> {
+pub fn slot_candidates(_session: SlotSession) -> Result<Json<Vec<Member>>,Status> {
     let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
     let stmt = conn.prep("SELECT user_id, user_key, firstname, lastname FROM users
-                          WHERE term >= :date_today").unwrap();
-    let params = mysql::params! {
-        "date_today" => chrono::Utc::today().to_string(),
-    };
+                          WHERE enabled = TRUE").unwrap();
+
     let map = |(user_id, user_key, firstname, lastname)|
         Member{id: user_id, key: user_key, firstname, lastname};
 
-    // TODO check threshold if existent
+    // TODO level check threshold if existent
 
-    match conn.exec_map(&stmt,&params,&map) {
+    match conn.exec_map(&stmt,params::Params::Empty,&map) {
         Err(..) => Err(Status::InternalServerError),
         Ok(users) => Ok(Json(users)),
     }

@@ -4,6 +4,7 @@ use mysql::prelude::{Queryable};
 use rocket::http::Status;
 use rocket_contrib::json::Json;
 
+use crate::api::ApiError;
 use crate::session::{POOL, UserSession, Slot, Location};
 
 // TODO make a check that status is not an invalid string by implementing a proper trait
@@ -34,29 +35,29 @@ pub fn reservation_list(status: String, session: UserSession) -> Result<Json<Vec
 }
 
 #[head("/reservation_accept?<slot_id>")]
-pub fn reservation_accept(slot_id: u32, session: UserSession) -> Status {
-    if !session.user.admin_reservations {return Status::Forbidden};
+pub fn reservation_accept(slot_id: u32, session: UserSession) -> Result<Status,ApiError> {
+    if !session.user.admin_reservations {return Err(ApiError::RIGHT_NO_RESERVATIONS)};
 
     // Perhaps lock the DB during checking and potentially accepting the request
 
     let slot : Slot = match crate::session::get_slot_info(&slot_id){
-        None => return Status::InternalServerError,
+        None => return Err(ApiError::SLOT_NO_ENTRY),
         Some(slot) => slot,
     };
 
     // The check is here intentional to be able to return early although it is also checked during is_slot_free
     if !crate::session::is_slot_valid(&slot) {
-        return Status::new(440, "Time window too narrow or negative");
+        return Err(ApiError::SLOT_BAD_TIME);
     }
 
     let (status_update, response) = match crate::session::is_slot_free(&slot) {
-        None => return Status::InternalServerError,
-        Some(false) => ("REJECTED", Status::new(441, "Slot rejected because of time overlaps")),
-        Some(true) => ("OCCURRING", Status::Ok),
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(false) => ("REJECTED", Err(ApiError::SLOT_OVERLAP_TIME)),
+        Some(true) => ("OCCURRING", Ok(Status::Ok)),
     };
 
     match crate::session::set_slot_status(slot.id, "PENDING", status_update) {
-        None => Status::InternalServerError,
+        None => Err(ApiError::DB_CONFLICT),
         Some(..) => response,
     }
 }
