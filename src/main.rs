@@ -7,8 +7,9 @@ use std::collections::HashSet;
 
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 
-mod api;
 mod config;
+mod db;
+mod api;
 mod session;
 mod clock;
 mod route_login;
@@ -27,6 +28,8 @@ fn index() -> &'static str {
 }
 
 fn main() {
+    db::connect_db();
+
     // CORS
     let allowed_origins = AllowedOrigins::all();
     let allowed_methods = vec![rocket::http::Method::Head,rocket::http::Method::Get,rocket::http::Method::Post,rocket::http::Method::Delete].into_iter().map(From::from).collect();

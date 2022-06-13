@@ -4,8 +4,10 @@ use rocket::request::{self, Request, FromRequest};
 use rocket::http::Status;
 use request::Outcome;
 
-use mysql::{Pool, PooledConn, params};
+use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
+
+use crate::db::get_pool_conn;
 
 use std::sync::Mutex;
 use std::collections::HashMap;
@@ -15,7 +17,6 @@ use rand::Rng;
 use sha2::{Sha256, Digest};
 
 lazy_static::lazy_static! {
-    pub static ref POOL : Pool = Pool::new(mysql::Opts::from_url(&load_db_conf()).unwrap()).unwrap();
     pub static ref USERSESSIONS: Mutex<HashMap<String,UserSession>> = Mutex::new(HashMap::new());
     pub static ref SLOTSESSIONS: Mutex<HashMap<String,SlotSession>> = Mutex::new(HashMap::new()); 
 }
@@ -23,39 +24,6 @@ lazy_static::lazy_static! {
 /*
  * STRUCTS
  */
-
-#[derive(Serialize, Deserialize)]
-pub struct DatabaseConfig {
-    pub server: String,
-    pub port: u16,
-    pub user: String,
-    pub password: String,
-    pub database: String,
-}
-
-// This let's us assume that a config is present even if there is none
-impl ::std::default::Default for DatabaseConfig {
-    fn default() -> Self { Self {
-        server: "localhost".into(),
-        port: 3306,
-        user: "db-user".into(),
-        password: "db-password".into(),
-        database: "cpt".into(),
-    } }
-}
-
-fn load_db_conf() -> String {
-    let db_conf : DatabaseConfig = confy::load_path("./Database.toml").unwrap();
-    println!("Connected to DB server: {:?} (Port {:?})", db_conf.server, db_conf.port);
-
-    return format!("mysql://{user}:{password}@{server}:{port}/{database}",
-        server =   db_conf.server,
-        port =     db_conf.port,
-        user =     db_conf.user,
-        password = db_conf.password,
-        database = db_conf.database,
-    );
-}
 
 #[derive(Debug,Clone)]
 pub struct UserSession {
@@ -295,7 +263,7 @@ pub fn random_bytes(size: usize) -> Vec<u8> {
 }
 
 pub fn is_user_created(user_key: & str) -> Option<bool> {
-    let mut conn : PooledConn = POOL.clone().get_conn().ok()?;
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT COUNT(1) FROM users WHERE user_key = :user_key").ok()?;
     let count : Option<i32> = conn.exec_first(&stmt, mysql::params! { "user_key" => user_key }).ok()?;
 
@@ -303,7 +271,7 @@ pub fn is_user_created(user_key: & str) -> Option<bool> {
 }
 
 pub fn get_slot_info(slot_id : & u32) -> Option<Slot> {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title, s.begin, s.end, s.status, s.course_id, s.user_id
                           FROM slots s
                           JOIN locations l ON l.location_id = s.location_id
@@ -332,7 +300,7 @@ pub fn is_slot_valid(slot: & Slot) -> bool {
 pub fn is_slot_free(slot: & Slot) -> Option<bool> {
     if !is_slot_valid(slot) {return Some(false)};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT COUNT(1) FROM slots
                           WHERE location_id = :location_id
                           AND NOT (end <= :begin OR begin >= :end)
@@ -366,7 +334,7 @@ pub fn round_slot_window(slot: &mut Slot) -> Option<()> {
 }
 
 pub fn set_slot_status(slot_id : u32, status_required : &str, status_update : &str) -> Option<()> {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE slots SET
         status = :status_update
         WHERE slot_id = :slot_id AND status = :status_required").unwrap();

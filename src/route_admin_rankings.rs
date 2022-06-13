@@ -4,13 +4,14 @@ use mysql::prelude::{Queryable};
 use rocket::http::Status;
 use rocket_contrib::json::Json;
 
-use crate::session::{POOL, UserSession, Ranking, Member, Branch};
+use crate::db::get_pool_conn;
+use crate::session::{UserSession, Ranking, Member, Branch};
 
 #[get("/ranking_list?<user_id>&<branch_id>&<min>&<max>")]
 pub fn ranking_list(user_id: u16, branch_id: u16, min: u8, max: u8, session: UserSession) -> Option<Json<Vec<Ranking>>> {
     if !session.user.admin_rankings {return None};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT r.ranking_id,
                                  u.user_id, u.user_key, u.firstname, u.lastname,
                                  b.branch_id, b.branch_key, b.title,
@@ -67,7 +68,7 @@ pub fn ranking_list(user_id: u16, branch_id: u16, min: u8, max: u8, session: Use
 pub fn ranking_create(ranking: Json<Ranking>, session: UserSession) {
     if !session.user.admin_rankings {return};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO rankings (user_id, branch_id, `rank`, date, judge_id)
                           SELECT :user_id, :branch_id, :rank, :date, :judge_id").unwrap();
 
@@ -87,7 +88,7 @@ pub fn ranking_create(ranking: Json<Ranking>, session: UserSession) {
 pub fn ranking_edit(ranking: Json<Ranking>, session: UserSession) {
     if !session.user.admin_rankings {return};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE rankings SET
                             user_id  = :user_id,
                             branch_id = :branch_id,
@@ -113,7 +114,7 @@ pub fn ranking_edit(ranking: Json<Ranking>, session: UserSession) {
 pub fn ranking_delete(ranking_id: u32, session: UserSession) -> Status {
     if !session.user.admin_rankings {return Status::Forbidden};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE r FROM rankings r WHERE r.ranking_id = :ranking_id").unwrap();
 
     let params = mysql::params! {"ranking_id" => ranking_id};

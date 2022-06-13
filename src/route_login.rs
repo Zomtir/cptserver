@@ -5,7 +5,8 @@ use serde::{Serialize, Deserialize};
 use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
-use crate::session::{POOL, USERSESSIONS, SLOTSESSIONS, UserSession, SlotSession, User, random_string, verify_password, hash_sha256};
+use crate::db::get_pool_conn;
+use crate::session::{USERSESSIONS, SLOTSESSIONS, UserSession, SlotSession, User, random_string, verify_password, hash_sha256};
 
 /* 
  * STRUCTS
@@ -25,7 +26,7 @@ use crate::api::ApiError;
 
 #[post("/user_login", format = "application/json", data = "<credit>")]
 pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,ApiError> {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT u.user_id, u.pwd, u.pepper, u.enabled, u.firstname, u.lastname,
                           COALESCE(MAX(admin_users),0) AS admin_users,
                           COALESCE(MAX(admin_rankings),0) AS admin_rankings,
@@ -88,7 +89,7 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
 
 #[post("/slot_login", format = "application/json", data = "<credit>")]
 pub fn slot_login(credit: Json<Credential>) -> Option<String> {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT slot_id, pwd FROM slots WHERE slot_id = :slot_id").unwrap();
     let params = mysql::params! { "slot_id" => credit.login.to_string() };
 
@@ -119,7 +120,7 @@ pub fn slot_login(credit: Json<Credential>) -> Option<String> {
 
 #[get("/slot_autologin?<location_id>")]
 pub fn slot_autologin(location_id: u16) -> Option<String> {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT slot_id, pwd
                           FROM slots
                           WHERE location_id = :location_id

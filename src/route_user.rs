@@ -5,7 +5,8 @@ use crate::api::ApiError;
 use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
-use crate::session::{POOL, UserSession, User, Course, Slot, Ranking, Member, Location, Branch, Access,
+use crate::db::get_pool_conn;
+use crate::session::{UserSession, User, Course, Slot, Ranking, Member, Location, Branch, Access,
     random_string, random_bytes, verify_password, hash_sha256};
 
 /*
@@ -14,7 +15,7 @@ use crate::session::{POOL, UserSession, User, Course, Slot, Ranking, Member, Loc
 
 #[get("/user_info")]
 pub fn user_info(session: UserSession) -> Json<User> {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT user_id, user_key, firstname, lastname, enabled FROM users
                           WHERE user_id = :user_id").unwrap();
 
@@ -42,7 +43,7 @@ pub fn user_password(session: UserSession, password: String) {
     let pepper : Vec<u8> = random_bytes(16);
     let shapassword : Vec<u8> = hash_sha256(&bpassword, &pepper);
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE users SET pwd = :pwd, pepper = :pepper WHERE user_id = :user_id").unwrap();
 
     conn.exec::<String,_,_>(
@@ -57,7 +58,7 @@ pub fn user_password(session: UserSession, password: String) {
 
 #[get("/user_info_rankings")]
 pub fn user_info_rankings(session: UserSession) -> Json<Vec<Ranking>> {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT r.ranking_id, b.branch_id, b.branch_key, b.title, r.rank, r.date, j.user_id, j.user_key, j.firstname, j.lastname
                           FROM rankings r
                           JOIN branches b ON (r.branch_id = b.branch_id)
@@ -92,7 +93,7 @@ pub fn user_info_rankings(session: UserSession) -> Json<Vec<Ranking>> {
 // TODO restrict to admins (ranking and moderation at least)?
 #[get("/user_member_list")]
 pub fn user_member_list(_session: UserSession) -> Json<Vec<Member>> {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT user_id, user_key, firstname, lastname FROM users").unwrap();
 
     let members = conn.exec_map(
@@ -108,7 +109,7 @@ pub fn user_member_list(_session: UserSession) -> Json<Vec<Member>> {
 
 #[get("/user_course_list")]
 pub fn user_course_list(session: UserSession) -> Json<Vec<Course>> {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT c.course_id, c.course_key, c.title, c.active,
                             b.branch_id, b.branch_key, b.title, c.threshold,
                             a.access_id, a.access_key, a.title
@@ -134,7 +135,7 @@ pub fn user_course_list(session: UserSession) -> Json<Vec<Course>> {
 
 #[get("/indi_slot_list?<status>")]
 pub fn indi_slot_list(session: UserSession, status: String) -> Result<Json<Vec<Slot>>,Status> {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title, s.begin, s.end, s.status
                           FROM slots s
                           JOIN locations l ON l.location_id = s.location_id
@@ -158,7 +159,7 @@ pub fn indi_slot_list(session: UserSession, status: String) -> Result<Json<Vec<S
 
 #[get("/course_slot_list?<course_id>")]
 pub fn course_slot_list(session: UserSession, course_id: u32) -> Json<Vec<Slot>> {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title, s.begin, s.end, s.status
                           FROM slots s
                           JOIN locations l ON l.location_id = s.location_id
@@ -185,7 +186,7 @@ pub fn course_slot_list(session: UserSession, course_id: u32) -> Json<Vec<Slot>>
 pub fn indi_slot_create(session: UserSession, mut slot: Json<Slot>) -> Result<String, Status> {
     crate::session::round_slot_window(&mut slot);
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO slots (slot_key, pwd, title, location_id, begin, end, status, user_id)
                           VALUES (:slot_key, :pwd, :title, :location_id, :begin, :end, :status, :user_id)").unwrap();
 
@@ -219,7 +220,7 @@ pub fn course_slot_create(session: UserSession, mut slot: Json<Slot>) -> Option<
 
     if !crate::session::is_slot_valid(&mut slot) {return None;}
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO slots (slot_key, pwd, title, status, autologin, location_id, begin, end, course_id)
                           SELECT :slot_key, :pwd, :title, :status, :autologin, :location_id, :begin, :end, m.course_id
                           FROM course_moderators m
@@ -264,7 +265,7 @@ pub fn course_slot_create(session: UserSession, mut slot: Json<Slot>) -> Option<
 pub fn indi_slot_edit(session: UserSession, mut slot: Json<Slot>) {
     crate::session::round_slot_window(&mut slot);
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE slots SET
         title = :title,
         location_id = :location_id,
@@ -300,7 +301,7 @@ pub fn indi_slot_edit(session: UserSession, mut slot: Json<Slot>) {
 // TODO round slot times
 #[post("/course_slot_edit", format = "application/json", data = "<slot>")]
 pub fn course_slot_edit(session: UserSession, slot: Json<Slot>) -> Status {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE slots s, course_moderators m SET
         s.title = :title,
         s.location_id = :location_id,
@@ -347,7 +348,7 @@ pub fn course_slot_edit(session: UserSession, slot: Json<Slot>) -> Status {
 
 #[head("/indi_slot_delete?<slot_id>")]
 pub fn indi_slot_delete(session: UserSession, slot_id: u32) -> Status {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE s FROM slots s
                           WHERE slot_id = :slot_id AND user_id = :user_id").unwrap();
     let params = mysql::params! {
@@ -363,7 +364,7 @@ pub fn indi_slot_delete(session: UserSession, slot_id: u32) -> Status {
 
 #[head("/course_slot_delete?<slot_id>")]
 pub fn course_slot_delete(session: UserSession, slot_id: u32) -> Status {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE s FROM slots s
                           JOIN course_moderators m ON s.course_id = m.course_id
                           WHERE s.slot_id = :slot_id AND m.user_id = :user_id").unwrap();

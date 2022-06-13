@@ -4,7 +4,8 @@ use rocket_contrib::json::Json;
 use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
-use crate::session::{POOL, SlotSession, Slot, Member, get_slot_info};
+use crate::db::get_pool_conn;
+use crate::session::{SlotSession, Slot, Member, get_slot_info};
 
 /*
  * ROUTES
@@ -20,7 +21,7 @@ pub fn slot_info(session: SlotSession) -> Result<Json<Slot>, Status> {
 
 #[get("/slot_candidates")]
 pub fn slot_candidates(_session: SlotSession) -> Result<Json<Vec<Member>>,Status> {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT user_id, user_key, firstname, lastname FROM users
                           WHERE enabled = TRUE").unwrap();
 
@@ -37,7 +38,7 @@ pub fn slot_candidates(_session: SlotSession) -> Result<Json<Vec<Member>>,Status
 
 #[get("/slot_participants")]
 pub fn slot_participants(session: SlotSession) -> Result<Json<Vec<Member>>, Status> {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT u.user_id, u.user_key, u.firstname, u.lastname
                           FROM slot_enrollments e JOIN users u ON (e.user_id = u.user_id)
                           WHERE slot_id = :slot_id").unwrap();
@@ -54,7 +55,7 @@ pub fn slot_participants(session: SlotSession) -> Result<Json<Vec<Member>>, Stat
 
 #[head("/slot_enrol?<user_id>")]
 pub fn slot_enrol(user_id: u32, session: SlotSession) -> Status {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO slot_enrollments (slot_id, user_id)
                           SELECT :slot_id, user_id FROM users
                           WHERE user_id = :user_id").unwrap();
@@ -71,7 +72,7 @@ pub fn slot_enrol(user_id: u32, session: SlotSession) -> Status {
 
 #[head("/slot_dismiss?<user_id>")]
 pub fn slot_dismiss(user_id: u32, session: SlotSession) -> Status {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE e FROM slot_enrollments e
                           JOIN users u ON (e.user_id = u.user_id)
                           WHERE e.slot_id = :slot_id AND e.user_id = :user_id").unwrap();

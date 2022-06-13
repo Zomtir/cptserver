@@ -4,13 +4,14 @@ use mysql::prelude::{Queryable};
 use rocket::http::Status;
 use rocket_contrib::json::Json;
 
-use crate::session::{POOL, UserSession, Course, Branch, Access, Member, random_string};
+use crate::db::get_pool_conn;
+use crate::session::{UserSession, Course, Branch, Access, Member, random_string};
 
 #[get("/course_list?<user_id>")]
 pub fn course_list(user_id: u32, session: UserSession) -> Result<Json<Vec<Course>>, Status> {
     if !session.user.admin_courses {return Err(Status::Unauthorized)};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT c.course_id, c.course_key, c.title, c.active,
                           b.branch_id, b.branch_key, b.title, c.threshold,
                           a.access_id, a.access_key, a.title
@@ -41,7 +42,7 @@ pub fn course_list(user_id: u32, session: UserSession) -> Result<Json<Vec<Course
 pub fn course_create(course: Json<Course>, session: UserSession) -> Result<String, Status> {
     if !session.user.admin_courses {return Err(Status::Unauthorized)};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO courses (course_key, title, active, access_id, branch_id, threshold)
         VALUES (:course_key, :title, :active, :access_id, :branch_id, :threshold)").unwrap();
     let params = mysql::params! {
@@ -70,7 +71,7 @@ pub fn course_create(course: Json<Course>, session: UserSession) -> Result<Strin
 pub fn course_edit(course: Json<Course>, session: UserSession) -> Status {
     if !session.user.admin_courses {return Status::Unauthorized;};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE courses SET
         course_key = :course_key,
         title = :title,
@@ -100,7 +101,7 @@ pub fn course_edit(course: Json<Course>, session: UserSession) -> Status {
 pub fn course_delete(course_id: u32, session: UserSession) -> Status {
     if !session.user.admin_courses {return Status::Unauthorized};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE c FROM courses c
                           WHERE c.course_id = :course_id").unwrap();
     let params = mysql::params! {"course_id" => &course_id};
@@ -114,7 +115,7 @@ pub fn course_delete(course_id: u32, session: UserSession) -> Status {
 // TODO check SQL call if permissions are correct, also this does not require admin to call??? 
 #[get("/course_moderator_list?<course_id>")]
 pub fn course_moderator_list(course_id: u32, session: UserSession) -> Result<Json<Vec<Member>>, Status> {
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT u.user_id, u.user_key, u.firstname, u.lastname
                           FROM users u
                           JOIN course_moderators m ON m.user_id = u.user_id
@@ -140,7 +141,7 @@ pub fn course_moderator_list(course_id: u32, session: UserSession) -> Result<Jso
 pub fn course_mod(course_id: u32, user_id: u32, session: UserSession) -> Status {
     if !session.user.admin_courses {return Status::Unauthorized};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO course_moderators (course_id, user_id)
                           SELECT :course_id, :user_id").unwrap();
     let params = mysql::params! {
@@ -158,7 +159,7 @@ pub fn course_mod(course_id: u32, user_id: u32, session: UserSession) -> Status 
 pub fn course_unmod(course_id: u32, user_id: u32, session: UserSession) -> Status {
     if !session.user.admin_courses {return Status::Unauthorized};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE e FROM course_moderators e
                           WHERE course_id = :course_id AND user_id = :user_id").unwrap();
     let params = mysql::params! {

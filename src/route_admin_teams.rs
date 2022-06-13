@@ -4,7 +4,8 @@ use mysql::prelude::{Queryable};
 use rocket::http::Status;
 use rocket_contrib::json::Json;
 
-use crate::session::{POOL, UserSession, Team};
+use crate::db::get_pool_conn;
+use crate::session::{UserSession, Team};
 
 /* ROUTES */
 
@@ -12,7 +13,7 @@ use crate::session::{POOL, UserSession, Team};
 pub fn team_list(session: UserSession) -> Result<Json<Vec<Team>>, Status> {
     if !session.user.admin_users {return Err(Status::Unauthorized)};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT team_id, name, description, admin_users, admin_rankings, admin_reservations, admin_courses FROM teams").unwrap();
     let map = |(team_id, name, description, admin_users, admin_rankings, admin_reservations, admin_courses)| {
         Team {id: team_id, name, description, admin_users, admin_rankings, admin_reservations, admin_courses}
@@ -28,7 +29,7 @@ pub fn team_list(session: UserSession) -> Result<Json<Vec<Team>>, Status> {
 pub fn team_create(session: UserSession, team: Json<Team>) -> Result<String, Status>{
     if !session.user.admin_users {return Err(Status::Unauthorized)};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO teams (name, description, admin_users, admin_rankings, admin_reservations, admin_courses)
                           VALUES (:name, :description, :admin_users, :admin_rankings, :admin_reservations, :admin_courses)").unwrap();
     let params = mysql::params! {
@@ -57,7 +58,7 @@ pub fn team_create(session: UserSession, team: Json<Team>) -> Result<String, Sta
 pub fn team_edit(session: UserSession, team: Json<Team>) -> Status {
     if !session.user.admin_users {return Status::Unauthorized};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE users SET
         name = :name,
         description = :description,
@@ -86,7 +87,7 @@ pub fn team_edit(session: UserSession, team: Json<Team>) -> Status {
 pub fn team_delete(session: UserSession, team_id: u32) -> Status {
     if !session.user.admin_users {return Status::Unauthorized};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE t FROM teams t WHERE t.team_id = :team_id").unwrap();
     let params = mysql::params! {"team_id" => team_id};
 
@@ -101,7 +102,7 @@ pub fn team_enrol(session: UserSession, team_id: u32, user_id: u32) -> Status {
     if !session.user.admin_users {return Status::Unauthorized};
 
     // TODO fix DB call to drop/extend permissions
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO team_members (team_id, user_id)
                           SELECT :team_id, :user_id").unwrap();
     let params = mysql::params! {
@@ -120,7 +121,7 @@ pub fn team_dismiss(session: UserSession, team_id: u32, user_id: u32) -> Status 
     if !session.user.admin_users {return Status::Unauthorized};
 
     // TODO fix DB call to drop/extend permissions
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE FROM team_members
                           WHERE team_id = :team_id AND e.user_id = :user_id").unwrap();
     let params = mysql::params! {

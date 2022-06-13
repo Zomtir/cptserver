@@ -5,14 +5,15 @@ use rocket::http::Status;
 use rocket_contrib::json::Json;
 
 use crate::api::ApiError;
-use crate::session::{POOL, UserSession, Slot, Location};
+use crate::db::get_pool_conn;
+use crate::session::{UserSession, Slot, Location};
 
 // TODO make a check that status is not an invalid string by implementing a proper trait
 #[get("/reservation_list?<status>")]
 pub fn reservation_list(status: String, session: UserSession) -> Result<Json<Vec<Slot>>,Status> {
     if !session.user.admin_reservations {return Err(Status::Unauthorized)};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title, s.begin, s.end, s.status
                           FROM slots s
                           JOIN locations l ON l.location_id = s.location_id
@@ -77,7 +78,7 @@ pub fn reservation_deny(slot_id: u32, session: UserSession) -> Status {
 pub fn reservation_delete(slot: u32, session: UserSession) -> Status {
     if !session.user.admin_reservations {return Status::Forbidden};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE r FROM slots WHERE slot_id = :slot_id AND status = `OCCURRING`").unwrap();
     let params = mysql::params! {"slot_id" => slot};
 

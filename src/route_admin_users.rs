@@ -4,7 +4,8 @@ use mysql::prelude::{Queryable};
 use rocket::http::Status;
 use rocket_contrib::json::Json;
 
-use crate::session::{POOL, UserSession, User, random_string, random_bytes, verify_password, hash_sha256};
+use crate::db::get_pool_conn;
+use crate::session::{UserSession, User, random_string, random_bytes, verify_password, hash_sha256};
 
 /* ROUTES */
 
@@ -12,7 +13,7 @@ use crate::session::{POOL, UserSession, User, random_string, random_bytes, verif
 pub fn user_list(session: UserSession) -> Result<Json<Vec<User>>, Status> {
     if !session.user.admin_users {return Err(Status::Unauthorized)};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT user_id, user_key, firstname, lastname FROM users").unwrap();
     let map = |(user_id, user_key, firstname, lastname)| {
         User::info( user_id, user_key, firstname, lastname )
@@ -28,7 +29,7 @@ pub fn user_list(session: UserSession) -> Result<Json<Vec<User>>, Status> {
 pub fn user_create(user: Json<User>, session: UserSession) -> Result<String, Status>{
     if !session.user.admin_users {return Err(Status::Unauthorized)};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO users (user_key, pwd, firstname, lastname, enabled)
                           VALUES (:user_key, :pwd, :firstname, :lastname, :enabled)").unwrap();
     let params = mysql::params! {
@@ -56,7 +57,7 @@ pub fn user_create(user: Json<User>, session: UserSession) -> Result<String, Sta
 pub fn user_edit(user: Json<User>, session: UserSession) -> Status {
     if !session.user.admin_users {return Status::Unauthorized};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE users SET
         user_key = :user_key,
         firstname = :firstname,
@@ -104,7 +105,7 @@ pub fn user_edit(user: Json<User>, session: UserSession) -> Status {
 pub fn user_delete(user_id: u32, session: UserSession) -> Status {
     if !session.user.admin_users {return Status::Unauthorized};
 
-    let mut conn : PooledConn = POOL.clone().get_conn().unwrap();
+    let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE u FROM users u WHERE u.user_id = :user_id").unwrap();
     let params = mysql::params! {"user_id" => user_id};
 
