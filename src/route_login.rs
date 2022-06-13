@@ -40,9 +40,16 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
     let params = mysql::params! { "user_key" => credit.login.to_string() };
 
     let mut row : mysql::Row = match conn.exec_first(&stmt,&params) {
-        Err(..) | Ok(None) => return Err(ApiError::USER_NO_ENTRY),   //Err(ApiError::user_missing(origin.path())), xxx
+        Err(..) | Ok(None) => return Err(ApiError::USER_NO_ENTRY),
         Ok(Some(row)) => row,
     };
+    // TODO the response should contain what call did result in the repsonse?
+    //Err(ApiError::user_missing(origin.path()))
+    // TODO should the client know the difference whether an account is exisiting or disabled? 
+    let user_enabled : bool = row.take("enabled").unwrap();
+    if user_enabled == false {
+        return Err(ApiError::USER_DISABLED);
+    }
 
     let bpassword : Vec<u8> = match verify_password(&credit.password){
         Some(bpassword) => bpassword,
@@ -57,11 +64,6 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
         return Err(ApiError::USER_BAD_PASSWORD);
     };
 
-    let user_enabled : String = row.take("enabled").unwrap();
-    if user_enabled != "ACTIVE".to_string() {
-        return Err(ApiError::USER_DISABLED);
-    }
-
     let user_token : String = random_string(30);
     let user_expiry = chrono::Utc::now() + chrono::Duration::hours(3);
 
@@ -72,9 +74,9 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
             id: row.take("user_id").unwrap(),
             key: credit.login.to_string(),
             pwd: None,
+            enabled: user_enabled,
             firstname: row.take("firstname").unwrap(),
             lastname: row.take("lastname").unwrap(),
-            enabled: row.take("enabled").unwrap(),
             admin_users: row.take("admin_users").unwrap(),
             admin_rankings: row.take("admin_rankings").unwrap(),
             admin_reservations: row.take("admin_reservations").unwrap(),
