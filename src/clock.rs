@@ -2,9 +2,9 @@
  * Time and chronology related stuff
  */
 
- use chrono::{NaiveDateTime, DateTime, Utc, Duration, DurationRound};
+use chrono::{NaiveDateTime, DateTime, Utc, Duration, DurationRound};
 
- pub mod date_format {
+pub mod date_format {
     use chrono::{NaiveDate};
     use serde::{self, Deserialize, Serializer, Deserializer};
 

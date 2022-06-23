@@ -2,14 +2,14 @@ use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
 use rocket::http::Status;
-use rocket_contrib::json::Json;
+use rocket::serde::json::Json;
 
 use crate::api::ApiError;
 use crate::db::get_pool_conn;
 use crate::session::{UserSession, Slot, Location};
 
 // TODO make a check that status is not an invalid string by implementing a proper trait
-#[get("/reservation_list?<status>")]
+#[rocket::get("/reservation_list?<status>")]
 pub fn reservation_list(status: String, session: UserSession) -> Result<Json<Vec<Slot>>,Status> {
     if !session.user.admin_reservations {return Err(Status::Unauthorized)};
 
@@ -19,7 +19,7 @@ pub fn reservation_list(status: String, session: UserSession) -> Result<Json<Vec
                           JOIN locations l ON l.location_id = s.location_id
                           WHERE status = :status").unwrap();
 
-    let params = mysql::params! {
+    let params = params! {
         "status" => &status,
     };
     let map = |(slot_id, slot_key, slot_title, location_id, location_key, location_title, begin, end, status): (u32, _, _, u32, _, _, _, _, String)| 
@@ -35,7 +35,7 @@ pub fn reservation_list(status: String, session: UserSession) -> Result<Json<Vec
     }
 }
 
-#[head("/reservation_accept?<slot_id>")]
+#[rocket::head("/reservation_accept?<slot_id>")]
 pub fn reservation_accept(slot_id: u32, session: UserSession) -> Result<Status,ApiError> {
     if !session.user.admin_reservations {return Err(ApiError::RIGHT_NO_RESERVATIONS)};
 
@@ -63,7 +63,7 @@ pub fn reservation_accept(slot_id: u32, session: UserSession) -> Result<Status,A
     }
 }
 
-#[head("/reservation_deny?<slot_id>")]
+#[rocket::head("/reservation_deny?<slot_id>")]
 pub fn reservation_deny(slot_id: u32, session: UserSession) -> Status {
     if !session.user.admin_reservations {return Status::Forbidden};
 
@@ -74,13 +74,13 @@ pub fn reservation_deny(slot_id: u32, session: UserSession) -> Status {
 }
 
 // TODO ruleset who is able to do this
-#[head("/reservation_delete?<slot>")]
+#[rocket::head("/reservation_delete?<slot>")]
 pub fn reservation_delete(slot: u32, session: UserSession) -> Status {
     if !session.user.admin_reservations {return Status::Forbidden};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE r FROM slots WHERE slot_id = :slot_id AND status = `OCCURRING`").unwrap();
-    let params = mysql::params! {"slot_id" => slot};
+    let params = params! {"slot_id" => slot};
 
     match conn.exec::<String,_,_>(&stmt,&params){
         Err(..) => Status::Conflict,

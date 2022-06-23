@@ -2,12 +2,12 @@ use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
 use rocket::http::Status;
-use rocket_contrib::json::Json;
+use rocket::serde::json::Json;
 
 use crate::db::get_pool_conn;
 use crate::session::{UserSession, Ranking, Member, Branch};
 
-#[get("/ranking_list?<user_id>&<branch_id>&<min>&<max>")]
+#[rocket::get("/ranking_list?<user_id>&<branch_id>&<min>&<max>")]
 pub fn ranking_list(user_id: u16, branch_id: u16, min: u8, max: u8, session: UserSession) -> Option<Json<Vec<Ranking>>> {
     if !session.user.admin_rankings {return None};
 
@@ -24,7 +24,7 @@ pub fn ranking_list(user_id: u16, branch_id: u16, min: u8, max: u8, session: Use
                           WHERE ((:user_id = '0') OR (r.user_id = :user_id))
                           AND ((:branch_id = '0') OR (r.branch_id = :branch_id AND r.rank >= :rank_min AND r.rank <= :rank_max))").unwrap();
 
-    let params = mysql::params! {
+    let params = params! {
         "user_id" => user_id,
         "branch_id" => branch_id,
         "rank_min" => min,
@@ -64,7 +64,7 @@ pub fn ranking_list(user_id: u16, branch_id: u16, min: u8, max: u8, session: Use
     return Some(Json(rankings));
 }
 
-#[post("/ranking_create", format = "application/json", data = "<ranking>")]
+#[rocket::post("/ranking_create", format = "application/json", data = "<ranking>")]
 pub fn ranking_create(ranking: Json<Ranking>, session: UserSession) {
     if !session.user.admin_rankings {return};
 
@@ -74,7 +74,7 @@ pub fn ranking_create(ranking: Json<Ranking>, session: UserSession) {
 
     conn.exec::<String,_,_>(
         &stmt,
-        mysql::params! {
+        params! {
             "user_id" => &ranking.user.id,
             "branch_id" => &ranking.branch.id,
             "rank" => &ranking.rank,
@@ -84,7 +84,7 @@ pub fn ranking_create(ranking: Json<Ranking>, session: UserSession) {
     ).unwrap();
 }
 
-#[post("/ranking_edit", format = "application/json", data = "<ranking>")]
+#[rocket::post("/ranking_edit", format = "application/json", data = "<ranking>")]
 pub fn ranking_edit(ranking: Json<Ranking>, session: UserSession) {
     if !session.user.admin_rankings {return};
 
@@ -99,7 +99,7 @@ pub fn ranking_edit(ranking: Json<Ranking>, session: UserSession) {
 
     conn.exec::<String,_,_>(
         &stmt,
-        mysql::params! {
+        params! {
             "ranking_id" => &ranking.id,
             "user_id" => &ranking.user.id,
             "branch_id" => &ranking.branch.id,
@@ -110,14 +110,14 @@ pub fn ranking_edit(ranking: Json<Ranking>, session: UserSession) {
     ).unwrap();
 }
 
-#[head("/ranking_delete?<ranking_id>", format = "application/json")]
+#[rocket::head("/ranking_delete?<ranking_id>", format = "application/json")]
 pub fn ranking_delete(ranking_id: u32, session: UserSession) -> Status {
     if !session.user.admin_rankings {return Status::Forbidden};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE r FROM rankings r WHERE r.ranking_id = :ranking_id").unwrap();
 
-    let params = mysql::params! {"ranking_id" => ranking_id};
+    let params = params! {"ranking_id" => ranking_id};
 
     match conn.exec::<String,_,_>(&stmt,&params){
         Err(..) => return Status::Conflict,

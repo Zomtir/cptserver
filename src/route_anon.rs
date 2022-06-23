@@ -1,6 +1,6 @@
 extern crate lazy_static;
 
-use rocket_contrib::json::Json;
+use rocket::serde::json::Json;
 use rocket::http::Status;
 
 use mysql::{PooledConn, params};
@@ -9,12 +9,12 @@ use mysql::prelude::{Queryable};
 use crate::db::get_pool_conn;
 use crate::session::{Location, Branch, Access};
 
-#[head("/status")]
+#[rocket::head("/status")]
 pub fn status() -> Status {    
     Status::Ok
 }
 
-#[get("/location_list")]
+#[rocket::get("/location_list")]
 pub fn location_list() -> Result<Json<Vec<Location>>, Status> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT location_id, location_key, title FROM locations").unwrap();
@@ -28,7 +28,7 @@ pub fn location_list() -> Result<Json<Vec<Location>>, Status> {
     }
 }
 
-#[get("/branch_list")]
+#[rocket::get("/branch_list")]
 pub fn branch_list() -> Result<Json<Vec<Branch>>,Status> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT branch_id, branch_key, title FROM branches").unwrap();
@@ -42,7 +42,7 @@ pub fn branch_list() -> Result<Json<Vec<Branch>>,Status> {
     }
 }
 
-#[get("/access_list")]
+#[rocket::get("/access_list")]
 pub fn access_list() -> Result<Json<Vec<Access>>,Status> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT access_id, access_key, title FROM access").unwrap();

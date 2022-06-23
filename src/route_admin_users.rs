@@ -2,14 +2,14 @@ use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
 use rocket::http::Status;
-use rocket_contrib::json::Json;
+use rocket::serde::json::Json;
 
 use crate::db::get_pool_conn;
 use crate::session::{UserSession, User, random_string, random_bytes, verify_password, hash_sha256};
 
 /* ROUTES */
 
-#[get("/user_list")]
+#[rocket::get("/user_list")]
 pub fn user_list(session: UserSession) -> Result<Json<Vec<User>>, Status> {
     if !session.user.admin_users {return Err(Status::Unauthorized)};
 
@@ -19,20 +19,20 @@ pub fn user_list(session: UserSession) -> Result<Json<Vec<User>>, Status> {
         User::info( user_id, user_key, firstname, lastname )
     };
 
-    match conn.exec_map(&stmt,mysql::params::Params::Empty,&map) {
+    match conn.exec_map(&stmt,params::Params::Empty,&map) {
         Err(..) => Err(Status::InternalServerError),
         Ok(users) => Ok(Json(users)),
     }
 }
 
-#[post("/user_create", format = "application/json", data = "<user>")]
+#[rocket::post("/user_create", format = "application/json", data = "<user>")]
 pub fn user_create(user: Json<User>, session: UserSession) -> Result<String, Status>{
     if !session.user.admin_users {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO users (user_key, pwd, firstname, lastname, enabled)
                           VALUES (:user_key, :pwd, :firstname, :lastname, :enabled)").unwrap();
-    let params = mysql::params! {
+    let params = params! {
         "user_key" => random_string(6),
         "pwd" => random_string(10),
         "firstname" => &user.firstname,
@@ -53,7 +53,7 @@ pub fn user_create(user: Json<User>, session: UserSession) -> Result<String, Sta
     };
 }
 
-#[post("/user_edit", format = "application/json", data = "<user>")]
+#[rocket::post("/user_edit", format = "application/json", data = "<user>")]
 pub fn user_edit(user: Json<User>, session: UserSession) -> Status {
     if !session.user.admin_users {return Status::Unauthorized};
 
@@ -64,7 +64,7 @@ pub fn user_edit(user: Json<User>, session: UserSession) -> Status {
         lastname = :lastname,
         enabled = :enabled
         WHERE user_id = :user_id").unwrap();
-    let params = mysql::params! {
+    let params = params! {
         "user_id" => &user.id,
         "user_key" => &user.key,
         "firstname" => &user.firstname,
@@ -89,7 +89,7 @@ pub fn user_edit(user: Json<User>, session: UserSession) -> Status {
     let shapassword : Vec<u8> = hash_sha256(&bpassword, &pepper);
     
     let stmt_pwd = conn.prep("UPDATE users SET pwd = :pwd, pepper = :pepper WHERE user_id = :user_id").unwrap();
-    let params_pwd = mysql::params! {
+    let params_pwd = params! {
         "user_id" => &user.id,
         "pwd" => &shapassword,
         "pepper" => &pepper,
@@ -101,13 +101,13 @@ pub fn user_edit(user: Json<User>, session: UserSession) -> Status {
     }
 }
 
-#[head("/user_delete?<user_id>")]
+#[rocket::head("/user_delete?<user_id>")]
 pub fn user_delete(user_id: u32, session: UserSession) -> Status {
     if !session.user.admin_users {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE u FROM users u WHERE u.user_id = :user_id").unwrap();
-    let params = mysql::params! {"user_id" => user_id};
+    let params = params! {"user_id" => user_id};
 
     match conn.exec::<String,_,_>(&stmt,&params) {
         Err(..) => Status::InternalServerError,

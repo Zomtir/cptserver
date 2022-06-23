@@ -1,4 +1,4 @@
-use rocket_contrib::json::Json;
+use rocket::serde::json::Json;
 use rocket::http::uri::Origin;
 use serde::{Serialize, Deserialize};
 
@@ -6,6 +6,7 @@ use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
+use crate::api::ApiError;
 use crate::session::{USERSESSIONS, SLOTSESSIONS, UserSession, SlotSession, User, random_string, verify_password, hash_sha256};
 
 /* 
@@ -22,9 +23,7 @@ pub struct Credential {
  * METHODS
  */
 
-use crate::api::ApiError;
-
-#[post("/user_login", format = "application/json", data = "<credit>")]
+#[rocket::post("/user_login", format = "application/json", data = "<credit>")]
 pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,ApiError> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT u.user_id, u.pwd, u.pepper, u.enabled, u.firstname, u.lastname,
@@ -37,7 +36,7 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
                           LEFT JOIN teams ON (team_members.team_id = teams.team_id)
                           WHERE u.user_key = :user_key
                           GROUP BY u.user_id").unwrap();
-    let params = mysql::params! { "user_key" => credit.login.to_string() };
+    let params = params! { "user_key" => credit.login.to_string() };
 
     let mut row : mysql::Row = match conn.exec_first(&stmt,&params) {
         Err(..) | Ok(None) => return Err(ApiError::USER_NO_ENTRY),
@@ -89,11 +88,11 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
     return Ok(user_token);
 }
 
-#[post("/slot_login", format = "application/json", data = "<credit>")]
+#[rocket::post("/slot_login", format = "application/json", data = "<credit>")]
 pub fn slot_login(credit: Json<Credential>) -> Option<String> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT slot_id, pwd FROM slots WHERE slot_id = :slot_id").unwrap();
-    let params = mysql::params! { "slot_id" => credit.login.to_string() };
+    let params = params! { "slot_id" => credit.login.to_string() };
 
     let mut row : mysql::Row = match conn.exec_first(&stmt,&params) {
         Err(..) | Ok(None) => return None,
@@ -120,7 +119,7 @@ pub fn slot_login(credit: Json<Credential>) -> Option<String> {
     return Some(slot_token);
 }
 
-#[get("/slot_autologin?<location_id>")]
+#[rocket::get("/slot_autologin?<location_id>")]
 pub fn slot_autologin(location_id: u16) -> Option<String> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT slot_id, pwd
@@ -128,7 +127,7 @@ pub fn slot_autologin(location_id: u16) -> Option<String> {
                           WHERE location_id = :location_id
                           AND begin <= UTC_TIMESTAMP() AND end >= UTC_TIMESTAMP()
                           AND autologin = 1").unwrap();
-    let params = mysql::params! { "location_id" => location_id };
+    let params = params! { "location_id" => location_id };
     let map = |(slot_id, slot_pwd): (u32, String)| {
         Credential { login: slot_id.to_string(), password: slot_pwd }
     };

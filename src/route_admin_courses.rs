@@ -2,12 +2,12 @@ use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
 use rocket::http::Status;
-use rocket_contrib::json::Json;
+use rocket::serde::json::Json;
 
 use crate::db::get_pool_conn;
 use crate::session::{UserSession, Course, Branch, Access, Member, random_string};
 
-#[get("/course_list?<user_id>")]
+#[rocket::get("/course_list?<user_id>")]
 pub fn course_list(user_id: u32, session: UserSession) -> Result<Json<Vec<Course>>, Status> {
     if !session.user.admin_courses {return Err(Status::Unauthorized)};
 
@@ -23,7 +23,7 @@ pub fn course_list(user_id: u32, session: UserSession) -> Result<Json<Vec<Course
                         GROUP BY c.course_id").unwrap();
     // TODO the WHERE and GROUP BY clause can be removed, if the user filter is deemed to be useless
         
-    let params = mysql::params! {"user_id" => user_id};
+    let params = params! {"user_id" => user_id};
     let map = |(course_id, course_key, course_title, active,
             branch_id, branch_key, branch_title, threshold,
             access_id, access_key, access_title): (u32, String, String, bool, u16, String, String, u8, u8, String, String)|
@@ -38,14 +38,14 @@ pub fn course_list(user_id: u32, session: UserSession) -> Result<Json<Vec<Course
     }
 }
 
-#[post("/course_create", format = "application/json", data = "<course>")]
+#[rocket::post("/course_create", format = "application/json", data = "<course>")]
 pub fn course_create(course: Json<Course>, session: UserSession) -> Result<String, Status> {
     if !session.user.admin_courses {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO courses (course_key, title, active, access_id, branch_id, threshold)
         VALUES (:course_key, :title, :active, :access_id, :branch_id, :threshold)").unwrap();
-    let params = mysql::params! {
+    let params = params! {
         "course_key" => random_string(10),
         "title" => &course.title,
         "active" => &course.active,
@@ -67,7 +67,7 @@ pub fn course_create(course: Json<Course>, session: UserSession) -> Result<Strin
     }
 }
 
-#[post("/course_edit", format = "application/json", data = "<course>")]
+#[rocket::post("/course_edit", format = "application/json", data = "<course>")]
 pub fn course_edit(course: Json<Course>, session: UserSession) -> Status {
     if !session.user.admin_courses {return Status::Unauthorized;};
 
@@ -81,7 +81,7 @@ pub fn course_edit(course: Json<Course>, session: UserSession) -> Status {
         threshold = :threshold
         WHERE course_id = :course_id").unwrap();
 
-    let params = mysql::params! {
+    let params = params! {
         "course_id" => &course.id,
         "course_key" => &course.key,
         "title" => &course.title,
@@ -97,14 +97,14 @@ pub fn course_edit(course: Json<Course>, session: UserSession) -> Status {
     }
 }
 
-#[head("/course_delete?<course_id>")]
+#[rocket::head("/course_delete?<course_id>")]
 pub fn course_delete(course_id: u32, session: UserSession) -> Status {
     if !session.user.admin_courses {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE c FROM courses c
                           WHERE c.course_id = :course_id").unwrap();
-    let params = mysql::params! {"course_id" => &course_id};
+    let params = params! {"course_id" => &course_id};
 
     match conn.exec::<String,_,_>(&stmt,&params) {
         Err(..) => Status::BadRequest,
@@ -113,7 +113,7 @@ pub fn course_delete(course_id: u32, session: UserSession) -> Status {
 }
 
 // TODO check SQL call if permissions are correct, also this does not require admin to call??? 
-#[get("/course_moderator_list?<course_id>")]
+#[rocket::get("/course_moderator_list?<course_id>")]
 pub fn course_moderator_list(course_id: u32, session: UserSession) -> Result<Json<Vec<Member>>, Status> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT u.user_id, u.user_key, u.firstname, u.lastname
@@ -121,7 +121,7 @@ pub fn course_moderator_list(course_id: u32, session: UserSession) -> Result<Jso
                           JOIN course_moderators m ON m.user_id = u.user_id
                           WHERE m.course_id = :course_id").unwrap();
 
-    let params = mysql::params! { "course_id" => course_id};
+    let params = params! { "course_id" => course_id};
     let map = |(user_id, user_key, firstname, lastname)| {
         Member{id: user_id, key: user_key, firstname, lastname}
     };
@@ -137,14 +137,14 @@ pub fn course_moderator_list(course_id: u32, session: UserSession) -> Result<Jso
     return Ok(Json(members));
 }
 
-#[head("/course_mod?<course_id>&<user_id>")]
+#[rocket::head("/course_mod?<course_id>&<user_id>")]
 pub fn course_mod(course_id: u32, user_id: u32, session: UserSession) -> Status {
     if !session.user.admin_courses {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO course_moderators (course_id, user_id)
                           SELECT :course_id, :user_id").unwrap();
-    let params = mysql::params! {
+    let params = params! {
         "course_id" => &course_id,
         "user_id" => &user_id,
     };
@@ -155,14 +155,14 @@ pub fn course_mod(course_id: u32, user_id: u32, session: UserSession) -> Status 
     }
 }
 
-#[head("/course_unmod?<course_id>&<user_id>")]
+#[rocket::head("/course_unmod?<course_id>&<user_id>")]
 pub fn course_unmod(course_id: u32, user_id: u32, session: UserSession) -> Status {
     if !session.user.admin_courses {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE e FROM course_moderators e
                           WHERE course_id = :course_id AND user_id = :user_id").unwrap();
-    let params = mysql::params! {
+    let params = params! {
         "course_id" => &course_id,
         "user_id" => &user_id,
     };

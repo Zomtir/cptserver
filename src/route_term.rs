@@ -3,7 +3,7 @@
 //     return Err(ApiError::USER_EXPIRED);
 // }
 
-// let params = mysql::params! {
+// let params = params! {
 //     "date_today" => chrono::Utc::today().to_string(),
 // };
 

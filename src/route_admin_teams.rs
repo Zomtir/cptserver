@@ -2,14 +2,14 @@ use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
 use rocket::http::Status;
-use rocket_contrib::json::Json;
+use rocket::serde::json::Json;
 
 use crate::db::get_pool_conn;
 use crate::session::{UserSession, Team};
 
 /* ROUTES */
 
-#[get("/team_list")]
+#[rocket::get("/team_list")]
 pub fn team_list(session: UserSession) -> Result<Json<Vec<Team>>, Status> {
     if !session.user.admin_users {return Err(Status::Unauthorized)};
 
@@ -19,20 +19,20 @@ pub fn team_list(session: UserSession) -> Result<Json<Vec<Team>>, Status> {
         Team {id: team_id, name, description, admin_users, admin_rankings, admin_reservations, admin_courses}
     };
 
-    match conn.exec_map(&stmt,mysql::params::Params::Empty,&map) {
+    match conn.exec_map(&stmt,params::Params::Empty,&map) {
         Err(..) => Err(Status::InternalServerError),
         Ok(teams) => Ok(Json(teams)),
     }
 }
 
-#[post("/team_create", format = "application/json", data = "<team>")]
+#[rocket::post("/team_create", format = "application/json", data = "<team>")]
 pub fn team_create(session: UserSession, team: Json<Team>) -> Result<String, Status>{
     if !session.user.admin_users {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO teams (name, description, admin_users, admin_rankings, admin_reservations, admin_courses)
                           VALUES (:name, :description, :admin_users, :admin_rankings, :admin_reservations, :admin_courses)").unwrap();
-    let params = mysql::params! {
+    let params = params! {
         "name" => &team.name,
         "description" => &team.description,
         "admin_users" => &team.admin_users,
@@ -54,7 +54,7 @@ pub fn team_create(session: UserSession, team: Json<Team>) -> Result<String, Sta
     };
 }
 
-#[post("/team_edit", format = "application/json", data = "<team>")]
+#[rocket::post("/team_edit", format = "application/json", data = "<team>")]
 pub fn team_edit(session: UserSession, team: Json<Team>) -> Status {
     if !session.user.admin_users {return Status::Unauthorized};
 
@@ -67,7 +67,7 @@ pub fn team_edit(session: UserSession, team: Json<Team>) -> Status {
         admin_reservations = :admin_reservations,
         admin_courses = :admin_courses
         WHERE team_id = :team_id").unwrap();
-    let params = mysql::params! {
+    let params = params! {
         "team_id" => &team.id,
         "name" => &team.name,
         "description" => &team.description,
@@ -83,13 +83,13 @@ pub fn team_edit(session: UserSession, team: Json<Team>) -> Status {
     }
 }
 
-#[head("/team_delete?<team_id>")]
+#[rocket::head("/team_delete?<team_id>")]
 pub fn team_delete(session: UserSession, team_id: u32) -> Status {
     if !session.user.admin_users {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE t FROM teams t WHERE t.team_id = :team_id").unwrap();
-    let params = mysql::params! {"team_id" => team_id};
+    let params = params! {"team_id" => team_id};
 
     match conn.exec::<String,_,_>(&stmt,&params) {
         Err(..) => Status::InternalServerError,
@@ -97,7 +97,7 @@ pub fn team_delete(session: UserSession, team_id: u32) -> Status {
     }
 }
 
-#[head("/team_enrol?<team_id>&<user_id>")]
+#[rocket::head("/team_enrol?<team_id>&<user_id>")]
 pub fn team_enrol(session: UserSession, team_id: u32, user_id: u32) -> Status {
     if !session.user.admin_users {return Status::Unauthorized};
 
@@ -105,7 +105,7 @@ pub fn team_enrol(session: UserSession, team_id: u32, user_id: u32) -> Status {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO team_members (team_id, user_id)
                           SELECT :team_id, :user_id").unwrap();
-    let params = mysql::params! {
+    let params = params! {
         "team_id" => &team_id,
         "user_id" => &user_id,
     };
@@ -116,7 +116,7 @@ pub fn team_enrol(session: UserSession, team_id: u32, user_id: u32) -> Status {
     }
 }
 
-#[head("/team_dismiss?<team_id>&<user_id>")]
+#[rocket::head("/team_dismiss?<team_id>&<user_id>")]
 pub fn team_dismiss(session: UserSession, team_id: u32, user_id: u32) -> Status {
     if !session.user.admin_users {return Status::Unauthorized};
 
@@ -124,7 +124,7 @@ pub fn team_dismiss(session: UserSession, team_id: u32, user_id: u32) -> Status 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE FROM team_members
                           WHERE team_id = :team_id AND e.user_id = :user_id").unwrap();
-    let params = mysql::params! {
+    let params = params! {
         "team_id" => &team_id,
         "user_id" => &user_id,
     };

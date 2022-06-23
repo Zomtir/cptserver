@@ -1,3 +1,2 @@
-[development]
-address = "localhost"
+[debug]
 port = 8002

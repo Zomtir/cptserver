@@ -1,8 +1,7 @@
 extern crate lazy_static;
 
-use rocket::request::{self, Request, FromRequest};
+use rocket::request::{self, Request, FromRequest, Outcome};
 use rocket::http::Status;
-use request::Outcome;
 
 use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
@@ -32,10 +31,11 @@ pub struct UserSession {
     pub user: User,
 }
 
-impl<'a, 'r> FromRequest<'a, 'r> for UserSession {
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for UserSession {
     type Error = SessionError;
 
-    fn from_request(request: &'a Request<'r>) -> Outcome<Self, Self::Error> {
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         let head_token = match request.headers().get_one("Token") {
             None => return Outcome::Failure((Status::Unauthorized,SessionError::MissingTokenHeader)),
             Some(token) => token,
@@ -67,10 +67,11 @@ pub struct SlotSession {
     pub slot_key: String,
 }
 
-impl<'a, 'r> FromRequest<'a, 'r> for SlotSession {
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for SlotSession {
     type Error = SessionError;
 
-    fn from_request(request: &'a Request<'r>) -> Outcome<Self, Self::Error> {
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         let head_token = request.headers().get_one("Token");
         if head_token.is_none() { return Outcome::Failure((Status::Unauthorized,SessionError::MissingTokenHeader)); }
 
@@ -265,7 +266,7 @@ pub fn random_bytes(size: usize) -> Vec<u8> {
 pub fn is_user_created(user_key: & str) -> Option<bool> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT COUNT(1) FROM users WHERE user_key = :user_key").ok()?;
-    let count : Option<i32> = conn.exec_first(&stmt, mysql::params! { "user_key" => user_key }).ok()?;
+    let count : Option<i32> = conn.exec_first(&stmt, params! { "user_key" => user_key }).ok()?;
 
     return Some(count.unwrap() == 1);
 }
@@ -277,7 +278,7 @@ pub fn get_slot_info(slot_id : & u32) -> Option<Slot> {
                           JOIN locations l ON l.location_id = s.location_id
                           WHERE slot_id = :slot_id").unwrap();
 
-    let params = mysql::params! { "slot_id" => slot_id };
+    let params = params! { "slot_id" => slot_id };
     let map =
         | (slot_id, slot_key, slot_title, location_id, location_key, location_title, begin, end, status, course_id, user_id)
         : (u32, _, _, u32, _, _, _, _, String, Option<u32>, Option<u32>)
@@ -306,7 +307,7 @@ pub fn is_slot_free(slot: & Slot) -> Option<bool> {
                           AND NOT (end <= :begin OR begin >= :end)
                           AND status = 'OCCURRING'").unwrap();
     
-    let params = mysql::params! {
+    let params = params! {
         "location_id" => &slot.location.id,
         "begin" => &slot.begin,
         "end" => &slot.end,
@@ -338,7 +339,7 @@ pub fn set_slot_status(slot_id : u32, status_required : &str, status_update : &s
     let stmt = conn.prep("UPDATE slots SET
         status = :status_update
         WHERE slot_id = :slot_id AND status = :status_required").unwrap();
-    let params = mysql::params! {
+    let params = params! {
         "slot_id" => slot_id,
         "status_required" => status_required,
         "status_update" => status_update,

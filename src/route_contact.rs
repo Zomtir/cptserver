@@ -1,4 +1,4 @@
-// #[post("/user_email", format = "text/plain", data = "<email>")]
+// #[rocket::post("/user_email", format = "text/plain", data = "<email>")]
 // pub fn user_email(session: UserSession, email: String) {
 //     if !verify_email(&email) {return};
 
@@ -7,7 +7,7 @@
 
 //     conn.exec::<String,_,_>(
 //         &stmt,
-//         mysql::params! { "user_id" => &session.user.id, "email" => &email},
+//         params! { "user_id" => &session.user.id, "email" => &email},
 //     ).unwrap();
 // }
 

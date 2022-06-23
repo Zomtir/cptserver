@@ -16,8 +16,8 @@ pub struct ApiError {
     message: &'static str,
 }
 
-impl<'a> Responder<'a> for ApiError {
-    fn respond_to(self, _: &Request) -> response::Result<'a> {
+impl<'r> Responder<'r, 'static> for ApiError {
+    fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
         Response::build()
             .status(match Status::from_code(self.status_code) { Some(status) => status, None => Status::InternalServerError} )
             .raw_header("Error-URI", self.uri)

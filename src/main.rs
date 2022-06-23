@@ -1,11 +1,10 @@
-#![feature(proc_macro_hygiene, decl_macro, try_blocks)]
-
-#[macro_use]
-extern crate rocket;
-extern crate rocket_cors;
-use std::collections::HashSet;
+//#![feature(try_blocks)]
 
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
+
+use std::collections::HashSet;
+
+extern crate mysql_common;
 
 mod config;
 mod db;
@@ -22,12 +21,13 @@ mod route_user;
 mod route_slot;
 mod route_anon;
 
-#[get("/")]
+#[rocket::get("/")]
 fn index() -> &'static str {
     "Welcome to the CPT server."
 }
 
-fn main() {
+#[rocket::launch]
+fn rocket() -> _ {
     db::connect_db();
 
     // CORS
@@ -48,9 +48,9 @@ fn main() {
 
     //cors.expose_headers(&["Error-URI", "Error-Message"]);
 
-    rocket::ignite()
+    rocket::build()
         //.register(catchers![catchers::user_not_found])
-        .mount("/", routes![index,
+        .mount("/", rocket::routes![index,
             route_anon::status, route_anon::location_list, route_anon::branch_list, route_anon::access_list,
             route_login::user_login, route_login::slot_login, route_login::slot_autologin,
             route_admin_users::user_list, route_admin_users::user_create, route_admin_users::user_edit, route_admin_users::user_delete,
@@ -71,5 +71,4 @@ fn main() {
             route_slot::slot_candidates, route_slot::slot_participants, route_slot::slot_enrol, route_slot::slot_dismiss,
         ])
         .attach(cors)
-        .launch();
 }
