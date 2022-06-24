@@ -1,5 +1,6 @@
-use rocket::request::Request;
+use rocket::request::{Request, FromRequest, Outcome};
 use rocket::response::{self, Response, Responder};
+use rocket::outcome::Outcome::{Success,Failure};
 use rocket::http::Status;
 
 #[derive(Debug)]
@@ -26,6 +27,12 @@ impl<'r> Responder<'r, 'static> for ApiError {
     }
 }
 
+impl ApiError {
+    pub fn outcome<T>(self) -> Outcome<T,ApiError> {
+        Failure((Status::from_code(self.status_code).unwrap(),self))
+    }
+}
+
 macro_rules! ctrs {
     ($($uri:ident => $code:expr, $message:expr),+) => {
         $(
@@ -44,6 +51,10 @@ impl ApiError {
         SLOT_BAD_PASSWORD => 400, "This password does not belong to given slot.",
         SLOT_BAD_TIME => 400, "Time window too narrow or negative.",
         SLOT_OVERLAP_TIME => 409, "Time window overlaps with an existing slot.",
+
+        SESSION_TOKEN_MISSING => 400, "Header token missing.",
+        SESSION_TOKEN_INVALID => 400, "Header token not valid.",
+        SESSION_TOKEN_EXPIRED => 403, "Header token expired.",
 
         RIGHT_CONFLICT => 403, "You tried to access or edit some resource that you were not supposed to.",
         RIGHT_NO_RESERVATIONS => 403, "You do not have rights to edit reservations.",

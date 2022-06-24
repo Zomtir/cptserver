@@ -10,7 +10,7 @@ mod config;
 mod db;
 mod api;
 mod session;
-mod clock;
+pub mod clock;
 mod route_login;
 mod route_admin_users;
 mod route_admin_courses;
@@ -57,7 +57,7 @@ fn rocket() -> _ {
             route_admin_courses::course_list, route_admin_courses::course_create, route_admin_courses::course_edit, route_admin_courses::course_delete,
             route_admin_courses::course_moderator_list, route_admin_courses::course_mod, route_admin_courses::course_unmod,
             route_admin_rankings::ranking_list, route_admin_rankings::ranking_create, route_admin_rankings::ranking_edit, route_admin_rankings::ranking_delete,
-            route_admin_reservations::reservation_list, route_admin_reservations::reservation_accept, route_admin_reservations::reservation_deny, 
+            route_admin_reservations::reservation_list, route_admin_reservations::reservation_accept, route_admin_reservations::reservation_deny, route_admin_reservations::reservation_cancel,
             route_admin_teams::team_list, route_admin_teams::team_create, route_admin_teams::team_edit, route_admin_teams::team_delete,
             route_admin_teams::team_enrol, route_admin_teams::team_dismiss,
             route_user::user_info, route_user::user_password, route_user::user_info_rankings,

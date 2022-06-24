@@ -1,12 +1,13 @@
 extern crate lazy_static;
 
-use rocket::request::{self, Request, FromRequest, Outcome};
-use rocket::http::Status;
+use rocket::request::{Request, FromRequest, Outcome};
+use rocket::outcome::Outcome::{Success,Failure};
 
 use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
+use crate::api::ApiError;
 
 use std::sync::Mutex;
 use std::collections::HashMap;
@@ -33,29 +34,29 @@ pub struct UserSession {
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for UserSession {
-    type Error = SessionError;
+    type Error = ApiError;
 
-    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self,ApiError> {
         let head_token = match request.headers().get_one("Token") {
-            None => return Outcome::Failure((Status::Unauthorized,SessionError::MissingTokenHeader)),
+            None => return ApiError::SESSION_TOKEN_MISSING.outcome(),
             Some(token) => token,
         };
 
         let session : UserSession = match USERSESSIONS.lock().unwrap().get(&head_token.to_string()).cloned() {
-            None => { return Outcome::Failure((Status::Unauthorized,SessionError::InvalidSession)); },
+            None => { return ApiError::SESSION_TOKEN_INVALID.outcome(); },
             Some(session) => session,
         };
 
         if session.token != head_token.to_string() {
-            return Outcome::Failure((Status::Unauthorized,SessionError::InvalidSession));
+            return ApiError::SESSION_TOKEN_INVALID.outcome();
         }
 
         if session.expiry < chrono::Utc::now() {
             USERSESSIONS.lock().unwrap().remove(&session.token);
-            return Outcome::Failure((Status::Unauthorized,SessionError::TokenExpired));
+            return ApiError::SESSION_TOKEN_EXPIRED.outcome();
         }
         
-        return Outcome::Success(session);
+        Success(session)
     }
 }
 
@@ -69,38 +70,30 @@ pub struct SlotSession {
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for SlotSession {
-    type Error = SessionError;
+    type Error = ApiError;
 
-    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        let head_token = request.headers().get_one("Token");
-        if head_token.is_none() { return Outcome::Failure((Status::Unauthorized,SessionError::MissingTokenHeader)); }
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self,ApiError> {
+        let head_token = match request.headers().get_one("Token") {
+            None => return ApiError::SESSION_TOKEN_MISSING.outcome(),
+            Some(token) => token,
+        };
 
-        let session : Option<SlotSession> = SLOTSESSIONS.lock().unwrap().get(&head_token.unwrap().to_string()).cloned();
+        let session : SlotSession = match SLOTSESSIONS.lock().unwrap().get(&head_token.to_string()).cloned() {
+            None => { return ApiError::SESSION_TOKEN_INVALID.outcome(); },
+            Some(session) => session,
+        };
 
-        match session {
-            None => { return Outcome::Failure((Status::Unauthorized,SessionError::InvalidSession)); },
-            Some(session) => {
-                if session.token != head_token.unwrap().to_string() {
-                    return Outcome::Failure((Status::Unauthorized,SessionError::InvalidSession));
-                }
-
-                if session.expiry < chrono::Utc::now() {
-                    SLOTSESSIONS.lock().unwrap().remove(&session.token);
-                    return Outcome::Failure((Status::Unauthorized,SessionError::TokenExpired));
-                }
-                
-                return Outcome::Success(session);
-            }
+        if session.token != head_token.to_string() {
+            return ApiError::SESSION_TOKEN_INVALID.outcome();
         }
-    }
-}
 
-#[derive(Debug)]
-pub enum SessionError {
-    MissingTokenHeader,
-    InvalidSession,
-    InsufficientRights,
-    TokenExpired,
+        if session.expiry < chrono::Utc::now() {
+            SLOTSESSIONS.lock().unwrap().remove(&session.token);
+            return ApiError::SESSION_TOKEN_EXPIRED.outcome();
+        }
+        
+        Success(session)
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]

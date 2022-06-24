@@ -441,3 +441,20 @@ pub fn indi_slot_recycle(_session: UserSession, slot_id: u32) -> Status {
         Some(..) => Status::Ok,
     }
 }
+
+// TODO ruleset who is able to do this
+/*
+#[rocket::head("/indi_slot_delete?<slot>")]
+pub fn indi_slot_delete(session: UserSession, slot: u32) -> Status {
+    if !session.user.admin_reservations {return Status::Forbidden};
+
+    let mut conn : PooledConn = get_pool_conn();
+    let stmt = conn.prep("DELETE r FROM slots WHERE slot_id = :slot_id AND status = `DRAFT`").unwrap();
+    let params = params! {"slot_id" => slot};
+
+    match conn.exec::<String,_,_>(&stmt,&params){
+        Err(..) => Status::Conflict,
+        Ok(..) => Status::Ok,
+    }
+}
+*/

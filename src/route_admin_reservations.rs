@@ -10,7 +10,7 @@ use crate::session::{UserSession, Slot, Location};
 
 // TODO make a check that status is not an invalid string by implementing a proper trait
 #[rocket::get("/reservation_list?<status>")]
-pub fn reservation_list(status: String, session: UserSession) -> Result<Json<Vec<Slot>>,Status> {
+pub fn reservation_list(session: UserSession, status: String) -> Result<Json<Vec<Slot>>,Status> {
     if !session.user.admin_reservations {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
@@ -36,7 +36,7 @@ pub fn reservation_list(status: String, session: UserSession) -> Result<Json<Vec
 }
 
 #[rocket::head("/reservation_accept?<slot_id>")]
-pub fn reservation_accept(slot_id: u32, session: UserSession) -> Result<Status,ApiError> {
+pub fn reservation_accept(session: UserSession, slot_id: u32) -> Result<Status,ApiError> {
     if !session.user.admin_reservations {return Err(ApiError::RIGHT_NO_RESERVATIONS)};
 
     // Perhaps lock the DB during checking and potentially accepting the request
@@ -64,7 +64,7 @@ pub fn reservation_accept(slot_id: u32, session: UserSession) -> Result<Status,A
 }
 
 #[rocket::head("/reservation_deny?<slot_id>")]
-pub fn reservation_deny(slot_id: u32, session: UserSession) -> Status {
+pub fn reservation_deny(session: UserSession, slot_id: u32) -> Status {
     if !session.user.admin_reservations {return Status::Forbidden};
 
     match crate::session::set_slot_status(slot_id, "PENDING", "REJECTED") {
@@ -73,17 +73,13 @@ pub fn reservation_deny(slot_id: u32, session: UserSession) -> Status {
     }
 }
 
-// TODO ruleset who is able to do this
-#[rocket::head("/reservation_delete?<slot>")]
-pub fn reservation_delete(slot: u32, session: UserSession) -> Status {
+#[rocket::head("/reservation_cancel?<slot_id>")]
+pub fn reservation_cancel(session: UserSession, slot_id: u32) -> Status {
     if !session.user.admin_reservations {return Status::Forbidden};
 
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("DELETE r FROM slots WHERE slot_id = :slot_id AND status = `OCCURRING`").unwrap();
-    let params = params! {"slot_id" => slot};
-
-    match conn.exec::<String,_,_>(&stmt,&params){
-        Err(..) => Status::Conflict,
-        Ok(..) => Status::Ok,
+    match crate::session::set_slot_status(slot_id, "OCCURRING", "REJECTED") {
+        None => Status::InternalServerError,
+        Some(..) => Status::Ok,
     }
 }
+

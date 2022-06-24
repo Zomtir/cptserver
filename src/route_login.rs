@@ -89,18 +89,20 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
 }
 
 #[rocket::post("/slot_login", format = "application/json", data = "<credit>")]
-pub fn slot_login(credit: Json<Credential>) -> Option<String> {
+pub fn slot_login(credit: Json<Credential>) -> Result<String,ApiError> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT slot_id, pwd FROM slots WHERE slot_id = :slot_id").unwrap();
     let params = params! { "slot_id" => credit.login.to_string() };
 
     let mut row : mysql::Row = match conn.exec_first(&stmt,&params) {
-        Err(..) | Ok(None) => return None,
+        Err(..) | Ok(None) => return Err(ApiError::SLOT_NO_ENTRY),
         Ok(Some(row)) => row,
     };
     
     let slot_pwd : String = row.take("pwd").unwrap();
-    if slot_pwd != credit.password { return None;}
+    if slot_pwd != credit.password {
+        return Err(ApiError::SLOT_BAD_PASSWORD);
+    };
 
     let slot_token : String = random_string(30);
     let slot_expiry = chrono::Utc::now() + chrono::Duration::hours(3);
@@ -116,11 +118,11 @@ pub fn slot_login(credit: Json<Credential>) -> Option<String> {
 
     SLOTSESSIONS.lock().unwrap().insert(slot_token.to_string(),session);
 
-    return Some(slot_token);
+    return Ok(slot_token);
 }
 
 #[rocket::get("/slot_autologin?<location_id>")]
-pub fn slot_autologin(location_id: u16) -> Option<String> {
+pub fn slot_autologin(location_id: u16) -> Result<String,ApiError>  {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT slot_id, pwd
                           FROM slots
@@ -134,7 +136,9 @@ pub fn slot_autologin(location_id: u16) -> Option<String> {
 
     let credentials = conn.exec_map(&stmt,&params,&map).unwrap();
 
-    if credentials.len() < 1 {return None};
+    if credentials.len() < 1 {
+        return Err(ApiError::SLOT_BAD_PASSWORD);
+    };
     
     return slot_login(Json(credentials[0].clone()));
 }
