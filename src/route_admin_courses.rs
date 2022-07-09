@@ -5,7 +5,8 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 
 use crate::db::get_pool_conn;
-use crate::session::{UserSession, Course, Branch, Access, Member, random_string};
+use crate::session::{UserSession};
+use crate::common::{Course, Branch, Access, Member, random_string};
 
 #[rocket::get("/course_list?<user_id>")]
 pub fn course_list(user_id: u32, session: UserSession) -> Result<Json<Vec<Course>>, Status> {

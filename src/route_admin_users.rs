@@ -5,7 +5,8 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 
 use crate::db::get_pool_conn;
-use crate::session::{UserSession, User, random_string, random_bytes, verify_password, hash_sha256};
+use crate::session::{UserSession};
+use crate::common::{User, random_string, random_bytes, verify_password, hash_sha256};
 
 /* ROUTES */
 

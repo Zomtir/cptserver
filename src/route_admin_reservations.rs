@@ -6,7 +6,8 @@ use rocket::serde::json::Json;
 
 use crate::api::ApiError;
 use crate::db::get_pool_conn;
-use crate::session::{UserSession, Slot, Location};
+use crate::common::{Slot, Location};
+use crate::session::{UserSession};
 
 // TODO make a check that status is not an invalid string by implementing a proper trait
 #[rocket::get("/reservation_list?<status>")]
@@ -41,23 +42,23 @@ pub fn reservation_accept(session: UserSession, slot_id: u32) -> Result<Status,A
 
     // Perhaps lock the DB during checking and potentially accepting the request
 
-    let slot : Slot = match crate::session::get_slot_info(&slot_id){
+    let slot : Slot = match crate::common::get_slot_info(&slot_id){
         None => return Err(ApiError::SLOT_NO_ENTRY),
         Some(slot) => slot,
     };
 
     // The check is here intentional to be able to return early although it is also checked during is_slot_free
-    if !crate::session::is_slot_valid(&slot) {
+    if !crate::common::is_slot_valid(&slot) {
         return Err(ApiError::SLOT_BAD_TIME);
     }
 
-    let (status_update, response) = match crate::session::is_slot_free(&slot) {
+    let (status_update, response) = match crate::common::is_slot_free(&slot) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => ("REJECTED", Err(ApiError::SLOT_OVERLAP_TIME)),
         Some(true) => ("OCCURRING", Ok(Status::Ok)),
     };
 
-    match crate::session::set_slot_status(slot.id, "PENDING", status_update) {
+    match crate::common::set_slot_status(slot.id, "PENDING", status_update) {
         None => Err(ApiError::DB_CONFLICT),
         Some(..) => response,
     }
@@ -67,7 +68,7 @@ pub fn reservation_accept(session: UserSession, slot_id: u32) -> Result<Status,A
 pub fn reservation_deny(session: UserSession, slot_id: u32) -> Status {
     if !session.user.admin_reservations {return Status::Forbidden};
 
-    match crate::session::set_slot_status(slot_id, "PENDING", "REJECTED") {
+    match crate::common::set_slot_status(slot_id, "PENDING", "REJECTED") {
         None => Status::InternalServerError,
         Some(..) => Status::Ok,
     }
@@ -77,7 +78,7 @@ pub fn reservation_deny(session: UserSession, slot_id: u32) -> Status {
 pub fn reservation_cancel(session: UserSession, slot_id: u32) -> Status {
     if !session.user.admin_reservations {return Status::Forbidden};
 
-    match crate::session::set_slot_status(slot_id, "OCCURRING", "REJECTED") {
+    match crate::common::set_slot_status(slot_id, "OCCURRING", "REJECTED") {
         None => Status::InternalServerError,
         Some(..) => Status::Ok,
     }

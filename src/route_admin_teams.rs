@@ -5,7 +5,8 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 
 use crate::db::get_pool_conn;
-use crate::session::{UserSession, Team};
+use crate::session::{UserSession};
+use crate::common::{Team};
 
 /* ROUTES */
 

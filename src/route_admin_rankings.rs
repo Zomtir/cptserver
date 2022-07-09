@@ -5,7 +5,8 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 
 use crate::db::get_pool_conn;
-use crate::session::{UserSession, Ranking, Member, Branch};
+use crate::session::{UserSession};
+use crate::common::{Ranking, Member, Branch};
 
 #[rocket::get("/ranking_list?<user_id>&<branch_id>&<min>&<max>")]
 pub fn ranking_list(user_id: u16, branch_id: u16, min: u8, max: u8, session: UserSession) -> Option<Json<Vec<Ranking>>> {

@@ -9,6 +9,7 @@ extern crate mysql_common;
 mod config;
 mod db;
 mod api;
+mod common;
 mod session;
 pub mod clock;
 mod route_login;

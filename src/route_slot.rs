@@ -5,7 +5,8 @@ use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
-use crate::session::{SlotSession, Slot, Member, get_slot_info};
+use crate::session::{SlotSession};
+use crate::common::{Slot, Member, get_slot_info};
 
 /*
  * ROUTES

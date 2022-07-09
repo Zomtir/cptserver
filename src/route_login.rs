@@ -7,7 +7,8 @@ use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
 use crate::api::ApiError;
-use crate::session::{USERSESSIONS, SLOTSESSIONS, UserSession, SlotSession, User, random_string, verify_password, hash_sha256};
+use crate::session::{USERSESSIONS, SLOTSESSIONS, UserSession, SlotSession};
+use crate::common::{User, random_string, hash_sha256};
 
 /* 
  * STRUCTS
@@ -50,7 +51,7 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
         return Err(ApiError::USER_DISABLED);
     }
 
-    let bpassword : Vec<u8> = match verify_password(&credit.password){
+    let bpassword : Vec<u8> = match crate::common::verify_password(&credit.password){
         Some(bpassword) => bpassword,
         None => return Err(ApiError::USER_BAD_PASSWORD),
     };

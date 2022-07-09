@@ -7,7 +7,7 @@ use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
-use crate::session::{Location, Branch, Access};
+use crate::common::{Location, Branch, Access};
 
 #[rocket::head("/status")]
 pub fn status() -> Status {    

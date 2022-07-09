@@ -1,6 +1,6 @@
-use rocket::request::{Request, FromRequest, Outcome};
+use rocket::request::{Request, Outcome};
 use rocket::response::{self, Response, Responder};
-use rocket::outcome::Outcome::{Success,Failure};
+use rocket::outcome::Outcome::{Failure};
 use rocket::http::Status;
 
 #[derive(Debug)]
@@ -51,6 +51,7 @@ impl ApiError {
         SLOT_BAD_PASSWORD => 400, "This password does not belong to given slot.",
         SLOT_BAD_TIME => 400, "Time window too narrow or negative.",
         SLOT_OVERLAP_TIME => 409, "Time window overlaps with an existing slot.",
+        SLOT_STATUS_INCOMPAT => 400, "Slot status is incompatible.",
 
         SESSION_TOKEN_MISSING => 400, "Header token missing.",
         SESSION_TOKEN_INVALID => 400, "Header token not valid.",

@@ -6,8 +6,9 @@ use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
-use crate::session::{UserSession, User, Course, Slot, Ranking, Member, Location, Branch, Access,
-    random_string, random_bytes, verify_password, hash_sha256};
+use crate::session::UserSession;
+use crate::common::{User, Course, Slot, Ranking, Member, Location, Branch, Access};
+use crate::common::{random_string, random_bytes};
 
 /*
  * ROUTES
@@ -35,13 +36,13 @@ pub fn user_info(session: UserSession) -> Json<User> {
 
 #[rocket::post("/user_password", format = "text/plain", data = "<password>")]
 pub fn user_password(session: UserSession, password: String) {
-    let bpassword : Vec<u8> = match verify_password(&password){
+    let bpassword : Vec<u8> = match crate::common::verify_password(&password){
         Some(bpassword) => bpassword,
         None => return,
     };
     
     let pepper : Vec<u8> = random_bytes(16);
-    let shapassword : Vec<u8> = hash_sha256(&bpassword, &pepper);
+    let shapassword : Vec<u8> = crate::common::hash_sha256(&bpassword, &pepper);
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE users SET pwd = :pwd, pepper = :pepper WHERE user_id = :user_id").unwrap();
@@ -184,7 +185,7 @@ pub fn course_slot_list(session: UserSession, course_id: u32) -> Json<Vec<Slot>>
 
 #[rocket::post("/indi_slot_create", format = "application/json", data = "<slot>")]
 pub fn indi_slot_create(session: UserSession, mut slot: Json<Slot>) -> Result<String, Status> {
-    crate::session::round_slot_window(&mut slot);
+    crate::common::round_slot_window(&mut slot);
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO slots (slot_key, pwd, title, location_id, begin, end, status, user_id)
@@ -216,9 +217,9 @@ pub fn indi_slot_create(session: UserSession, mut slot: Json<Slot>) -> Result<St
 
 #[rocket::post("/course_slot_create", format = "application/json", data = "<slot>")]
 pub fn course_slot_create(session: UserSession, mut slot: Json<Slot>) -> Option<String> {
-    crate::session::round_slot_window(&mut slot);
+    crate::common::round_slot_window(&mut slot);
 
-    if !crate::session::is_slot_valid(&mut slot) {return None;}
+    if !crate::common::is_slot_valid(&mut slot) {return None;}
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO slots (slot_key, pwd, title, status, autologin, location_id, begin, end, course_id)
@@ -263,7 +264,7 @@ pub fn course_slot_create(session: UserSession, mut slot: Json<Slot>) -> Option<
 // TODO, allow inviting groups for draft
 #[rocket::post("/indi_slot_edit", format = "application/json", data = "<slot>")]
 pub fn indi_slot_edit(session: UserSession, mut slot: Json<Slot>) {
-    crate::session::round_slot_window(&mut slot);
+    crate::common::round_slot_window(&mut slot);
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE slots SET
@@ -346,22 +347,6 @@ pub fn course_slot_edit(session: UserSession, slot: Json<Slot>) -> Status {
     }
 }
 
-#[rocket::head("/indi_slot_delete?<slot_id>")]
-pub fn indi_slot_delete(session: UserSession, slot_id: u32) -> Status {
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("DELETE s FROM slots s
-                          WHERE slot_id = :slot_id AND user_id = :user_id").unwrap();
-    let params = params! {
-        "slot_id" => &slot_id,
-        "user_id" => &session.user.id,
-    };
-
-    match conn.exec::<String,_,_>(&stmt,&params) {
-        Err(..) => Status::Conflict,
-        Ok(..) => Status::Ok,
-    }
-}
-
 #[rocket::head("/course_slot_delete?<slot_id>")]
 pub fn course_slot_delete(session: UserSession, slot_id: u32) -> Status {
     let mut conn : PooledConn = get_pool_conn();
@@ -379,28 +364,31 @@ pub fn course_slot_delete(session: UserSession, slot_id: u32) -> Status {
     }
 }
 
-
 #[rocket::head("/indi_slot_submit?<slot_id>")]
 pub fn indi_slot_submit(session: UserSession, slot_id: u32) -> Result<Status,ApiError> {
     // Perhaps lock the DB during checking and modifying the slot status
 
-    let slot : Slot = match crate::session::get_slot_info(&slot_id){
+    let slot : Slot = match crate::common::get_slot_info(&slot_id){
         None => return Err(ApiError::SLOT_NO_ENTRY),
         Some(slot) => slot,
     };
 
     // Check that user is responsible for this slot
-    if slot.id != session.user.id {
-        return Err(ApiError::RIGHT_CONFLICT);
+    match slot.user_id {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(id) => match id {
+            _ if id == session.user.id => (),
+            _ => return Err(ApiError::RIGHT_CONFLICT),
+        },
     }
 
     // The check is here intentional to be able to return early although it is also checked during is_slot_free
-    if !crate::session::is_slot_valid(&slot) {
+    if !crate::common::is_slot_valid(&slot) {
         return Err(ApiError::SLOT_BAD_TIME);
     }
 
     // Perhaps just leave the slot as draft if the time is not free
-    let (status_update, response) = match crate::session::is_slot_free(&slot) {
+    let (status_update, response) = match crate::common::is_slot_free(&slot) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => ("REJECTED", Err(ApiError::SLOT_OVERLAP_TIME)),
         Some(true) => match crate::config::CONFIG_RESERVATION_AUTO_ACCEPT {
@@ -409,7 +397,7 @@ pub fn indi_slot_submit(session: UserSession, slot_id: u32) -> Result<Status,Api
         },
     };
     
-    match crate::session::set_slot_status(slot.id, "PENDING", status_update) {
+    match crate::common::set_slot_status(slot.id, "DRAFT", status_update) {
         None => Err(ApiError::DB_CONFLICT),
         Some(..) => response,
     }
@@ -418,7 +406,7 @@ pub fn indi_slot_submit(session: UserSession, slot_id: u32) -> Result<Status,Api
 // TODO check that user is allowed to edit this slot
 #[rocket::head("/indi_slot_withdraw?<slot_id>")]
 pub fn indi_slot_withdraw(_session: UserSession, slot_id: u32) -> Status {
-    match crate::session::set_slot_status(slot_id, "PENDING", "DRAFT") {
+    match crate::common::set_slot_status(slot_id, "PENDING", "DRAFT") {
         None => Status::InternalServerError,
         Some(..) => Status::Ok,
     }
@@ -427,7 +415,7 @@ pub fn indi_slot_withdraw(_session: UserSession, slot_id: u32) -> Status {
 // TODO check that user is allowed to edit this slot
 #[rocket::head("/indi_slot_cancel?<slot_id>")]
 pub fn indi_slot_cancel(_session: UserSession, slot_id: u32) -> Status {
-    match crate::session::set_slot_status(slot_id, "OCCURRING", "CANCELED") {
+    match crate::common::set_slot_status(slot_id, "OCCURRING", "CANCELED") {
         None => Status::InternalServerError,
         Some(..) => Status::Ok,
     }
@@ -436,25 +424,48 @@ pub fn indi_slot_cancel(_session: UserSession, slot_id: u32) -> Status {
 // TODO check that user is allowed to edit this slot
 #[rocket::head("/indi_slot_recycle?<slot_id>")]
 pub fn indi_slot_recycle(_session: UserSession, slot_id: u32) -> Status {
-    match crate::session::set_slot_status(slot_id, "REJECTED", "DRAFT") {
+    match crate::common::set_slot_status(slot_id, "REJECTED", "DRAFT") {
         None => Status::InternalServerError,
         Some(..) => Status::Ok,
     }
 }
 
-// TODO ruleset who is able to do this
-/*
-#[rocket::head("/indi_slot_delete?<slot>")]
-pub fn indi_slot_delete(session: UserSession, slot: u32) -> Status {
-    if !session.user.admin_reservations {return Status::Forbidden};
+#[rocket::head("/indi_slot_delete?<slot_id>")]
+pub fn indi_slot_delete(session: UserSession, slot_id: u32) -> Result<Status,ApiError> {
+    // Perhaps lock the DB during checking and modifying the slot status
+    let slot : Slot = match crate::common::get_slot_info(&slot_id){
+        None => return Err(ApiError::SLOT_NO_ENTRY),
+        Some(slot) => slot,
+    };
+
+    match slot.user_id {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(id) => match id {
+            _ if id == session.user.id => (),
+            _ => return Err(ApiError::RIGHT_CONFLICT),
+        },
+    }
+
+    match slot.status {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(status) => match status.as_str() {
+            "DRAFT" => (),
+            _ => return Err(ApiError::SLOT_STATUS_INCOMPAT),
+        },
+    }
 
     let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("DELETE r FROM slots WHERE slot_id = :slot_id AND status = `DRAFT`").unwrap();
-    let params = params! {"slot_id" => slot};
+    let stmt = conn.prep("DELETE s FROM slots s
+                          WHERE slot_id = :slot_id AND user_id = :user_id
+                          AND status = 'DRAFT'").unwrap();
 
-    match conn.exec::<String,_,_>(&stmt,&params){
-        Err(..) => Status::Conflict,
-        Ok(..) => Status::Ok,
+    let params = params! {
+        "slot_id" => &slot_id,
+        "user_id" => &session.user.id,
+    };
+
+    match conn.exec::<String,_,_>(&stmt,&params) {
+        Err(..) => Err(ApiError::DB_CONFLICT),
+        Ok(..) => Ok(Status::Ok),
     }
 }
-*/
