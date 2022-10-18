@@ -16,10 +16,11 @@ pub struct User {
     pub firstname: String,
     pub lastname: String,
     pub enabled: bool,
-    pub admin_users: bool,
+    pub admin_courses: bool,
     pub admin_rankings: bool,
     pub admin_reservations: bool,
-    pub admin_courses: bool,
+    pub admin_teams: bool,
+    pub admin_users: bool,
 }
 
 impl User {
@@ -31,10 +32,11 @@ impl User {
             firstname: firstname,
             lastname: lastname,
             enabled: false,
-            admin_users: false,
+            admin_courses: false,
             admin_rankings: false,
             admin_reservations: false,
-            admin_courses: false,
+            admin_teams: false,
+            admin_users: false,
         }
     }
 }
@@ -93,6 +95,7 @@ pub struct Team {
     pub admin_courses: bool,
     pub admin_rankings: bool,
     pub admin_reservations: bool,
+    pub admin_teams: bool,
     pub admin_users: bool,
 }
 

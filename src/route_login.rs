@@ -28,10 +28,11 @@ pub struct Credential {
 pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,ApiError> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT u.user_id, u.pwd, u.pepper, u.enabled, u.firstname, u.lastname,
-                          COALESCE(MAX(admin_users),0) AS admin_users,
+                          COALESCE(MAX(admin_courses),0) AS admin_courses,
                           COALESCE(MAX(admin_rankings),0) AS admin_rankings,
                           COALESCE(MAX(admin_reservations),0) AS admin_reservations,
-                          COALESCE(MAX(admin_courses),0) AS admin_courses
+                          COALESCE(MAX(admin_teams),0) AS admin_teams,
+                          COALESCE(MAX(admin_users),0) AS admin_users
                           FROM users u
                           LEFT JOIN team_members ON (u.user_id = team_members.user_id)
                           LEFT JOIN teams ON (team_members.team_id = teams.team_id)
@@ -77,10 +78,11 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
             enabled: user_enabled,
             firstname: row.take("firstname").unwrap(),
             lastname: row.take("lastname").unwrap(),
-            admin_users: row.take("admin_users").unwrap(),
+            admin_courses: row.take("admin_courses").unwrap(),
             admin_rankings: row.take("admin_rankings").unwrap(),
             admin_reservations: row.take("admin_reservations").unwrap(),
-            admin_courses: row.take("admin_courses").unwrap(),
+            admin_teams: row.take("admin_teams").unwrap(),
+            admin_users: row.take("admin_users").unwrap(),
         },
     };
 

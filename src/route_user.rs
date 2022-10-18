@@ -23,10 +23,11 @@ pub fn user_info(session: UserSession) -> Json<User> {
     let params = params! { "user_id" => session.user.id };
     let map = |(id, key, firstname, lastname, enabled)| {
         User { id, key, pwd: None, firstname, lastname, enabled,
-            admin_users: session.user.admin_users,
+            admin_courses: session.user.admin_courses,
             admin_rankings: session.user.admin_rankings,
             admin_reservations: session.user.admin_reservations,
-            admin_courses: session.user.admin_courses,
+            admin_teams: session.user.admin_teams,
+            admin_users: session.user.admin_users,
         }
     };
 
