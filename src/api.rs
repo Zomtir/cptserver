@@ -60,6 +60,8 @@ impl ApiError {
         RIGHT_CONFLICT => 403, "You tried to access or edit some resource that you were not supposed to.",
         RIGHT_NO_RESERVATIONS => 403, "You do not have rights to edit reservations.",
 
+        INVALID_RANGE => 400, "The implied range is out of scope.",
+
         DB_CONFLICT => 409, "The database query failed. Might still be your fault because you didn't refresh."
     }
 }

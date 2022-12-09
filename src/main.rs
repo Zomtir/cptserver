@@ -19,6 +19,8 @@ mod route_admin_rankings;
 mod route_admin_reservations;
 mod route_admin_teams;
 mod route_user;
+mod route_user_course;
+mod route_user_event;
 mod route_slot;
 mod route_anon;
 
@@ -61,13 +63,12 @@ fn rocket() -> _ {
             route_admin_reservations::reservation_list, route_admin_reservations::reservation_accept, route_admin_reservations::reservation_deny, route_admin_reservations::reservation_cancel,
             route_admin_teams::team_list, route_admin_teams::team_create, route_admin_teams::team_edit, route_admin_teams::team_delete,
             route_admin_teams::team_enrol, route_admin_teams::team_dismiss,
-            route_user::user_info, route_user::user_password, route_user::user_info_rankings,
-            route_user::user_member_list, route_user::user_course_list,
-            route_user::indi_slot_list, route_user::course_slot_list,
-            route_user::indi_slot_create, route_user::course_slot_create,
-            route_user::indi_slot_edit, route_user::course_slot_edit,
-            route_user::indi_slot_delete, route_user::course_slot_delete,
-            route_user::indi_slot_submit, route_user::indi_slot_withdraw, route_user::indi_slot_cancel, route_user::indi_slot_recycle,
+            route_user::user_info, route_user::user_password, route_user::user_info_rankings, route_user::user_member_list,
+            route_user_course::user_course_list, route_user_course::course_slot_list,
+            route_user_course::course_slot_create, route_user_course::course_slot_edit, route_user_course::course_slot_delete,
+            route_user_event::indi_slot_list,
+            route_user_event::indi_slot_create, route_user_event::indi_slot_edit, route_user_event::indi_slot_delete,
+            route_user_event::indi_slot_submit, route_user_event::indi_slot_withdraw, route_user_event::indi_slot_cancel, route_user_event::indi_slot_recycle,
             route_slot::slot_info,
             route_slot::slot_candidates, route_slot::slot_participants, route_slot::slot_enrol, route_slot::slot_dismiss,
         ])

@@ -7,8 +7,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mysql = "22.1.0"
-mysql_common = { version = "0.28.0", features = ["time03", "chrono", "frunk"]}
+mysql = "^23.0"
+mysql_common = {features = ["time03", "chrono", "frunk"]}
 http = "0.2"
 rocket = { version = "0.5.0-rc.2", features = ["json"] }
 #rocket_cors = "0.6.0-alpha1"
