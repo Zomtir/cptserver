@@ -276,12 +276,11 @@ pub fn is_slot_free(slot: & Slot) -> Option<bool> {
 }
 
 pub fn round_slot_window(slot: &mut Slot) -> Option<()> {
-    use crate::clock::NaiveDurationRound;
-    slot.begin = match slot.begin.duration_round(crate::config::CONFIG_SLOT_WINDOW_SNAP()) {
+    slot.begin = match crate::clock::duration_round(slot.begin, crate::config::CONFIG_SLOT_WINDOW_SNAP()) {
         Err(..) => return None,
         Ok(dt) => dt,
     };
-    slot.end = match slot.end.duration_round(crate::config::CONFIG_SLOT_WINDOW_SNAP()) {
+    slot.end = match crate::clock::duration_round(slot.end, crate::config::CONFIG_SLOT_WINDOW_SNAP()) {
         Err(..) => return None,
         Ok(dt) => dt,
     };

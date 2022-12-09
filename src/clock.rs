@@ -57,22 +57,11 @@ pub mod datetime_format {
     }
 }
 
-pub trait NaiveDurationRound: Sized {
-    fn duration_round(
-        self,
-        duration: Duration,
-    ) -> Result<Self, <DateTime<Utc> as DurationRound>::Err>;
-}
-
-impl NaiveDurationRound for chrono::NaiveDateTime {
-    fn duration_round(
-        self,
-        duration: Duration,
-    ) -> Result<Self, <DateTime<Utc> as DurationRound>::Err> {
-        match DateTime::<Utc>::from_utc(self, Utc).duration_round(duration) {
-            Err(e) => Err(e),
-            Ok(dt) => Ok(dt.naive_utc()),
-        }
+pub fn duration_round(naive_datetime: chrono::NaiveDateTime, duration: Duration) -> Result<chrono::NaiveDateTime, <DateTime<Utc> as DurationRound>::Err>
+{
+    match DateTime::<Utc>::from_utc(naive_datetime, Utc).duration_round(duration) {
+        Err(e) => Err(e),
+        Ok(dt) => Ok(dt.naive_utc()),
     }
 }
 
