@@ -41,7 +41,7 @@ pub fn user_create(user: Json<User>, session: UserSession) -> Result<String, Sta
         "enabled" => user.enabled,
     };
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => return Err(Status::BadRequest),
         Ok(..) => (),
     };
@@ -73,7 +73,7 @@ pub fn user_edit(user: Json<User>, session: UserSession) -> Status {
         "enabled" => &user.enabled,
     };
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => return Status::InternalServerError,
         Ok(..) => ()
     };
@@ -110,7 +110,7 @@ pub fn user_delete(user_id: u32, session: UserSession) -> Status {
     let stmt = conn.prep("DELETE u FROM users u WHERE u.user_id = :user_id").unwrap();
     let params = params! {"user_id" => user_id};
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => Status::InternalServerError,
         Ok(..) => Status::Ok,
     }

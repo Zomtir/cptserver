@@ -4,6 +4,7 @@ use mysql::prelude::{Queryable};
 use rocket::http::Status;
 use rocket::serde::json::Json;
 
+use crate::api::ApiError;
 use crate::db::get_pool_conn;
 use crate::session::{UserSession};
 use crate::common::{Ranking, Member, Branch};
@@ -66,49 +67,54 @@ pub fn ranking_list(user_id: u16, branch_id: u16, min: u8, max: u8, session: Use
 }
 
 #[rocket::post("/ranking_create", format = "application/json", data = "<ranking>")]
-pub fn ranking_create(ranking: Json<Ranking>, session: UserSession) {
-    if !session.user.admin_rankings {return};
+pub fn ranking_create(ranking: Json<Ranking>, session: UserSession) -> Result<Status, ApiError> {
+    if !session.user.admin_rankings {return Err(ApiError::RIGHT_NO_RANKINGS)};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO rankings (user_id, branch_id, `rank`, date, judge_id)
                           SELECT :user_id, :branch_id, :rank, :date, :judge_id").unwrap();
 
-    conn.exec::<String,_,_>(
-        &stmt,
-        params! {
-            "user_id" => &ranking.user.id,
-            "branch_id" => &ranking.branch.id,
-            "rank" => &ranking.rank,
-            "date" => &ranking.date,
-            "judge_id" => &ranking.judge.id,
-        },
-    ).unwrap();
+    let params = params! {
+        "user_id" => &ranking.user.id,
+        "branch_id" => &ranking.branch.id,
+        "rank" => &ranking.rank,
+        "date" => &ranking.date,
+        "judge_id" => &ranking.judge.id,
+    };
+
+    match conn.exec_drop(&stmt,&params) {
+        Err(..) => Err(ApiError::DB_CONFLICT),
+        Ok(..) => Ok(Status::Ok),
+    }
 }
 
 #[rocket::post("/ranking_edit", format = "application/json", data = "<ranking>")]
-pub fn ranking_edit(ranking: Json<Ranking>, session: UserSession) {
-    if !session.user.admin_rankings {return};
+pub fn ranking_edit(ranking: Json<Ranking>, session: UserSession) -> Result<Status, ApiError> {
+    if !session.user.admin_rankings {return Err(ApiError::RIGHT_NO_RANKINGS)};
 
     let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("UPDATE rankings SET
-                            user_id  = :user_id,
-                            branch_id = :branch_id,
-                            `rank` = :rank,
-                            date = :date,
-                            judge_id = :judge_id
-                          WHERE rankin_id = :ranking_id").unwrap();
+    let stmt = conn.prep("
+        UPDATE rankings SET
+            user_id  = :user_id,
+            branch_id = :branch_id,
+            `rank` = :rank,
+            date = :date,
+            judge_id = :judge_id
+        WHERE rankin_id = :ranking_id").unwrap();
 
-    conn.exec::<String,_,_>(
-        &stmt,
-        params! {
-            "ranking_id" => &ranking.id,
-            "user_id" => &ranking.user.id,
-            "branch_id" => &ranking.branch.id,
-            "rank" => &ranking.rank,
-            "date" => &ranking.date,
-            "judge_id" => &ranking.judge.id,
-        },
-    ).unwrap();
+    let params = params! {
+        "ranking_id" => &ranking.id,
+        "user_id" => &ranking.user.id,
+        "branch_id" => &ranking.branch.id,
+        "rank" => &ranking.rank,
+        "date" => &ranking.date,
+        "judge_id" => &ranking.judge.id,
+    };
+
+    match conn.exec_drop(&stmt,&params) {
+        Err(..) => Err(ApiError::DB_CONFLICT),
+        Ok(..) => Ok(Status::Ok),
+    }
 }
 
 #[rocket::head("/ranking_delete?<ranking_id>", format = "application/json")]
@@ -120,7 +126,7 @@ pub fn ranking_delete(ranking_id: u32, session: UserSession) -> Status {
 
     let params = params! {"ranking_id" => ranking_id};
 
-    match conn.exec::<String,_,_>(&stmt,&params){
+    match conn.exec_drop(&stmt,&params){
         Err(..) => return Status::Conflict,
         Ok(..) => return Status::Ok,
     };

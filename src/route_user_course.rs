@@ -66,9 +66,9 @@ pub fn course_slot_list(session: UserSession, course_id: u32) -> Json<Vec<Slot>>
 
 #[rocket::post("/course_slot_create", format = "application/json", data = "<slot>")]
 pub fn course_slot_create(session: UserSession, mut slot: Json<Slot>) -> Option<String> {
-    crate::common::round_slot_window(&mut slot);
+    crate::db_slot::round_slot_window(&mut slot);
 
-    if !crate::common::is_slot_valid(&mut slot) {return None;}
+    if !crate::db_slot::is_slot_valid(&mut slot) {return None;}
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO slots (slot_key, pwd, title, status, autologin, location_id, begin, end, course_id)
@@ -89,7 +89,7 @@ pub fn course_slot_create(session: UserSession, mut slot: Json<Slot>) -> Option<
         "user_id" => &session.user.id,
     };
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => return None,
         Ok(..) => (),
     };
@@ -129,7 +129,7 @@ pub fn course_slot_edit(session: UserSession, slot: Json<Slot>) -> Status {
         "user_id" => &session.user.id,
     };
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => return Status::Conflict,
         Ok(..) => (),
     };
@@ -149,7 +149,7 @@ pub fn course_slot_edit(session: UserSession, slot: Json<Slot>) -> Status {
         "user_id" => &session.user.id,
     };
 
-    match conn.exec::<String,_,_>(&stmt_pwd,&params_pwd) {
+    match conn.exec_drop(&stmt_pwd,&params_pwd) {
         Err(..) => Status::Conflict,
         Ok(..) => Status::Ok,
     }
@@ -166,7 +166,7 @@ pub fn course_slot_delete(session: UserSession, slot_id: u32) -> Status {
         "user_id" => &session.user.id,
     };
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => Status::Conflict,
         Ok(..) => Status::Ok,
     }

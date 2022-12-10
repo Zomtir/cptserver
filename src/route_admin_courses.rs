@@ -55,7 +55,7 @@ pub fn course_create(course: Json<Course>, session: UserSession) -> Result<Strin
         "threshold" => &course.threshold,
     };
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => return Err(Status::BadRequest),
         Ok(..) => (),
     };
@@ -92,7 +92,7 @@ pub fn course_edit(course: Json<Course>, session: UserSession) -> Status {
         "threshold" => &course.threshold,
     };
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => Status::BadRequest,
         Ok(..) => Status::Ok,
     }
@@ -107,7 +107,7 @@ pub fn course_delete(course_id: u32, session: UserSession) -> Status {
                           WHERE c.course_id = :course_id").unwrap();
     let params = params! {"course_id" => &course_id};
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => Status::BadRequest,
         Ok(..) => Status::Ok,
     }
@@ -150,7 +150,7 @@ pub fn course_mod(course_id: u32, user_id: u32, session: UserSession) -> Status 
         "user_id" => &user_id,
     };
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => Status::Conflict,
         Ok(..) => Status::Ok,
     }
@@ -168,7 +168,7 @@ pub fn course_unmod(course_id: u32, user_id: u32, session: UserSession) -> Statu
         "user_id" => &user_id,
     };
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => Status::Conflict,
         Ok(..) => Status::Ok,
     }

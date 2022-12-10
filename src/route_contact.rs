@@ -5,7 +5,7 @@
 //     let mut conn : PooledConn = get_pool_conn();
 //     let stmt = conn.prep("UPDATE user_contact SET email = :email WHERE user_id = :user_id").unwrap();
 
-//     conn.exec::<String,_,_>(
+//     conn.exec_drop(
 //         &stmt,
 //         params! { "user_id" => &session.user.id, "email" => &email},
 //     ).unwrap();

@@ -6,7 +6,7 @@ use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
 use crate::session::{SlotSession};
-use crate::common::{Slot, Member, get_slot_info};
+use crate::common::{Slot, Member};
 
 /*
  * ROUTES
@@ -14,7 +14,7 @@ use crate::common::{Slot, Member, get_slot_info};
 
 #[rocket::get("/slot_info")]
 pub fn slot_info(session: SlotSession) -> Result<Json<Slot>, Status> {
-    match get_slot_info(&session.slot_id) {
+    match crate::db_slot::get_slot_info(&session.slot_id) {
         None => Err(Status::InternalServerError),
         Some(slot) => Ok(Json(slot)),
     }
@@ -65,7 +65,7 @@ pub fn slot_enrol(user_id: u32, session: SlotSession) -> Status {
         "user_id" => &user_id,
     };
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => Status::InternalServerError,
         Ok(..) => Status::Ok,
     }
@@ -82,7 +82,7 @@ pub fn slot_dismiss(user_id: u32, session: SlotSession) -> Status {
         "user_id" => &user_id,
     };
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => Status::InternalServerError,
         Ok(..) => Status::Ok,
     }

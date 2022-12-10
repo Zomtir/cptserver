@@ -43,7 +43,7 @@ pub fn team_create(session: UserSession, team: Json<Team>) -> Result<String, Sta
         "admin_users" => &team.admin_users,
     };
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => return Err(Status::BadRequest),
         Ok(..) => (),
     };
@@ -81,7 +81,7 @@ pub fn team_edit(session: UserSession, team: Json<Team>) -> Status {
         "admin_users" => &team.admin_users,
     };
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => Status::InternalServerError,
         Ok(..) => Status::Ok
     }
@@ -95,7 +95,7 @@ pub fn team_delete(session: UserSession, team_id: u32) -> Status {
     let stmt = conn.prep("DELETE t FROM teams t WHERE t.team_id = :team_id").unwrap();
     let params = params! {"team_id" => team_id};
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => Status::InternalServerError,
         Ok(..) => Status::Ok,
     }
@@ -114,7 +114,7 @@ pub fn team_enrol(session: UserSession, team_id: u32, user_id: u32) -> Status {
         "user_id" => &user_id,
     };
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => Status::InternalServerError,
         Ok(..) => Status::Ok,
     }
@@ -133,7 +133,7 @@ pub fn team_dismiss(session: UserSession, team_id: u32, user_id: u32) -> Status 
         "user_id" => &user_id,
     };
 
-    match conn.exec::<String,_,_>(&stmt,&params) {
+    match conn.exec_drop(&stmt,&params) {
         Err(..) => Status::InternalServerError,
         Ok(..) => Status::Ok,
     }

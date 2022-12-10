@@ -1,8 +1,10 @@
+use rocket::http::Status;
 use rocket::serde::json::Json;
 
 use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
+use crate::api::ApiError;
 use crate::db::get_pool_conn;
 use crate::session::UserSession;
 use crate::common::{User, Ranking, Member, Branch};
@@ -34,10 +36,10 @@ pub fn user_info(session: UserSession) -> Json<User> {
 }
 
 #[rocket::post("/user_password", format = "text/plain", data = "<password>")]
-pub fn user_password(session: UserSession, password: String) {
+pub fn user_password(session: UserSession, password: String) -> Result<Status, ApiError> {
     let bpassword : Vec<u8> = match crate::common::verify_password(&password){
         Some(bpassword) => bpassword,
-        None => return,
+        None => return Err(ApiError::USER_BAD_PASSWORD),
     };
     
     let pepper : Vec<u8> = random_bytes(16);
@@ -45,15 +47,16 @@ pub fn user_password(session: UserSession, password: String) {
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE users SET pwd = :pwd, pepper = :pepper WHERE user_id = :user_id").unwrap();
+    let params = params! {
+        "user_id" => &session.user.id,
+        "pwd" => &shapassword,
+        "pepper" => &pepper,
+    };
 
-    conn.exec::<String,_,_>(
-        &stmt,
-        params! {
-            "user_id" => &session.user.id,
-            "pwd" => &shapassword,
-            "pepper" => &pepper,
-        },
-    ).unwrap();
+    match conn.exec_drop(&stmt,&params) {
+        Err(..) => Err(ApiError::DB_CONFLICT),
+        Ok(..) => Ok(Status::Ok),
+    }
 }
 
 #[rocket::get("/user_info_rankings")]

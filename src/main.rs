@@ -8,6 +8,8 @@ extern crate mysql_common;
 
 mod config;
 mod db;
+mod db_user;
+mod db_slot;
 mod api;
 mod common;
 mod session;
@@ -69,6 +71,7 @@ fn rocket() -> _ {
             route_user_event::indi_slot_list,
             route_user_event::indi_slot_create, route_user_event::indi_slot_edit, route_user_event::indi_slot_delete,
             route_user_event::indi_slot_submit, route_user_event::indi_slot_withdraw, route_user_event::indi_slot_cancel, route_user_event::indi_slot_recycle,
+            route_user_event::event_owner_add, route_user_event::event_owner_remove,
             route_slot::slot_info,
             route_slot::slot_candidates, route_slot::slot_participants, route_slot::slot_enrol, route_slot::slot_dismiss,
         ])
