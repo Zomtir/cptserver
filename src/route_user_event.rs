@@ -20,7 +20,8 @@ pub fn indi_slot_list(session: UserSession, status: String) -> Result<Json<Vec<S
     let stmt = conn.prep("SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title, s.begin, s.end, s.status
                           FROM slots s
                           JOIN locations l ON l.location_id = s.location_id
-                          WHERE user_id = :user_id AND status = :status").unwrap();
+                          INNER JOIN slot_owners o ON s.slot_id = o.slot_id
+                          WHERE o.user_id = :user_id AND s.status = :status").unwrap();
 
     let params = params! {
         "user_id" => session.user.id,

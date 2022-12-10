@@ -29,7 +29,7 @@ pub fn reservation_list(
     let stmt = conn.prep("SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title, s.begin, s.end, s.status
                           FROM slots s
                           JOIN locations l ON l.location_id = s.location_id
-                          LEFT JOIN slot_owners o ON s.slot_id = o.slot_id
+                          INNER JOIN slot_owners o ON s.slot_id = o.slot_id
                           WHERE s.begin > :frame_start
                           AND s.begin < :frame_stop
                           AND (('' = :status) OR (s.status = :status))
