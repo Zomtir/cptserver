@@ -19,7 +19,7 @@ pub fn course_list(user_id: u32, session: UserSession) -> Result<Json<Vec<Course
                         FROM courses c
                         JOIN branches b ON c.branch_id = b.branch_id
                         JOIN access a ON c.access_id = a.access_id
-                        INNER JOIN course_moderators m ON c.course_id = m.course_id
+                        LEFT JOIN course_moderators m ON c.course_id = m.course_id
                         WHERE ((:user_id = '0') OR (m.user_id = :user_id))
                         GROUP BY c.course_id").unwrap();
     // TODO the WHERE and GROUP BY clause can be removed, if the user filter is deemed to be useless
