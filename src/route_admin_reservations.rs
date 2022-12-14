@@ -13,11 +13,11 @@ use crate::session::UserSession;
 // TODO make a check that status is not an invalid string by implementing a proper trait
 // status shouldn't even be a searchable criteria? if so, please make it enum with FromFormValue::default()
 // Default user_id should not be 0, but NULL
-#[rocket::get("/reservation_list?<date>&<window>&<status>&<user_id>")]
+#[rocket::get("/reservation_list?<begin>&<end>&<status>&<user_id>")]
 pub fn reservation_list(
     session: UserSession,
-    date: WebDate,
-    window: i64,
+    begin: WebDate,
+    end: WebDate,
     status: Option<String>,
     user_id: Option<u32>,
 ) -> Result<Json<Vec<Slot>>, ApiError> {
@@ -26,7 +26,7 @@ pub fn reservation_list(
     };
 
     let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title, s.begin, s.end, s.status
+    let stmt = conn.prep("SELECT s.slot_id, s.slot_key, s.title, l.location_id, l.location_key, l.title, s.begin, s.end, s.status
                           FROM slots s
                           JOIN locations l ON l.location_id = s.location_id
                           INNER JOIN slot_owners o ON s.slot_id = o.slot_id
@@ -35,12 +35,14 @@ pub fn reservation_list(
                           AND (('' = :status) OR (s.status = :status))
                           AND (('0' = :user_id) OR (o.user_id = :user_id))").unwrap();
 
+    let frame_start = begin.to_naive();
+    let frame_stop = end.to_naive();
+
+    let window = frame_stop.signed_duration_since(frame_start).num_days();
+
     if window < 1 || window > 366 {
         return Err(ApiError::INVALID_RANGE);
     }
-    
-    let frame_start = date.to_naive();
-    let frame_stop = frame_start + chrono::Duration::days(window);
 
     let params = params! {
         "frame_start" => &frame_start,

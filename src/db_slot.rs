@@ -11,7 +11,7 @@ use crate::common::{Location, Slot, Member};
 
 pub fn get_slot_info(slot_id : & u32) -> Option<Slot> {
     let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title, s.begin, s.end, s.status, s.course_id, s.user_id
+    let stmt = conn.prep("SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title, s.begin, s.end, s.status, s.course_id
                           FROM slots s
                           JOIN locations l ON l.location_id = s.location_id
                           WHERE slot_id = :slot_id").unwrap();
