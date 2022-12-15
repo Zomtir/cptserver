@@ -139,7 +139,7 @@ pub fn add_slot_owner(slot_id : u32, user_id : u32) -> Result<(), ApiError> {
 pub fn remove_slot_owner(slot_id : u32, user_id : u32) -> Result<(), ApiError> {    
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("
-        DELETE FROM slots_owners
+        DELETE FROM slot_owners
         WHERE slot_id = :slot_id AND user_id = :user_id").unwrap();
 
     let params = params! {
