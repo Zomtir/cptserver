@@ -7,7 +7,6 @@ use mysql::prelude::{Queryable};
 use crate::db::get_pool_conn;
 use crate::session::UserSession;
 use crate::common::{Course, Slot, Location, Branch, Access};
-use crate::common::{random_string};
 
 /*
  * ROUTES
@@ -66,7 +65,7 @@ pub fn course_slot_list(session: UserSession, course_id: u32) -> Json<Vec<Slot>>
 
 #[rocket::post("/course_slot_create", format = "application/json", data = "<slot>")]
 pub fn course_slot_create(session: UserSession, mut slot: Json<Slot>) -> Option<String> {
-    crate::db_slot::round_slot_window(&mut slot);
+    crate::common::round_slot_window(&mut slot);
 
     if !crate::db_slot::is_slot_valid(&mut slot) {return None;}
 
@@ -77,8 +76,8 @@ pub fn course_slot_create(session: UserSession, mut slot: Json<Slot>) -> Option<
                           WHERE m.course_id = :course_id AND m.user_id = :user_id").unwrap();
 
     let params = params! {
-        "slot_key" => random_string(8),
-        "pwd" => random_string(8),
+        "slot_key" => crate::common::random_string(8),
+        "pwd" => crate::common::random_string(8),
         "title" => &slot.title,
         "status" => "OCCURRING",
         "autologin" => false,

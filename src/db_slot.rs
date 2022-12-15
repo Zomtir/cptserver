@@ -103,19 +103,6 @@ pub fn is_slot_free(slot: & Slot) -> Option<bool> {
     };
 }
 
-pub fn round_slot_window(slot: &mut Slot) -> Option<()> {
-    slot.begin = match crate::clock::duration_round(slot.begin, crate::config::CONFIG_SLOT_WINDOW_SNAP()) {
-        Err(..) => return None,
-        Ok(dt) => dt,
-    };
-    slot.end = match crate::clock::duration_round(slot.end, crate::config::CONFIG_SLOT_WINDOW_SNAP()) {
-        Err(..) => return None,
-        Ok(dt) => dt,
-    };
-
-    return Some(())
-}
-
 pub fn set_slot_status(slot_id : u32, status_required : &str, status_update : &str) -> Option<()> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE slots SET

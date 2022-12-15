@@ -7,15 +7,15 @@ use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
 use crate::session::UserSession;
-use crate::common::{Slot, Location};
+use crate::common::{Slot, Location, Member};
 use crate::common::{random_string};
 
 /*
  * ROUTES
  */
 
-#[rocket::get("/indi_slot_list?<status>")]
-pub fn indi_slot_list(session: UserSession, status: String) -> Result<Json<Vec<Slot>>,Status> {
+#[rocket::get("/event_list?<status>")]
+pub fn event_list(session: UserSession, status: String) -> Result<Json<Vec<Slot>>,Status> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT s.slot_id, s.slot_key, s.title, l.location_id, l.location_key, l.title, s.begin, s.end, s.status
                           FROM slots s
@@ -39,9 +39,9 @@ pub fn indi_slot_list(session: UserSession, status: String) -> Result<Json<Vec<S
     };
 }
 
-#[rocket::post("/indi_slot_create", format = "application/json", data = "<slot>")]
-pub fn indi_slot_create(session: UserSession, mut slot: Json<Slot>) -> Result<String, ApiError> {
-    crate::db_slot::round_slot_window(&mut slot);
+#[rocket::post("/event_create", format = "application/json", data = "<slot>")]
+pub fn event_create(session: UserSession, mut slot: Json<Slot>) -> Result<String, ApiError> {
+    crate::common::round_slot_window(&mut slot);
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO slots (slot_key, pwd, title, location_id, begin, end, status)
@@ -78,6 +78,20 @@ pub fn indi_slot_create(session: UserSession, mut slot: Json<Slot>) -> Result<St
     Ok(slot_id.to_string())
 }
 
+#[rocket::get("/event_owner_list?<slot_id>")]
+pub fn event_owner_list(session: UserSession, slot_id: u32) -> Result<Json<Vec<Member>>,ApiError> {
+    match crate::db_slot::is_slot_owner(&slot_id, &session.user.id) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(false) => return Err(ApiError::SLOT_NO_OWNER),
+        Some(true) => (),
+    };
+
+    match crate::db_slot::get_slot_owners(&slot_id) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(members) => Ok(Json(members)),
+    }
+}
+
 #[rocket::head("/event_owner_add?<slot_id>&<user_id>")]
 pub fn event_owner_add(session: UserSession, slot_id: u32, user_id: u32) -> Result<Status,ApiError> {
     match crate::db_slot::is_slot_owner(&slot_id, &session.user.id) {
@@ -110,9 +124,9 @@ pub fn event_owner_remove(session: UserSession, slot_id: u32, user_id: u32) -> R
 // TODO, check times again... overall share more code with slot accept and slot_create
 // TODO, allow inviting member for draft
 // TODO, allow inviting groups for draft
-#[rocket::post("/indi_slot_edit", format = "application/json", data = "<slot>")]
-pub fn indi_slot_edit(session: UserSession, mut slot: Json<Slot>) -> Result<Status, ApiError> {
-    crate::db_slot::round_slot_window(&mut slot);
+#[rocket::post("/event_edit", format = "application/json", data = "<slot>")]
+pub fn event_edit(session: UserSession, mut slot: Json<Slot>) -> Result<Status, ApiError> {
+    crate::common::round_slot_window(&mut slot);
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE slots SET
@@ -155,8 +169,8 @@ pub fn indi_slot_edit(session: UserSession, mut slot: Json<Slot>) -> Result<Stat
     }
 }
 
-#[rocket::head("/indi_slot_submit?<slot_id>")]
-pub fn indi_slot_submit(session: UserSession, slot_id: u32) -> Result<Status,ApiError> {
+#[rocket::head("/event_submit?<slot_id>")]
+pub fn event_submit(session: UserSession, slot_id: u32) -> Result<Status,ApiError> {
     // Perhaps lock the DB during checking and modifying the slot status
 
     // Check that user is responsible for this slot
@@ -193,8 +207,8 @@ pub fn indi_slot_submit(session: UserSession, slot_id: u32) -> Result<Status,Api
 }
 
 // TODO check that user is allowed to edit this slot
-#[rocket::head("/indi_slot_withdraw?<slot_id>")]
-pub fn indi_slot_withdraw(_session: UserSession, slot_id: u32) -> Status {
+#[rocket::head("/event_withdraw?<slot_id>")]
+pub fn event_withdraw(_session: UserSession, slot_id: u32) -> Status {
     match crate::db_slot::set_slot_status(slot_id, "PENDING", "DRAFT") {
         None => Status::InternalServerError,
         Some(..) => Status::Ok,
@@ -202,8 +216,8 @@ pub fn indi_slot_withdraw(_session: UserSession, slot_id: u32) -> Status {
 }
 
 // TODO check that user is allowed to edit this slot
-#[rocket::head("/indi_slot_cancel?<slot_id>")]
-pub fn indi_slot_cancel(_session: UserSession, slot_id: u32) -> Status {
+#[rocket::head("/event_cancel?<slot_id>")]
+pub fn event_cancel(_session: UserSession, slot_id: u32) -> Status {
     match crate::db_slot::set_slot_status(slot_id, "OCCURRING", "CANCELED") {
         None => Status::InternalServerError,
         Some(..) => Status::Ok,
@@ -211,16 +225,16 @@ pub fn indi_slot_cancel(_session: UserSession, slot_id: u32) -> Status {
 }
 
 // TODO check that user is allowed to edit this slot
-#[rocket::head("/indi_slot_recycle?<slot_id>")]
-pub fn indi_slot_recycle(_session: UserSession, slot_id: u32) -> Status {
+#[rocket::head("/event_recycle?<slot_id>")]
+pub fn event_recycle(_session: UserSession, slot_id: u32) -> Status {
     match crate::db_slot::set_slot_status(slot_id, "REJECTED", "DRAFT") {
         None => Status::InternalServerError,
         Some(..) => Status::Ok,
     }
 }
 
-#[rocket::head("/indi_slot_delete?<slot_id>")]
-pub fn indi_slot_delete(session: UserSession, slot_id: u32) -> Result<Status,ApiError> {
+#[rocket::head("/event_delete?<slot_id>")]
+pub fn event_delete(session: UserSession, slot_id: u32) -> Result<Status,ApiError> {
     // Perhaps lock the DB during checking and modifying the slot status
     match crate::db_slot::is_slot_owner(&slot_id, &session.user.id){
         None => return Err(ApiError::DB_CONFLICT),
