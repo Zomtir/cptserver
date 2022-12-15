@@ -10,6 +10,7 @@ mod config;
 mod db;
 mod db_user;
 mod db_slot;
+mod db_course;
 mod api;
 mod common;
 mod session;
@@ -59,8 +60,8 @@ fn rocket() -> _ {
             route_anon::status, route_anon::location_list, route_anon::branch_list, route_anon::access_list,
             route_login::user_login, route_login::slot_login, route_login::slot_autologin,
             route_admin_users::user_list, route_admin_users::user_create, route_admin_users::user_edit, route_admin_users::user_delete,
-            route_admin_courses::course_list, route_admin_courses::course_create, route_admin_courses::course_edit, route_admin_courses::course_delete,
-            route_admin_courses::course_moderator_list, route_admin_courses::course_mod, route_admin_courses::course_unmod,
+            route_admin_courses::admin_course_list, route_admin_courses::admin_course_create, route_admin_courses::admin_course_edit, route_admin_courses::admin_course_delete,
+            route_admin_courses::admin_course_moderator_list, route_admin_courses::admin_course_moderator_add, route_admin_courses::admin_course_moderator_remove,
             route_admin_rankings::ranking_list, route_admin_rankings::ranking_create, route_admin_rankings::ranking_edit, route_admin_rankings::ranking_delete,
             route_admin_reservations::reservation_list, route_admin_reservations::reservation_accept, route_admin_reservations::reservation_deny, route_admin_reservations::reservation_cancel,
             route_admin_teams::team_list, route_admin_teams::team_create, route_admin_teams::team_edit, route_admin_teams::team_delete,

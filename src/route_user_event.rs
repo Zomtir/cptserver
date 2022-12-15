@@ -114,15 +114,15 @@ pub fn event_edit(session: UserSession, mut slot: Json<Slot>) -> Result<Status, 
         Ok(..) => (),
     };
 
+    // TODO, set the password with a seperate call and not plain-text in the JSON
     if slot.pwd.is_none() || slot.pwd.as_ref().unwrap().len() < 8 {
-        return Err(ApiError::SLOT_BAD_PASSWORD);
+        return Ok(Status::Ok);
     };
 
-    let stmt_pwd = conn.prep("UPDATE slots SET pwd = :pwd WHERE slot_id = :slot_id AND user_id = :user_id").unwrap();
+    let stmt_pwd = conn.prep("UPDATE slots SET pwd = :pwd WHERE slot_id = :slot_id").unwrap();
     let params_pwd = params! {
         "slot_id" => &slot.id,
         "pwd" => &slot.pwd.as_ref().unwrap(),
-        "user_id" => &session.user.id,
     };
 
     match conn.exec_drop(&stmt_pwd,&params_pwd) {

@@ -4,12 +4,13 @@ use mysql::prelude::{Queryable};
 use rocket::http::Status;
 use rocket::serde::json::Json;
 
+use crate::api::ApiError;
 use crate::db::get_pool_conn;
 use crate::session::{UserSession};
 use crate::common::{Course, Branch, Access, Member, random_string};
 
-#[rocket::get("/course_list?<user_id>")]
-pub fn course_list(user_id: u32, session: UserSession) -> Result<Json<Vec<Course>>, Status> {
+#[rocket::get("/admin_course_list?<user_id>")]
+pub fn admin_course_list(user_id: u32, session: UserSession) -> Result<Json<Vec<Course>>, Status> {
     if !session.user.admin_courses {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
@@ -39,8 +40,8 @@ pub fn course_list(user_id: u32, session: UserSession) -> Result<Json<Vec<Course
     }
 }
 
-#[rocket::post("/course_create", format = "application/json", data = "<course>")]
-pub fn course_create(course: Json<Course>, session: UserSession) -> Result<String, Status> {
+#[rocket::post("/admin_course_create", format = "application/json", data = "<course>")]
+pub fn admin_course_create(course: Json<Course>, session: UserSession) -> Result<String, Status> {
     if !session.user.admin_courses {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
@@ -68,8 +69,8 @@ pub fn course_create(course: Json<Course>, session: UserSession) -> Result<Strin
     }
 }
 
-#[rocket::post("/course_edit", format = "application/json", data = "<course>")]
-pub fn course_edit(course: Json<Course>, session: UserSession) -> Status {
+#[rocket::post("/admin_course_edit", format = "application/json", data = "<course>")]
+pub fn admin_course_edit(course: Json<Course>, session: UserSession) -> Status {
     if !session.user.admin_courses {return Status::Unauthorized;};
 
     let mut conn : PooledConn = get_pool_conn();
@@ -98,8 +99,8 @@ pub fn course_edit(course: Json<Course>, session: UserSession) -> Status {
     }
 }
 
-#[rocket::head("/course_delete?<course_id>")]
-pub fn course_delete(course_id: u32, session: UserSession) -> Status {
+#[rocket::head("/admin_course_delete?<course_id>")]
+pub fn admin_course_delete(course_id: u32, session: UserSession) -> Status {
     if !session.user.admin_courses {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();
@@ -113,33 +114,20 @@ pub fn course_delete(course_id: u32, session: UserSession) -> Status {
     }
 }
 
-// TODO check SQL call if permissions are correct, also this does not require admin to call??? 
-#[rocket::get("/course_moderator_list?<course_id>")]
-pub fn course_moderator_list(course_id: u32, session: UserSession) -> Result<Json<Vec<Member>>, Status> {
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT u.user_id, u.user_key, u.firstname, u.lastname
-                          FROM users u
-                          JOIN course_moderators m ON m.user_id = u.user_id
-                          WHERE m.course_id = :course_id").unwrap();
+#[rocket::get("/admin_course_moderator_list?<course_id>")]
+pub fn admin_course_moderator_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Member>>, ApiError> {
+    if !session.user.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
-    let params = params! { "course_id" => course_id};
-    let map = |(user_id, user_key, firstname, lastname)| {
-        Member{id: user_id, key: user_key, firstname, lastname}
+    let moderators = match crate::db_course::get_course_moderator_list(&course_id) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(moderators) => moderators,
     };
 
-    let members = conn.exec_map(&stmt, &params, &map).unwrap();
-
-    // Bail if you are neither admin nor course moderator
-    // This means that participants will not be able to see the teachers
-    if !session.user.admin_courses && !members.iter().any(|member| member.id == session.user.id){
-        return Err(Status::Unauthorized);
-    };
-
-    return Ok(Json(members));
+    return Ok(Json(moderators));
 }
 
-#[rocket::head("/course_mod?<course_id>&<user_id>")]
-pub fn course_mod(course_id: u32, user_id: u32, session: UserSession) -> Status {
+#[rocket::head("/admin_course_moderator_add?<course_id>&<user_id>")]
+pub fn admin_course_moderator_add(course_id: u32, user_id: u32, session: UserSession) -> Status {
     if !session.user.admin_courses {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();
@@ -156,8 +144,8 @@ pub fn course_mod(course_id: u32, user_id: u32, session: UserSession) -> Status 
     }
 }
 
-#[rocket::head("/course_unmod?<course_id>&<user_id>")]
-pub fn course_unmod(course_id: u32, user_id: u32, session: UserSession) -> Status {
+#[rocket::head("/admin_course_moderator_remove?<course_id>&<user_id>")]
+pub fn admin_course_moderator_remove(course_id: u32, user_id: u32, session: UserSession) -> Status {
     if !session.user.admin_courses {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();

@@ -4,9 +4,10 @@ use rocket::http::Status;
 use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
+use crate::api::ApiError;
 use crate::db::get_pool_conn;
 use crate::session::UserSession;
-use crate::common::{Course, Slot, Location, Branch, Access};
+use crate::common::{Course, Slot, Location, Branch, Access, Member};
 
 /*
  * ROUTES
@@ -169,4 +170,18 @@ pub fn course_slot_delete(session: UserSession, slot_id: u32) -> Status {
         Err(..) => Status::Conflict,
         Ok(..) => Status::Ok,
     }
+}
+
+#[rocket::get("/course_moderator_list?<course_id>")]
+pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Member>>, ApiError> {
+    let moderators = match crate::db_course::get_course_moderator_list(&course_id) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(moderators) => moderators,
+    };
+
+    if !moderators.iter().any(|member| member.id == session.user.id){
+        return Err(ApiError::COURSE_NO_MODERATOR);
+    };
+
+    return Ok(Json(moderators));
 }

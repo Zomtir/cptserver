@@ -54,13 +54,17 @@ impl ApiError {
         SLOT_OVERLAP_TIME => 409, "Time window overlaps with an existing slot.",
         SLOT_STATUS_INCOMPAT => 400, "Slot status is incompatible.",
 
+        COURSE_NO_MODERATOR => 400, "You do not moderate the course.",
+        
         SESSION_TOKEN_MISSING => 400, "Header token missing.",
         SESSION_TOKEN_INVALID => 400, "Header token not valid.",
         SESSION_TOKEN_EXPIRED => 403, "Header token expired.",
 
         RIGHT_CONFLICT => 403, "You tried to access or edit some resource that you were not supposed to.",
-        RIGHT_NO_RESERVATIONS => 403, "You do not have rights to edit reservations.",
+        RIGHT_NO_COURSES => 403, "You do not have rights to edit courses.",
+        RIGHT_NO_INVENTORY => 403, "You do not have rights to edit the inventory.",
         RIGHT_NO_RANKINGS => 403, "You do not have rights to edit rankings.",
+        RIGHT_NO_RESERVATIONS => 403, "You do not have rights to edit reservations.",
 
         INVALID_RANGE => 400, "The implied range is out of scope.",
 
