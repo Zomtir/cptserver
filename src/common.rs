@@ -168,15 +168,22 @@ pub fn random_bytes(size: usize) -> Vec<u8> {
     rand::thread_rng().sample_iter(rand::distributions::Standard).take(size).collect()
 }
 
-pub fn round_slot_window(slot: &mut Slot) -> Option<()> {
+pub fn validate_slot_dates(slot: &mut Slot) -> Option<()> {
     slot.begin = match crate::clock::duration_round(slot.begin, crate::config::CONFIG_SLOT_WINDOW_SNAP()) {
         Err(..) => return None,
         Ok(dt) => dt,
     };
+
     slot.end = match crate::clock::duration_round(slot.end, crate::config::CONFIG_SLOT_WINDOW_SNAP()) {
         Err(..) => return None,
         Ok(dt) => dt,
     };
+
+    let earliest_end = slot.begin + crate::config::CONFIG_SLOT_WINDOW_MINIMUM();
+
+    if earliest_end < slot.end {
+        slot.end = earliest_end;
+    }
 
     return Some(())
 }

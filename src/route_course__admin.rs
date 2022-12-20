@@ -9,8 +9,8 @@ use crate::db::get_pool_conn;
 use crate::session::{UserSession};
 use crate::common::{Course, Branch, Access, Member, random_string};
 
-#[rocket::get("/admin_course_list?<user_id>")]
-pub fn admin_course_list(user_id: u32, session: UserSession) -> Result<Json<Vec<Course>>, Status> {
+#[rocket::get("/admin/course_list?<mod_id>")]
+pub fn course_list(mod_id: u32, session: UserSession) -> Result<Json<Vec<Course>>, Status> {
     if !session.user.admin_courses {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
@@ -21,11 +21,14 @@ pub fn admin_course_list(user_id: u32, session: UserSession) -> Result<Json<Vec<
                         JOIN branches b ON c.branch_id = b.branch_id
                         JOIN access a ON c.access_id = a.access_id
                         LEFT JOIN course_moderators m ON c.course_id = m.course_id
-                        WHERE ((:user_id = '0') OR (m.user_id = :user_id))
+                        WHERE ((:user_id = '0') OR (m.user_id = :mod_id))
                         GROUP BY c.course_id").unwrap();
     // TODO the WHERE and GROUP BY clause can be removed, if the user filter is deemed to be useless
         
-    let params = params! {"user_id" => user_id};
+    let params = params! {
+        "mod_id" => mod_id,
+    };
+
     let map = |(course_id, course_key, course_title, active,
             branch_id, branch_key, branch_title, threshold,
             access_id, access_key, access_title): (u32, String, String, bool, u16, String, String, u8, u8, String, String)|
@@ -40,8 +43,8 @@ pub fn admin_course_list(user_id: u32, session: UserSession) -> Result<Json<Vec<
     }
 }
 
-#[rocket::post("/admin_course_create", format = "application/json", data = "<course>")]
-pub fn admin_course_create(course: Json<Course>, session: UserSession) -> Result<String, Status> {
+#[rocket::post("/admin/course_create", format = "application/json", data = "<course>")]
+pub fn course_create(course: Json<Course>, session: UserSession) -> Result<String, Status> {
     if !session.user.admin_courses {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
@@ -69,8 +72,8 @@ pub fn admin_course_create(course: Json<Course>, session: UserSession) -> Result
     }
 }
 
-#[rocket::post("/admin_course_edit", format = "application/json", data = "<course>")]
-pub fn admin_course_edit(course: Json<Course>, session: UserSession) -> Status {
+#[rocket::post("/admin/course_edit", format = "application/json", data = "<course>")]
+pub fn course_edit(course: Json<Course>, session: UserSession) -> Status {
     if !session.user.admin_courses {return Status::Unauthorized;};
 
     let mut conn : PooledConn = get_pool_conn();
@@ -99,8 +102,8 @@ pub fn admin_course_edit(course: Json<Course>, session: UserSession) -> Status {
     }
 }
 
-#[rocket::head("/admin_course_delete?<course_id>")]
-pub fn admin_course_delete(course_id: u32, session: UserSession) -> Status {
+#[rocket::head("/admin/course_delete?<course_id>")]
+pub fn course_delete(course_id: u32, session: UserSession) -> Status {
     if !session.user.admin_courses {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();
@@ -114,8 +117,8 @@ pub fn admin_course_delete(course_id: u32, session: UserSession) -> Status {
     }
 }
 
-#[rocket::get("/admin_course_moderator_list?<course_id>")]
-pub fn admin_course_moderator_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Member>>, ApiError> {
+#[rocket::get("/admin/course_moderator_list?<course_id>")]
+pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Member>>, ApiError> {
     if !session.user.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
     let moderators = match crate::db_course::get_course_moderator_list(&course_id) {
@@ -126,8 +129,8 @@ pub fn admin_course_moderator_list(session: UserSession, course_id: u32) -> Resu
     return Ok(Json(moderators));
 }
 
-#[rocket::head("/admin_course_moderator_add?<course_id>&<user_id>")]
-pub fn admin_course_moderator_add(course_id: u32, user_id: u32, session: UserSession) -> Status {
+#[rocket::head("/admin/course_moderator_add?<course_id>&<user_id>")]
+pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u32) -> Status {
     if !session.user.admin_courses {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();
@@ -144,8 +147,8 @@ pub fn admin_course_moderator_add(course_id: u32, user_id: u32, session: UserSes
     }
 }
 
-#[rocket::head("/admin_course_moderator_remove?<course_id>&<user_id>")]
-pub fn admin_course_moderator_remove(course_id: u32, user_id: u32, session: UserSession) -> Status {
+#[rocket::head("/admin/course_moderator_remove?<course_id>&<user_id>")]
+pub fn course_moderator_remove(session: UserSession, course_id: u32, user_id: u32) -> Status {
     if !session.user.admin_courses {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();

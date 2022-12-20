@@ -41,7 +41,7 @@ pub fn event_list(session: UserSession, status: String) -> Result<Json<Vec<Slot>
 
 #[rocket::post("/event_create", format = "application/json", data = "<slot>")]
 pub fn event_create(session: UserSession, mut slot: Json<Slot>) -> Result<String, ApiError> {
-    crate::common::round_slot_window(&mut slot);
+    crate::common::validate_slot_dates(&mut slot);
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO slots (slot_key, pwd, title, location_id, begin, end, status)
@@ -89,7 +89,7 @@ pub fn event_edit(session: UserSession, mut slot: Json<Slot>) -> Result<Status, 
         Some(true) => (),
     }
 
-    crate::common::round_slot_window(&mut slot);
+    crate::common::validate_slot_dates(&mut slot);
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE slots SET

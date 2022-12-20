@@ -8,5 +8,5 @@
 
 pub static CONFIG_RESERVATION_AUTO_ACCEPT : bool = false;
 
-pub fn CONFIG_SLOT_WINDOW_MINIMUM() -> chrono::Duration {chrono::Duration::minutes(5)}
+pub fn CONFIG_SLOT_WINDOW_MINIMUM() -> chrono::Duration {chrono::Duration::minutes(15)}
 pub fn CONFIG_SLOT_WINDOW_SNAP() -> chrono::Duration {chrono::Duration::minutes(15)}
