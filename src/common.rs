@@ -59,7 +59,7 @@ pub struct Right {
     pub admin_courses: bool,
     pub admin_inventory: bool,
     pub admin_rankings: bool,
-    pub admin_reservations: bool,
+    pub admin_event: bool,
     pub admin_teams: bool,
     pub admin_users: bool,
 }
@@ -71,7 +71,7 @@ pub struct Team {
     pub description: String,
     pub admin_courses: bool,
     pub admin_rankings: bool,
-    pub admin_reservations: bool,
+    pub admin_event: bool,
     pub admin_teams: bool,
     pub admin_users: bool,
 }

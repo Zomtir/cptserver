@@ -15,9 +15,9 @@ pub fn team_list(session: UserSession) -> Result<Json<Vec<Team>>, Status> {
     if !session.right.admin_teams {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT team_id, name, description, admin_courses, admin_rankings, admin_reservations, admin_teams, admin_users FROM teams").unwrap();
-    let map = |(team_id, name, description, admin_courses, admin_rankings, admin_reservations, admin_teams, admin_users)| {
-        Team {id: team_id, name, description, admin_courses, admin_rankings, admin_reservations, admin_teams, admin_users}
+    let stmt = conn.prep("SELECT team_id, name, description, admin_courses, admin_rankings, admin_event, admin_teams, admin_users FROM teams").unwrap();
+    let map = |(team_id, name, description, admin_courses, admin_rankings, admin_event, admin_teams, admin_users)| {
+        Team {id: team_id, name, description, admin_courses, admin_rankings, admin_event, admin_teams, admin_users}
     };
 
     match conn.exec_map(&stmt,params::Params::Empty,&map) {
@@ -31,14 +31,14 @@ pub fn team_create(session: UserSession, team: Json<Team>) -> Result<String, Sta
     if !session.right.admin_teams {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("INSERT INTO teams (name, description, admin_courses, admin_rankings, admin_reservations, admin_teams, admin_users)
-                          VALUES (:name, :description, :admin_courses, :admin_rankings, :admin_reservations, :admin_teams, :admin_users)").unwrap();
+    let stmt = conn.prep("INSERT INTO teams (name, description, admin_courses, admin_rankings, admin_event, admin_teams, admin_users)
+                          VALUES (:name, :description, :admin_courses, :admin_rankings, :admin_event, :admin_teams, :admin_users)").unwrap();
     let params = params! {
         "name" => &team.name,
         "description" => &team.description,
         "admin_courses" => &team.admin_courses,
         "admin_rankings" => &team.admin_rankings,
-        "admin_reservations" => &team.admin_reservations,
+        "admin_event" => &team.admin_event,
         "admin_teams" => &team.admin_teams,
         "admin_users" => &team.admin_users,
     };
@@ -66,7 +66,7 @@ pub fn team_edit(session: UserSession, team: Json<Team>) -> Status {
         description = :description,
         admin_courses = :admin_courses,
         admin_rankings = :admin_rankings,
-        admin_reservations = :admin_reservations,
+        admin_event = :admin_event,
         admin_teams = :admin_teams,
         admin_users = :admin_users
         WHERE team_id = :team_id").unwrap();
@@ -76,7 +76,7 @@ pub fn team_edit(session: UserSession, team: Json<Team>) -> Status {
         "description" => &team.description,
         "admin_courses" => &team.admin_courses,
         "admin_rankings" => &team.admin_rankings,
-        "admin_reservations" => &team.admin_reservations,
+        "admin_event" => &team.admin_event,
         "admin_teams" => &team.admin_teams,
         "admin_users" => &team.admin_users,
     };

@@ -202,7 +202,7 @@ CREATE TABLE `teams` (
   `description` varchar(50) NOT NULL,
   `admin_courses` tinyint(1) NOT NULL DEFAULT 0,
   `admin_rankings` tinyint(1) NOT NULL DEFAULT 0,
-  `admin_reservations` tinyint(1) NOT NULL DEFAULT 0,
+  `admin_event` tinyint(1) NOT NULL DEFAULT 0,
   `admin_teams` tinyint(1) NOT NULL DEFAULT 0,
   `admin_users` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
