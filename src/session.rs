@@ -7,7 +7,7 @@ use std::sync::Mutex;
 use std::collections::HashMap;
 
 use crate::api::ApiError;
-use crate::common::User;
+use crate::common::{User, Right};
 
 lazy_static::lazy_static! {
     pub static ref USERSESSIONS: Mutex<HashMap<String,UserSession>> = Mutex::new(HashMap::new());
@@ -23,6 +23,7 @@ pub struct UserSession {
     pub token: String,
     pub expiry: chrono::DateTime<chrono::Utc>,
     pub user: User,
+    pub right: Right,
 }
 
 #[rocket::async_trait]

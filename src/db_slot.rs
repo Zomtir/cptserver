@@ -3,7 +3,7 @@ use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
 use crate::api::ApiError;
-use crate::common::{Location, Slot, Member};
+use crate::common::{Location, Slot, User};
 
 /*
  * METHODS
@@ -35,7 +35,7 @@ pub fn get_slot_info(slot_id : & u32) -> Option<Slot> {
     return Some(slot);
 }
 
-pub fn get_slot_owners(slot_id : & u32) -> Option<Vec<Member>> {
+pub fn get_slot_owners(slot_id : & u32) -> Option<Vec<User>> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT u.user_id, u.user_key, u.firstname, u.lastname
                           FROM slot_owners
@@ -46,11 +46,7 @@ pub fn get_slot_owners(slot_id : & u32) -> Option<Vec<Member>> {
     let map =
         | (user_id, user_key, firstname, lastname)
         : (u32, String, String, String)
-        | Member {
-            id: user_id,
-            key: user_key,
-            firstname: firstname,
-            lastname: lastname,};
+        | User::from_info(user_id, user_key, firstname, lastname);
 
     match conn.exec_map(&stmt, &params, &map) {
         Err(..) => return None,

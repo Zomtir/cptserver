@@ -7,8 +7,7 @@ use mysql::prelude::{Queryable};
 use crate::api::ApiError;
 use crate::db::get_pool_conn;
 use crate::session::UserSession;
-use crate::common::{User, Ranking, Member, Branch};
-use crate::common::{random_bytes};
+use crate::common::{User, Ranking, Branch, Right};
 
 /*
  * ROUTES
@@ -16,23 +15,24 @@ use crate::common::{random_bytes};
 
 #[rocket::get("/user_info")]
 pub fn user_info(session: UserSession) -> Json<User> {
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT user_id, user_key, firstname, lastname, enabled FROM users
-                          WHERE user_id = :user_id").unwrap();
+    Json(User::from_info(
+        session.user.id,
+        session.user.key,
+        session.user.firstname,
+        session.user.lastname,
+    ))
+}
 
-    let params = params! { "user_id" => session.user.id };
-    let map = |(id, key, firstname, lastname, enabled)| {
-        User { id, key, pwd: None, firstname, lastname, enabled,
-            admin_courses: session.user.admin_courses,
-            admin_rankings: session.user.admin_rankings,
-            admin_reservations: session.user.admin_reservations,
-            admin_teams: session.user.admin_teams,
-            admin_users: session.user.admin_users,
-        }
-    };
-
-    let mut users = conn.exec_map(&stmt, &params, &map).unwrap();
-    return Json(users.remove(0));
+#[rocket::get("/user_right")]
+pub fn user_right(session: UserSession) -> Json<Right> {
+    Json(Right{
+        admin_courses: session.right.admin_courses,
+        admin_inventory: session.right.admin_inventory,
+        admin_rankings: session.right.admin_rankings,
+        admin_reservations: session.right.admin_reservations,
+        admin_teams: session.right.admin_teams,
+        admin_users: session.right.admin_users,
+    })
 }
 
 #[rocket::post("/user_password", format = "text/plain", data = "<password>")]
@@ -42,7 +42,7 @@ pub fn user_password(session: UserSession, password: String) -> Result<Status, A
         None => return Err(ApiError::USER_BAD_PASSWORD),
     };
     
-    let pepper : Vec<u8> = random_bytes(16);
+    let pepper : Vec<u8> = crate::common::random_bytes(16);
     let shapassword : Vec<u8> = crate::common::hash_sha256(&bpassword, &pepper);
 
     let mut conn : PooledConn = get_pool_conn();
@@ -77,10 +77,10 @@ pub fn user_info_rankings(session: UserSession) -> Json<Vec<Ranking>> {
         u8, _,
         u32, String, String, String)|
       Ranking {id: ranking_id,
-        user: Member::from_user(&session.user),
+        user: session.user.clone(),
         branch: Branch{id: branch_id, key: branch_key, title: branch_title},
         rank, date,
-        judge: Member{id: judge_id, key: judge_key, firstname: judge_firstname, lastname: judge_lastname}
+        judge: User::from_info(judge_id, judge_key, judge_firstname, judge_lastname),
       };
 
     let rankings = conn.exec_map(
@@ -93,18 +93,18 @@ pub fn user_info_rankings(session: UserSession) -> Json<Vec<Ranking>> {
 }
 
 // TODO only active members
-#[rocket::get("/user_member_list")]
-pub fn user_member_list(_session: UserSession) -> Json<Vec<Member>> {
+#[rocket::get("/member/user_list")]
+pub fn user_list(_session: UserSession) -> Json<Vec<User>> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT user_id, user_key, firstname, lastname FROM users").unwrap();
 
-    let members = conn.exec_map(
+    let users = conn.exec_map(
         &stmt,
         params::Params::Empty,
         |(user_id, user_key, firstname, lastname)| {
-            Member{id: user_id, key: user_key, firstname, lastname}
+            User::from_info(user_id, user_key, firstname, lastname)
         },
     ).unwrap();
 
-    return Json(members);
+    return Json(users);
 }

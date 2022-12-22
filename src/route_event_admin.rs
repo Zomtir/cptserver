@@ -21,7 +21,7 @@ pub fn reservation_list(
     status: Option<String>,
     user_id: Option<u32>,
 ) -> Result<Json<Vec<Slot>>, ApiError> {
-    if !session.user.admin_reservations {
+    if !session.right.admin_reservations {
         return Err(ApiError::RIGHT_NO_RESERVATIONS);
     };
 
@@ -87,7 +87,7 @@ pub fn reservation_list(
 
 #[rocket::head("/reservation_accept?<slot_id>")]
 pub fn reservation_accept(session: UserSession, slot_id: u32) -> Result<Status, ApiError> {
-    if !session.user.admin_reservations {
+    if !session.right.admin_reservations {
         return Err(ApiError::RIGHT_NO_RESERVATIONS);
     };
 
@@ -117,7 +117,7 @@ pub fn reservation_accept(session: UserSession, slot_id: u32) -> Result<Status, 
 
 #[rocket::head("/reservation_deny?<slot_id>")]
 pub fn reservation_deny(session: UserSession, slot_id: u32) -> Status {
-    if !session.user.admin_reservations {
+    if !session.right.admin_reservations {
         return Status::Forbidden;
     };
 
@@ -129,7 +129,7 @@ pub fn reservation_deny(session: UserSession, slot_id: u32) -> Status {
 
 #[rocket::head("/reservation_cancel?<slot_id>")]
 pub fn reservation_cancel(session: UserSession, slot_id: u32) -> Status {
-    if !session.user.admin_reservations {
+    if !session.right.admin_reservations {
         return Status::Forbidden;
     };
 

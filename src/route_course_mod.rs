@@ -7,7 +7,7 @@ use rocket::serde::json::Json;
 use crate::api::ApiError;
 use crate::db::get_pool_conn;
 use crate::session::{UserSession};
-use crate::common::{Course, Branch, Access, Member, Slot, Location};
+use crate::common::{Course, Branch, Access, Slot, User, Location};
 
 #[rocket::get("/mod/course_list")]
 pub fn course_list(session: UserSession) -> Json<Vec<Course>> {
@@ -36,7 +36,7 @@ pub fn course_list(session: UserSession) -> Json<Vec<Course>> {
 }
 
 #[rocket::get("/mod/course_moderator_list?<course_id>")]
-pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Member>>, ApiError> {
+pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Json<Vec<User>>, ApiError> {
     let moderators = match crate::db_course::get_course_moderator_list(&course_id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(moderators) => moderators,
@@ -49,8 +49,8 @@ pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Jso
     return Ok(Json(moderators));
 }
 
-#[rocket::get("/mod/course_slot_list?<course_id>")]
-pub fn course_slot_list(session: UserSession, course_id: u32) -> Json<Vec<Slot>> {
+#[rocket::get("/mod/course_class_list?<course_id>")]
+pub fn course_class_list(session: UserSession, course_id: u32) -> Json<Vec<Slot>> {
     // TODO check if session user is moderator
 
     let mut conn : PooledConn = get_pool_conn();
@@ -76,8 +76,8 @@ pub fn course_slot_list(session: UserSession, course_id: u32) -> Json<Vec<Slot>>
     return Json(slots);
 }
 
-#[rocket::post("/mod/course_slot_create?<course_id>", format = "application/json", data = "<slot>")]
-pub fn course_slot_create(session: UserSession, course_id: u32, mut slot: Json<Slot>) -> Result<String,ApiError> {
+#[rocket::post("/mod/course_class_create?<course_id>", format = "application/json", data = "<slot>")]
+pub fn course_class_create(session: UserSession, course_id: u32, mut slot: Json<Slot>) -> Result<String,ApiError> {
     match crate::db_course::is_course_moderator(&course_id, &session.user.id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::RIGHT_CONFLICT),
@@ -119,8 +119,8 @@ pub fn course_slot_create(session: UserSession, course_id: u32, mut slot: Json<S
     }
 }
 
-#[rocket::post("/mod/course_slot_edit?<course_id>", format = "application/json", data = "<slot>")]
-pub fn course_slot_edit(session: UserSession, course_id: u32, mut slot: Json<Slot>) -> Result<(),ApiError> {
+#[rocket::post("/mod/course_class_edit?<course_id>", format = "application/json", data = "<slot>")]
+pub fn course_class_edit(session: UserSession, course_id: u32, mut slot: Json<Slot>) -> Result<(),ApiError> {
     match crate::db_course::is_course_moderator(&course_id, &session.user.id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::RIGHT_CONFLICT),
@@ -176,8 +176,8 @@ pub fn course_slot_edit(session: UserSession, course_id: u32, mut slot: Json<Slo
     }
 }
 
-#[rocket::head("/mod/course_slot_delete?<slot_id>")]
-pub fn course_slot_delete(session: UserSession, slot_id: u32) -> Status {
+#[rocket::head("/mod/course_class_delete?<slot_id>")]
+pub fn course_class_delete(session: UserSession, slot_id: u32) -> Status {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE s FROM slots s
                           JOIN course_moderators m ON s.course_id = m.course_id

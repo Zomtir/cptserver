@@ -7,8 +7,7 @@ use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
 use crate::session::UserSession;
-use crate::common::{Slot, Location, Member};
-use crate::common::{random_string};
+use crate::common::{Slot, User, Location};
 
 /*
  * ROUTES
@@ -48,8 +47,8 @@ pub fn event_create(session: UserSession, mut slot: Json<Slot>) -> Result<String
                           VALUES (:slot_key, :pwd, :title, :location_id, :begin, :end, :status)").unwrap();
 
     let params = params! {
-        "slot_key" => random_string(8),
-        "pwd" => random_string(8),
+        "slot_key" => crate::common::random_string(8),
+        "pwd" => crate::common::random_string(8),
         "title" => &slot.title,
         "location_id" => &slot.location.id,
         "begin" => &slot.begin,
@@ -246,7 +245,7 @@ pub fn event_delete(session: UserSession, slot_id: u32) -> Result<Status,ApiErro
 
 
 #[rocket::get("/event_owner_list?<slot_id>")]
-pub fn event_owner_list(session: UserSession, slot_id: u32) -> Result<Json<Vec<Member>>,ApiError> {
+pub fn event_owner_list(session: UserSession, slot_id: u32) -> Result<Json<Vec<User>>,ApiError> {
     match crate::db_slot::is_slot_owner(&slot_id, &session.user.id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::SLOT_NO_OWNER),
@@ -255,7 +254,7 @@ pub fn event_owner_list(session: UserSession, slot_id: u32) -> Result<Json<Vec<M
 
     match crate::db_slot::get_slot_owners(&slot_id) {
         None => return Err(ApiError::DB_CONFLICT),
-        Some(members) => Ok(Json(members)),
+        Some(users) => Ok(Json(users)),
     }
 }
 

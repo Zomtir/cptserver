@@ -12,7 +12,7 @@ use crate::common::{Course, Slot, Location, Branch, Access};
  * ROUTES
  */
 
- #[rocket::get("/user/course_list")]
+ #[rocket::get("/member/course_list")]
 pub fn course_list(session: UserSession) -> Json<Vec<Course>> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("
@@ -47,8 +47,8 @@ pub fn course_list(session: UserSession) -> Json<Vec<Course>> {
     return Json(courses);
 }
 
-#[rocket::get("/user/course_slot_list?<course_id>")]
-pub fn course_slot_list(session: UserSession, course_id: u32) -> Json<Vec<Slot>> {
+#[rocket::get("/member/course_class_list?<course_id>")]
+pub fn course_class_list(session: UserSession, course_id: u32) -> Json<Vec<Slot>> {
     // TODO check if course is public
 
     let mut conn : PooledConn = get_pool_conn();

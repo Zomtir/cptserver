@@ -16,19 +16,23 @@ mod common;
 mod session;
 pub mod clock;
 mod route_login;
-mod route_admin_users;
 
-mod route_admin_rankings;
-mod route_admin_reservations;
-mod route_admin_teams;
-mod route_course__admin;
-mod route_course__mod;
-mod route_course__user;
-mod route_user;
-
-mod route_user_event;
-mod route_slot;
 mod route_anon;
+
+mod route_course_member;
+mod route_course_mod;
+mod route_course_admin;
+
+mod route_user_member;
+mod route_user_admin;
+
+mod route_event_member;
+mod route_event_admin;
+
+mod route_ranking_admin;
+mod route_team_admin;
+
+mod route_slot;
 
 #[rocket::get("/")]
 fn index() -> &'static str {
@@ -61,42 +65,58 @@ fn rocket() -> _ {
         //.register(catchers![catchers::user_not_found])
         .mount("/", rocket::routes![index,
             route_anon::status, route_anon::location_list, route_anon::branch_list, route_anon::access_list,
-            route_login::user_login, route_login::slot_login, route_login::slot_autologin,
-            route_admin_users::user_list, route_admin_users::user_create, route_admin_users::user_edit, route_admin_users::user_delete,
-            route_admin_rankings::ranking_list, route_admin_rankings::ranking_create, route_admin_rankings::ranking_edit, route_admin_rankings::ranking_delete,
-            route_admin_reservations::reservation_list, route_admin_reservations::reservation_accept, route_admin_reservations::reservation_deny, route_admin_reservations::reservation_cancel,
-            route_admin_teams::team_list, route_admin_teams::team_create, route_admin_teams::team_edit, route_admin_teams::team_delete,
-            route_admin_teams::team_enrol, route_admin_teams::team_dismiss,
-            route_user::user_info,
-            route_user::user_password,
-            route_user::user_info_rankings,
-            route_user::user_member_list,
-            route_course__admin::course_list,
-            route_course__admin::course_create,
-            route_course__admin::course_edit,
-            route_course__admin::course_delete,
-            route_course__admin::course_moderator_list,
-            route_course__admin::course_moderator_add,
-            route_course__admin::course_moderator_remove,
-            route_course__user::course_list,
-            route_course__user::course_slot_list,
-            route_course__mod::course_list,
-            route_course__mod::course_moderator_list,
-            route_course__mod::course_slot_list,
-            route_course__mod::course_slot_create,
-            route_course__mod::course_slot_edit,
-            route_course__mod::course_slot_delete,
-            route_user_event::event_list,
-            route_user_event::event_create,
-            route_user_event::event_edit,
-            route_user_event::event_delete,
-            route_user_event::event_submit,
-            route_user_event::event_withdraw,
-            route_user_event::event_cancel,
-            route_user_event::event_recycle,
-            route_user_event::event_owner_list,
-            route_user_event::event_owner_add,
-            route_user_event::event_owner_remove,
+            route_login::user_login,
+            route_login::slot_login,
+            route_login::slot_autologin, // TODO rename to location_login
+            route_user_admin::user_list,
+            route_user_admin::user_create,
+            route_user_admin::user_edit,
+            route_user_admin::user_delete,
+            route_user_member::user_info,
+            route_user_member::user_right,
+            route_user_member::user_password,
+            route_user_member::user_info_rankings,
+            route_user_member::user_list,
+            route_course_admin::course_list,
+            route_course_admin::course_create,
+            route_course_admin::course_edit,
+            route_course_admin::course_delete,
+            route_course_admin::course_moderator_list,
+            route_course_admin::course_moderator_add,
+            route_course_admin::course_moderator_remove,
+            route_course_member::course_list,
+            route_course_member::course_class_list,
+            route_course_mod::course_list,
+            route_course_mod::course_moderator_list,
+            route_course_mod::course_class_list,
+            route_course_mod::course_class_create,
+            route_course_mod::course_class_edit,
+            route_course_mod::course_class_delete,
+            route_event_admin::reservation_list,
+            route_event_admin::reservation_accept,
+            route_event_admin::reservation_deny,
+            route_event_admin::reservation_cancel,
+            route_event_member::event_list,
+            route_event_member::event_create,
+            route_event_member::event_edit,
+            route_event_member::event_delete,
+            route_event_member::event_submit,
+            route_event_member::event_withdraw,
+            route_event_member::event_cancel,
+            route_event_member::event_recycle,
+            route_event_member::event_owner_list,
+            route_event_member::event_owner_add,
+            route_event_member::event_owner_remove,
+            route_team_admin::team_list,
+            route_team_admin::team_create,
+            route_team_admin::team_edit,
+            route_team_admin::team_delete,
+            route_team_admin::team_enrol,
+            route_team_admin::team_dismiss,
+            route_ranking_admin::ranking_list,
+            route_ranking_admin::ranking_create,
+            route_ranking_admin::ranking_edit,
+            route_ranking_admin::ranking_delete,
             route_slot::slot_info,
             route_slot::slot_candidates, route_slot::slot_participants, route_slot::slot_enrol, route_slot::slot_dismiss,
         ])

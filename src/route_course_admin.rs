@@ -7,11 +7,11 @@ use rocket::serde::json::Json;
 use crate::api::ApiError;
 use crate::db::get_pool_conn;
 use crate::session::{UserSession};
-use crate::common::{Course, Branch, Access, Member, random_string};
+use crate::common::{Course, Branch, Access, User, random_string};
 
 #[rocket::get("/admin/course_list?<mod_id>")]
 pub fn course_list(mod_id: u32, session: UserSession) -> Result<Json<Vec<Course>>, Status> {
-    if !session.user.admin_courses {return Err(Status::Unauthorized)};
+    if !session.right.admin_courses {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT c.course_id, c.course_key, c.title, c.active,
@@ -45,7 +45,7 @@ pub fn course_list(mod_id: u32, session: UserSession) -> Result<Json<Vec<Course>
 
 #[rocket::post("/admin/course_create", format = "application/json", data = "<course>")]
 pub fn course_create(course: Json<Course>, session: UserSession) -> Result<String, Status> {
-    if !session.user.admin_courses {return Err(Status::Unauthorized)};
+    if !session.right.admin_courses {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO courses (course_key, title, active, access_id, branch_id, threshold)
@@ -74,7 +74,7 @@ pub fn course_create(course: Json<Course>, session: UserSession) -> Result<Strin
 
 #[rocket::post("/admin/course_edit", format = "application/json", data = "<course>")]
 pub fn course_edit(course: Json<Course>, session: UserSession) -> Status {
-    if !session.user.admin_courses {return Status::Unauthorized;};
+    if !session.right.admin_courses {return Status::Unauthorized;};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE courses SET
@@ -104,7 +104,7 @@ pub fn course_edit(course: Json<Course>, session: UserSession) -> Status {
 
 #[rocket::head("/admin/course_delete?<course_id>")]
 pub fn course_delete(course_id: u32, session: UserSession) -> Status {
-    if !session.user.admin_courses {return Status::Unauthorized};
+    if !session.right.admin_courses {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE c FROM courses c
@@ -118,8 +118,8 @@ pub fn course_delete(course_id: u32, session: UserSession) -> Status {
 }
 
 #[rocket::get("/admin/course_moderator_list?<course_id>")]
-pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Member>>, ApiError> {
-    if !session.user.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
+pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Json<Vec<User>>, ApiError> {
+    if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
     let moderators = match crate::db_course::get_course_moderator_list(&course_id) {
         None => return Err(ApiError::DB_CONFLICT),
@@ -131,7 +131,7 @@ pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Jso
 
 #[rocket::head("/admin/course_moderator_add?<course_id>&<user_id>")]
 pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u32) -> Status {
-    if !session.user.admin_courses {return Status::Unauthorized};
+    if !session.right.admin_courses {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO course_moderators (course_id, user_id)
@@ -149,7 +149,7 @@ pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u32) 
 
 #[rocket::head("/admin/course_moderator_remove?<course_id>&<user_id>")]
 pub fn course_moderator_remove(session: UserSession, course_id: u32, user_id: u32) -> Status {
-    if !session.user.admin_courses {return Status::Unauthorized};
+    if !session.right.admin_courses {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE e FROM course_moderators e

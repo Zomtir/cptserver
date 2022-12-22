@@ -11,16 +11,11 @@ pub struct User {
     pub firstname: String,
     pub lastname: String,
     pub enabled: bool,
-    pub admin_courses: bool,
-    pub admin_rankings: bool,
-    pub admin_reservations: bool,
-    pub admin_teams: bool,
-    pub admin_users: bool,
     //pub admin_inventory: bool,
 }
 
 impl User {
-    pub fn info(id: u32, key: String, firstname: String, lastname: String) -> User {
+    pub fn from_info(id: u32, key: String, firstname: String, lastname: String) -> User {
         User {
             id: id,
             key: key,
@@ -28,11 +23,6 @@ impl User {
             firstname: firstname,
             lastname: lastname,
             enabled: false,
-            admin_courses: false,
-            admin_rankings: false,
-            admin_reservations: false,
-            admin_teams: false,
-            admin_users: false,
         }
     }
 }
@@ -50,7 +40,7 @@ pub struct Slot {
     pub end: chrono::NaiveDateTime,
     pub status: Option<String>,
     pub course_id: Option<u32>,
-    pub owners: Option<Vec<Member>>,
+    pub owners: Option<Vec<User>>,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -64,23 +54,14 @@ pub struct Course {
     pub active: bool,
 }
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Member {
-    pub id: u32,
-    pub key: String,
-    pub firstname: String,
-    pub lastname: String,
-}
-
-impl Member {
-    pub fn from_user(user: &User) -> Member {
-        Member {
-            id: user.id,
-            key: user.key.to_string(),
-            firstname: user.firstname.to_string(),
-            lastname: user.lastname.to_string(),
-        }
-    }
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
+pub struct Right {
+    pub admin_courses: bool,
+    pub admin_inventory: bool,
+    pub admin_rankings: bool,
+    pub admin_reservations: bool,
+    pub admin_teams: bool,
+    pub admin_users: bool,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -119,11 +100,11 @@ pub struct Access {
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Ranking {
     pub id: u32,
-    pub user: Member,
+    pub user: User,
     pub branch: Branch,
     pub rank: u8,
     pub date: chrono::NaiveDate,
-    pub judge: Member,
+    pub judge: User,
 }
 
 

@@ -2,21 +2,13 @@ use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
-use crate::common::{Member};
+use crate::common::{User};
 
 /*
  * METHODS
  */
 
-pub fn is_user_created(user_key: & str) -> Option<bool> {
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT COUNT(1) FROM users WHERE user_key = :user_key").ok()?;
-    let count : Option<i32> = conn.exec_first(&stmt, params! { "user_key" => user_key }).ok()?;
-
-    return Some(count.unwrap() == 1);
-}
-
-pub fn get_course_moderator_list(course_id: &u32) -> Option<Vec<Member>> {
+pub fn get_course_moderator_list(course_id: &u32) -> Option<Vec<User>> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT u.user_id, u.user_key, u.firstname, u.lastname
                           FROM users u
@@ -25,7 +17,7 @@ pub fn get_course_moderator_list(course_id: &u32) -> Option<Vec<Member>> {
 
     let params = params! { "course_id" => course_id};
     let map = |(user_id, user_key, firstname, lastname)| {
-        Member{id: user_id, key: user_key, firstname, lastname}
+        User::from_info(user_id, user_key, firstname, lastname)
     };
 
     match conn.exec_map(&stmt, &params, &map) {

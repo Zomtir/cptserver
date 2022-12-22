@@ -8,7 +8,7 @@ use mysql::prelude::{Queryable};
 use crate::db::get_pool_conn;
 use crate::api::ApiError;
 use crate::session::{USERSESSIONS, SLOTSESSIONS, UserSession, SlotSession};
-use crate::common::{User, random_string, hash_sha256};
+use crate::common::{User, Right};
 
 /* 
  * STRUCTS
@@ -29,6 +29,7 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT u.user_id, u.pwd, u.pepper, u.enabled, u.firstname, u.lastname,
                           COALESCE(MAX(admin_courses),0) AS admin_courses,
+                          COALESCE(MAX(admin_inventory),0) AS admin_inventory,
                           COALESCE(MAX(admin_rankings),0) AS admin_rankings,
                           COALESCE(MAX(admin_reservations),0) AS admin_reservations,
                           COALESCE(MAX(admin_teams),0) AS admin_teams,
@@ -58,14 +59,14 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
     };
 
     let user_pepper : Vec<u8> = row.take("pepper").unwrap();
-    let user_shapwd : Vec<u8> = hash_sha256(&bpassword, &user_pepper);
+    let user_shapwd : Vec<u8> = crate::common::hash_sha256(&bpassword, &user_pepper);
 
     let user_pwd : Vec<u8> = row.take("pwd").unwrap();
     if user_pwd != user_shapwd {
         return Err(ApiError::USER_BAD_PASSWORD);
     };
 
-    let user_token : String = random_string(30);
+    let user_token : String = crate::common::random_string(30);
     let user_expiry = chrono::Utc::now() + chrono::Duration::hours(3);
 
     let session : UserSession = UserSession {
@@ -78,7 +79,10 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
             enabled: user_enabled,
             firstname: row.take("firstname").unwrap(),
             lastname: row.take("lastname").unwrap(),
+        },
+        right: Right{
             admin_courses: row.take("admin_courses").unwrap(),
+            admin_inventory: row.take("admin_inventory").unwrap(),
             admin_rankings: row.take("admin_rankings").unwrap(),
             admin_reservations: row.take("admin_reservations").unwrap(),
             admin_teams: row.take("admin_teams").unwrap(),
@@ -107,7 +111,7 @@ pub fn slot_login(credit: Json<Credential>) -> Result<String,ApiError> {
         return Err(ApiError::SLOT_BAD_PASSWORD);
     };
 
-    let slot_token : String = random_string(30);
+    let slot_token : String = crate::common::random_string(30);
     let slot_expiry = chrono::Utc::now() + chrono::Duration::hours(3);
 
     let slot_id : u32 = row.take("slot_id").unwrap();

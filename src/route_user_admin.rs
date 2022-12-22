@@ -10,14 +10,14 @@ use crate::common::{User, random_string, random_bytes, verify_password, hash_sha
 
 /* ROUTES */
 
-#[rocket::get("/user_list")]
+#[rocket::get("/admin/user_list")]
 pub fn user_list(session: UserSession) -> Result<Json<Vec<User>>, Status> {
-    if !session.user.admin_users {return Err(Status::Unauthorized)};
+    if !session.right.admin_users {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT user_id, user_key, firstname, lastname FROM users").unwrap();
     let map = |(user_id, user_key, firstname, lastname)| {
-        User::info( user_id, user_key, firstname, lastname )
+        User::from_info( user_id, user_key, firstname, lastname )
     };
 
     match conn.exec_map(&stmt,params::Params::Empty,&map) {
@@ -26,9 +26,9 @@ pub fn user_list(session: UserSession) -> Result<Json<Vec<User>>, Status> {
     }
 }
 
-#[rocket::post("/user_create", format = "application/json", data = "<user>")]
+#[rocket::post("/admin/user_create", format = "application/json", data = "<user>")]
 pub fn user_create(user: Json<User>, session: UserSession) -> Result<String, Status>{
-    if !session.user.admin_users {return Err(Status::Unauthorized)};
+    if !session.right.admin_users {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO users (user_key, pwd, firstname, lastname, enabled)
@@ -54,9 +54,9 @@ pub fn user_create(user: Json<User>, session: UserSession) -> Result<String, Sta
     };
 }
 
-#[rocket::post("/user_edit", format = "application/json", data = "<user>")]
+#[rocket::post("/admin/user_edit", format = "application/json", data = "<user>")]
 pub fn user_edit(user: Json<User>, session: UserSession) -> Status {
-    if !session.user.admin_users {return Status::Unauthorized};
+    if !session.right.admin_users {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE users SET
@@ -102,9 +102,9 @@ pub fn user_edit(user: Json<User>, session: UserSession) -> Status {
     }
 }
 
-#[rocket::head("/user_delete?<user_id>")]
+#[rocket::head("/admin/user_delete?<user_id>")]
 pub fn user_delete(user_id: u32, session: UserSession) -> Status {
-    if !session.user.admin_users {return Status::Unauthorized};
+    if !session.right.admin_users {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE u FROM users u WHERE u.user_id = :user_id").unwrap();

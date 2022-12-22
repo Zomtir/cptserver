@@ -6,7 +6,7 @@ use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
 use crate::session::{SlotSession};
-use crate::common::{Slot, Member};
+use crate::common::{Slot, User};
 
 /*
  * ROUTES
@@ -21,13 +21,13 @@ pub fn slot_info(session: SlotSession) -> Result<Json<Slot>, Status> {
 }
 
 #[rocket::get("/slot_candidates")]
-pub fn slot_candidates(_session: SlotSession) -> Result<Json<Vec<Member>>,Status> {
+pub fn slot_candidates(_session: SlotSession) -> Result<Json<Vec<User>>,Status> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT user_id, user_key, firstname, lastname FROM users
                           WHERE enabled = TRUE").unwrap();
 
     let map = |(user_id, user_key, firstname, lastname)|
-        Member{id: user_id, key: user_key, firstname, lastname};
+        User::from_info(user_id, user_key, firstname, lastname);
 
     // TODO level check threshold if existent
 
@@ -38,14 +38,14 @@ pub fn slot_candidates(_session: SlotSession) -> Result<Json<Vec<Member>>,Status
 }
 
 #[rocket::get("/slot_participants")]
-pub fn slot_participants(session: SlotSession) -> Result<Json<Vec<Member>>, Status> {
+pub fn slot_participants(session: SlotSession) -> Result<Json<Vec<User>>, Status> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT u.user_id, u.user_key, u.firstname, u.lastname
                           FROM slot_enrollments e JOIN users u ON (e.user_id = u.user_id)
                           WHERE slot_id = :slot_id").unwrap();
     let params = params! { "slot_id" => session.slot_id };
     let map = |(user_id, user_key, firstname, lastname)| {
-        Member{id: user_id, key: user_key, firstname, lastname}
+        User::from_info(user_id, user_key, firstname, lastname)
     };
 
     match conn.exec_map(&stmt,&params,&map) {

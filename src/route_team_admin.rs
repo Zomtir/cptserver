@@ -10,9 +10,9 @@ use crate::common::{Team};
 
 /* ROUTES */
 
-#[rocket::get("/team_list")]
+#[rocket::get("/admin/team_list")]
 pub fn team_list(session: UserSession) -> Result<Json<Vec<Team>>, Status> {
-    if !session.user.admin_teams {return Err(Status::Unauthorized)};
+    if !session.right.admin_teams {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT team_id, name, description, admin_courses, admin_rankings, admin_reservations, admin_teams, admin_users FROM teams").unwrap();
@@ -26,9 +26,9 @@ pub fn team_list(session: UserSession) -> Result<Json<Vec<Team>>, Status> {
     }
 }
 
-#[rocket::post("/team_create", format = "application/json", data = "<team>")]
+#[rocket::post("/admin/team_create", format = "application/json", data = "<team>")]
 pub fn team_create(session: UserSession, team: Json<Team>) -> Result<String, Status>{
-    if !session.user.admin_teams {return Err(Status::Unauthorized)};
+    if !session.right.admin_teams {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO teams (name, description, admin_courses, admin_rankings, admin_reservations, admin_teams, admin_users)
@@ -56,9 +56,9 @@ pub fn team_create(session: UserSession, team: Json<Team>) -> Result<String, Sta
     };
 }
 
-#[rocket::post("/team_edit", format = "application/json", data = "<team>")]
+#[rocket::post("/admin/team_edit", format = "application/json", data = "<team>")]
 pub fn team_edit(session: UserSession, team: Json<Team>) -> Status {
-    if !session.user.admin_teams {return Status::Unauthorized};
+    if !session.right.admin_teams {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE teams SET
@@ -87,9 +87,9 @@ pub fn team_edit(session: UserSession, team: Json<Team>) -> Status {
     }
 }
 
-#[rocket::head("/team_delete?<team_id>")]
+#[rocket::head("/admin/team_delete?<team_id>")]
 pub fn team_delete(session: UserSession, team_id: u32) -> Status {
-    if !session.user.admin_teams {return Status::Unauthorized};
+    if !session.right.admin_teams {return Status::Unauthorized};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE t FROM teams t WHERE t.team_id = :team_id").unwrap();
@@ -101,9 +101,9 @@ pub fn team_delete(session: UserSession, team_id: u32) -> Status {
     }
 }
 
-#[rocket::head("/team_enrol?<team_id>&<user_id>")]
+#[rocket::head("/admin/team_enrol?<team_id>&<user_id>")]
 pub fn team_enrol(session: UserSession, team_id: u32, user_id: u32) -> Status {
-    if !session.user.admin_teams {return Status::Unauthorized};
+    if !session.right.admin_teams {return Status::Unauthorized};
 
     // TODO: remove/add permissions of currently logged-in users
     let mut conn : PooledConn = get_pool_conn();
@@ -120,9 +120,9 @@ pub fn team_enrol(session: UserSession, team_id: u32, user_id: u32) -> Status {
     }
 }
 
-#[rocket::head("/team_dismiss?<team_id>&<user_id>")]
+#[rocket::head("/admin/team_dismiss?<team_id>&<user_id>")]
 pub fn team_dismiss(session: UserSession, team_id: u32, user_id: u32) -> Status {
-    if !session.user.admin_teams {return Status::Unauthorized};
+    if !session.right.admin_teams {return Status::Unauthorized};
 
     // TODO: remove/add permissions of currently logged-in users
     let mut conn : PooledConn = get_pool_conn();
