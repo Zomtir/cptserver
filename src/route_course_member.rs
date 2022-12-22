@@ -13,11 +13,11 @@ use crate::common::{Course, Slot, Location, Branch, Access};
  */
 
  #[rocket::get("/member/course_list")]
-pub fn course_list(session: UserSession) -> Json<Vec<Course>> {
+pub fn course_list(session: UserSession) -> Result<Json<Vec<Course>>, ApiError> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("
         SELECT c.course_id, c.course_key, c.title, c.active,
-            b.branch_id, b.branch_key, b.title, c.threshold, COALESCE(skill.rank,0) as saneskill,
+            b.branch_id, b.branch_key, b.title, c.threshold,
             a.access_id, a.access_key, a.title
         FROM courses c
         JOIN branches b ON c.branch_id = b.branch_id
@@ -31,7 +31,7 @@ pub fn course_list(session: UserSession) -> Json<Vec<Course>> {
             GROUP BY r.branch_id
         ) AS skill ON c.branch_id = skill.branch_id
         WHERE c.active = TRUE
-        AND c.threshold <= saneskill").unwrap();
+        AND c.threshold <= COALESCE(skill.rank,0)").unwrap();
     
     let params = params! { "user_id" => session.user.id};
 
@@ -43,12 +43,14 @@ pub fn course_list(session: UserSession) -> Json<Vec<Course>> {
             branch: Branch{id: branch_id, key: branch_key, title: branch_title}, threshold,
             access: Access{id: access_id, key: access_key, title: access_title}};
     
-    let courses = conn.exec_map(&stmt,&params,&map).unwrap();
-    return Json(courses);
+    match conn.exec_map(&stmt,&params,&map) {
+        Err(..) => Err(ApiError::DB_CONFLICT),
+        Ok(courses) => Ok(Json(courses)),
+    }
 }
 
 #[rocket::get("/member/course_class_list?<course_id>")]
-pub fn course_class_list(session: UserSession, course_id: u32) -> Json<Vec<Slot>> {
+pub fn course_class_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Slot>>, ApiError> {
     // TODO check if course is public
 
     let mut conn : PooledConn = get_pool_conn();
@@ -70,6 +72,8 @@ pub fn course_class_list(session: UserSession, course_id: u32) -> Json<Vec<Slot>
             location: Location {id: location_id, key: location_key, title: location_title},
             course_id: Some(course_id), owners: None};
     
-    let slots = conn.exec_map(&stmt,&params,&map).unwrap();
-    return Json(slots);
+    match conn.exec_map(&stmt,&params,&map) {
+        Err(..) => Err(ApiError::DB_CONFLICT),
+        Ok(slots) => Ok(Json(slots)),
+    }
 }

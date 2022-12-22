@@ -6,7 +6,7 @@ use rocket::serde::json::Json;
 
 use crate::db::get_pool_conn;
 use crate::session::{UserSession};
-use crate::common::{Team};
+use crate::common::{Team, Right};
 
 /* ROUTES */
 
@@ -15,9 +15,21 @@ pub fn team_list(session: UserSession) -> Result<Json<Vec<Team>>, Status> {
     if !session.right.admin_teams {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT team_id, name, description, admin_courses, admin_rankings, admin_event, admin_teams, admin_users FROM teams").unwrap();
-    let map = |(team_id, name, description, admin_courses, admin_rankings, admin_event, admin_teams, admin_users)| {
-        Team {id: team_id, name, description, admin_courses, admin_rankings, admin_event, admin_teams, admin_users}
+    let stmt = conn.prep("
+    SELECT team_id, name, description, admin_courses, admin_event, admin_inventory, admin_rankings, admin_teams, admin_users
+    FROM teams").unwrap();
+    let map =
+    |(team_id, name, description, admin_courses, admin_event, admin_inventory, admin_rankings, admin_teams, admin_users)| {
+        Team {id: team_id, name, description, 
+            right: Right {
+                admin_courses,
+                admin_event,
+                admin_inventory,
+                admin_rankings,
+                admin_teams,
+                admin_users,
+            }
+        }
     };
 
     match conn.exec_map(&stmt,params::Params::Empty,&map) {
@@ -31,16 +43,17 @@ pub fn team_create(session: UserSession, team: Json<Team>) -> Result<String, Sta
     if !session.right.admin_teams {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("INSERT INTO teams (name, description, admin_courses, admin_rankings, admin_event, admin_teams, admin_users)
-                          VALUES (:name, :description, :admin_courses, :admin_rankings, :admin_event, :admin_teams, :admin_users)").unwrap();
+    let stmt = conn.prep("
+        INSERT INTO teams (name, description, admin_courses, admin_event, admin_inventory, admin_rankings, admin_teams, admin_users)
+        VALUES (:name, :description, :admin_courses, :admin_event, :admin_inventory, :admin_rankings, :admin_teams, :admin_users)").unwrap();
     let params = params! {
         "name" => &team.name,
         "description" => &team.description,
-        "admin_courses" => &team.admin_courses,
-        "admin_rankings" => &team.admin_rankings,
-        "admin_event" => &team.admin_event,
-        "admin_teams" => &team.admin_teams,
-        "admin_users" => &team.admin_users,
+        "admin_courses" => &team.right.admin_courses,
+        "admin_rankings" => &team.right.admin_rankings,
+        "admin_event" => &team.right.admin_event,
+        "admin_teams" => &team.right.admin_teams,
+        "admin_users" => &team.right.admin_users,
     };
 
     match conn.exec_drop(&stmt,&params) {
@@ -74,11 +87,11 @@ pub fn team_edit(session: UserSession, team: Json<Team>) -> Status {
         "team_id" => &team.id,
         "name" => &team.name,
         "description" => &team.description,
-        "admin_courses" => &team.admin_courses,
-        "admin_rankings" => &team.admin_rankings,
-        "admin_event" => &team.admin_event,
-        "admin_teams" => &team.admin_teams,
-        "admin_users" => &team.admin_users,
+        "admin_courses" => &team.right.admin_courses,
+        "admin_rankings" => &team.right.admin_rankings,
+        "admin_event" => &team.right.admin_event,
+        "admin_teams" => &team.right.admin_teams,
+        "admin_users" => &team.right.admin_users,
     };
 
     match conn.exec_drop(&stmt,&params) {

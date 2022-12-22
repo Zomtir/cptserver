@@ -29,9 +29,9 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT u.user_id, u.pwd, u.pepper, u.enabled, u.firstname, u.lastname,
                           COALESCE(MAX(admin_courses),0) AS admin_courses,
+                          COALESCE(MAX(admin_event),0) AS admin_event,
                           COALESCE(MAX(admin_inventory),0) AS admin_inventory,
                           COALESCE(MAX(admin_rankings),0) AS admin_rankings,
-                          COALESCE(MAX(admin_event),0) AS admin_event,
                           COALESCE(MAX(admin_teams),0) AS admin_teams,
                           COALESCE(MAX(admin_users),0) AS admin_users
                           FROM users u
@@ -82,9 +82,9 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
         },
         right: Right{
             admin_courses: row.take("admin_courses").unwrap(),
+            admin_event: row.take("admin_event").unwrap(),
             admin_inventory: row.take("admin_inventory").unwrap(),
             admin_rankings: row.take("admin_rankings").unwrap(),
-            admin_event: row.take("admin_event").unwrap(),
             admin_teams: row.take("admin_teams").unwrap(),
             admin_users: row.take("admin_users").unwrap(),
         },

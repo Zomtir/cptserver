@@ -69,11 +69,7 @@ pub struct Team {
     pub id: u32,
     pub name: String,
     pub description: String,
-    pub admin_courses: bool,
-    pub admin_rankings: bool,
-    pub admin_event: bool,
-    pub admin_teams: bool,
-    pub admin_users: bool,
+    pub right: Right,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]

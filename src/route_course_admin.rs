@@ -10,7 +10,7 @@ use crate::session::{UserSession};
 use crate::common::{Course, Branch, Access, User, random_string};
 
 #[rocket::get("/admin/course_list?<mod_id>")]
-pub fn course_list(mod_id: u32, session: UserSession) -> Result<Json<Vec<Course>>, Status> {
+pub fn course_list(mod_id: Option<u32>, session: UserSession) -> Result<Json<Vec<Course>>, Status> {
     if !session.right.admin_courses {return Err(Status::Unauthorized)};
 
     let mut conn : PooledConn = get_pool_conn();
@@ -21,9 +21,10 @@ pub fn course_list(mod_id: u32, session: UserSession) -> Result<Json<Vec<Course>
                         JOIN branches b ON c.branch_id = b.branch_id
                         JOIN access a ON c.access_id = a.access_id
                         LEFT JOIN course_moderators m ON c.course_id = m.course_id
-                        WHERE ((:user_id = '0') OR (m.user_id = :mod_id))
+                        WHERE ((:user_id = null) OR (m.user_id = :mod_id))
                         GROUP BY c.course_id").unwrap();
     // TODO the WHERE and GROUP BY clause can be removed, if the user filter is deemed to be useless
+    // TODO add filter whether or not the course is active
         
     let params = params! {
         "mod_id" => mod_id,
