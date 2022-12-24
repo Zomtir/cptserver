@@ -144,7 +144,7 @@ pub fn event_submit(session: UserSession, slot_id: u32) -> Result<Status,ApiErro
     };
 
     // The check is here intentional to be able to return early although it is also checked during is_slot_free
-    if !crate::db_slot::is_slot_valid(&slot) {
+    if !crate::common::is_slot_valid(&slot) {
         return Err(ApiError::SLOT_BAD_TIME);
     }
 

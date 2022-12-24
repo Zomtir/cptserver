@@ -72,13 +72,9 @@ pub fn is_slot_owner(slot_id : & u32, user_id : & u32) -> Option<bool> {
     };
 }
 
-pub fn is_slot_valid(slot: & Slot) -> bool {
-    return slot.begin + crate::config::CONFIG_SLOT_WINDOW_MINIMUM() < slot.end;
-}
-
 // Perhaps the database should be locked between checking for a free slot and modifying the slot later
 pub fn is_slot_free(slot: & Slot) -> Option<bool> {
-    if !is_slot_valid(slot) {return Some(false)};
+    if !crate::common::is_slot_valid(slot) {return Some(false)};
 
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT COUNT(1) FROM slots

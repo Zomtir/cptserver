@@ -145,6 +145,10 @@ pub fn random_bytes(size: usize) -> Vec<u8> {
     rand::thread_rng().sample_iter(rand::distributions::Standard).take(size).collect()
 }
 
+pub fn is_slot_valid(slot: & Slot) -> bool {
+    return slot.begin + crate::config::CONFIG_SLOT_WINDOW_MINIMUM() < slot.end;
+}
+
 pub fn validate_slot_dates(slot: &mut Slot) -> Option<()> {
     slot.begin = match crate::clock::duration_round(slot.begin, crate::config::CONFIG_SLOT_WINDOW_SNAP()) {
         Err(..) => return None,
