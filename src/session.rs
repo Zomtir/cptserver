@@ -58,7 +58,7 @@ impl<'r> FromRequest<'r> for UserSession {
 pub struct SlotSession {
     pub token: String,
     pub expiry: chrono::DateTime<chrono::Utc>,
-    pub slot_id: u32,
+    pub slot_id: i64,
     pub slot_key: String,
 }
 

@@ -114,7 +114,7 @@ pub fn slot_login(credit: Json<Credential>) -> Result<String,ApiError> {
     let slot_token : String = crate::common::random_string(30);
     let slot_expiry = chrono::Utc::now() + chrono::Duration::hours(3);
 
-    let slot_id : u32 = row.take("slot_id").unwrap();
+    let slot_id : i64 = row.take("slot_id").unwrap();
     
     let session : SlotSession = SlotSession {
         token: slot_token.to_string(),

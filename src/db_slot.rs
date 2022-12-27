@@ -2,14 +2,13 @@ use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
-use crate::api::ApiError;
 use crate::common::{Location, Slot, User};
 
 /*
  * METHODS
  */
 
-pub fn get_slot_info(slot_id : & u32) -> Option<Slot> {
+pub fn get_slot_info(slot_id : & i64) -> Option<Slot> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title, s.begin, s.end, s.status, s.course_id
                           FROM slots s
@@ -19,7 +18,7 @@ pub fn get_slot_info(slot_id : & u32) -> Option<Slot> {
     let params = params! { "slot_id" => slot_id };
     let map =
         | (slot_id, slot_key, slot_title, location_id, location_key, location_title, begin, end, status, course_id)
-        : (u32, _, _, u32, _, _, _, _, String, Option<u32>)
+        : (i64, _, _, u32, _, _, _, _, String, Option<u32>)
         | Slot {
             id: slot_id, key: slot_key, pwd: None, title: slot_title, begin, end, status: Some(status),
             location: Location {id: location_id, key: location_key, title: location_title},
@@ -35,7 +34,7 @@ pub fn get_slot_info(slot_id : & u32) -> Option<Slot> {
     return Some(slot);
 }
 
-pub fn get_slot_owners(slot_id : & u32) -> Option<Vec<User>> {
+pub fn get_slot_owners(slot_id : & i64) -> Option<Vec<User>> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT u.user_id, u.user_key, u.firstname, u.lastname
                           FROM slot_owners
@@ -54,7 +53,7 @@ pub fn get_slot_owners(slot_id : & u32) -> Option<Vec<User>> {
     }
 }
 
-pub fn is_slot_owner(slot_id : & u32, user_id : & u32) -> Option<bool> {
+pub fn is_slot_owner(slot_id : & i64, user_id : & u32) -> Option<bool> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT COUNT(1)
                           FROM slot_owners
@@ -65,7 +64,7 @@ pub fn is_slot_owner(slot_id : & u32, user_id : & u32) -> Option<bool> {
         "user_id" => user_id,
     };
 
-    match conn.exec_first::<u32,_,_>(&stmt, &params){
+    match conn.exec_first::<i64,_,_>(&stmt, &params){
         Err(..) => return None,
         Ok(None) => return Some(false),
         Ok(Some(count)) => return Some(count == 1),
@@ -88,14 +87,14 @@ pub fn is_slot_free(slot: & Slot) -> Option<bool> {
         "end" => &slot.end,
     };
 
-    match conn.exec_first::<u32,_,_>(&stmt, &params){
+    match conn.exec_first::<i64,_,_>(&stmt, &params){
         Err(..) => return None,
         Ok(None) => return None,
         Ok(Some(count)) => return Some(count == 0),
     };
 }
 
-pub fn set_slot_status(slot_id : u32, status_required : &str, status_update : &str) -> Option<()> {
+pub fn set_slot_status(slot_id : i64, status_required : &str, status_update : &str) -> Option<()> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE slots SET
         status = :status_update
@@ -107,12 +106,12 @@ pub fn set_slot_status(slot_id : u32, status_required : &str, status_update : &s
     };
 
     match conn.exec_drop(&stmt,&params){
-        Err(..) => return None,
-        Ok(..) => return Some(()),
-    };
+        Err(..) => None,
+        Ok(..) => Some(()),
+    }
 }
 
-pub fn add_slot_owner(slot_id : u32, user_id : u32) -> Result<(), ApiError> {
+pub fn add_slot_owner(slot_id : i64, user_id : u32) -> Option<()> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO slot_owners (slot_id, user_id)
                           VALUES (:slot_id, :user_id)").unwrap();
@@ -123,12 +122,12 @@ pub fn add_slot_owner(slot_id : u32, user_id : u32) -> Result<(), ApiError> {
     };
     
     match conn.exec_drop(&stmt,&params) {
-        Err(..) => return Err(ApiError::DB_CONFLICT),
-        Ok(..) => return Ok(()),
-    };
+        Err(..) => None,
+        Ok(..) => Some(()),
+    }
 }
 
-pub fn remove_slot_owner(slot_id : u32, user_id : u32) -> Result<(), ApiError> {    
+pub fn remove_slot_owner(slot_id : i64, user_id : u32) -> Option<()> {    
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("
         DELETE FROM slot_owners
@@ -140,7 +139,7 @@ pub fn remove_slot_owner(slot_id : u32, user_id : u32) -> Result<(), ApiError> {
     };
 
     match conn.exec_drop(&stmt,&params) {
-        Err(..) => return Err(ApiError::DB_CONFLICT),
-        Ok(..) => return Ok(()),
-    };
+        Err(..) => None,
+        Ok(..) => Some(()),
+    }
 }

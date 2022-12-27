@@ -33,7 +33,7 @@ pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Jso
 
 #[rocket::head("/mod/course_moderator_add?<course_id>&<user_id>")]
 pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u32) -> Result<(),ApiError> {
-    match (crate::config::CONFIG_COURSE_MODERATOR_PROMOTION) {
+    match crate::config::CONFIG_COURSE_MODERATOR_PROMOTION {
         false => return Err(ApiError::RIGHT_CONFLICT),
         true => (),
     }
@@ -52,7 +52,7 @@ pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u32) 
 
 #[rocket::head("/mod/course_moderator_remove?<course_id>&<user_id>")]
 pub fn course_moderator_remove(session: UserSession, course_id: u32, user_id: u32) -> Result<(),ApiError> {
-    match (crate::config::CONFIG_COURSE_MODERATOR_PROMOTION) {
+    match crate::config::CONFIG_COURSE_MODERATOR_PROMOTION {
         false => return Err(ApiError::RIGHT_CONFLICT),
         true => (),
     }

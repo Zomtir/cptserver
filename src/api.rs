@@ -64,7 +64,7 @@ impl ApiError {
         RIGHT_NO_COURSES => 403, "You do not have rights to edit courses.",
         RIGHT_NO_INVENTORY => 403, "You do not have rights to edit the inventory.",
         RIGHT_NO_RANKINGS => 403, "You do not have rights to edit rankings.",
-        RIGHT_NO_RESERVATIONS => 403, "You do not have rights to edit reservations.",
+        RIGHT_NO_EVENT => 403, "You do not have rights to edit events.",
 
         INVALID_RANGE => 400, "The implied range is out of scope.",
 

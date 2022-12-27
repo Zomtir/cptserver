@@ -184,11 +184,13 @@ pub fn get_course_class_list(course_id: u32) -> Option<Vec<Slot>> {
         "course_id" => course_id,
     };
 
-    let map = |(slot_id, slot_key, slot_title, location_id, location_key, location_title, begin, end, status): (u32, _, _, u32, _, _, _, _, String)|
+    let map = |(slot_id, slot_key, slot_title, location_id, location_key, location_title, begin, end, status)
+    : (i64, _, _, u32, _, _, _, _, String)|
         Slot {
             id: slot_id, key: slot_key, pwd: None, title: slot_title, begin, end, status: Some(status),
             location: Location {id: location_id, key: location_key, title: location_title},
-            course_id: Some(course_id), owners: None};
+            course_id: Some(course_id), owners: None,
+        };
     
     match conn.exec_map(&stmt,&params,&map) {
         Err(..) => None,

@@ -11,6 +11,7 @@ mod db;
 mod db_user;
 mod db_slot;
 mod db_course;
+mod db_event;
 mod api;
 mod common;
 mod session;
@@ -27,6 +28,7 @@ mod route_user_member;
 mod route_user_admin;
 
 mod route_event_member;
+mod route_event_owner;
 mod route_event_admin;
 
 mod route_ranking_admin;
@@ -88,25 +90,27 @@ fn rocket() -> _ {
             route_course_member::course_class_list,
             route_course_moderator::course_responsibility,
             route_course_moderator::course_moderator_list,
+            route_course_moderator::course_moderator_add,
+            route_course_moderator::course_moderator_remove,
             route_course_moderator::course_class_list,
             route_course_moderator::course_class_create,
             route_course_moderator::course_class_edit,
             route_course_moderator::course_class_delete,
-            route_event_admin::reservation_list,
-            route_event_admin::reservation_accept,
-            route_event_admin::reservation_deny,
-            route_event_admin::reservation_cancel,
+            route_event_admin::event_list,
+            route_event_admin::event_accept,
+            route_event_admin::event_deny,
+            route_event_admin::event_cancel,
             route_event_member::event_list,
             route_event_member::event_create,
-            route_event_member::event_edit,
-            route_event_member::event_delete,
-            route_event_member::event_submit,
-            route_event_member::event_withdraw,
-            route_event_member::event_cancel,
-            route_event_member::event_recycle,
-            route_event_member::event_owner_list,
-            route_event_member::event_owner_add,
-            route_event_member::event_owner_remove,
+            route_event_owner::event_edit,
+            route_event_owner::event_delete,
+            route_event_owner::event_submit,
+            route_event_owner::event_withdraw,
+            route_event_owner::event_cancel,
+            route_event_owner::event_recycle,
+            route_event_owner::event_owner_list,
+            route_event_owner::event_owner_add,
+            route_event_owner::event_owner_remove,
             route_team_admin::team_list,
             route_team_admin::team_create,
             route_team_admin::team_edit,

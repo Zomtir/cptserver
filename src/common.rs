@@ -29,7 +29,7 @@ impl User {
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Slot {
-    pub id: u32,
+    pub id: i64,
     pub key: String,
     pub pwd: Option<String>,
     pub title: String,
