@@ -20,7 +20,7 @@ mod route_login;
 mod route_anon;
 
 mod route_course_member;
-mod route_course_mod;
+mod route_course_moderator;
 mod route_course_admin;
 
 mod route_user_member;
@@ -84,14 +84,14 @@ fn rocket() -> _ {
             route_course_admin::course_moderator_list,
             route_course_admin::course_moderator_add,
             route_course_admin::course_moderator_remove,
-            route_course_member::course_list,
+            route_course_member::course_availiblity,
             route_course_member::course_class_list,
-            route_course_mod::course_list,
-            route_course_mod::course_moderator_list,
-            route_course_mod::course_class_list,
-            route_course_mod::course_class_create,
-            route_course_mod::course_class_edit,
-            route_course_mod::course_class_delete,
+            route_course_moderator::course_responsibility,
+            route_course_moderator::course_moderator_list,
+            route_course_moderator::course_class_list,
+            route_course_moderator::course_class_create,
+            route_course_moderator::course_class_edit,
+            route_course_moderator::course_class_delete,
             route_event_admin::reservation_list,
             route_event_admin::reservation_accept,
             route_event_admin::reservation_deny,

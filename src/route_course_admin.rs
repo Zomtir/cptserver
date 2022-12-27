@@ -6,40 +6,15 @@ use rocket::serde::json::Json;
 use crate::api::ApiError;
 use crate::db::get_pool_conn;
 use crate::session::{UserSession};
-use crate::common::{Course, Branch, Access, User, random_string};
+use crate::common::{Course, User};
 
 #[rocket::get("/admin/course_list?<mod_id>")]
 pub fn course_list(session: UserSession, mod_id: Option<u32>) -> Result<Json<Vec<Course>>, ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
-
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT c.course_id, c.course_key, c.title, c.active,
-                          b.branch_id, b.branch_key, b.title, c.threshold,
-                          a.access_id, a.access_key, a.title
-                        FROM courses c
-                        JOIN branches b ON c.branch_id = b.branch_id
-                        JOIN access a ON c.access_id = a.access_id
-                        LEFT JOIN course_moderators m ON c.course_id = m.course_id
-                        WHERE (:mod_id IS NULL OR m.user_id = :mod_id)
-                        GROUP BY c.course_id").unwrap();
-    // TODO the WHERE and GROUP BY clause can be removed, if the user filter is deemed to be useless
-    // TODO add filter whether or not the course is active
-        
-    let params = params! {
-        "mod_id" => mod_id,
-    };
-
-    let map = |(course_id, course_key, course_title, active,
-            branch_id, branch_key, branch_title, threshold,
-            access_id, access_key, access_title): (u32, String, String, bool, u16, String, String, u8, u8, String, String)|
-        Course {
-            id: course_id, key: course_key, title: course_title, active,
-            branch: Branch{id: branch_id, key: branch_key, title: branch_title}, threshold,
-            access: Access{id: access_id, key: access_key, title: access_title}};
     
-    match conn.exec_map(&stmt,&params,&map) {
-        Err(..) => Err(ApiError::DB_CONFLICT),
-        Ok(courses) => Ok(Json(courses)),
+    match crate::db_course::get_course_list(mod_id) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(courses) => Ok(Json(courses)),
     }
 }
 
@@ -51,7 +26,7 @@ pub fn course_create(course: Json<Course>, session: UserSession) -> Result<Strin
     let stmt = conn.prep("INSERT INTO courses (course_key, title, active, access_id, branch_id, threshold)
         VALUES (:course_key, :title, :active, :access_id, :branch_id, :threshold)").unwrap();
     let params = params! {
-        "course_key" => random_string(10),
+        "course_key" => crate::common::random_string(10),
         "title" => &course.title,
         "active" => &course.active,
         "access_id" => &course.access.id,
@@ -131,17 +106,9 @@ pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Jso
 pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u32) -> Result<(),ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("INSERT INTO course_moderators (course_id, user_id)
-                          SELECT :course_id, :user_id").unwrap();
-    let params = params! {
-        "course_id" => &course_id,
-        "user_id" => &user_id,
-    };
-
-    match conn.exec_drop(&stmt,&params) {
-        Err(..) => Err(ApiError::DB_CONFLICT),
-        Ok(..) => Ok(()),
+    match crate::db_course::add_course_moderator(course_id, user_id) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(..) => Ok(()),
     }
 }
 
@@ -149,16 +116,8 @@ pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u32) 
 pub fn course_moderator_remove(session: UserSession, course_id: u32, user_id: u32) -> Result<(),ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("DELETE e FROM course_moderators e
-                          WHERE course_id = :course_id AND user_id = :user_id").unwrap();
-    let params = params! {
-        "course_id" => &course_id,
-        "user_id" => &user_id,
-    };
-
-    match conn.exec_drop(&stmt,&params) {
-        Err(..) => Err(ApiError::DB_CONFLICT),
-        Ok(..) => Ok(()),
+    match crate::db_course::remove_course_moderator(course_id, user_id) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(..) => Ok(()),
     }
 }

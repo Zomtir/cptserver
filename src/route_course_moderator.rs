@@ -7,32 +7,14 @@ use rocket::serde::json::Json;
 use crate::api::ApiError;
 use crate::db::get_pool_conn;
 use crate::session::{UserSession};
-use crate::common::{Course, Branch, Access, Slot, User, Location};
+use crate::common::{Course, Slot, User};
 
-#[rocket::get("/mod/course_list")]
-pub fn course_list(session: UserSession) -> Json<Vec<Course>> {
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT c.course_id, c.course_key, c.title, c.active,
-                            b.branch_id, b.branch_key, b.title, c.threshold,
-                            a.access_id, a.access_key, a.title
-                          FROM courses c
-                          JOIN branches b ON c.branch_id = b.branch_id
-                          JOIN access a ON c.access_id = a.access_id
-                          JOIN course_moderators m ON c.course_id = m.course_id
-                          WHERE m.user_id = :user_id").unwrap();
-    
-    let params = params! { "user_id" => session.user.id};
-
-    let map = |(course_id, course_key, course_title, active,
-            branch_id, branch_key, branch_title, threshold,
-            access_id, access_key, access_title): (u32, String, String, bool, u16, String, String, u8, u8, String, String)|
-        Course {
-            id: course_id, key: course_key, title: course_title, active,
-            branch: Branch{id: branch_id, key: branch_key, title: branch_title}, threshold,
-            access: Access{id: access_id, key: access_key, title: access_title}};
-    
-    let courses = conn.exec_map(&stmt,&params,&map).unwrap();
-    return Json(courses);
+#[rocket::get("/mod/course_responsibility")]
+pub fn course_responsibility(session: UserSession) -> Result<Json<Vec<Course>>,ApiError> {
+    match crate::db_course::get_course_responsibility(session.user.id) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(courses) => Ok(Json(courses)),
+    }
 }
 
 #[rocket::get("/mod/course_moderator_list?<course_id>")]
@@ -49,31 +31,56 @@ pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Jso
     return Ok(Json(moderators));
 }
 
-#[rocket::get("/mod/course_class_list?<course_id>")]
-pub fn course_class_list(session: UserSession, course_id: u32) -> Json<Vec<Slot>> {
-    // TODO check if session user is moderator
+#[rocket::head("/mod/course_moderator_add?<course_id>&<user_id>")]
+pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u32) -> Result<(),ApiError> {
+    match (crate::config::CONFIG_COURSE_MODERATOR_PROMOTION) {
+        false => return Err(ApiError::RIGHT_CONFLICT),
+        true => (),
+    }
 
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title, s.begin, s.end, s.status
-                          FROM slots s
-                          JOIN locations l ON l.location_id = s.location_id
-                          JOIN course_moderators m ON s.course_id = m.course_id
-                          JOIN users u ON m.user_id = u.user_id
-                          WHERE s.course_id = :course_id AND m.user_id = :user_id").unwrap();
-
-    let params = params! {
-        "course_id" => course_id,
-        "user_id" => session.user.id,
+    match crate::db_course::is_course_moderator(&course_id, &session.user.id) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(false) => return Err(ApiError::RIGHT_CONFLICT),
+        Some(true) => (),
     };
 
-    let map = |(slot_id, slot_key, slot_title, location_id, location_key, location_title, begin, end, status): (u32, _, _, u32, _, _, _, _, String)|
-        Slot {
-            id: slot_id, key: slot_key, pwd: None, title: slot_title, begin, end, status: Some(status),
-            location: Location {id: location_id, key: location_key, title: location_title},
-            course_id: Some(course_id), owners: None};
-    
-    let slots = conn.exec_map(&stmt,&params,&map).unwrap();
-    return Json(slots);
+    match crate::db_course::add_course_moderator(course_id, user_id) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(..) => Ok(()),
+    }
+}
+
+#[rocket::head("/mod/course_moderator_remove?<course_id>&<user_id>")]
+pub fn course_moderator_remove(session: UserSession, course_id: u32, user_id: u32) -> Result<(),ApiError> {
+    match (crate::config::CONFIG_COURSE_MODERATOR_PROMOTION) {
+        false => return Err(ApiError::RIGHT_CONFLICT),
+        true => (),
+    }
+
+    match crate::db_course::is_course_moderator(&course_id, &session.user.id) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(false) => return Err(ApiError::RIGHT_CONFLICT),
+        Some(true) => (),
+    };
+
+    match crate::db_course::remove_course_moderator(course_id, user_id) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(..) => Ok(()),
+    }
+}
+
+#[rocket::get("/mod/course_class_list?<course_id>")]
+pub fn course_class_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Slot>>,ApiError> {
+    match crate::db_course::is_course_moderator(&course_id, &session.user.id) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(false) => return Err(ApiError::RIGHT_CONFLICT),
+        Some(true) => (),
+    };
+
+    match crate::db_course::get_course_class_list(course_id) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(slots) => Ok(Json(slots)),
+    }
 }
 
 #[rocket::post("/mod/course_class_create?<course_id>", format = "application/json", data = "<slot>")]
