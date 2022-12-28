@@ -65,6 +65,7 @@ impl ApiError {
         RIGHT_NO_INVENTORY => 403, "You do not have rights to edit the inventory.",
         RIGHT_NO_RANKINGS => 403, "You do not have rights to edit rankings.",
         RIGHT_NO_EVENT => 403, "You do not have rights to edit events.",
+        RIGHT_NO_USER => 403, "You do not have rights to edit users.",
 
         INVALID_RANGE => 400, "The implied range is out of scope.",
 
