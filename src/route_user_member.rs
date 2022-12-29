@@ -1,4 +1,3 @@
-use rocket::http::Status;
 use rocket::serde::json::Json;
 
 use mysql::{PooledConn, params};
@@ -13,7 +12,7 @@ use crate::common::{User, Ranking, Branch, Right};
  * ROUTES
  */
 
-#[rocket::get("/user_info")]
+#[rocket::get("/member/user_info")]
 pub fn user_info(session: UserSession) -> Json<User> {
     Json(User::from_info(
         session.user.id,
@@ -23,7 +22,7 @@ pub fn user_info(session: UserSession) -> Json<User> {
     ))
 }
 
-#[rocket::get("/user_right")]
+#[rocket::get("/member/user_right")]
 pub fn user_right(session: UserSession) -> Json<Right> {
     Json(Right{
         admin_courses: session.right.admin_courses,
@@ -35,31 +34,15 @@ pub fn user_right(session: UserSession) -> Json<Right> {
     })
 }
 
-#[rocket::post("/user_password", format = "text/plain", data = "<password>")]
-pub fn user_password(session: UserSession, password: String) -> Result<Status, ApiError> {
-    let bpassword : Vec<u8> = match crate::common::verify_password(&password){
-        Some(bpassword) => bpassword,
-        None => return Err(ApiError::USER_BAD_PASSWORD),
-    };
-    
-    let pepper : Vec<u8> = crate::common::random_bytes(16);
-    let shapassword : Vec<u8> = crate::common::hash_sha256(&bpassword, &pepper);
-
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("UPDATE users SET pwd = :pwd, pepper = :pepper WHERE user_id = :user_id").unwrap();
-    let params = params! {
-        "user_id" => &session.user.id,
-        "pwd" => &shapassword,
-        "pepper" => &pepper,
-    };
-
-    match conn.exec_drop(&stmt,&params) {
-        Err(..) => Err(ApiError::DB_CONFLICT),
-        Ok(..) => Ok(Status::Ok),
+#[rocket::post("/member/user_password", format = "text/plain", data = "<password>")]
+pub fn user_password(session: UserSession, password: String) -> Result<(), ApiError> {
+    match crate::db_user::edit_user_password(&session.user.id, password) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(..) => Ok(()),
     }
 }
 
-#[rocket::get("/user_info_rankings")]
+#[rocket::get("/member/user_info_rankings")]
 pub fn user_info_rankings(session: UserSession) -> Json<Vec<Ranking>> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT r.ranking_id, b.branch_id, b.branch_key, b.title, r.rank, r.date, j.user_id, j.user_key, j.firstname, j.lastname
@@ -94,17 +77,9 @@ pub fn user_info_rankings(session: UserSession) -> Json<Vec<Ranking>> {
 
 // TODO only active members
 #[rocket::get("/member/user_list")]
-pub fn user_list(_session: UserSession) -> Json<Vec<User>> {
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT user_id, user_key, firstname, lastname FROM users").unwrap();
-
-    let users = conn.exec_map(
-        &stmt,
-        params::Params::Empty,
-        |(user_id, user_key, firstname, lastname)| {
-            User::from_info(user_id, user_key, firstname, lastname)
-        },
-    ).unwrap();
-
-    return Json(users);
+pub fn user_list(_session: UserSession) -> Result<Json<Vec<User>>,ApiError> {
+    match crate::db_user::list_user(Some(true)) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(users) => Ok(Json(users)),
+    }
 }

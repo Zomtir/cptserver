@@ -6,11 +6,11 @@ use crate::common::{User};
 
 /* ROUTES */
 
-#[rocket::get("/admin/user_list")]
-pub fn user_list(session: UserSession) -> Result<Json<Vec<User>>, ApiError> {
+#[rocket::get("/admin/user_list?<enabled>")]
+pub fn user_list(session: UserSession, enabled: Option<bool>) -> Result<Json<Vec<User>>, ApiError> {
     if !session.right.admin_users {return Err(ApiError::RIGHT_NO_USER)};
 
-    match crate::db_user::list_user() {
+    match crate::db_user::list_user(enabled) {
         None => Err(ApiError::DB_CONFLICT),
         Some(users) => Ok(Json(users)),
     }
