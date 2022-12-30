@@ -8,10 +8,12 @@ extern crate mysql_common;
 
 mod config;
 mod db;
-mod db_user;
-mod db_slot;
 mod db_course;
-mod db_event;
+mod db_slot;
+mod db_team;
+mod db_term;
+mod db_user;
+
 mod api;
 mod common;
 mod session;
@@ -20,12 +22,14 @@ mod route_login;
 
 mod route_anon;
 
+mod route_user_member;
+mod route_user_admin;
+
 mod route_course_member;
 mod route_course_moderator;
 mod route_course_admin;
 
-mod route_user_member;
-mod route_user_admin;
+mod route_class_moderator;
 
 mod route_event_member;
 mod route_event_owner;
@@ -88,14 +92,14 @@ fn rocket() -> _ {
             route_course_admin::course_moderator_remove,
             route_course_member::course_availiblity,
             route_course_member::course_class_list,
-            route_course_moderator::course_responsibility,
+            route_course_moderator::course_responsiblity,
             route_course_moderator::course_moderator_list,
             route_course_moderator::course_moderator_add,
             route_course_moderator::course_moderator_remove,
-            route_course_moderator::course_class_list,
-            route_course_moderator::course_class_create,
-            route_course_moderator::course_class_edit,
-            route_course_moderator::course_class_delete,
+            route_class_moderator::class_list,
+            route_class_moderator::class_create,
+            route_class_moderator::class_edit,
+            route_class_moderator::class_delete,
             route_event_admin::event_list,
             route_event_admin::event_accept,
             route_event_admin::event_deny,

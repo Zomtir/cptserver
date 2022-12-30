@@ -11,4 +11,3 @@
 // pub term_begin: chrono::NaiveDate,
 // pub term_end: chrono::NaiveDate,
 
-

@@ -1,5 +1,5 @@
 TODO
 ====
 
-- Server side settings (auto accept slot reservations)
+- Dedicated settings file that does not require recompile
 - Server action log file

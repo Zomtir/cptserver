@@ -30,6 +30,7 @@ pub fn user_right(session: UserSession) -> Json<Right> {
         admin_rankings: session.right.admin_rankings,
         admin_event: session.right.admin_event,
         admin_teams: session.right.admin_teams,
+        admin_term: session.right.admin_term,
         admin_users: session.right.admin_users,
     })
 }

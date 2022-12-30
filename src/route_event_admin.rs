@@ -1,4 +1,3 @@
-use rocket::http::Status;
 use rocket::serde::json::Json;
 
 use crate::api::ApiError;
@@ -27,14 +26,14 @@ pub fn event_list(
         return Err(ApiError::INVALID_RANGE);
     }
 
-    match crate::db_event::get_event_list(frame_start, frame_stop, status, owner_id) {
+    match crate::db_slot::list_slots(Some(frame_start), Some(frame_stop), status, None, owner_id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(slots) => return Ok(Json(slots)),
     };
 }
 
 #[rocket::head("/admin/event_accept?<slot_id>")]
-pub fn event_accept(session: UserSession, slot_id: i64) -> Result<Status, ApiError> {
+pub fn event_accept(session: UserSession, slot_id: i64) -> Result<(), ApiError> {
     if !session.right.admin_event {
         return Err(ApiError::RIGHT_NO_EVENT);
     };
@@ -51,38 +50,38 @@ pub fn event_accept(session: UserSession, slot_id: i64) -> Result<Status, ApiErr
         return Err(ApiError::SLOT_BAD_TIME);
     }
 
-    let (status_update, response) = match crate::db_slot::is_slot_free(&slot) {
+    let status_update = match crate::db_slot::is_slot_free(&slot) {
         None => return Err(ApiError::DB_CONFLICT),
-        Some(false) => ("REJECTED", Err(ApiError::SLOT_OVERLAP_TIME)),
-        Some(true) => ("OCCURRING", Ok(Status::Ok)),
+        Some(false) => "REJECTED",
+        Some(true) => "OCCURRING",
     };
 
-    match crate::db_slot::set_slot_status(slot.id, "PENDING", status_update) {
+    match crate::db_slot::edit_slot_status(slot.id, "PENDING", status_update) {
         None => Err(ApiError::DB_CONFLICT),
-        Some(..) => response,
+        Some(..) => Ok(()),
     }
 }
 
 #[rocket::head("/admin/event_deny?<slot_id>")]
-pub fn event_deny(session: UserSession, slot_id: i64) -> Status {
+pub fn event_deny(session: UserSession, slot_id: i64) -> Result<(), ApiError> {
     if !session.right.admin_event {
-        return Status::Forbidden;
+        return Err(ApiError::RIGHT_NO_EVENT);
     };
 
-    match crate::db_slot::set_slot_status(slot_id, "PENDING", "REJECTED") {
-        None => Status::InternalServerError,
-        Some(..) => Status::Ok,
+    match crate::db_slot::edit_slot_status(slot_id, "PENDING", "REJECTED") {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(..) => Ok(()),
     }
 }
 
 #[rocket::head("/admin/event_cancel?<slot_id>")]
-pub fn event_cancel(session: UserSession, slot_id: i64) -> Status {
+pub fn event_cancel(session: UserSession, slot_id: i64) -> Result<(), ApiError> {
     if !session.right.admin_event {
-        return Status::Forbidden;
+        return Err(ApiError::RIGHT_NO_EVENT);
     };
 
-    match crate::db_slot::set_slot_status(slot_id, "OCCURRING", "REJECTED") {
-        None => Status::InternalServerError,
-        Some(..) => Status::Ok,
+    match crate::db_slot::edit_slot_status(slot_id, "OCCURRING", "REJECTED") {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(..) => Ok(()),
     }
 }

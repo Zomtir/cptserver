@@ -1,5 +1,6 @@
 use serde::{Serialize, Deserialize};
-use mysql::{Pool, PooledConn};
+use mysql::{Pool, PooledConn, params};
+use mysql::prelude::Queryable;
 
 static mut POOL : Option<Pool> = None;
 
@@ -54,5 +55,15 @@ pub fn get_pool_conn() -> PooledConn {
             Ok(conn) => conn,
         }
     }
+    }
+}
+
+pub fn get_last_id<T: mysql::prelude::FromValue>(mut conn: PooledConn) -> Option<T> {
+    let stmt = conn.prep("SELECT LAST_INSERT_ID()").unwrap();
+    let params = params::Params::Empty;
+
+    match conn.exec_first::<T, _, _>(&stmt, &params) {
+        Err(..) => None,
+        Ok(id) => id,
     }
 }

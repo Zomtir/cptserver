@@ -61,6 +61,7 @@ pub struct Right {
     pub admin_rankings: bool,
     pub admin_event: bool,
     pub admin_teams: bool,
+    pub admin_term: bool,
     pub admin_users: bool,
 }
 
@@ -101,6 +102,16 @@ pub struct Ranking {
     pub rank: u8,
     pub date: chrono::NaiveDate,
     pub judge: User,
+}
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Term {
+    pub id: i64,
+    pub user_id: u32,
+    #[serde(with = "crate::clock::datetime_format")]
+    pub begin: chrono::NaiveDateTime,
+    #[serde(with = "crate::clock::datetime_format")]
+    pub end: chrono::NaiveDateTime,
 }
 
 

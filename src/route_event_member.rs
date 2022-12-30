@@ -13,7 +13,7 @@ pub fn event_list(session: UserSession, status: Option<String>) -> Result<Json<V
     let begin = chrono::Utc::now().naive_utc() - chrono::Duration::days(30);
     let end = chrono::Utc::now().naive_utc() + chrono::Duration::days(90);
 
-    match crate::db_event::get_event_list(begin.date(), end.date(), status, Some(session.user.id)) {
+    match crate::db_slot::list_slots(Some(begin.date()), Some(end.date()), status, None, Some(session.user.id)) {
         None => Err(ApiError::DB_CONFLICT),
         Some(slots) => Ok(Json(slots)),
     }
@@ -23,7 +23,7 @@ pub fn event_list(session: UserSession, status: Option<String>) -> Result<Json<V
 pub fn event_create(session: UserSession, mut slot: Json<Slot>) -> Result<String, ApiError> {
     crate::common::validate_slot_dates(&mut slot);
 
-    let slot_id = match crate::db_event::create_event(&mut slot) {
+    let slot_id = match crate::db_slot::create_slot(&mut slot, &"DRAFT", &None) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(slot_id) => slot_id,
     };

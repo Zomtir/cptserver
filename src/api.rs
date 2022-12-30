@@ -62,11 +62,12 @@ impl ApiError {
 
         RIGHT_CONFLICT => 403, "You tried to access or edit some resource that you were not supposed to.",
         RIGHT_NO_COURSES => 403, "You do not have rights to edit courses.",
+        RIGHT_NO_EVENT => 403, "You do not have rights to edit events.",
         RIGHT_NO_INVENTORY => 403, "You do not have rights to edit the inventory.",
         RIGHT_NO_RANKINGS => 403, "You do not have rights to edit rankings.",
-        RIGHT_NO_EVENT => 403, "You do not have rights to edit events.",
-        RIGHT_NO_USER => 403, "You do not have rights to edit users.",
+        RIGHT_NO_TEAM => 403, "You do not have rights to edit teams.",
         RIGHT_NO_TERM => 403, "You do not have rights to edit terms.",
+        RIGHT_NO_USER => 403, "You do not have rights to edit users.",
 
         INVALID_RANGE => 400, "The implied range is out of scope.",
 

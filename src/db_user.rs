@@ -46,12 +46,7 @@ pub fn create_user(user : &User) -> Option<u32> {
         Ok(..) => (),
     };
 
-    let stmt_id = conn.prep("SELECT LAST_INSERT_ID()").unwrap();
-
-    match conn.exec_first::<u32,_,_>(&stmt_id,params::Params::Empty) {
-        Err(..) | Ok(None) => None,
-        Ok(Some(user_id)) => Some(user_id),
-    }
+    crate::db::get_last_id(conn)
 }
 
 pub fn is_user_created(user_key: & str) -> Option<bool> {

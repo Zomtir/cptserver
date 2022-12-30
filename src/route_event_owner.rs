@@ -8,11 +8,10 @@ use crate::common::{Slot, User};
  * ROUTES
  */
 
-// TODO, check times again... overall share more code with slot accept and slot_create
 // TODO, allow inviting member for draft
 // TODO, allow inviting groups for draft
-#[rocket::post("/owner/event_edit", format = "application/json", data = "<slot>")]
-pub fn event_edit(session: UserSession, mut slot: Json<Slot>) -> Result<(), ApiError> {
+#[rocket::post("/owner/event_edit?<slot_id>", format = "application/json", data = "<slot>")]
+pub fn event_edit(session: UserSession, slot_id: i64, mut slot: Json<Slot>) -> Result<(), ApiError> {
     match crate::db_slot::is_slot_owner(&slot.id, &session.user.id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::RIGHT_CONFLICT),
@@ -21,7 +20,29 @@ pub fn event_edit(session: UserSession, mut slot: Json<Slot>) -> Result<(), ApiE
 
     crate::common::validate_slot_dates(&mut slot);
 
-    match crate::db_event::edit_event(&slot) {
+    let db_slot = match crate::db_slot::get_slot_info(&slot_id) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(slot) => slot,
+    };
+    
+    match db_slot.status {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(status) => match status.as_str() {
+            "DRAFT" => (),
+            _ => return Err(ApiError::SLOT_STATUS_INCOMPAT),
+        },
+    }
+
+    match crate::db_slot::edit_slot(&slot_id, &slot) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(()) => (),
+    };
+
+    if slot.pwd.is_none() || slot.pwd.as_ref().unwrap().len() < 8 {
+        return Err(ApiError::SLOT_BAD_PASSWORD);
+    };
+
+    match crate::db_slot::edit_slot_password(&slot_id, &slot.pwd.as_ref().unwrap()) {
         None => Err(ApiError::DB_CONFLICT),
         Some(()) => Ok(()),
     }
@@ -58,7 +79,7 @@ pub fn event_submit(session: UserSession, slot_id: i64) -> Result<(),ApiError> {
         },
     };
     
-    match crate::db_slot::set_slot_status(slot.id, "DRAFT", status_update) {
+    match crate::db_slot::edit_slot_status(slot.id, "DRAFT", status_update) {
         None => Err(ApiError::DB_CONFLICT),
         Some(..) => Ok(()),
     }
@@ -72,7 +93,7 @@ pub fn event_withdraw(session: UserSession, slot_id: i64) -> Result<(),ApiError>
         Some(true) => (),
     }
 
-    match crate::db_slot::set_slot_status(slot_id, "PENDING", "DRAFT") {
+    match crate::db_slot::edit_slot_status(slot_id, "PENDING", "DRAFT") {
         None => Err(ApiError::DB_CONFLICT),
         Some(..) => Ok(()),
     }
@@ -86,7 +107,7 @@ pub fn event_cancel(session: UserSession, slot_id: i64) -> Result<(),ApiError> {
         Some(true) => (),
     }
 
-    match crate::db_slot::set_slot_status(slot_id, "OCCURRING", "CANCELED") {
+    match crate::db_slot::edit_slot_status(slot_id, "OCCURRING", "CANCELED") {
         None => Err(ApiError::DB_CONFLICT),
         Some(..) => Ok(()),
     }
@@ -100,7 +121,7 @@ pub fn event_recycle(session: UserSession, slot_id: i64) -> Result<(),ApiError> 
         Some(true) => (),
     }
 
-    match crate::db_slot::set_slot_status(slot_id, "REJECTED", "DRAFT") {
+    match crate::db_slot::edit_slot_status(slot_id, "REJECTED", "DRAFT") {
         None => Err(ApiError::DB_CONFLICT),
         Some(..) => Ok(()),
     }
@@ -127,7 +148,7 @@ pub fn event_delete(session: UserSession, slot_id: i64) -> Result<(),ApiError> {
         },
     }
 
-    match crate::db_event::delete_event(slot.id) {
+    match crate::db_slot::delete_slot(&slot.id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(()) => Ok(()),
     }

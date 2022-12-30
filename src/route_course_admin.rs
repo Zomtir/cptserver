@@ -12,43 +12,24 @@ use crate::common::{Course, User};
 pub fn course_list(session: UserSession, mod_id: Option<u32>) -> Result<Json<Vec<Course>>, ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
     
-    match crate::db_course::get_course_list(mod_id) {
+    match crate::db_course::list_courses(mod_id) {
         None => Err(ApiError::DB_CONFLICT),
         Some(courses) => Ok(Json(courses)),
     }
 }
 
 #[rocket::post("/admin/course_create", format = "application/json", data = "<course>")]
-pub fn course_create(course: Json<Course>, session: UserSession) -> Result<String, ApiError> {
+pub fn course_create(session: UserSession, course: Json<Course>) -> Result<String, ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("INSERT INTO courses (course_key, title, active, access_id, branch_id, threshold)
-        VALUES (:course_key, :title, :active, :access_id, :branch_id, :threshold)").unwrap();
-    let params = params! {
-        "course_key" => crate::common::random_string(10),
-        "title" => &course.title,
-        "active" => &course.active,
-        "access_id" => &course.access.id,
-        "branch_id" => &course.branch.id,
-        "threshold" => &course.threshold,
-    };
-
-    match conn.exec_drop(&stmt,&params) {
-        Err(..) => return Err(ApiError::DB_CONFLICT),
-        Ok(..) => (),
-    };
-
-    let stmt_id = conn.prep("SELECT LAST_INSERT_ID()").unwrap();
-
-    match conn.exec_first::<u32,_,_>(&stmt_id,params::Params::Empty) {
-        Err(..) | Ok(None) => Err(ApiError::DB_CONFLICT),
-        Ok(Some(course_id)) => Ok(course_id.to_string()),
+    match crate::db_course::create_course(&course) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(id) => Ok(id.to_string()),
     }
 }
 
 #[rocket::post("/admin/course_edit", format = "application/json", data = "<course>")]
-pub fn course_edit(course: Json<Course>, session: UserSession) -> Result<(),ApiError> {
+pub fn course_edit(session: UserSession, course: Json<Course>) -> Result<(),ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
     let mut conn : PooledConn = get_pool_conn();
@@ -78,7 +59,7 @@ pub fn course_edit(course: Json<Course>, session: UserSession) -> Result<(),ApiE
 }
 
 #[rocket::head("/admin/course_delete?<course_id>")]
-pub fn course_delete(course_id: u32, session: UserSession) -> Result<(),ApiError> {
+pub fn course_delete(session: UserSession, course_id: u32) -> Result<(),ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
     let mut conn : PooledConn = get_pool_conn();
@@ -96,7 +77,7 @@ pub fn course_delete(course_id: u32, session: UserSession) -> Result<(),ApiError
 pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Json<Vec<User>>, ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
-    match crate::db_course::get_course_moderator_list(&course_id) {
+    match crate::db_course::list_course_moderators(&course_id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(moderators) => Ok(Json(moderators)),
     }

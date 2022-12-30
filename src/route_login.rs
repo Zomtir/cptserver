@@ -86,6 +86,7 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
             admin_inventory: row.take("admin_inventory").unwrap(),
             admin_rankings: row.take("admin_rankings").unwrap(),
             admin_teams: row.take("admin_teams").unwrap(),
+            admin_term: row.take("admin_term").unwrap(),
             admin_users: row.take("admin_users").unwrap(),
         },
     };
