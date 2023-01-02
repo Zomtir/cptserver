@@ -100,7 +100,7 @@ pub fn ranking_edit(ranking: Json<Ranking>, session: UserSession) -> Result<Stat
             `rank` = :rank,
             date = :date,
             judge_id = :judge_id
-        WHERE rankin_id = :ranking_id").unwrap();
+        WHERE ranking_id = :ranking_id").unwrap();
 
     let params = params! {
         "ranking_id" => &ranking.id,
