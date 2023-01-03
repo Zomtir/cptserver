@@ -33,34 +33,10 @@ pub fn list_terms(user_id: Option<i64>) -> Option<Vec<Term>> {
     }
 }
 
-pub fn get_user_membership_days(user_id: u32, enabled: Option<bool>) -> Option<Vec<(i64,i64)>> {
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep(
-        "SELECT t.user_id, SUM(DATEDIFF(t.term_end, t.term_begin)) as active_days 
-        FROM terms t
-        JOIN users u ON u.user_id = t.user_id
-        WHERE (:enabled IS NULL OR :enabled = u.enabled)
-        GROUP BY t.user_id
-        ORDER BY active_days DESC;");
-
-    let params = params! {
-        "enabled" => &enabled,
-    };
-
-    let map = |(user_id, active_days) : (i64, i64)| {
-        (user_id, active_days)
-    };
-    
-    match conn.exec_map(&stmt.unwrap(), &params, &map) {
-        Err(..) => None,
-        Ok(leaderboard) => Some(leaderboard),
-    }
-}
-
 pub fn create_term(term: &Term) -> Option<u32> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO terms (user_id, begin, end)
-        VALUES (:user_id, :begin, :and)");
+        VALUES (:user_id, :begin, :end)");
     let params = params! {
         "user_id" => term.user.id,
         "begin" => &term.begin,
@@ -99,7 +75,7 @@ pub fn edit_term(term_id: i64, term: &Term) -> Option<()> {
 
 pub fn delete_term(term_id: i64) -> Option<()> {
     let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("DELETE r FROM rankings r WHERE r.ranking_id = :ranking_id");
+    let stmt = conn.prep("DELETE t FROM terms t WHERE t.term_id_id = :term_id");
 
     let params = params! {
         "term_id" => term_id
@@ -108,5 +84,85 @@ pub fn delete_term(term_id: i64) -> Option<()> {
     match conn.exec_drop(&stmt.unwrap(),&params) {
         Err(..) => None,
         Ok(..) => Some(()),
+    }
+}
+
+pub fn get_user_membership_days(user_id: u32, enabled: Option<bool>) -> Option<Vec<(i64,i64)>> {
+    let mut conn : PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT t.user_id, SUM(DATEDIFF(t.term_end, t.term_begin)) as active_days 
+        FROM terms t
+        JOIN users u ON u.user_id = t.user_id
+        WHERE (:enabled IS NULL OR :enabled = u.enabled)
+        GROUP BY t.user_id
+        ORDER BY active_days DESC;");
+
+    let params = params! {
+        "enabled" => &enabled,
+    };
+
+    let map = |(user_id, active_days) : (i64, i64)| {
+        (user_id, active_days)
+    };
+    
+    match conn.exec_map(&stmt.unwrap(), &params, &map) {
+        Err(..) => None,
+        Ok(leaderboard) => Some(leaderboard),
+    }
+}
+
+pub fn get_wrong_enabled_users() -> Option<Vec<User>> {
+    let mut conn : PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname
+        FROM users u
+        LEFT JOIN
+        (
+            SELECT t.user_id as user_id, TRUE as valid
+            FROM terms t
+            WHERE IFNULL(t.term_begin,'0000-01-01') < UTC_DATE()
+            AND IFNULL(t.term_end,'9999-12-31') > UTC_DATE()
+            GROUP BY t.user_id
+        ) AS termstatus ON u.user_id = termstatus.user_id
+        WHERE u.enabled = TRUE
+        AND termstatus.valid IS NULL;");
+
+    let params = params::Params::Empty;
+
+    let map = |(user_id, user_key, firstname, lastname)| {
+        User::from_info(user_id, user_key, firstname, lastname)
+    };
+    
+    match conn.exec_map(&stmt.unwrap(), &params, &map) {
+        Err(..) => None,
+        Ok(users) => Some(users),
+    }
+}
+
+pub fn get_wrong_disabled_users() -> Option<Vec<User>> {
+    let mut conn : PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname
+        FROM users u
+        LEFT JOIN
+        (
+            SELECT t.user_id as user_id, TRUE as valid
+            FROM terms t
+            WHERE IFNULL(t.term_begin,'0000-01-01') < UTC_DATE()
+            AND IFNULL(t.term_end,'9999-12-31') > UTC_DATE()
+            GROUP BY t.user_id
+        ) AS termstatus ON u.user_id = termstatus.user_id
+        WHERE u.enabled = FALSE
+        AND termstatus.valid = TRUE;");
+
+    let params = params::Params::Empty;
+
+    let map = |(user_id, user_key, firstname, lastname)| {
+        User::from_info(user_id, user_key, firstname, lastname)
+    };
+    
+    match conn.exec_map(&stmt.unwrap(), &params, &map) {
+        Err(..) => None,
+        Ok(users) => Some(users),
     }
 }

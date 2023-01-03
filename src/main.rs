@@ -9,6 +9,7 @@ extern crate mysql_common;
 mod config;
 mod db;
 mod db_course;
+mod db_ranking;
 mod db_slot;
 mod db_team;
 mod db_term;
