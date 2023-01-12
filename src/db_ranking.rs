@@ -1,11 +1,16 @@
-use mysql::{PooledConn, params};
-use mysql::prelude::{Queryable};
+use mysql::prelude::Queryable;
+use mysql::{params, PooledConn};
 
+use crate::common::{Branch, Ranking, User};
 use crate::db::get_pool_conn;
-use crate::common::{Ranking, User, Branch};
 
-pub fn list_rankings(user_id: Option<i64>, branch_id: Option<i64>, rank_min: i16, rank_max: i16) -> Option<Vec<Ranking>> {
-    let mut conn : PooledConn = get_pool_conn();
+pub fn list_rankings(
+    user_id: Option<u32>,
+    branch_id: Option<i64>,
+    rank_min: i16,
+    rank_max: i16,
+) -> Option<Vec<Ranking>> {
+    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT r.ranking_id,
             u.user_id, u.user_key, u.firstname, u.lastname,
@@ -26,30 +31,30 @@ pub fn list_rankings(user_id: Option<i64>, branch_id: Option<i64>, rank_min: i16
         "rank_max" => rank_max,
     };
 
-    let rows : Vec<mysql::Row> = match conn.exec(&stmt.unwrap(),&params) {
+    let rows: Vec<mysql::Row> = match conn.exec(&stmt.unwrap(), &params) {
         Err(..) => return None,
         Ok(rows) => rows,
     };
-    
-    let mut rankings : Vec<Ranking> = Vec::new();
+
+    let mut rankings: Vec<Ranking> = Vec::new();
 
     for mut row in rows {
         let r = Ranking {
-            id : row.take("ranking_id").unwrap(),
+            id: row.take("ranking_id").unwrap(),
             user: User::from_info(
                 row.take(1).unwrap(),
                 row.take(2).unwrap(),
                 row.take(3).unwrap(),
                 row.take(4).unwrap(),
             ),
-            branch : Branch {
+            branch: Branch {
                 id: row.take(5).unwrap(),
                 key: row.take(6).unwrap(),
                 title: row.take(7).unwrap(),
             },
             rank: row.take("rank").unwrap(),
             date: row.take("date").unwrap(),
-            judge : User::from_info(
+            judge: User::from_info(
                 row.take(10).unwrap(),
                 row.take(11).unwrap(),
                 row.take(12).unwrap(),
@@ -63,10 +68,11 @@ pub fn list_rankings(user_id: Option<i64>, branch_id: Option<i64>, rank_min: i16
 }
 
 pub fn create_ranking(ranking: &Ranking) -> Option<u32> {
-    let mut conn : PooledConn = get_pool_conn();
+    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO rankings (user_id, branch_id, `rank`, date, judge_id)
-        SELECT :user_id, :branch_id, :rank, :date, :judge_id");
+        SELECT :user_id, :branch_id, :rank, :date, :judge_id",
+    );
     let params = params! {
         "user_id" => &ranking.user.id,
         "branch_id" => &ranking.branch.id,
@@ -75,7 +81,7 @@ pub fn create_ranking(ranking: &Ranking) -> Option<u32> {
         "judge_id" => &ranking.judge.id,
     };
 
-    match conn.exec_drop(&stmt.unwrap(),&params) {
+    match conn.exec_drop(&stmt.unwrap(), &params) {
         Err(..) => return None,
         Ok(..) => (),
     };
@@ -84,16 +90,17 @@ pub fn create_ranking(ranking: &Ranking) -> Option<u32> {
 }
 
 pub fn edit_ranking(ranking_id: i64, ranking: &Ranking) -> Option<()> {
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("
-        UPDATE rankings
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "UPDATE rankings
         SET
             user_id  = :user_id,
             branch_id = :branch_id,
             `rank` = :rank,
             date = :date,
             judge_id = :judge_id
-        WHERE ranking_id = :ranking_id").unwrap();
+        WHERE ranking_id = :ranking_id",
+    );
 
     let params = params! {
         "ranking_id" => &ranking_id,
@@ -104,22 +111,54 @@ pub fn edit_ranking(ranking_id: i64, ranking: &Ranking) -> Option<()> {
         "judge_id" => &ranking.judge.id,
     };
 
-    match conn.exec_drop(&stmt,&params) {
+    match conn.exec_drop(&stmt.unwrap(), &params) {
         Err(..) => None,
         Ok(..) => Some(()),
     }
 }
 
 pub fn delete_ranking(ranking_id: i64) -> Option<()> {
-    let mut conn : PooledConn = get_pool_conn();
+    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE r FROM rankings r WHERE r.ranking_id = :ranking_id");
 
     let params = params! {
         "ranking_id" => ranking_id
     };
 
-    match conn.exec_drop(&stmt.unwrap(),&params) {
+    match conn.exec_drop(&stmt.unwrap(), &params) {
         Err(..) => None,
         Ok(..) => Some(()),
+    }
+}
+
+pub fn summarize_rankings(user_id: u32) -> Option<Vec<(Branch, i16)>> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT b.branch_id, b.branch_key, b.title, MAX(r.rank)
+        FROM rankings r
+        JOIN branches b ON (r.branch_id = b.branch_id)
+        JOIN users j ON (r.judge_id = j.user_id)
+        WHERE r.user_id = 6
+        GROUP BY b.branch_id",
+    );
+
+    let params = params! {
+        "user_id" => user_id,
+    };
+
+    let map = |(branch_id, branch_key, branch_title, maxrank)| {
+        (
+            Branch {
+                id: branch_id,
+                key: branch_key,
+                title: branch_title,
+            },
+            maxrank,
+        )
+    };
+
+    match conn.exec_map(&stmt.unwrap(), &params, &map) {
+        Err(..) => None,
+        Ok(summary) => Some(summary),
     }
 }

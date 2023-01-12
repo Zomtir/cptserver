@@ -1,12 +1,8 @@
 use rocket::serde::json::Json;
 
-use mysql::{PooledConn, params};
-use mysql::prelude::{Queryable};
-
 use crate::api::ApiError;
-use crate::db::get_pool_conn;
 use crate::session::UserSession;
-use crate::common::{User, Ranking, Branch, Right};
+use crate::common::{User, Right};
 
 /*
  * ROUTES
@@ -41,39 +37,6 @@ pub fn user_password(session: UserSession, password: String) -> Result<(), ApiEr
         None => Err(ApiError::DB_CONFLICT),
         Some(..) => Ok(()),
     }
-}
-
-#[rocket::get("/member/user_info_rankings")]
-pub fn user_info_rankings(session: UserSession) -> Json<Vec<Ranking>> {
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT r.ranking_id, b.branch_id, b.branch_key, b.title, r.rank, r.date, j.user_id, j.user_key, j.firstname, j.lastname
-                          FROM rankings r
-                          JOIN branches b ON (r.branch_id = b.branch_id)
-                          JOIN users j ON (r.judge_id = j.user_id)
-                          WHERE r.user_id = :user_id").unwrap();
-
-    let map = |(ranking_id,
-        branch_id, branch_key, branch_title,
-        rank, date,
-        judge_id, judge_key, judge_firstname, judge_lastname)
-      : (u32,
-        u16, String, String,
-        u8, _,
-        u32, String, String, String)|
-      Ranking {id: ranking_id,
-        user: session.user.clone(),
-        branch: Branch{id: branch_id, key: branch_key, title: branch_title},
-        rank, date,
-        judge: User::from_info(judge_id, judge_key, judge_firstname, judge_lastname),
-      };
-
-    let rankings = conn.exec_map(
-        &stmt,
-        params! { "user_id" => session.user.id },
-        &map,
-    ).unwrap();
-
-    return Json(rankings);
 }
 
 // TODO only active members

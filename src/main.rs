@@ -36,7 +36,9 @@ mod route_event_member;
 mod route_event_owner;
 mod route_event_admin;
 
+mod route_ranking_member;
 mod route_ranking_admin;
+
 mod route_team_admin;
 mod route_term_admin;
 
@@ -83,7 +85,6 @@ fn rocket() -> _ {
             route_user_member::user_info,
             route_user_member::user_right,
             route_user_member::user_password,
-            route_user_member::user_info_rankings,
             route_user_member::user_list,
             route_course_admin::course_list,
             route_course_admin::course_create,
@@ -131,6 +132,8 @@ fn rocket() -> _ {
             route_ranking_admin::ranking_create,
             route_ranking_admin::ranking_edit,
             route_ranking_admin::ranking_delete,
+            route_ranking_member::ranking_list,
+            route_ranking_member::ranking_summary,
             route_slot::slot_info,
             route_slot::slot_candidates, route_slot::slot_participants, route_slot::slot_enrol, route_slot::slot_dismiss,
         ])

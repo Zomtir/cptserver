@@ -8,18 +8,18 @@ use crate::common::{User, Access, Course, Branch};
  * METHODS
  */
 
-pub fn list_courses(mod_id: Option<u32>) -> Option<Vec<Course>> {
+pub fn list_courses(mod_id: Option<i64>) -> Option<Vec<Course>> {
     let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("
-    SELECT c.course_id, c.course_key, c.title, c.active,
-        b.branch_id, b.branch_key, b.title, c.threshold,
-        a.access_id, a.access_key, a.title
-    FROM courses c
-    JOIN branches b ON c.branch_id = b.branch_id
-    JOIN access a ON c.access_id = a.access_id
-    LEFT JOIN course_moderators m ON c.course_id = m.course_id
-    WHERE (:mod_id IS NULL OR m.user_id = :mod_id)
-    GROUP BY c.course_id");
+    let stmt = conn.prep(
+        "SELECT c.course_id, c.course_key, c.title, c.active,
+            b.branch_id, b.branch_key, b.title, c.threshold,
+            a.access_id, a.access_key, a.title
+        FROM courses c
+        JOIN branches b ON c.branch_id = b.branch_id
+        JOIN access a ON c.access_id = a.access_id
+        LEFT JOIN course_moderators m ON c.course_id = m.course_id
+        WHERE (:mod_id IS NULL OR m.user_id = :mod_id)
+        GROUP BY c.course_id");
     // TODO the WHERE and GROUP BY clause can be removed, if the user filter is deemed to be useless
     // TODO add filter whether or not the course is active
         

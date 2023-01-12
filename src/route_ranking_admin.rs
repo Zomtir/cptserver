@@ -5,14 +5,13 @@ use crate::session::{UserSession};
 use crate::common::{Ranking};
 
 #[rocket::get("/admin/ranking_list?<user_id>&<branch_id>&<min>&<max>")]
-pub fn ranking_list(session: UserSession, user_id: Option<i64>, branch_id: Option<i64>, min: i16, max: i16) -> Result<Json<Vec<Ranking>>, ApiError> {
+pub fn ranking_list(session: UserSession, user_id: Option<u32>, branch_id: Option<i64>, min: i16, max: i16) -> Result<Json<Vec<Ranking>>, ApiError> {
     if !session.right.admin_rankings {return Err(ApiError::RIGHT_NO_RANKINGS)};
 
     match crate::db_ranking::list_rankings(user_id, branch_id, min, max) {
         None => Err(ApiError::DB_CONFLICT),
         Some(rankings) => Ok(Json(rankings)),
     }
-    
 }
 
 #[rocket::post("/admin/ranking_create", format = "application/json", data = "<ranking>")]

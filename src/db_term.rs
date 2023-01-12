@@ -87,7 +87,7 @@ pub fn delete_term(term_id: i64) -> Option<()> {
     }
 }
 
-pub fn get_user_membership_days(user_id: u32, enabled: Option<bool>) -> Option<Vec<(i64,i64)>> {
+pub fn get_user_membership_days(enabled: Option<bool>) -> Option<Vec<(i64,i64)>> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT t.user_id, SUM(DATEDIFF(t.term_end, t.term_begin)) as active_days 

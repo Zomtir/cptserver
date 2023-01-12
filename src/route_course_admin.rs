@@ -9,7 +9,7 @@ use crate::session::{UserSession};
 use crate::common::{Course, User};
 
 #[rocket::get("/admin/course_list?<mod_id>")]
-pub fn course_list(session: UserSession, mod_id: Option<u32>) -> Result<Json<Vec<Course>>, ApiError> {
+pub fn course_list(session: UserSession, mod_id: Option<i64>) -> Result<Json<Vec<Course>>, ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
     
     match crate::db_course::list_courses(mod_id) {

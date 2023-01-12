@@ -33,6 +33,7 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
                           COALESCE(MAX(admin_inventory),0) AS admin_inventory,
                           COALESCE(MAX(admin_rankings),0) AS admin_rankings,
                           COALESCE(MAX(admin_teams),0) AS admin_teams,
+                          COALESCE(MAX(admin_term),0) AS admin_term,
                           COALESCE(MAX(admin_users),0) AS admin_users
                           FROM users u
                           LEFT JOIN team_members ON (u.user_id = team_members.user_id)

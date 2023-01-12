@@ -75,7 +75,7 @@ pub fn list_slots(
         WHERE s.begin > :frame_start
         AND s.begin < :frame_stop
         AND (:status IS NULL OR :status = s.status)
-        AND (:course_id_id IS NULL OR :course_id = s.course_id)
+        AND (:course_id IS NULL OR :course_id = s.course_id)
         AND (:owner_id IS NULL OR :owner_id = o.user_id)
         GROUP BY s.slot_id");
 
