@@ -138,8 +138,8 @@ pub fn summarize_rankings(user_id: u32) -> Option<Vec<(Branch, i16)>> {
         FROM rankings r
         JOIN branches b ON (r.branch_id = b.branch_id)
         JOIN users j ON (r.judge_id = j.user_id)
-        WHERE r.user_id = 6
-        GROUP BY b.branch_id",
+        WHERE r.user_id = :user_id
+        GROUP BY b.branch_id;",
     );
 
     let params = params! {
@@ -156,9 +156,9 @@ pub fn summarize_rankings(user_id: u32) -> Option<Vec<(Branch, i16)>> {
             maxrank,
         )
     };
-
+    
     match conn.exec_map(&stmt.unwrap(), &params, &map) {
-        Err(..) => None,
+        Err(e) => None,
         Ok(summary) => Some(summary),
     }
 }
