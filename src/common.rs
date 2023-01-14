@@ -10,8 +10,7 @@ pub struct User {
     pub pwd: Option<String>,
     pub firstname: String,
     pub lastname: String,
-    pub enabled: bool,
-    //pub admin_inventory: bool,
+    pub enabled: Option<bool>,
 }
 
 impl User {
@@ -22,7 +21,7 @@ impl User {
             pwd: None,
             firstname: firstname,
             lastname: lastname,
-            enabled: false,
+            enabled: None,
         }
     }
 }

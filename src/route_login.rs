@@ -77,7 +77,7 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
             id: row.take("user_id").unwrap(),
             key: credit.login.to_string(),
             pwd: None,
-            enabled: user_enabled,
+            enabled: Some(user_enabled),
             firstname: row.take("firstname").unwrap(),
             lastname: row.take("lastname").unwrap(),
         },
