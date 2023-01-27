@@ -72,8 +72,8 @@ pub fn list_slots(
         FROM slots s
         JOIN locations l ON l.location_id = s.location_id
         LEFT JOIN slot_owners o ON s.slot_id = o.slot_id
-        WHERE s.begin > :frame_start
-        AND s.begin < :frame_stop
+        WHERE (:frame_start IS NULL OR :frame_start < s.begin)
+        AND (:frame_stop IS NULL OR :frame_stop > s.begin)
         AND (:status IS NULL OR :status = s.status)
         AND (:course_id IS NULL OR :course_id = s.course_id)
         AND (:owner_id IS NULL OR :owner_id = o.user_id)
@@ -199,7 +199,7 @@ pub fn edit_slot_status(slot_id: i64, status_required: &str, status_update: &str
     }
 }
 
-pub fn edit_slot_password(slot_id: &i64, password: &String) -> Option<()> {
+pub fn edit_slot_password(slot_id: i64, password: String) -> Option<()> {
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(
@@ -218,7 +218,7 @@ pub fn edit_slot_password(slot_id: &i64, password: &String) -> Option<()> {
     }
 }
 
-pub fn delete_slot(slot_id: &i64) -> Option<()> {
+pub fn delete_slot(slot_id: i64) -> Option<()> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "DELETE s
@@ -341,7 +341,7 @@ pub fn remove_slot_owner(slot_id: i64, user_id: u32) -> Option<()> {
 
 /* COURSE RELATED */
 
-pub fn is_slot_moderator(slot_id: &i64, user_id: &u32) -> Option<bool> {
+pub fn is_slot_moderator(slot_id: i64, user_id: u32) -> Option<bool> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)

@@ -38,11 +38,12 @@ pub fn event_edit(session: UserSession, slot_id: i64, mut slot: Json<Slot>) -> R
         Some(()) => (),
     };
 
-    if slot.pwd.is_none() || slot.pwd.as_ref().unwrap().len() < 8 {
-        return Err(ApiError::SLOT_BAD_PASSWORD);
+    let password = match crate::common::validate_slot_password(&mut slot) {
+        None => return Err(ApiError::SLOT_BAD_PASSWORD),
+        Some(password) => password,
     };
 
-    match crate::db_slot::edit_slot_password(&slot_id, &slot.pwd.as_ref().unwrap()) {
+    match crate::db_slot::edit_slot_password(slot_id, password) {
         None => Err(ApiError::DB_CONFLICT),
         Some(()) => Ok(()),
     }
@@ -148,7 +149,7 @@ pub fn event_delete(session: UserSession, slot_id: i64) -> Result<(),ApiError> {
         },
     }
 
-    match crate::db_slot::delete_slot(&slot.id) {
+    match crate::db_slot::delete_slot(slot.id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(()) => Ok(()),
     }

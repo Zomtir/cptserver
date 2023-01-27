@@ -1,16 +1,12 @@
 use rocket::serde::json::Json;
 
 use crate::api::ApiError;
-use crate::common::Slot;
+use crate::common::{Slot};
 use crate::session::UserSession;
 
-#[rocket::get("/mod/class_list?<course_id>")]
+#[rocket::get("/admin/class_list?<course_id>")]
 pub fn class_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Slot>>, ApiError> {
-    match crate::db_course::is_course_moderator(&course_id, &session.user.id) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(false) => return Err(ApiError::COURSE_NO_MODERATOR),
-        Some(true) => (),
-    };
+    if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
     match crate::db_slot::list_slots(None, None, None, Some(course_id), None) {
         None => Err(ApiError::DB_CONFLICT),
@@ -19,7 +15,7 @@ pub fn class_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Slot>
 }
 
 #[rocket::post(
-    "/mod/class_create?<course_id>",
+    "/admin/class_create?<course_id>",
     format = "application/json",
     data = "<slot>"
 )]
@@ -28,11 +24,7 @@ pub fn class_create(
     course_id: u32,
     mut slot: Json<Slot>,
 ) -> Result<String, ApiError> {
-    match crate::db_course::is_course_moderator(&course_id, &session.user.id) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(false) => return Err(ApiError::COURSE_NO_MODERATOR),
-        Some(true) => (),
-    };
+    if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
     crate::common::validate_slot_dates(&mut slot);
 
@@ -43,7 +35,7 @@ pub fn class_create(
 }
 
 #[rocket::post(
-    "/mod/class_edit?<slot_id>",
+    "/admin/class_edit?<slot_id>",
     format = "application/json",
     data = "<slot>"
 )]
@@ -52,11 +44,7 @@ pub fn class_edit(
     slot_id: i64,
     mut slot: Json<Slot>,
 ) -> Result<(), ApiError> {
-    match crate::db_slot::is_slot_moderator(slot_id, session.user.id) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(false) => return Err(ApiError::COURSE_NO_MODERATOR),
-        Some(true) => (),
-    };
+    if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
     crate::common::validate_slot_dates(&mut slot);
 
@@ -76,13 +64,9 @@ pub fn class_edit(
     }
 }
 
-#[rocket::head("/mod/class_delete?<slot_id>")]
+#[rocket::head("/admin/class_delete?<slot_id>")]
 pub fn class_delete(session: UserSession, slot_id: i64) -> Result<(), ApiError> {
-    match crate::db_slot::is_slot_moderator(slot_id, session.user.id) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(false) => return Err(ApiError::COURSE_NO_MODERATOR),
-        Some(true) => (),
-    };
+    if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
     match crate::db_slot::delete_slot(slot_id) {
         None => Err(ApiError::DB_CONFLICT),

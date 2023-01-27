@@ -30,6 +30,7 @@ mod route_course_member;
 mod route_course_moderator;
 mod route_course_admin;
 
+mod route_class_admin;
 mod route_class_moderator;
 
 mod route_event_member;
@@ -99,6 +100,10 @@ fn rocket() -> _ {
             route_course_moderator::course_moderator_list,
             route_course_moderator::course_moderator_add,
             route_course_moderator::course_moderator_remove,
+            route_class_admin::class_list,
+            route_class_admin::class_create,
+            route_class_admin::class_edit,
+            route_class_admin::class_delete,
             route_class_moderator::class_list,
             route_class_moderator::class_create,
             route_class_moderator::class_edit,
@@ -109,6 +114,7 @@ fn rocket() -> _ {
             route_event_admin::event_cancel,
             route_event_member::event_list,
             route_event_member::event_create,
+            route_event_member::event_owner_condition,
             route_event_owner::event_edit,
             route_event_owner::event_delete,
             route_event_owner::event_submit,

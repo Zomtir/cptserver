@@ -178,3 +178,17 @@ pub fn validate_slot_dates(slot: &mut Slot) -> Option<()> {
 
     return Some(())
 }
+
+pub fn validate_slot_password(slot: &mut Slot) -> Option<String> {
+    let password = match &slot.pwd {
+        None => return None,
+        Some(password) => password,
+    };
+
+    if password.len() < 8 || password.len() > 50 {
+        return None;
+    };
+
+    Some(password.to_string())
+}
+

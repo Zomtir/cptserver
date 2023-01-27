@@ -158,7 +158,7 @@ pub fn summarize_rankings(user_id: u32) -> Option<Vec<(Branch, i16)>> {
     };
     
     match conn.exec_map(&stmt.unwrap(), &params, &map) {
-        Err(e) => None,
+        Err(..) => None,
         Ok(summary) => Some(summary),
     }
 }
