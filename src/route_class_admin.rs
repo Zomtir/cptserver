@@ -1,7 +1,7 @@
 use rocket::serde::json::Json;
 
 use crate::api::ApiError;
-use crate::common::{Slot};
+use crate::common::{Slot, User};
 use crate::session::UserSession;
 
 #[rocket::get("/admin/class_list?<course_id>")]
@@ -69,6 +69,54 @@ pub fn class_delete(session: UserSession, slot_id: i64) -> Result<(), ApiError> 
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
     match crate::db_slot::delete_slot(slot_id) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(()) => Ok(()),
+    }
+}
+
+#[rocket::get("/admin/class_owner_list?<slot_id>")]
+pub fn class_owner_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<User>>,ApiError> {
+    if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
+    
+    match crate::db_slot::is_slot_in_any_course(&slot_id) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(false) => return Err(ApiError::SLOT_NO_COURSE),
+        Some(true) => (),
+    };
+    
+    match crate::db_slot::get_slot_owners(&slot_id) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(users) => Ok(Json(users)),
+    }
+}
+
+#[rocket::head("/admin/class_owner_add?<slot_id>&<user_id>")]
+pub fn class_owner_add(session: UserSession, slot_id: i64, user_id: u32) -> Result<(),ApiError> {
+    if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
+
+    match crate::db_slot::is_slot_in_any_course(&slot_id) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(false) => return Err(ApiError::SLOT_NO_COURSE),
+        Some(true) => (),
+    };
+
+    match crate::db_slot::add_slot_owner(slot_id, user_id) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(()) => Ok(()),
+    }
+}
+
+#[rocket::head("/admin/class_owner_remove?<slot_id>&<user_id>")]
+pub fn class_owner_remove(session: UserSession, slot_id: i64, user_id: u32) -> Result<(),ApiError> {
+    if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
+
+    match crate::db_slot::is_slot_in_any_course(&slot_id) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(false) => return Err(ApiError::SLOT_NO_COURSE),
+        Some(true) => (),
+    };
+
+    match crate::db_slot::remove_slot_owner(slot_id, user_id) {
         None => Err(ApiError::DB_CONFLICT),
         Some(()) => Ok(()),
     }

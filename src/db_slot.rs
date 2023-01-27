@@ -400,3 +400,21 @@ pub fn is_slot_in_course(slot_id: &i64, course_id: &u32) -> Option<bool> {
         Ok(Some(count)) => return Some(count == 1),
     };
 }
+
+pub fn is_slot_in_any_course(slot_id: &i64) -> Option<bool> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT COUNT(1)
+        FROM slots
+        WHERE slot_id = :slot_id AND course_id IS NOT NULL;",
+    );
+    let params = params! {
+        "slot_id" => slot_id,
+    };
+
+    match conn.exec_first::<i64, _, _>(&stmt.unwrap(), &params) {
+        Err(..) => return None,
+        Ok(None) => return Some(false),
+        Ok(Some(count)) => return Some(count == 1),
+    };
+}

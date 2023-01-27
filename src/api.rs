@@ -49,6 +49,7 @@ impl ApiError {
         USER_DISABLED => 400, "The user account is disabled.",
         SLOT_NO_ENTRY => 400, "This slot has no entry in the database.",
         SLOT_NO_OWNER => 400, "You do not own the slot.",
+        SLOT_NO_COURSE => 400, "Slot is not part of a course.",
         SLOT_BAD_PASSWORD => 400, "This password does not belong to given slot.",
         SLOT_BAD_TIME => 400, "Time window too narrow or negative.",
         SLOT_OVERLAP_TIME => 409, "Time window overlaps with an existing slot.",
