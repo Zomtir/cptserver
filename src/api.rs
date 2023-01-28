@@ -45,12 +45,14 @@ impl ApiError {
 
     ctrs! {
         USER_NO_ENTRY => 400, "This user has no entry in the database.",
-        USER_BAD_PASSWORD => 400, "Password has either invalid formatting or is not belonging to this user.",
+        USER_WRONG_PASSWORD => 400, "Password does not belong to this user.",
+        USER_BAD_PASSWORD => 400, "Password has invalid formatting.",
         USER_DISABLED => 400, "The user account is disabled.",
         SLOT_NO_ENTRY => 400, "This slot has no entry in the database.",
         SLOT_NO_OWNER => 400, "You do not own the slot.",
         SLOT_NO_COURSE => 400, "Slot is not part of a course.",
-        SLOT_BAD_PASSWORD => 400, "This password does not belong to given slot.",
+        SLOT_WRONG_PASSWORD => 400, "This password does not belong to given slot.",
+        SLOT_BAD_PASSWORD => 400, "Password has invalid formatting.",
         SLOT_BAD_TIME => 400, "Time window too narrow or negative.",
         SLOT_OVERLAP_TIME => 409, "Time window overlaps with an existing slot.",
         SLOT_STATUS_INCOMPAT => 400, "Slot status is incompatible.",

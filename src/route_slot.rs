@@ -13,7 +13,7 @@ use crate::common::{Slot, User};
  * ROUTES
  */
 
-#[rocket::get("/slot_info")]
+#[rocket::get("/slot/slot_info")]
 pub fn slot_info(session: SlotSession) -> Result<Json<Slot>, Status> {
     match crate::db_slot::get_slot_info(&session.slot_id) {
         None => Err(Status::InternalServerError),
@@ -21,7 +21,7 @@ pub fn slot_info(session: SlotSession) -> Result<Json<Slot>, Status> {
     }
 }
 
-#[rocket::get("/slot_candidates")]
+#[rocket::get("/slot/slot_candidate_list")]
 pub fn slot_candidates(_session: SlotSession) -> Result<Json<Vec<User>>,Status> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT user_id, user_key, firstname, lastname FROM users

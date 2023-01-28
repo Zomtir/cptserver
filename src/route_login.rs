@@ -64,7 +64,7 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
 
     let user_pwd : Vec<u8> = row.take("pwd").unwrap();
     if user_pwd != user_shapwd {
-        return Err(ApiError::USER_BAD_PASSWORD);
+        return Err(ApiError::USER_WRONG_PASSWORD);
     };
 
     let user_token : String = crate::common::random_string(30);
@@ -100,9 +100,12 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
 #[rocket::post("/slot_login", format = "application/json", data = "<credit>")]
 pub fn slot_login(credit: Json<Credential>) -> Result<String,ApiError> {
     let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT slot_id, pwd FROM slots WHERE slot_id = :slot_id").unwrap();
-    let params = params! { "slot_id" => credit.login.to_string(), };
+    let stmt = conn.prep("SELECT slot_id, pwd FROM slots WHERE slot_key = :slot_key").unwrap();
+    let params = params! {
+        "slot_key" => credit.login.to_string(),
+    };
 
+    println!("{}", credit.login.to_string());
     let mut row : mysql::Row = match conn.exec_first(&stmt,&params) {
         Err(..) | Ok(None) => return Err(ApiError::SLOT_NO_ENTRY),
         Ok(Some(row)) => row,
@@ -110,7 +113,7 @@ pub fn slot_login(credit: Json<Credential>) -> Result<String,ApiError> {
     
     let slot_pwd : String = row.take("pwd").unwrap();
     if slot_pwd != credit.password {
-        return Err(ApiError::SLOT_BAD_PASSWORD);
+        return Err(ApiError::SLOT_WRONG_PASSWORD);
     };
 
     let slot_token : String = crate::common::random_string(30);
@@ -134,15 +137,15 @@ pub fn slot_login(credit: Json<Credential>) -> Result<String,ApiError> {
 pub fn location_login(location_key: String) -> Result<String,ApiError>  {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT s.slot_id, s.pwd
+        "SELECT s.slot_key, s.pwd
         FROM slots s
         JOIN locations l ON l.location_id = slots.
         WHERE l.location_key = :location_key
         AND s.begin <= UTC_TIMESTAMP() AND s.end >= UTC_TIMESTAMP()
         AND autologin = 1").unwrap();
     let params = params! { "location_key" => location_key, };
-    let map = |(slot_id, slot_pwd) : (i64, String)| {
-        Credential { login: slot_id.to_string(), password: slot_pwd }
+    let map = |(slot_key, slot_pwd) : (i64, String)| {
+        Credential { login: slot_key.to_string(), password: slot_pwd }
     };
 
     let credentials = conn.exec_map(&stmt,&params,&map).unwrap();
