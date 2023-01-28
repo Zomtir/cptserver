@@ -121,3 +121,51 @@ pub fn class_owner_remove(session: UserSession, slot_id: i64, user_id: u32) -> R
         Some(()) => Ok(()),
     }
 }
+
+#[rocket::get("/admin/class_participant_list?<slot_id>")]
+pub fn class_participant_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<User>>, ApiError> {
+    if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
+
+    match crate::db_slot::is_slot_in_any_course(&slot_id) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(false) => return Err(ApiError::SLOT_NO_COURSE),
+        Some(true) => (),
+    };
+
+    match crate::db_slot::list_slot_participants(slot_id) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(users) => Ok(Json(users)),
+    }
+}
+
+#[rocket::head("/admin/class_participant_add?<slot_id>&<user_id>")]
+pub fn class_participant_add(session: UserSession, slot_id: i64, user_id: u32) -> Result<(), ApiError> {
+    if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
+
+    match crate::db_slot::is_slot_in_any_course(&slot_id) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(false) => return Err(ApiError::SLOT_NO_COURSE),
+        Some(true) => (),
+    };
+
+    match crate::db_slot::add_slot_participant(slot_id, user_id) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(()) => Ok(()),
+    }
+}
+
+#[rocket::head("/admin/class_participant_remove?<slot_id>&<user_id>")]
+pub fn class_participant_remove(session: UserSession, slot_id: i64, user_id: u32) -> Result<(), ApiError> {
+    if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
+
+    match crate::db_slot::is_slot_in_any_course(&slot_id) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(false) => return Err(ApiError::SLOT_NO_COURSE),
+        Some(true) => (),
+    };
+
+    match crate::db_slot::remove_slot_participant(slot_id, user_id) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(()) => Ok(()),
+    }
+}

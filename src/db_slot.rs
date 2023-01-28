@@ -418,3 +418,61 @@ pub fn is_slot_in_any_course(slot_id: &i64) -> Option<bool> {
         Ok(Some(count)) => return Some(count == 1),
     };
 }
+
+/* PARTICIPANT RELATED */
+
+pub fn list_slot_participants(slot_id: i64) -> Option<Vec<User>> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname
+        FROM slot_enrollments e
+        JOIN users u ON u.user_id = e.user_id
+        WHERE slot_id = :slot_id;",
+    );
+    let params = params! {
+        "slot_id" => slot_id,
+    };
+    let map = |(user_id, user_key, firstname, lastname)| {
+        User::from_info(user_id, user_key, firstname, lastname)
+    };
+
+    match conn.exec_map(&stmt.unwrap(), &params, &map) {
+        Err(..) => return None,
+        Ok(members) => return Some(members),
+    }
+}
+
+pub fn add_slot_participant(slot_id: i64, user_id: u32) -> Option<()> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "INSERT INTO slot_enrollments (slot_id, user_id)
+        VALUES (:slot_id, :user_id);",
+    );
+    let params = params! {
+        "slot_id" => &slot_id,
+        "user_id" => &user_id,
+    };
+
+    match conn.exec_drop(&stmt.unwrap(), &params) {
+        Err(..) => None,
+        Ok(..) => Some(()),
+    }
+}
+
+pub fn remove_slot_participant(slot_id: i64, user_id: u32) -> Option<()> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "DELETE FROM slot_enrollments
+        WHERE slot_id = :slot_id AND user_id = :user_id;",
+    );
+
+    let params = params! {
+        "slot_id" => &slot_id,
+        "user_id" => &user_id,
+    };
+
+    match conn.exec_drop(&stmt.unwrap(), &params) {
+        Err(..) => None,
+        Ok(..) => Some(()),
+    }
+}

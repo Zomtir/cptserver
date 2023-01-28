@@ -101,7 +101,7 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
 pub fn slot_login(credit: Json<Credential>) -> Result<String,ApiError> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT slot_id, pwd FROM slots WHERE slot_id = :slot_id").unwrap();
-    let params = params! { "slot_id" => credit.login.to_string() };
+    let params = params! { "slot_id" => credit.login.to_string(), };
 
     let mut row : mysql::Row = match conn.exec_first(&stmt,&params) {
         Err(..) | Ok(None) => return Err(ApiError::SLOT_NO_ENTRY),
@@ -130,16 +130,18 @@ pub fn slot_login(credit: Json<Credential>) -> Result<String,ApiError> {
     return Ok(slot_token);
 }
 
-#[rocket::get("/slot_autologin?<location_id>")]
-pub fn slot_autologin(location_id: u16) -> Result<String,ApiError>  {
+#[rocket::get("/location_login?<location_key>")]
+pub fn location_login(location_key: String) -> Result<String,ApiError>  {
     let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT slot_id, pwd
-                          FROM slots
-                          WHERE location_id = :location_id
-                          AND begin <= UTC_TIMESTAMP() AND end >= UTC_TIMESTAMP()
-                          AND autologin = 1").unwrap();
-    let params = params! { "location_id" => location_id };
-    let map = |(slot_id, slot_pwd): (u32, String)| {
+    let stmt = conn.prep(
+        "SELECT s.slot_id, s.pwd
+        FROM slots s
+        JOIN locations l ON l.location_id = slots.
+        WHERE l.location_key = :location_key
+        AND s.begin <= UTC_TIMESTAMP() AND s.end >= UTC_TIMESTAMP()
+        AND autologin = 1").unwrap();
+    let params = params! { "location_key" => location_key, };
+    let map = |(slot_id, slot_pwd) : (i64, String)| {
         Credential { login: slot_id.to_string(), password: slot_pwd }
     };
 

@@ -78,7 +78,7 @@ fn rocket() -> _ {
             route_anon::status, route_anon::location_list, route_anon::branch_list, route_anon::access_list,
             route_login::user_login,
             route_login::slot_login,
-            route_login::slot_autologin, // TODO rename to location_login
+            route_login::location_login,
             route_user_admin::user_list,
             route_user_admin::user_create,
             route_user_admin::user_edit,
@@ -107,6 +107,9 @@ fn rocket() -> _ {
             route_class_admin::class_owner_list,
             route_class_admin::class_owner_add,
             route_class_admin::class_owner_remove,
+            route_class_admin::class_participant_list,
+            route_class_admin::class_participant_add,
+            route_class_admin::class_participant_remove,
             route_class_moderator::class_list,
             route_class_moderator::class_create,
             route_class_moderator::class_edit,
@@ -144,7 +147,10 @@ fn rocket() -> _ {
             route_ranking_member::ranking_list,
             route_ranking_member::ranking_summary,
             route_slot::slot_info,
-            route_slot::slot_candidates, route_slot::slot_participants, route_slot::slot_enrol, route_slot::slot_dismiss,
+            route_slot::slot_candidates,
+            route_slot::slot_participant_list,
+            route_slot::slot_participant_add,
+            route_slot::slot_participant_remove,
         ])
         .attach(cors)
 }
