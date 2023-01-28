@@ -65,7 +65,7 @@ pub fn is_user_created(user_key: &str) -> Option<bool> {
     return Some(count.unwrap() == 1);
 }
 
-pub fn edit_user(user_id: &u32, user: &User) -> Option<()> {
+pub fn edit_user(user_id: u32, user: &User) -> Option<()> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE users SET
@@ -89,7 +89,7 @@ pub fn edit_user(user_id: &u32, user: &User) -> Option<()> {
     }
 }
 
-pub fn edit_user_password(user_id: &u32, password: String) -> Option<()> {
+pub fn edit_user_password(user_id: u32, password: String) -> Option<()> {
     let bpassword: Vec<u8> = match crate::common::verify_hashed_password(&password) {
         Some(bpassword) => bpassword,
         None => return None,

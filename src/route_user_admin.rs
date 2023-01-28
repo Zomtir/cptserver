@@ -30,9 +30,19 @@ pub fn user_create(session: UserSession, user: Json<User>) -> Result<String, Api
 pub fn user_edit(session: UserSession, user_id: u32, user: Json<User>) -> Result<(),ApiError> {
     if !session.right.admin_users {return Err(ApiError::RIGHT_NO_USER)};
 
-    match crate::db_user::edit_user(&user_id, &user) {
+    match crate::db_user::edit_user(user_id, &user) {
         None => Err(ApiError::DB_CONFLICT),
         Some(()) => Ok(()),
+    }
+}
+
+#[rocket::post("/admin/user_edit_password?<user_id>", format = "text/plain", data = "<password>")]
+pub fn user_edit_password(session: UserSession, user_id: u32, password: String) -> Result<(), ApiError> {
+    if !session.right.admin_users {return Err(ApiError::RIGHT_NO_USER)};
+
+    match crate::db_user::edit_user_password(user_id, password) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(..) => Ok(()),
     }
 }
 

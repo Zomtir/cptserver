@@ -82,6 +82,7 @@ fn rocket() -> _ {
             route_user_admin::user_list,
             route_user_admin::user_create,
             route_user_admin::user_edit,
+            route_user_admin::user_edit_password,
             route_user_admin::user_delete,
             route_user_member::user_info,
             route_user_member::user_right,

@@ -33,7 +33,7 @@ pub fn user_right(session: UserSession) -> Json<Right> {
 
 #[rocket::post("/member/user_password", format = "text/plain", data = "<password>")]
 pub fn user_password(session: UserSession, password: String) -> Result<(), ApiError> {
-    match crate::db_user::edit_user_password(&session.user.id, password) {
+    match crate::db_user::edit_user_password(session.user.id, password) {
         None => Err(ApiError::DB_CONFLICT),
         Some(..) => Ok(()),
     }

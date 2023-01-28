@@ -42,6 +42,12 @@ pub fn class_create(
 pub fn class_edit(session: UserSession, slot_id: i64, mut slot: Json<Slot>) -> Result<(), ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
+    match crate::db_slot::is_slot_in_any_course(&slot_id) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(false) => return Err(ApiError::SLOT_NO_COURSE),
+        Some(true) => (),
+    };
+
     crate::common::validate_slot_dates(&mut slot);
 
     match crate::db_slot::edit_slot(&slot_id, &slot) {
@@ -52,6 +58,14 @@ pub fn class_edit(session: UserSession, slot_id: i64, mut slot: Json<Slot>) -> R
 
 #[rocket::post("/admin/class_edit_password?<slot_id>", format = "text/plain", data = "<password>")]
 pub fn class_edit_password(session: UserSession, slot_id: i64, password: String) -> Result<(), ApiError> {
+    if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
+
+    match crate::db_slot::is_slot_in_any_course(&slot_id) {
+        None => return Err(ApiError::DB_CONFLICT),
+        Some(false) => return Err(ApiError::SLOT_NO_COURSE),
+        Some(true) => (),
+    };
+
     let password = match crate::common::validate_clear_password(Some(password)) {
         None => return Err(ApiError::SLOT_BAD_PASSWORD),
         Some(password) => password,
