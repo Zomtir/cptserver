@@ -129,7 +129,20 @@ pub fn random_string(size: usize) -> String {
     rand::thread_rng().sample_iter(&rand::distributions::Alphanumeric).take(size).map(char::from).collect()
 }
 
-pub fn verify_password(password: & str) -> Option<Vec<u8>> {
+pub fn validate_clear_password(pwd: Option<String>) -> Option<String> {
+    let password = match pwd {
+        None => return None,
+        Some(password) => password,
+    };
+
+    if password.len() < 6 || password.len() > 50 {
+        return None;
+    };
+
+    Some(password.to_string())
+}
+
+pub fn verify_hashed_password(password: & str) -> Option<Vec<u8>> {
     match &password.len() {
         // Sha256 is 64 chars long
         64 => match hex::decode(&password) {
@@ -177,18 +190,5 @@ pub fn validate_slot_dates(slot: &mut Slot) -> Option<()> {
     }
 
     return Some(())
-}
-
-pub fn validate_slot_password(slot: &mut Slot) -> Option<String> {
-    let password = match &slot.pwd {
-        None => return None,
-        Some(password) => password,
-    };
-
-    if password.len() < 8 || password.len() > 50 {
-        return None;
-    };
-
-    Some(password.to_string())
 }
 

@@ -61,11 +61,20 @@ pub fn class_edit(
     crate::common::validate_slot_dates(&mut slot);
 
     match crate::db_slot::edit_slot(&slot_id, &slot) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(..) => Ok(()),
+    }
+}
+
+#[rocket::post("/mod/class_edit_password?<slot_id>", format = "text/plain", data = "<password>")]
+pub fn class_edit_password(session: UserSession, slot_id: i64, password: String) -> Result<(), ApiError> {
+    match crate::db_slot::is_slot_moderator(slot_id, session.user.id) {
         None => return Err(ApiError::DB_CONFLICT),
-        Some(..) => (),
+        Some(false) => return Err(ApiError::COURSE_NO_MODERATOR),
+        Some(true) => (),
     };
 
-    let password = match crate::common::validate_slot_password(&mut slot) {
+    let password = match crate::common::validate_clear_password(Some(password)) {
         None => return Err(ApiError::SLOT_BAD_PASSWORD),
         Some(password) => password,
     };

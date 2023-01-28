@@ -39,21 +39,20 @@ pub fn class_create(
     format = "application/json",
     data = "<slot>"
 )]
-pub fn class_edit(
-    session: UserSession,
-    slot_id: i64,
-    mut slot: Json<Slot>,
-) -> Result<(), ApiError> {
+pub fn class_edit(session: UserSession, slot_id: i64, mut slot: Json<Slot>) -> Result<(), ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
     crate::common::validate_slot_dates(&mut slot);
 
     match crate::db_slot::edit_slot(&slot_id, &slot) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(..) => (),
-    };
+        None => Err(ApiError::DB_CONFLICT),
+        Some(..) => Ok(()),
+    }
+}
 
-    let password = match crate::common::validate_slot_password(&mut slot) {
+#[rocket::post("/admin/class_edit_password?<slot_id>", format = "text/plain", data = "<password>")]
+pub fn class_edit_password(session: UserSession, slot_id: i64, password: String) -> Result<(), ApiError> {
+    let password = match crate::common::validate_clear_password(Some(password)) {
         None => return Err(ApiError::SLOT_BAD_PASSWORD),
         Some(password) => password,
     };
@@ -84,7 +83,7 @@ pub fn class_owner_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<U
         Some(true) => (),
     };
     
-    match crate::db_slot::get_slot_owners(&slot_id) {
+    match crate::db_slot::get_slot_owners(slot_id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(users) => Ok(Json(users)),
     }

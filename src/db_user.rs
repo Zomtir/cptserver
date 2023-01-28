@@ -90,7 +90,7 @@ pub fn edit_user(user_id: &u32, user: &User) -> Option<()> {
 }
 
 pub fn edit_user_password(user_id: &u32, password: String) -> Option<()> {
-    let bpassword: Vec<u8> = match crate::common::verify_password(&password) {
+    let bpassword: Vec<u8> = match crate::common::verify_hashed_password(&password) {
         Some(bpassword) => bpassword,
         None => return None,
     };

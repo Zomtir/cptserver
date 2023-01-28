@@ -40,7 +40,7 @@ pub fn event_accept(session: UserSession, slot_id: i64) -> Result<(), ApiError> 
 
     // Perhaps lock the DB during checking and potentially accepting the request
 
-    let slot: Slot = match crate::db_slot::get_slot_info(&slot_id) {
+    let slot: Slot = match crate::db_slot::get_slot_info(slot_id) {
         None => return Err(ApiError::SLOT_NO_ENTRY),
         Some(slot) => slot,
     };

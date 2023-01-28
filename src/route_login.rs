@@ -54,7 +54,7 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
         return Err(ApiError::USER_DISABLED);
     }
 
-    let bpassword : Vec<u8> = match crate::common::verify_password(&credit.password){
+    let bpassword : Vec<u8> = match crate::common::verify_hashed_password(&credit.password){
         Some(bpassword) => bpassword,
         None => return Err(ApiError::USER_BAD_PASSWORD),
     };

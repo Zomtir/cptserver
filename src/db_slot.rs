@@ -8,7 +8,7 @@ use crate::db::get_pool_conn;
  * METHODS
  */
 
-pub fn get_slot_info(slot_id: &i64) -> Option<Slot> {
+pub fn get_slot_info(slot_id: i64) -> Option<Slot> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title, s.begin, s.end, s.status, s.course_id
@@ -264,7 +264,7 @@ pub fn is_slot_free(slot: &Slot) -> Option<bool> {
 
 /* EVENT RELATED */
 
-pub fn get_slot_owners(slot_id: &i64) -> Option<Vec<User>> {
+pub fn get_slot_owners(slot_id: i64) -> Option<Vec<User>> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname
@@ -285,7 +285,7 @@ pub fn get_slot_owners(slot_id: &i64) -> Option<Vec<User>> {
     }
 }
 
-pub fn is_slot_owner(slot_id: &i64, user_id: &u32) -> Option<bool> {
+pub fn is_slot_owner(slot_id: i64, user_id: u32) -> Option<bool> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)

@@ -15,7 +15,7 @@ use crate::common::{Slot, User};
 
 #[rocket::get("/slot/slot_info")]
 pub fn slot_info(session: SlotSession) -> Result<Json<Slot>, Status> {
-    match crate::db_slot::get_slot_info(&session.slot_id) {
+    match crate::db_slot::get_slot_info(session.slot_id) {
         None => Err(Status::InternalServerError),
         Some(slot) => Ok(Json(slot)),
     }
