@@ -17,7 +17,7 @@ pub fn course_availiblity(session: UserSession) -> Result<Json<Vec<Course>>, Api
 }
 
 #[rocket::get("/member/course_class_list?<course_id>")]
-pub fn course_class_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Slot>>, ApiError> {
+pub fn course_class_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Slot>>, ApiError> {
     // TODO check if course is public
     // TODO check if member is part of course
 

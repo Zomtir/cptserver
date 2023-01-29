@@ -11,7 +11,7 @@ pub fn event_list(
     begin: WebDate,
     end: WebDate,
     status: Option<String>,
-    owner_id: Option<u32>,
+    owner_id: Option<i64>,
 ) -> Result<Json<Vec<Slot>>, ApiError> {
     if !session.right.admin_event {
         return Err(ApiError::RIGHT_NO_EVENT);

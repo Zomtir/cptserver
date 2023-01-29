@@ -1,5 +1,4 @@
 use rocket::serde::json::Json;
-use rocket::http::uri::Origin;
 use serde::{Serialize, Deserialize};
 
 use mysql::{PooledConn, params};
@@ -25,7 +24,7 @@ pub struct Credential {
  */
 
 #[rocket::post("/user_login", format = "application/json", data = "<credit>")]
-pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,ApiError> {
+pub fn user_login(credit: Json<Credential>) -> Result<String,ApiError> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT u.user_id, u.pwd, u.pepper, u.enabled, u.firstname, u.lastname,
                           COALESCE(MAX(admin_courses),0) AS admin_courses,
@@ -46,8 +45,7 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
         Err(..) | Ok(None) => return Err(ApiError::USER_NO_ENTRY),
         Ok(Some(row)) => row,
     };
-    // TODO the response should contain what call did result in the repsonse?
-    //Err(ApiError::user_missing(origin.path()))
+
     // TODO should the client know the difference whether an account is exisiting or disabled? 
     let user_enabled : bool = row.take("enabled").unwrap();
     if user_enabled == false {
@@ -61,6 +59,7 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
 
     let user_pepper : Vec<u8> = row.take("pepper").unwrap();
     let user_shapwd : Vec<u8> = crate::common::hash_sha256(&bpassword, &user_pepper);
+    //println!("{}", hex::encode(user_shapwd.clone()));
 
     let user_pwd : Vec<u8> = row.take("pwd").unwrap();
     if user_pwd != user_shapwd {
@@ -73,14 +72,12 @@ pub fn user_login(origin: &Origin, credit: Json<Credential>) -> Result<String,Ap
     let session : UserSession = UserSession {
         token: user_token.to_string(),
         expiry: user_expiry,
-        user: User{
-            id: row.take("user_id").unwrap(),
-            key: credit.login.to_string(),
-            pwd: None,
-            enabled: Some(user_enabled),
-            firstname: row.take("firstname").unwrap(),
-            lastname: row.take("lastname").unwrap(),
-        },
+        user: User::from_info(
+            row.take("user_id").unwrap(),
+            credit.login.to_string(),
+            row.take("firstname").unwrap(),
+            row.take("lastname").unwrap(),
+        ),
         right: Right{
             admin_courses: row.take("admin_courses").unwrap(),
             admin_event: row.take("admin_event").unwrap(),

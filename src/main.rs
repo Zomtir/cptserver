@@ -80,6 +80,7 @@ fn rocket() -> _ {
             route_login::slot_login,
             route_login::location_login,
             route_user_admin::user_list,
+            route_user_admin::user_detailed,
             route_user_admin::user_create,
             route_user_admin::user_edit,
             route_user_admin::user_edit_password,

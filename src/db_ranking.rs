@@ -5,7 +5,7 @@ use crate::common::{Branch, Ranking, User};
 use crate::db::get_pool_conn;
 
 pub fn list_rankings(
-    user_id: Option<u32>,
+    user_id: Option<i64>,
     branch_id: Option<i64>,
     rank_min: i16,
     rank_max: i16,
@@ -131,7 +131,7 @@ pub fn delete_ranking(ranking_id: i64) -> Option<()> {
     }
 }
 
-pub fn summarize_rankings(user_id: u32) -> Option<Vec<(Branch, i16)>> {
+pub fn summarize_rankings(user_id: i64) -> Option<Vec<(Branch, i16)>> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT b.branch_id, b.branch_key, b.title, MAX(r.rank)

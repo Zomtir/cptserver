@@ -52,7 +52,7 @@ pub fn get_slot_info(slot_id: i64) -> Option<Slot> {
         Ok(mut slots) => slots.remove(0),
     };
 
-    slot.owners = crate::db_slot::get_slot_owners(slot_id);
+    //slot.owners = crate::db_slot::get_slot_owners(slot_id);
 
     return Some(slot);
 }
@@ -63,8 +63,8 @@ pub fn list_slots(
     mut begin: Option<chrono::NaiveDate>,
     mut end: Option<chrono::NaiveDate>,
     status: Option<String>,
-    course_id: Option<u32>,
-    owner_id: Option<u32>,
+    course_id: Option<i64>,
+    owner_id: Option<i64>,
 ) -> Option<Vec<Slot>> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
@@ -128,7 +128,7 @@ pub fn list_slots(
     }
 }
 
-pub fn create_slot(slot: &Slot, status: &str, course_id: &Option<u32>) -> Option<u32> {
+pub fn create_slot(slot: &Slot, status: &str, course_id: Option<i64>) -> Option<i64> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO slots (slot_key, pwd, title, status, autologin, location_id, begin, end, course_id)
@@ -154,7 +154,7 @@ pub fn create_slot(slot: &Slot, status: &str, course_id: &Option<u32>) -> Option
     crate::db::get_last_id(conn)
 }
 
-pub fn edit_slot(slot_id: &i64, slot: &Slot) -> Option<()> {
+pub fn edit_slot(slot_id: i64, slot: &Slot) -> Option<()> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE slots
@@ -275,7 +275,7 @@ pub fn get_slot_owners(slot_id: i64) -> Option<Vec<User>> {
     let params = params! {
         "slot_id" => slot_id,
     };
-    let map = |(user_id, user_key, firstname, lastname): (u32, String, String, String)| {
+    let map = |(user_id, user_key, firstname, lastname): (i64, String, String, String)| {
         User::from_info(user_id, user_key, firstname, lastname)
     };
 
@@ -285,7 +285,7 @@ pub fn get_slot_owners(slot_id: i64) -> Option<Vec<User>> {
     }
 }
 
-pub fn is_slot_owner(slot_id: i64, user_id: u32) -> Option<bool> {
+pub fn is_slot_owner(slot_id: i64, user_id: i64) -> Option<bool> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)
@@ -304,7 +304,7 @@ pub fn is_slot_owner(slot_id: i64, user_id: u32) -> Option<bool> {
     };
 }
 
-pub fn add_slot_owner(slot_id: i64, user_id: u32) -> Option<()> {
+pub fn add_slot_owner(slot_id: i64, user_id: i64) -> Option<()> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO slot_owners (slot_id, user_id)
@@ -321,7 +321,7 @@ pub fn add_slot_owner(slot_id: i64, user_id: u32) -> Option<()> {
     }
 }
 
-pub fn remove_slot_owner(slot_id: i64, user_id: u32) -> Option<()> {
+pub fn remove_slot_owner(slot_id: i64, user_id: i64) -> Option<()> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "DELETE FROM slot_owners
@@ -341,7 +341,7 @@ pub fn remove_slot_owner(slot_id: i64, user_id: u32) -> Option<()> {
 
 /* COURSE RELATED */
 
-pub fn is_slot_moderator(slot_id: i64, user_id: u32) -> Option<bool> {
+pub fn is_slot_moderator(slot_id: i64, user_id: i64) -> Option<bool> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)
@@ -362,7 +362,7 @@ pub fn is_slot_moderator(slot_id: i64, user_id: u32) -> Option<bool> {
     };
 }
 
-pub fn edit_slot_in_course(slot_id: &u32, course_id: &Option<u32>) -> Option<()> {
+pub fn edit_slot_in_course(slot_id: i64, course_id: Option<i64>) -> Option<()> {
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(
@@ -382,7 +382,7 @@ pub fn edit_slot_in_course(slot_id: &u32, course_id: &Option<u32>) -> Option<()>
     }
 }
 
-pub fn is_slot_in_course(slot_id: &i64, course_id: &u32) -> Option<bool> {
+pub fn is_slot_in_course(slot_id: i64, course_id: i64) -> Option<bool> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)
@@ -401,7 +401,7 @@ pub fn is_slot_in_course(slot_id: &i64, course_id: &u32) -> Option<bool> {
     };
 }
 
-pub fn is_slot_in_any_course(slot_id: &i64) -> Option<bool> {
+pub fn is_slot_in_any_course(slot_id: i64) -> Option<bool> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)
@@ -442,7 +442,7 @@ pub fn list_slot_participants(slot_id: i64) -> Option<Vec<User>> {
     }
 }
 
-pub fn add_slot_participant(slot_id: i64, user_id: u32) -> Option<()> {
+pub fn add_slot_participant(slot_id: i64, user_id: i64) -> Option<()> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO slot_enrollments (slot_id, user_id)
@@ -459,7 +459,7 @@ pub fn add_slot_participant(slot_id: i64, user_id: u32) -> Option<()> {
     }
 }
 
-pub fn remove_slot_participant(slot_id: i64, user_id: u32) -> Option<()> {
+pub fn remove_slot_participant(slot_id: i64, user_id: i64) -> Option<()> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "DELETE FROM slot_enrollments

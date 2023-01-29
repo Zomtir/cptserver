@@ -33,7 +33,7 @@ pub fn event_edit(session: UserSession, slot_id: i64, mut slot: Json<Slot>) -> R
         },
     }
 
-    match crate::db_slot::edit_slot(&slot_id, &slot) {
+    match crate::db_slot::edit_slot(slot_id, &slot) {
         None => Err(ApiError::DB_CONFLICT),
         Some(()) => Ok(()),
     }
@@ -180,7 +180,7 @@ pub fn event_owner_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<U
 }
 
 #[rocket::head("/owner/event_owner_add?<slot_id>&<user_id>")]
-pub fn event_owner_add(session: UserSession, slot_id: i64, user_id: u32) -> Result<(),ApiError> {
+pub fn event_owner_add(session: UserSession, slot_id: i64, user_id: i64) -> Result<(),ApiError> {
     match crate::db_slot::is_slot_owner(slot_id, session.user.id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::SLOT_NO_OWNER),
@@ -194,7 +194,7 @@ pub fn event_owner_add(session: UserSession, slot_id: i64, user_id: u32) -> Resu
 }
 
 #[rocket::head("/owner/event_owner_remove?<slot_id>&<user_id>")]
-pub fn event_owner_remove(session: UserSession, slot_id: i64, user_id: u32) -> Result<(),ApiError> {
+pub fn event_owner_remove(session: UserSession, slot_id: i64, user_id: i64) -> Result<(),ApiError> {
     match crate::db_slot::is_slot_owner(slot_id, session.user.id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::SLOT_NO_OWNER),

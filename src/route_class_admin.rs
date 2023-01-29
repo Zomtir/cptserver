@@ -5,7 +5,7 @@ use crate::common::{Slot, User};
 use crate::session::UserSession;
 
 #[rocket::get("/admin/class_list?<course_id>")]
-pub fn class_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Slot>>, ApiError> {
+pub fn class_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Slot>>, ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
     match crate::db_slot::list_slots(None, None, None, Some(course_id), None) {
@@ -21,14 +21,14 @@ pub fn class_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Slot>
 )]
 pub fn class_create(
     session: UserSession,
-    course_id: u32,
+    course_id: i64,
     mut slot: Json<Slot>,
 ) -> Result<String, ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
     crate::common::validate_slot_dates(&mut slot);
 
-    match crate::db_slot::create_slot(&slot, "OCCURRING", &Some(course_id)) {
+    match crate::db_slot::create_slot(&slot, "OCCURRING", Some(course_id)) {
         None => Err(ApiError::DB_CONFLICT),
         Some(slot_id) => Ok(slot_id.to_string()),
     }
@@ -42,7 +42,7 @@ pub fn class_create(
 pub fn class_edit(session: UserSession, slot_id: i64, mut slot: Json<Slot>) -> Result<(), ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
-    match crate::db_slot::is_slot_in_any_course(&slot_id) {
+    match crate::db_slot::is_slot_in_any_course(slot_id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::SLOT_NO_COURSE),
         Some(true) => (),
@@ -50,7 +50,7 @@ pub fn class_edit(session: UserSession, slot_id: i64, mut slot: Json<Slot>) -> R
 
     crate::common::validate_slot_dates(&mut slot);
 
-    match crate::db_slot::edit_slot(&slot_id, &slot) {
+    match crate::db_slot::edit_slot(slot_id, &slot) {
         None => Err(ApiError::DB_CONFLICT),
         Some(..) => Ok(()),
     }
@@ -60,7 +60,7 @@ pub fn class_edit(session: UserSession, slot_id: i64, mut slot: Json<Slot>) -> R
 pub fn class_edit_password(session: UserSession, slot_id: i64, password: String) -> Result<(), ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
-    match crate::db_slot::is_slot_in_any_course(&slot_id) {
+    match crate::db_slot::is_slot_in_any_course(slot_id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::SLOT_NO_COURSE),
         Some(true) => (),
@@ -91,7 +91,7 @@ pub fn class_delete(session: UserSession, slot_id: i64) -> Result<(), ApiError> 
 pub fn class_owner_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<User>>,ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
     
-    match crate::db_slot::is_slot_in_any_course(&slot_id) {
+    match crate::db_slot::is_slot_in_any_course(slot_id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::SLOT_NO_COURSE),
         Some(true) => (),
@@ -104,10 +104,10 @@ pub fn class_owner_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<U
 }
 
 #[rocket::head("/admin/class_owner_add?<slot_id>&<user_id>")]
-pub fn class_owner_add(session: UserSession, slot_id: i64, user_id: u32) -> Result<(),ApiError> {
+pub fn class_owner_add(session: UserSession, slot_id: i64, user_id: i64) -> Result<(),ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
-    match crate::db_slot::is_slot_in_any_course(&slot_id) {
+    match crate::db_slot::is_slot_in_any_course(slot_id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::SLOT_NO_COURSE),
         Some(true) => (),
@@ -120,10 +120,10 @@ pub fn class_owner_add(session: UserSession, slot_id: i64, user_id: u32) -> Resu
 }
 
 #[rocket::head("/admin/class_owner_remove?<slot_id>&<user_id>")]
-pub fn class_owner_remove(session: UserSession, slot_id: i64, user_id: u32) -> Result<(),ApiError> {
+pub fn class_owner_remove(session: UserSession, slot_id: i64, user_id: i64) -> Result<(),ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
-    match crate::db_slot::is_slot_in_any_course(&slot_id) {
+    match crate::db_slot::is_slot_in_any_course(slot_id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::SLOT_NO_COURSE),
         Some(true) => (),
@@ -139,7 +139,7 @@ pub fn class_owner_remove(session: UserSession, slot_id: i64, user_id: u32) -> R
 pub fn class_participant_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<User>>, ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
-    match crate::db_slot::is_slot_in_any_course(&slot_id) {
+    match crate::db_slot::is_slot_in_any_course(slot_id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::SLOT_NO_COURSE),
         Some(true) => (),
@@ -152,10 +152,10 @@ pub fn class_participant_list(session: UserSession, slot_id: i64) -> Result<Json
 }
 
 #[rocket::head("/admin/class_participant_add?<slot_id>&<user_id>")]
-pub fn class_participant_add(session: UserSession, slot_id: i64, user_id: u32) -> Result<(), ApiError> {
+pub fn class_participant_add(session: UserSession, slot_id: i64, user_id: i64) -> Result<(), ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
-    match crate::db_slot::is_slot_in_any_course(&slot_id) {
+    match crate::db_slot::is_slot_in_any_course(slot_id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::SLOT_NO_COURSE),
         Some(true) => (),
@@ -168,10 +168,10 @@ pub fn class_participant_add(session: UserSession, slot_id: i64, user_id: u32) -
 }
 
 #[rocket::head("/admin/class_participant_remove?<slot_id>&<user_id>")]
-pub fn class_participant_remove(session: UserSession, slot_id: i64, user_id: u32) -> Result<(), ApiError> {
+pub fn class_participant_remove(session: UserSession, slot_id: i64, user_id: i64) -> Result<(), ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
-    match crate::db_slot::is_slot_in_any_course(&slot_id) {
+    match crate::db_slot::is_slot_in_any_course(slot_id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::SLOT_NO_COURSE),
         Some(true) => (),

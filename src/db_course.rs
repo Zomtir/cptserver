@@ -41,7 +41,7 @@ pub fn list_courses(mod_id: Option<i64>) -> Option<Vec<Course>> {
     }
 }
 
-pub fn available_courses(user_id : u32) -> Option<Vec<Course>> {
+pub fn available_courses(user_id: i64) -> Option<Vec<Course>> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("
         SELECT c.course_id, c.course_key, c.title, c.active,
@@ -61,7 +61,9 @@ pub fn available_courses(user_id : u32) -> Option<Vec<Course>> {
         WHERE c.active = TRUE
         AND c.threshold <= COALESCE(skill.rank,0)");
     
-    let params = params! { "user_id" => user_id};
+    let params = params! {
+        "user_id" => user_id,
+    };
 
     let map = |(course_id, course_key, course_title, active,
             branch_id, branch_key, branch_title, threshold,
@@ -77,7 +79,7 @@ pub fn available_courses(user_id : u32) -> Option<Vec<Course>> {
     }
 }
 
-pub fn responsible_courses(user_id : u32) -> Option<Vec<Course>> {
+pub fn responsible_courses(user_id: i64) -> Option<Vec<Course>> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("
         SELECT c.course_id, c.course_key, c.title, c.active,
@@ -89,7 +91,9 @@ pub fn responsible_courses(user_id : u32) -> Option<Vec<Course>> {
         JOIN course_moderators m ON c.course_id = m.course_id
         WHERE m.user_id = :user_id");
     
-    let params = params! { "user_id" => user_id};
+    let params = params! {
+        "user_id" => user_id,
+    };
 
     let map = |(course_id, course_key, course_title, active,
             branch_id, branch_key, branch_title, threshold,
@@ -127,14 +131,17 @@ pub fn create_course(course: &Course) -> Option<u32> {
     crate::db::get_last_id(conn)
 }
 
-pub fn list_course_moderators(course_id: &u32) -> Option<Vec<User>> {
+pub fn list_course_moderators(course_id: i64) -> Option<Vec<User>> {
     let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT u.user_id, u.user_key, u.firstname, u.lastname
-                          FROM users u
-                          JOIN course_moderators m ON m.user_id = u.user_id
-                          WHERE m.course_id = :course_id");
+    let stmt = conn.prep(
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname
+        FROM users u
+        JOIN course_moderators m ON m.user_id = u.user_id
+        WHERE m.course_id = :course_id");
 
-    let params = params! { "course_id" => course_id};
+    let params = params! {
+        "course_id" => course_id,
+    };
     let map = |(user_id, user_key, firstname, lastname)| {
         User::from_info(user_id, user_key, firstname, lastname)
     };
@@ -145,11 +152,12 @@ pub fn list_course_moderators(course_id: &u32) -> Option<Vec<User>> {
     }
 }
 
-pub fn is_course_moderator(course_id : & u32, user_id : & u32) -> Option<bool> {
+pub fn is_course_moderator(course_id: i64, user_id: i64) -> Option<bool> {
     let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT COUNT(1)
-                          FROM course_moderators
-                          WHERE course_id = :course_id AND user_id = :user_id");
+    let stmt = conn.prep(
+        "SELECT COUNT(1)
+        FROM course_moderators
+        WHERE course_id = :course_id AND user_id = :user_id");
 
     let params = params! {
         "course_id" => course_id,
@@ -163,7 +171,7 @@ pub fn is_course_moderator(course_id : & u32, user_id : & u32) -> Option<bool> {
     };
 }
 
-pub fn add_course_moderator(course_id: u32, user_id: u32) -> Option<()> {
+pub fn add_course_moderator(course_id: i64, user_id: i64) -> Option<()> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO course_moderators (course_id, user_id)
                           SELECT :course_id, :user_id");
@@ -178,7 +186,7 @@ pub fn add_course_moderator(course_id: u32, user_id: u32) -> Option<()> {
     }
 }
 
-pub fn remove_course_moderator(course_id: u32, user_id: u32) -> Option<()> {
+pub fn remove_course_moderator(course_id: i64, user_id: i64) -> Option<()> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE e FROM course_moderators e
                           WHERE course_id = :course_id AND user_id = :user_id").unwrap();

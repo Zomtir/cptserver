@@ -5,8 +5,8 @@ use crate::common::Slot;
 use crate::session::UserSession;
 
 #[rocket::get("/mod/class_list?<course_id>")]
-pub fn class_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Slot>>, ApiError> {
-    match crate::db_course::is_course_moderator(&course_id, &session.user.id) {
+pub fn class_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Slot>>, ApiError> {
+    match crate::db_course::is_course_moderator(course_id, session.user.id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::COURSE_NO_MODERATOR),
         Some(true) => (),
@@ -25,10 +25,10 @@ pub fn class_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Slot>
 )]
 pub fn class_create(
     session: UserSession,
-    course_id: u32,
+    course_id: i64,
     mut slot: Json<Slot>,
 ) -> Result<String, ApiError> {
-    match crate::db_course::is_course_moderator(&course_id, &session.user.id) {
+    match crate::db_course::is_course_moderator(course_id, session.user.id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::COURSE_NO_MODERATOR),
         Some(true) => (),
@@ -36,7 +36,7 @@ pub fn class_create(
 
     crate::common::validate_slot_dates(&mut slot);
 
-    match crate::db_slot::create_slot(&slot, "OCCURRING", &Some(course_id)) {
+    match crate::db_slot::create_slot(&slot, "OCCURRING", Some(course_id)) {
         None => Err(ApiError::DB_CONFLICT),
         Some(slot_id) => Ok(slot_id.to_string()),
     }
@@ -60,7 +60,7 @@ pub fn class_edit(
 
     crate::common::validate_slot_dates(&mut slot);
 
-    match crate::db_slot::edit_slot(&slot_id, &slot) {
+    match crate::db_slot::edit_slot(slot_id, &slot) {
         None => Err(ApiError::DB_CONFLICT),
         Some(..) => Ok(()),
     }

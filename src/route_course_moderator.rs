@@ -15,15 +15,15 @@ pub fn course_responsiblity(session: UserSession) -> Result<Json<Vec<Course>>, A
 #[rocket::get("/mod/course_moderator_list?<course_id>")]
 pub fn course_moderator_list(
     session: UserSession,
-    course_id: u32,
+    course_id: i64,
 ) -> Result<Json<Vec<User>>, ApiError> {
-    match crate::db_course::is_course_moderator(&course_id, &session.user.id) {
+    match crate::db_course::is_course_moderator(course_id, session.user.id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::COURSE_NO_MODERATOR),
         Some(true) => (),
     };
 
-    match crate::db_course::list_course_moderators(&course_id) {
+    match crate::db_course::list_course_moderators(course_id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(moderators) => Ok(Json(moderators)),
     }
@@ -32,10 +32,10 @@ pub fn course_moderator_list(
 #[rocket::head("/mod/course_moderator_add?<course_id>&<user_id>")]
 pub fn course_moderator_add(
     session: UserSession,
-    course_id: u32,
-    user_id: u32,
+    course_id: i64,
+    user_id: i64,
 ) -> Result<(), ApiError> {
-    match crate::db_course::is_course_moderator(&course_id, &session.user.id) {
+    match crate::db_course::is_course_moderator(course_id, session.user.id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::COURSE_NO_MODERATOR),
         Some(true) => (),
@@ -50,10 +50,10 @@ pub fn course_moderator_add(
 #[rocket::head("/mod/course_moderator_remove?<course_id>&<user_id>")]
 pub fn course_moderator_remove(
     session: UserSession,
-    course_id: u32,
-    user_id: u32,
+    course_id: i64,
+    user_id: i64,
 ) -> Result<(), ApiError> {
-    match crate::db_course::is_course_moderator(&course_id, &session.user.id) {
+    match crate::db_course::is_course_moderator(course_id, session.user.id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(false) => return Err(ApiError::COURSE_NO_MODERATOR),
         Some(true) => (),

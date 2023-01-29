@@ -59,7 +59,7 @@ pub fn course_edit(session: UserSession, course: Json<Course>) -> Result<(),ApiE
 }
 
 #[rocket::head("/admin/course_delete?<course_id>")]
-pub fn course_delete(session: UserSession, course_id: u32) -> Result<(),ApiError> {
+pub fn course_delete(session: UserSession, course_id: i64) -> Result<(),ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
     let mut conn : PooledConn = get_pool_conn();
@@ -74,17 +74,17 @@ pub fn course_delete(session: UserSession, course_id: u32) -> Result<(),ApiError
 }
 
 #[rocket::get("/admin/course_moderator_list?<course_id>")]
-pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Json<Vec<User>>, ApiError> {
+pub fn course_moderator_list(session: UserSession, course_id: i64) -> Result<Json<Vec<User>>, ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
-    match crate::db_course::list_course_moderators(&course_id) {
+    match crate::db_course::list_course_moderators(course_id) {
         None => return Err(ApiError::DB_CONFLICT),
         Some(moderators) => Ok(Json(moderators)),
     }
 }
 
 #[rocket::head("/admin/course_moderator_add?<course_id>&<user_id>")]
-pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u32) -> Result<(),ApiError> {
+pub fn course_moderator_add(session: UserSession, course_id: i64, user_id: i64) -> Result<(),ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
     match crate::db_course::add_course_moderator(course_id, user_id) {
@@ -94,7 +94,7 @@ pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u32) 
 }
 
 #[rocket::head("/admin/course_moderator_remove?<course_id>&<user_id>")]
-pub fn course_moderator_remove(session: UserSession, course_id: u32, user_id: u32) -> Result<(),ApiError> {
+pub fn course_moderator_remove(session: UserSession, course_id: i64, user_id: i64) -> Result<(),ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
     match crate::db_course::remove_course_moderator(course_id, user_id) {

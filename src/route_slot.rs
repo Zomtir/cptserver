@@ -47,7 +47,7 @@ pub fn slot_participant_list(session: SlotSession) -> Result<Json<Vec<User>>, Ap
 }
 
 #[rocket::head("/slot/slot_participant_add?<user_id>")]
-pub fn slot_participant_add(user_id: u32, session: SlotSession) -> Result<(), ApiError> {
+pub fn slot_participant_add(user_id: i64, session: SlotSession) -> Result<(), ApiError> {
     match crate::db_slot::add_slot_participant(session.slot_id, user_id) {
         None => Err(ApiError::DB_CONFLICT),
         Some(()) => Ok(()),
@@ -55,7 +55,7 @@ pub fn slot_participant_add(user_id: u32, session: SlotSession) -> Result<(), Ap
 }
 
 #[rocket::head("/slot/slot_participant_remove?<user_id>")]
-pub fn slot_participant_remove(user_id: u32, session: SlotSession) -> Result<(), ApiError> {
+pub fn slot_participant_remove(user_id: i64, session: SlotSession) -> Result<(), ApiError> {
     match crate::db_slot::remove_slot_participant(session.slot_id, user_id) {
         None => Err(ApiError::DB_CONFLICT),
         Some(()) => Ok(()),
