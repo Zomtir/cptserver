@@ -37,7 +37,7 @@ pub fn course_edit(session: UserSession, course: Json<Course>) -> Result<(),ApiE
         course_key = :course_key,
         title = :title,
         active = :active,
-        access_id = :access_id,
+        public = :public,
         branch_id = :branch_id,
         threshold = :threshold
         WHERE course_id = :course_id").unwrap();
@@ -47,7 +47,7 @@ pub fn course_edit(session: UserSession, course: Json<Course>) -> Result<(),ApiE
         "course_key" => &course.key,
         "title" => &course.title,
         "active" => &course.active,
-        "access_id" => &course.access.id,
+        "public" => &course.public,
         "branch_id" => &course.branch.id,
         "threshold" => &course.threshold,
     };

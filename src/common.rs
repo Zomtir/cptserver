@@ -53,7 +53,6 @@ pub struct Slot {
     pub end: chrono::NaiveDateTime,
     pub status: Option<String>,
     pub course_id: Option<u32>,
-    pub owners: Option<Vec<User>>,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -63,8 +62,8 @@ pub struct Course {
     pub title: String,
     pub branch: Branch,
     pub threshold: u8,
-    pub access: Access,
     pub active: bool,
+    pub public: bool,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
@@ -96,13 +95,6 @@ pub struct Location {
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Branch {
     pub id: u16,
-    pub key: String,
-    pub title: String,
-}
-
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Access {
-    pub id: u8,
     pub key: String,
     pub title: String,
 }

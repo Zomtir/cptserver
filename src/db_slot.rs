@@ -44,17 +44,12 @@ pub fn get_slot_info(slot_id: i64) -> Option<Slot> {
             title: location_title,
         },
         course_id: course_id,
-        owners: None,
     };
 
-    let mut slot: Slot = match conn.exec_map(&stmt.unwrap(), &params, &map) {
-        Err(..) => return None,
-        Ok(mut slots) => slots.remove(0),
-    };
-
-    //slot.owners = crate::db_slot::get_slot_owners(slot_id);
-
-    return Some(slot);
+    match conn.exec_map(&stmt.unwrap(), &params, &map) {
+        Err(..) => None,
+        Ok(mut slots) => Some(slots.remove(0)),
+    }
 }
 
 // TODO make a check that status is not an invalid string by implementing a proper trait
@@ -119,7 +114,6 @@ pub fn list_slots(
             title: location_title,
         },
         course_id: None,
-        owners: None,
     };
 
     match conn.exec_map(&stmt.unwrap(), &params, &map) {

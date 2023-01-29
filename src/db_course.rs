@@ -2,7 +2,7 @@ use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
-use crate::common::{User, Access, Course, Branch};
+use crate::common::{User, Course, Branch};
 
 /*
  * METHODS
@@ -11,12 +11,10 @@ use crate::common::{User, Access, Course, Branch};
 pub fn list_courses(mod_id: Option<i64>) -> Option<Vec<Course>> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT c.course_id, c.course_key, c.title, c.active,
-            b.branch_id, b.branch_key, b.title, c.threshold,
-            a.access_id, a.access_key, a.title
+        "SELECT c.course_id, c.course_key, c.title, c.active, c.public,
+            b.branch_id, b.branch_key, b.title, c.threshold
         FROM courses c
         JOIN branches b ON c.branch_id = b.branch_id
-        JOIN access a ON c.access_id = a.access_id
         LEFT JOIN course_moderators m ON c.course_id = m.course_id
         WHERE (:mod_id IS NULL OR m.user_id = :mod_id)
         GROUP BY c.course_id");
@@ -27,13 +25,12 @@ pub fn list_courses(mod_id: Option<i64>) -> Option<Vec<Course>> {
         "mod_id" => mod_id,
     };
 
-    let map = |(course_id, course_key, course_title, active,
-            branch_id, branch_key, branch_title, threshold,
-            access_id, access_key, access_title): (u32, String, String, bool, u16, String, String, u8, u8, String, String)|
+    let map = |(course_id, course_key, course_title, active, public,
+            branch_id, branch_key, branch_title, threshold)|
         Course {
-            id: course_id, key: course_key, title: course_title, active,
+            id: course_id, key: course_key, title: course_title, active, public,
             branch: Branch{id: branch_id, key: branch_key, title: branch_title}, threshold,
-            access: Access{id: access_id, key: access_key, title: access_title}};
+        };
     
     match conn.exec_map(&stmt.unwrap(),&params,&map) {
         Err(..) => None,
@@ -44,12 +41,10 @@ pub fn list_courses(mod_id: Option<i64>) -> Option<Vec<Course>> {
 pub fn available_courses(user_id: i64) -> Option<Vec<Course>> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("
-        SELECT c.course_id, c.course_key, c.title, c.active,
-            b.branch_id, b.branch_key, b.title, c.threshold,
-            a.access_id, a.access_key, a.title
+        SELECT c.course_id, c.course_key, c.title, c.active, c.public,
+            b.branch_id, b.branch_key, b.title, c.threshold
         FROM courses c
         JOIN branches b ON c.branch_id = b.branch_id
-        JOIN access a ON c.access_id = a.access_id
         LEFT JOIN
         (
             SELECT b.branch_id as branch_id, COALESCE(MAX(r.rank),0) as rank
@@ -65,13 +60,12 @@ pub fn available_courses(user_id: i64) -> Option<Vec<Course>> {
         "user_id" => user_id,
     };
 
-    let map = |(course_id, course_key, course_title, active,
-            branch_id, branch_key, branch_title, threshold,
-            access_id, access_key, access_title): (u32, String, String, bool, u16, String, String, u8, u8, String, String)|
+    let map = |(course_id, course_key, course_title, active, public,
+            branch_id, branch_key, branch_title, threshold)|
         Course {
-            id: course_id, key: course_key, title: course_title, active,
+            id: course_id, key: course_key, title: course_title, active, public,
             branch: Branch{id: branch_id, key: branch_key, title: branch_title}, threshold,
-            access: Access{id: access_id, key: access_key, title: access_title}};
+        };
     
     match conn.exec_map(&stmt.unwrap(),&params,&map) {
         Err(..) => None,
@@ -82,12 +76,10 @@ pub fn available_courses(user_id: i64) -> Option<Vec<Course>> {
 pub fn responsible_courses(user_id: i64) -> Option<Vec<Course>> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("
-        SELECT c.course_id, c.course_key, c.title, c.active,
-            b.branch_id, b.branch_key, b.title, c.threshold,
-            a.access_id, a.access_key, a.title
+        SELECT c.course_id, c.course_key, c.title, c.active, c.public,
+            b.branch_id, b.branch_key, b.title, c.threshold
         FROM courses c
         JOIN branches b ON c.branch_id = b.branch_id
-        JOIN access a ON c.access_id = a.access_id
         JOIN course_moderators m ON c.course_id = m.course_id
         WHERE m.user_id = :user_id");
     
@@ -95,13 +87,11 @@ pub fn responsible_courses(user_id: i64) -> Option<Vec<Course>> {
         "user_id" => user_id,
     };
 
-    let map = |(course_id, course_key, course_title, active,
-            branch_id, branch_key, branch_title, threshold,
-            access_id, access_key, access_title): (u32, String, String, bool, u16, String, String, u8, u8, String, String)|
+    let map = |(course_id, course_key, course_title, active, public,
+            branch_id, branch_key, branch_title, threshold)|
         Course {
-            id: course_id, key: course_key, title: course_title, active,
+            id: course_id, key: course_key, title: course_title, active, public,
             branch: Branch{id: branch_id, key: branch_key, title: branch_title}, threshold,
-            access: Access{id: access_id, key: access_key, title: access_title}
         };
     
     match conn.exec_map(&stmt.unwrap(),&params,&map) {
@@ -112,13 +102,13 @@ pub fn responsible_courses(user_id: i64) -> Option<Vec<Course>> {
 
 pub fn create_course(course: &Course) -> Option<u32> {
     let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("INSERT INTO courses (course_key, title, active, access_id, branch_id, threshold)
-        VALUES (:course_key, :title, :active, :access_id, :branch_id, :threshold)");
+    let stmt = conn.prep("INSERT INTO courses (course_key, title, active, public, branch_id, threshold)
+        VALUES (:course_key, :title, :active, :public, :branch_id, :threshold)");
     let params = params! {
         "course_key" => crate::common::random_string(10),
         "title" => &course.title,
         "active" => &course.active,
-        "access_id" => &course.access.id,
+        "public" => &course.public,
         "branch_id" => &course.branch.id,
         "threshold" => &course.threshold,
     };
