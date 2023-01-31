@@ -25,7 +25,16 @@ impl ::std::default::Default for DatabaseConfig {
 }
 
 pub fn connect_db() {
-    let db_conf : DatabaseConfig = confy::load_path("./Database.toml").unwrap();
+    let mut confdir: String = match std::env::var("ROCKET_CONFIG") {
+        Err(..) => ".".to_string(),
+        Ok(dir) => dir,
+    };
+
+    if confdir.is_empty() {confdir = ".".to_string()}
+
+    let confpath = format!("{}/{}", confdir, "Database.toml");
+
+    let db_conf : DatabaseConfig = confy::load_path(confpath).unwrap();
     println!("\u{1F5C4}  Configured DB server.");
     println!("    => address: {}", db_conf.server);
     println!("    => port: {:?}", db_conf.port);
