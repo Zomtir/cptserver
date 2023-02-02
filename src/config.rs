@@ -6,6 +6,7 @@ use serde::{Serialize, Deserialize};
 pub struct ServerConfig {
     pub rocket_address: String,
     pub rocket_port: u16,
+    pub rocket_log_level: String,
 
     pub db_server: String,
     pub db_port: u16,
@@ -18,6 +19,8 @@ impl ::std::default::Default for ServerConfig {
     fn default() -> Self { Self {
         rocket_address: "127.0.0.1".into(),
         rocket_port: 8000,
+        rocket_log_level: "Normal".into(),
+
         db_server: "localhost".into(),
         db_port: 3306,
         db_database: "cptdb".into(),
@@ -41,6 +44,7 @@ pub fn readConfig() -> ServerConfig {
     println!("Rocket settings");
     println!("    => address: {:?}", server_conf.rocket_address);
     println!("    => port: {:?}", server_conf.rocket_port);
+    println!("    => log level: {:?}", server_conf.rocket_log_level);
 
     println!("Database settings");
     println!("    => server: {:?}", server_conf.db_server);

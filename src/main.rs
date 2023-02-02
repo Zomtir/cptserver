@@ -59,6 +59,7 @@ fn rocket() -> _ {
     let rocket_config = rocket::Config {
         port: server_config.rocket_port,
         address: server_config.rocket_address.parse().unwrap(),
+        log_level: server_config.rocket_log_level.parse().unwrap(),
         ..rocket::Config::default()
     };
 
