@@ -4,28 +4,28 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct ServerConfig {
-    pub rocket_address: String,
-    pub rocket_port: u16,
-    pub rocket_log_level: String,
+    pub rocket_address: Option<String>,
+    pub rocket_port: Option<u16>,
+    pub rocket_log_level: Option<String>,
 
-    pub db_server: String,
-    pub db_port: u16,
-    pub db_database: String,
-    pub db_user: String,
-    pub db_password: String,
+    pub db_server: Option<String>,
+    pub db_port: Option<u16>,
+    pub db_database: Option<String>,
+    pub db_user: Option<String>,
+    pub db_password: Option<String>,
 }
 
 impl ::std::default::Default for ServerConfig {
     fn default() -> Self { Self {
-        rocket_address: "127.0.0.1".into(),
-        rocket_port: 8000,
-        rocket_log_level: "Normal".into(),
+        rocket_address: Some("127.0.0.1".into()),
+        rocket_port: Some(8000),
+        rocket_log_level: Some("Normal".into()),
 
-        db_server: "localhost".into(),
-        db_port: 3306,
-        db_database: "cptdb".into(),
-        db_user: "cptdb-user".into(),
-        db_password: "cptdb-password".into(),
+        db_server: Some("localhost".into()),
+        db_port: Some(3306),
+        db_database: Some("cptdb".into()),
+        db_user: Some("cptdb-user".into()),
+        db_password: Some("cptdb-password".into()),
     } }
 }
 

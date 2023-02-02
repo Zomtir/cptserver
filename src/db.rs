@@ -6,12 +6,11 @@ static mut POOL : Option<Pool> = None;
 
 pub fn connect_db(server_conf: &crate::config::ServerConfig) {
     let db_url = format!("mysql://{user}:{password}@{server}:{port}/{database}",
-        server =   server_conf.db_server,
-        port =     server_conf.db_port,
-        database = server_conf.db_database,
-        user =     server_conf.db_user,
-        password = server_conf.db_password,
-
+        server =   server_conf.db_server.clone().unwrap_or("127.0.0.1".into()),
+        port =     server_conf.db_port.clone().unwrap_or(3306),
+        database = server_conf.db_database.clone().unwrap_or("cptdb".into()),
+        user =     server_conf.db_user.clone().unwrap_or("cptdb-user".into()),
+        password = server_conf.db_password.clone().unwrap_or_default(),
     );
 
     unsafe {

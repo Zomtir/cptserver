@@ -1,5 +1,6 @@
 rocket_address = "127.0.0.1"
 rocket_port = 8000
+rocket_log_level = 'Normal'
 
 db_server = 'localhost'
 db_port = 3306

@@ -57,9 +57,9 @@ fn rocket() -> _ {
     db::connect_db(&server_config);
 
     let rocket_config = rocket::Config {
-        port: server_config.rocket_port,
-        address: server_config.rocket_address.parse().unwrap(),
-        log_level: server_config.rocket_log_level.parse().unwrap(),
+        address: server_config.rocket_address.unwrap_or("127.0.0.1".into()).parse().unwrap(),
+        port: server_config.rocket_port.unwrap_or(8000),
+        log_level: server_config.rocket_log_level.unwrap_or("Normal".into()).parse().unwrap(),
         ..rocket::Config::default()
     };
 
