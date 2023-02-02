@@ -1,50 +1,17 @@
-use serde::{Serialize, Deserialize};
 use mysql::{Pool, PooledConn, params};
 use mysql::prelude::Queryable;
 
 static mut POOL : Option<Pool> = None;
 
-#[derive(Serialize, Deserialize)]
-struct DatabaseConfig {
-    server: String,
-    port: u16,
-    user: String,
-    password: String,
-    database: String,
-}
 
-// This let's us assume that a config is present even if there is none
-impl ::std::default::Default for DatabaseConfig {
-    fn default() -> Self { Self {
-        server: "localhost".into(),
-        port: 3306,
-        user: "db-user".into(),
-        password: "db-password".into(),
-        database: "cpt".into(),
-    } }
-}
-
-pub fn connect_db() {
-    let mut confdir: String = match std::env::var("ROCKET_CONFIG") {
-        Err(..) => ".".to_string(),
-        Ok(dir) => dir,
-    };
-
-    if confdir.is_empty() {confdir = ".".to_string()}
-
-    let confpath = format!("{}/{}", confdir, "Database.toml");
-
-    let db_conf : DatabaseConfig = confy::load_path(confpath).unwrap();
-    println!("\u{1F5C4}  Configured DB server.");
-    println!("    => address: {}", db_conf.server);
-    println!("    => port: {:?}", db_conf.port);
-
+pub fn connect_db(server_conf: &crate::config::ServerConfig) {
     let db_url = format!("mysql://{user}:{password}@{server}:{port}/{database}",
-        server =   db_conf.server,
-        port =     db_conf.port,
-        user =     db_conf.user,
-        password = db_conf.password,
-        database = db_conf.database,
+        server =   server_conf.db_server,
+        port =     server_conf.db_port,
+        database = server_conf.db_database,
+        user =     server_conf.db_user,
+        password = server_conf.db_password,
+
     );
 
     unsafe {

@@ -52,7 +52,15 @@ fn index() -> &'static str {
 
 #[rocket::launch]
 fn rocket() -> _ {
-    db::connect_db();
+    let server_config = config::readConfig();
+
+    db::connect_db(&server_config);
+
+    let rocket_config = rocket::Config {
+        port: server_config.rocket_port,
+        address: server_config.rocket_address.parse().unwrap(),
+        ..rocket::Config::default()
+    };
 
     // CORS
     let allowed_origins = AllowedOrigins::all();
@@ -72,7 +80,7 @@ fn rocket() -> _ {
 
     //cors.expose_headers(&["Error-URI", "Error-Message"]);
 
-    rocket::build()
+    rocket::custom(&rocket_config)
         //.register(catchers![catchers::user_not_found])
         .mount("/", rocket::routes![index,
             route_anon::status, route_anon::location_list, route_anon::branch_list,

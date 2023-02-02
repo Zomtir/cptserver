@@ -1,0 +1,9 @@
+rocket_address = "127.0.0.1"
+rocket_port = 8000
+
+db_server = 'localhost'
+db_port = 3306
+db_database = 'cptdb'
+db_user = 'cptdb-user'
+db_password = 'cptdb-password'
+
