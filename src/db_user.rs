@@ -149,21 +149,27 @@ pub fn edit_user(user_id: i64, user: &User) -> Option<()> {
     }
 }
 
-pub fn edit_user_password(user_id: i64, password: String) -> Option<()> {
-    let bpassword: Vec<u8> = match crate::common::verify_hashed_password(&password) {
+pub fn edit_user_password(user_id: i64, password: &String, salt: &String) -> Option<()> {
+    let bpassword: Vec<u8> = match crate::common::decode_hash256(password) {
         Some(bpassword) => bpassword,
         None => return None,
     };
 
-    let pepper: Vec<u8> = crate::common::random_bytes(16);
-    let shapassword: Vec<u8> = crate::common::hash_sha256(&bpassword, &pepper);
+    let bsalt: Vec<u8> = match crate::common::decode_hash128(salt) {
+        Some(bsalt) => bsalt,
+        None => return None,
+    };
+
+    let bpepper: Vec<u8> = crate::common::random_bytes(16);
+    let shapassword: Vec<u8> = crate::common::hash_sha256(&bpassword, &bpepper);
 
     let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep("UPDATE users SET pwd = :pwd, pepper = :pepper WHERE user_id = :user_id");
+    let stmt = conn.prep("UPDATE users SET pwd = :pwd, pepper = :pepper, salt = :salt WHERE user_id = :user_id");
     let params = params! {
         "user_id" => &user_id,
         "pwd" => &shapassword,
-        "pepper" => &pepper,
+        "pepper" => &bpepper,
+        "salt" => &bsalt,
     };
 
     match conn.exec_drop(&stmt.unwrap(), &params) {

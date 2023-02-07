@@ -155,10 +155,10 @@ pub fn validate_clear_password(pwd: Option<String>) -> Option<String> {
     Some(password.to_string())
 }
 
-pub fn verify_hashed_password(password: & str) -> Option<Vec<u8>> {
-    match &password.len() {
+pub fn decode_hash256(hash: & str) -> Option<Vec<u8>> {
+    match &hash.len() {
         // Sha256 is 64 chars long
-        64 => match hex::decode(&password) {
+        64 => match hex::decode(&hash) {
             Ok(bytes) => Some(bytes),
             _ => None,
         },
@@ -166,15 +166,31 @@ pub fn verify_hashed_password(password: & str) -> Option<Vec<u8>> {
     }
 }
 
-pub fn hash_sha256(salt: &Vec<u8>, pepper: &Vec<u8>) -> Vec<u8> {
-    let mut spice : Vec<u8> = salt.clone();
-    spice.extend(pepper.iter().cloned());
-    let sha_spice = Sha256::digest(&spice);
+pub fn decode_hash128(hash: & str) -> Option<Vec<u8>> {
+    match &hash.len() {
+        // 128 bits are 32 chars long
+        32 => match hex::decode(&hash) {
+            Ok(bytes) => Some(bytes),
+            _ => None,
+        },
+        _ => None,
+    }
+}
 
-    // println!("spice bytes: {:?}", spice);
-    // println!("spice hex: {:x}", sha_spice);
+pub fn hash_sha256(meal: &Vec<u8>, pepper: &Vec<u8>) -> Vec<u8> {
+    let spiced_meal : Vec<u8> = meal.iter().cloned().chain(pepper.iter().cloned()).collect();
+    let digested_meal = Sha256::digest(&spiced_meal);
 
-    return sha_spice.to_vec();
+    // println!("spiced meal: {:?}", spiced_meal);
+    // println!("digested meal: {:?}", digested_meal);
+
+    return digested_meal.to_vec();
+}
+
+pub fn hash128_string(meal: &String) -> Vec<u8> {
+    let digested_meal = Sha256::digest(meal.as_bytes());
+
+    return digested_meal[..=15].to_vec();
 }
 
 pub fn random_bytes(size: usize) -> Vec<u8> {

@@ -84,7 +84,10 @@ fn rocket() -> _ {
     rocket::custom(&rocket_config)
         //.register(catchers![catchers::user_not_found])
         .mount("/", rocket::routes![index,
-            route_anon::status, route_anon::location_list, route_anon::branch_list,
+            route_anon::status,
+            route_anon::location_list,
+            route_anon::branch_list,
+            route_anon::user_salt,
             route_login::user_login,
             route_login::slot_login,
             route_login::location_login,

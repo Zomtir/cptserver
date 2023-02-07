@@ -1,27 +1,13 @@
 use rocket::serde::json::Json;
-use serde::{Serialize, Deserialize};
 
 use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
 use crate::api::ApiError;
-use crate::session::{USERSESSIONS, SLOTSESSIONS, UserSession, SlotSession};
+use crate::session::{USERSESSIONS, SLOTSESSIONS, UserSession, SlotSession, Credential};
 use crate::common::{User, Right};
 
-/* 
- * STRUCTS
- */
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Credential {
-    login: String,
-    password: String,
-}
-
-/* 
- * METHODS
- */
 
 #[rocket::post("/user_login", format = "application/json", data = "<credit>")]
 pub fn user_login(credit: Json<Credential>) -> Result<String,ApiError> {
@@ -52,14 +38,15 @@ pub fn user_login(credit: Json<Credential>) -> Result<String,ApiError> {
         return Err(ApiError::USER_DISABLED);
     }
 
-    let bpassword : Vec<u8> = match crate::common::verify_hashed_password(&credit.password){
+    let bpassword : Vec<u8> = match crate::common::decode_hash256(&credit.password){
         Some(bpassword) => bpassword,
         None => return Err(ApiError::USER_BAD_PASSWORD),
     };
 
     let user_pepper : Vec<u8> = row.take("pepper").unwrap();
     let user_shapwd : Vec<u8> = crate::common::hash_sha256(&bpassword, &user_pepper);
-    //println!("{}", hex::encode(user_shapwd.clone()));
+
+    println!("User {} tries to login with hash {}", credit.login, hex::encode(user_shapwd.clone()));
 
     let user_pwd : Vec<u8> = row.take("pwd").unwrap();
     if user_pwd != user_shapwd {
@@ -142,7 +129,7 @@ pub fn location_login(location_key: String) -> Result<String,ApiError>  {
         AND autologin = 1").unwrap();
     let params = params! { "location_key" => location_key, };
     let map = |(slot_key, slot_pwd) : (i64, String)| {
-        Credential { login: slot_key.to_string(), password: slot_pwd }
+        Credential { login: slot_key.to_string(), password: slot_pwd, salt: "".into()}
     };
 
     let credentials = conn.exec_map(&stmt,&params,&map).unwrap();
