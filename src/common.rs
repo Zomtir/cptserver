@@ -214,7 +214,7 @@ pub fn validate_slot_dates(slot: &mut Slot) -> Option<()> {
 
     let earliest_end = slot.begin + crate::config::CONFIG_SLOT_WINDOW_MINIMUM();
 
-    if earliest_end < slot.end {
+    if earliest_end > slot.end {
         slot.end = earliest_end;
     }
 
