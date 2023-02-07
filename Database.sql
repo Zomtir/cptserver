@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8001
--- Generation Time: Jan 29, 2023 at 08:51 PM
+-- Generation Time: Feb 07, 2023 at 06:44 PM
 -- Server version: 10.6.11-MariaDB-0ubuntu0.22.10.1
 -- PHP Version: 8.1.7-1ubuntu3.2
 
@@ -20,18 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `cptdb`
 --
-
--- --------------------------------------------------------
-
---
--- Table structure for table `access`
---
-
-CREATE TABLE `access` (
-  `access_id` smallint(6) NOT NULL,
-  `access_key` char(10) NOT NULL,
-  `title` tinytext NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -70,8 +58,8 @@ CREATE TABLE `courses` (
   `title` varchar(100) NOT NULL,
   `branch_id` smallint(6) NOT NULL,
   `threshold` int(11) NOT NULL,
-  `access_id` smallint(6) NOT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1
+  `active` tinyint(1) NOT NULL DEFAULT 1,
+  `public` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -265,6 +253,7 @@ CREATE TABLE `users` (
   `user_key` char(6) NOT NULL,
   `pwd` binary(32) NOT NULL,
   `pepper` binary(16) NOT NULL,
+  `salt` binary(16) NOT NULL,
   `firstname` tinytext NOT NULL,
   `lastname` tinytext NOT NULL,
   `enabled` tinyint(1) NOT NULL DEFAULT 0
@@ -292,12 +281,6 @@ CREATE TABLE `user_detail` (
 --
 
 --
--- Indexes for table `access`
---
-ALTER TABLE `access`
-  ADD PRIMARY KEY (`access_id`);
-
---
 -- Indexes for table `address`
 --
 ALTER TABLE `address`
@@ -316,8 +299,7 @@ ALTER TABLE `branches`
 ALTER TABLE `courses`
   ADD PRIMARY KEY (`course_id`),
   ADD UNIQUE KEY `KEY` (`course_key`),
-  ADD KEY `REF_branch` (`branch_id`) USING BTREE,
-  ADD KEY `REF_access` (`access_id`);
+  ADD KEY `REF_branch` (`branch_id`) USING BTREE;
 
 --
 -- Indexes for table `course_moderators`
@@ -440,12 +422,6 @@ ALTER TABLE `user_detail`
 --
 
 --
--- AUTO_INCREMENT for table `access`
---
-ALTER TABLE `access`
-  MODIFY `access_id` smallint(6) NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT for table `address`
 --
 ALTER TABLE `address`
@@ -519,8 +495,7 @@ ALTER TABLE `users`
 -- Constraints for table `courses`
 --
 ALTER TABLE `courses`
-  ADD CONSTRAINT `courses_ibfk_1` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`branch_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `courses_ibfk_2` FOREIGN KEY (`access_id`) REFERENCES `access` (`access_id`);
+  ADD CONSTRAINT `courses_ibfk_1` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`branch_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `course_moderators`
