@@ -90,8 +90,9 @@ pub fn create_team(team: &Team) -> Option<u32> {
         "name" => &team.name,
         "description" => &team.description,
         "admin_courses" => &team.right.admin_courses,
-        "admin_rankings" => &team.right.admin_rankings,
         "admin_event" => &team.right.admin_event,
+        "admin_inventory" => &team.right.admin_inventory,
+        "admin_rankings" => &team.right.admin_rankings,
         "admin_teams" => &team.right.admin_teams,
         "admin_term" => &team.right.admin_term,
         "admin_users" => &team.right.admin_users,
@@ -112,9 +113,11 @@ pub fn edit_team(team_id: &u32, team: &Team) -> Option<()> {
             name = :name,
             description = :description,
             admin_courses = :admin_courses,
-            admin_rankings = :admin_rankings,
             admin_event = :admin_event,
+            admin_inventory = :admin_inventory,
+            admin_rankings = :admin_rankings,
             admin_teams = :admin_teams,
+            admin_term = :admin_term,
             admin_users = :admin_users
         WHERE team_id = :team_id",
     );
@@ -124,9 +127,11 @@ pub fn edit_team(team_id: &u32, team: &Team) -> Option<()> {
         "name" => &team.name,
         "description" => &team.description,
         "admin_courses" => &team.right.admin_courses,
-        "admin_rankings" => &team.right.admin_rankings,
         "admin_event" => &team.right.admin_event,
+        "admin_inventory" => &team.right.admin_inventory,
+        "admin_rankings" => &team.right.admin_rankings,
         "admin_teams" => &team.right.admin_teams,
+        "admin_term" => &team.right.admin_term,
         "admin_users" => &team.right.admin_users,
     };
 
