@@ -1,7 +1,7 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Right, Team};
+use crate::common::{Right, Team, User};
 use crate::db::get_pool_conn;
 
 /*
@@ -144,6 +144,27 @@ pub fn delete_team(team_id: &u32) -> Option<()> {
     match conn.exec_drop(&stmt.unwrap(), &params) {
         Err(..) => None,
         Ok(..) => Some(()),
+    }
+}
+
+pub fn list_team_members(team_id: u32) -> Option<Vec<User>> {
+    let mut conn : PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname
+        FROM users u
+        JOIN team_members m ON m.user_id = u.user_id
+        WHERE m.team_id = :team_id");
+
+    let params = params! {
+        "team_id" => team_id,
+    };
+    let map = |(user_id, user_key, firstname, lastname)| {
+        User::from_info(user_id, user_key, firstname, lastname)
+    };
+
+    match conn.exec_map(&stmt.unwrap(), &params, &map) {
+        Err(..) => None,
+        Ok(members) => Some(members),
     }
 }
 

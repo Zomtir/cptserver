@@ -1,8 +1,8 @@
 use rocket::serde::json::Json;
 
 use crate::api::ApiError;
-use crate::session::{UserSession};
-use crate::common::{Team};
+use crate::session::UserSession;
+use crate::common::{Team, User};
 
 /* ROUTES */
 
@@ -46,8 +46,18 @@ pub fn team_delete(session: UserSession, team_id: u32) -> Result<(), ApiError> {
     }
 }
 
-#[rocket::head("/admin/team_enrol?<team_id>&<user_id>")]
-pub fn team_enrol(session: UserSession, team_id: u32, user_id: u32) -> Result<(), ApiError> {
+#[rocket::get("/admin/team_member_list?<team_id>")]
+pub fn team_member_list(session: UserSession, team_id: u32) -> Result<Json<Vec<User>>, ApiError> {
+    if !session.right.admin_teams {return Err(ApiError::RIGHT_NO_TEAM)};
+
+    match crate::db_team::list_team_members(team_id) {
+        None => Err(ApiError::DB_CONFLICT),
+        Some(users) => Ok(Json(users)),
+    }
+}
+
+#[rocket::head("/admin/team_member_add?<team_id>&<user_id>")]
+pub fn team_member_add(session: UserSession, team_id: u32, user_id: u32) -> Result<(), ApiError> {
     if !session.right.admin_teams {return Err(ApiError::RIGHT_NO_TEAM)};
 
     match crate::db_team::add_team_member(&team_id, &user_id) {
@@ -58,8 +68,8 @@ pub fn team_enrol(session: UserSession, team_id: u32, user_id: u32) -> Result<()
     // TODO: remove/add permissions of currently logged-in users
 }
 
-#[rocket::head("/admin/team_dismiss?<team_id>&<user_id>")]
-pub fn team_dismiss(session: UserSession, team_id: u32, user_id: u32) -> Result<(), ApiError> {
+#[rocket::head("/admin/team_member_remove?<team_id>&<user_id>")]
+pub fn team_member_remove(session: UserSession, team_id: u32, user_id: u32) -> Result<(), ApiError> {
     if !session.right.admin_teams {return Err(ApiError::RIGHT_NO_TEAM)};
 
     match crate::db_team::remove_team_member(&team_id, &user_id) {
