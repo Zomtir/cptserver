@@ -69,13 +69,14 @@ pub fn get_user_detailed(user_id: i64) -> Option<User> {
 pub fn create_user(user: &User) -> Option<u32> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "INSERT INTO users (user_key, pwd, pepper, firstname, lastname, enabled)
-        VALUES (:user_key, :pwd, :pepper, :firstname, :lastname, :enabled);",
+        "INSERT INTO users (user_key, pwd, pepper, salt, firstname, lastname, enabled)
+        VALUES (:user_key, :pwd, :pepper, :salt, :firstname, :lastname, :enabled);",
     );
     let params = params! {
         "user_key" => crate::common::random_string(6),
         "pwd" => crate::common::random_string(10),
         "pepper" => crate::common::random_bytes(16),
+        "salt" => crate::common::random_bytes(16),
         "firstname" => &user.firstname,
         "lastname" => &user.lastname,
         "enabled" => user.enabled.unwrap_or(false),
