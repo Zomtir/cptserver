@@ -22,10 +22,8 @@ pub fn course_list(session: UserSession, mod_id: Option<i64>) -> Result<Json<Vec
 pub fn course_create(session: UserSession, course: Json<Course>) -> Result<String, ApiError> {
     if !session.right.admin_courses {return Err(ApiError::RIGHT_NO_COURSES)};
 
-    match crate::db_course::create_course(&course) {
-        None => Err(ApiError::DB_CONFLICT),
-        Some(id) => Ok(id.to_string()),
-    }
+    let id = crate::db_course::create_course(&course)?;
+    Ok(id.to_string())
 }
 
 #[rocket::post("/admin/course_edit", format = "application/json", data = "<course>")]

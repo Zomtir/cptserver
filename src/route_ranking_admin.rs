@@ -18,10 +18,8 @@ pub fn ranking_list(session: UserSession, user_id: Option<i64>, branch_id: Optio
 pub fn ranking_create(session: UserSession, ranking: Json<Ranking>) -> Result<String, ApiError> {
     if !session.right.admin_rankings {return Err(ApiError::RIGHT_NO_RANKINGS)};
 
-    match crate::db_ranking::create_ranking(&ranking) {
-        None => Err(ApiError::DB_CONFLICT),
-        Some(id) => Ok(id.to_string()),
-    }
+    let id = crate::db_ranking::create_ranking(&ranking)?;
+    Ok(id.to_string())
 }
 
 #[rocket::post("/admin/ranking_edit?<ranking_id>", format = "application/json", data = "<ranking>")]

@@ -28,10 +28,8 @@ pub fn class_create(
 
     crate::common::validate_slot_dates(&mut slot);
 
-    match crate::db_slot::create_slot(&slot, "OCCURRING", Some(course_id)) {
-        None => Err(ApiError::DB_CONFLICT),
-        Some(slot_id) => Ok(slot_id.to_string()),
-    }
+    let id = crate::db_slot::create_slot(&slot, "OCCURRING", Some(course_id))?;
+    Ok(id.to_string())
 }
 
 #[rocket::post(

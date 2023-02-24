@@ -3,6 +3,7 @@ use mysql::{params, PooledConn};
 
 use crate::common::{Location, Slot, User};
 use crate::db::get_pool_conn;
+use crate::error::CptError;
 
 /*
  * METHODS
@@ -122,7 +123,7 @@ pub fn list_slots(
     }
 }
 
-pub fn create_slot(slot: &Slot, status: &str, course_id: Option<i64>) -> Option<i64> {
+pub fn create_slot(slot: &Slot, status: &str, course_id: Option<i64>) -> Result<i64, CptError> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO slots (slot_key, pwd, title, status, autologin, location_id, begin, end, course_id)
@@ -140,12 +141,9 @@ pub fn create_slot(slot: &Slot, status: &str, course_id: Option<i64>) -> Option<
         "course_id" => &course_id,
     };
 
-    match conn.exec_drop(&stmt.unwrap(), &params) {
-        Err(..) => return None,
-        Ok(..) => (),
-    };
+    conn.exec_drop(&stmt.unwrap(), &params)?;
 
-    crate::db::get_last_id(conn)
+    crate::db::get_last_id(&mut conn)
 }
 
 pub fn edit_slot(slot_id: i64, slot: &Slot) -> Option<()> {

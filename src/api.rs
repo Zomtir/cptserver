@@ -3,6 +3,8 @@ use rocket::response::{self, Response, Responder};
 use rocket::outcome::Outcome::{Failure};
 use rocket::http::Status;
 
+use crate::error::CptError;
+
 #[derive(Debug)]
 pub struct ApiError {
     // the unique identifier of this error type (URI)
@@ -44,10 +46,11 @@ macro_rules! ctrs {
 impl ApiError {
 
     ctrs! {
+        DEFAULT_ERROR => 400, "Default error.",
+
         USER_NO_ENTRY => 400, "This user has no entry in the database.",
         USER_WRONG_PASSWORD => 400, "Password does not belong to this user.",
         USER_BAD_PASSWORD => 400, "Password has invalid formatting.",
-        USER_BAD_EMAIL => 400, "Email has invalid formatting.",
         USER_DISABLED => 400, "The user account is disabled.",
         SLOT_NO_ENTRY => 400, "This slot has no entry in the database.",
         SLOT_NO_OWNER => 400, "You do not own the slot.",
@@ -76,5 +79,12 @@ impl ApiError {
         INVALID_RANGE => 400, "The implied range is out of scope.",
 
         DB_CONFLICT => 409, "The database query failed. Might still be your fault because you didn't refresh."
+    }
+}
+
+
+impl From<CptError> for ApiError {
+    fn from(_: CptError) -> Self {
+        ApiError::DEFAULT_ERROR
     }
 }

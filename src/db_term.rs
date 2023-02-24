@@ -3,6 +3,7 @@ use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
 use crate::common::{Term, User};
+use crate::error::CptError;
 
 pub fn list_terms(user_id: Option<i64>) -> Option<Vec<Term>> {
     let mut conn : PooledConn = get_pool_conn();
@@ -33,7 +34,7 @@ pub fn list_terms(user_id: Option<i64>) -> Option<Vec<Term>> {
     }
 }
 
-pub fn create_term(term: &Term) -> Option<u32> {
+pub fn create_term(term: &Term) -> Result<u32, CptError> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO terms (user_id, begin, end)
         VALUES (:user_id, :begin, :end)");
@@ -43,12 +44,9 @@ pub fn create_term(term: &Term) -> Option<u32> {
         "end" => &term.end,
     };
 
-    match conn.exec_drop(&stmt.unwrap(),&params) {
-        Err(..) => return None,
-        Ok(..) => (),
-    };
-
-    crate::db::get_last_id(conn)
+    conn.exec_drop(&stmt.unwrap(),&params)?;
+    
+    crate::db::get_last_id(&mut conn)
 }
 
 pub fn edit_term(term_id: i64, term: &Term) -> Option<()> {

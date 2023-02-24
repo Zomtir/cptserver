@@ -3,11 +3,12 @@ use regex::Regex;
 use serde::{Serialize, Deserialize};
 use sha2::{Sha256, Digest};
 
+use crate::error::CptError;
+
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct User {
     pub id: i64,
-    pub key: String,
-    pub pwd: Option<String>,
+    pub key: Option<String>,
     pub enabled: Option<bool>,
     pub firstname: String,
     pub lastname: String,
@@ -24,8 +25,7 @@ impl User {
     pub fn from_info(id: i64, key: String, firstname: String, lastname: String) -> User {
         User {
             id: id,
-            key: key,
-            pwd: None,
+            key: Some(key),
             enabled: None,
             firstname: firstname,
             lastname: lastname,
@@ -124,22 +124,38 @@ pub struct Term {
  * METHODS
  */
 
-pub fn verify_email(email: &Option<String>) -> Option<bool> {
-    let text = match email {
-        None => return None,
+pub fn random_string(size: usize) -> String {
+    rand::thread_rng().sample_iter(&rand::distributions::Alphanumeric).take(size).map(char::from).collect()
+}
+
+pub fn validate_user_key(key: &Option<String>) -> Result<Option<String>, CptError> {
+    let text = match key {
+        None => return Ok(None),
         Some(text) => text,
     };
 
-    if text.is_empty() { return None; };
+    if text.is_empty() { return Ok(None); };
 
-    match Regex::new(r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})") {
-        Err(..) => Some(false),
-        Ok(regex) => Some(regex.is_match(&text)),
-    }
+    if text.len() < 2 || text.len() > 20 {return Err(CptError::UserKeyBad)};
+
+    Ok(key.clone())
 }
 
-pub fn random_string(size: usize) -> String {
-    rand::thread_rng().sample_iter(&rand::distributions::Alphanumeric).take(size).map(char::from).collect()
+pub fn validate_email(email: &Option<String>) -> Result<Option<String>, CptError> {
+    let text = match email {
+        None => return Ok(None),
+        Some(text) => text,
+    };
+
+    if text.is_empty() { return Ok(None); };
+
+    match Regex::new(r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})") {
+        Err(..) => Err(CptError::RegexError),
+        Ok(regex) => match regex.is_match(&text) {
+            false => Err(CptError::UserEmailBad),
+            true => Ok(email.clone()),
+        },
+    }
 }
 
 pub fn validate_clear_password(pwd: Option<String>) -> Option<String> {
@@ -219,10 +235,4 @@ pub fn validate_slot_dates(slot: &mut Slot) -> Option<()> {
     }
 
     return Some(())
-}
-
-pub fn censor_user(user_id: i64, user: &mut User) {
-    user.id = user_id;
-    user.pwd = None;
-    //user.enabled = None;
 }

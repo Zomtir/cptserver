@@ -12,7 +12,7 @@ use crate::common::{User, Right};
 pub fn user_info(session: UserSession) -> Json<User> {
     Json(User::from_info(
         session.user.id,
-        session.user.key,
+        session.user.key.unwrap(),
         session.user.firstname,
         session.user.lastname,
     ))

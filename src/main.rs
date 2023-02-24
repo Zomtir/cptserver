@@ -16,6 +16,7 @@ mod db_term;
 mod db_user;
 
 mod api;
+mod error;
 mod common;
 mod session;
 pub mod clock;

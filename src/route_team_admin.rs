@@ -20,10 +20,8 @@ pub fn team_list(session: UserSession) -> Result<Json<Vec<Team>>, ApiError> {
 pub fn team_create(session: UserSession, team: Json<Team>) -> Result<String, ApiError> {
     if !session.right.admin_teams {return Err(ApiError::RIGHT_NO_TEAM)};
 
-    match crate::db_team::create_team(&team) {
-        None => Err(ApiError::DB_CONFLICT),
-        Some(team_id) => Ok(team_id.to_string()),
-    }
+    let team_id = crate::db_team::create_team(&team)?;
+    Ok(team_id.to_string())
 }
 
 #[rocket::post("/admin/team_edit?<team_id>", format = "application/json", data = "<team>")]

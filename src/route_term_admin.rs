@@ -18,10 +18,8 @@ pub fn term_list(session: UserSession, user_id: Option<i64>) -> Result<Json<Vec<
 pub fn term_create(session: UserSession, term: Json<Term>) -> Result<String, ApiError> {
     if !session.right.admin_term {return Err(ApiError::RIGHT_NO_TERM)};
 
-    match crate::db_term::create_term(&term) {
-        None => Err(ApiError::DB_CONFLICT),
-        Some(id) => Ok(id.to_string()),
-    }
+    let id = crate::db_term::create_term(&term)?;
+    Ok(id.to_string())
 }
 
 #[rocket::post("/term_edit?<term_id>", format = "application/json", data = "<term>")]

@@ -23,10 +23,7 @@ pub fn event_list(session: UserSession, status: Option<String>) -> Result<Json<V
 pub fn event_create(session: UserSession, mut slot: Json<Slot>) -> Result<String, ApiError> {
     crate::common::validate_slot_dates(&mut slot);
 
-    let slot_id = match crate::db_slot::create_slot(&mut slot, &"DRAFT", None) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(slot_id) => slot_id,
-    };
+    let slot_id = crate::db_slot::create_slot(&mut slot, &"DRAFT", None)?;
 
     match crate::db_slot::add_slot_owner(slot.id, session.user.id) {
         None => Err(ApiError::DB_CONFLICT),

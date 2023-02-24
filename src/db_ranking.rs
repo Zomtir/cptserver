@@ -3,6 +3,7 @@ use mysql::{params, PooledConn};
 
 use crate::common::{Branch, Ranking, User};
 use crate::db::get_pool_conn;
+use crate::error::CptError;
 
 pub fn list_rankings(
     user_id: Option<i64>,
@@ -67,7 +68,7 @@ pub fn list_rankings(
     return Some(rankings);
 }
 
-pub fn create_ranking(ranking: &Ranking) -> Option<u32> {
+pub fn create_ranking(ranking: &Ranking) -> Result<u32, CptError> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO rankings (user_id, branch_id, `rank`, date, judge_id)
@@ -81,12 +82,9 @@ pub fn create_ranking(ranking: &Ranking) -> Option<u32> {
         "judge_id" => &ranking.judge.id,
     };
 
-    match conn.exec_drop(&stmt.unwrap(), &params) {
-        Err(..) => return None,
-        Ok(..) => (),
-    };
+    conn.exec_drop(&stmt.unwrap(), &params)?;
 
-    crate::db::get_last_id(conn)
+    crate::db::get_last_id(&mut conn)
 }
 
 pub fn edit_ranking(ranking_id: i64, ranking: &Ranking) -> Option<()> {
