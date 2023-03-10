@@ -19,6 +19,7 @@ pub struct User {
     pub birthday: Option<chrono::NaiveDateTime>,
     pub gender: Option<String>,
     pub organization_id: Option<i64>,
+    pub mediapermission: Option<bool>,
 }
 
 impl User {
@@ -36,6 +37,7 @@ impl User {
             birthday: None,
             gender: None,
             organization_id: None,
+            mediapermission: None,
         }
     }
 }

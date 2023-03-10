@@ -44,7 +44,8 @@ pub fn get_user_detailed(user_id: i64) -> Option<User> {
             iban,
             birthday,
             gender,
-            organization_id
+            organization_id,
+            mediapermission
         FROM users
         LEFT JOIN user_detail ON user_detail.user_id = users.user_id
         WHERE users.user_id = :user_id;");
@@ -54,10 +55,10 @@ pub fn get_user_detailed(user_id: i64) -> Option<User> {
     };
 
     let map = |(user_id, user_key, enabled, firstname, lastname,
-                email, phone, iban, birthday, gender, organization_id)| {
+                email, phone, iban, birthday, gender, organization_id, mediapermission)| {
         User{
             id: user_id, key: user_key, enabled, firstname, lastname,
-            address: None, email, phone, iban, birthday, gender, organization_id
+            address: None, email, phone, iban, birthday, gender, organization_id, mediapermission
         }
     };
 
