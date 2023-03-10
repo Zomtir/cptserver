@@ -1,0 +1,12 @@
+[Unit]
+Description=CPT Server
+After=multi-user.target
+
+[Service]
+Environment=CPTSERVER_CONFIG=/opt/cptserver/
+ExecStart=/opt/cptserver/cptserver
+Restart=always
+RestartSec=60s
+
+[Install]
+WantedBy=multi-user.target
