@@ -2,10 +2,10 @@
 -- version 5.1.4deb1
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost:8001
--- Generation Time: Feb 07, 2023 at 06:44 PM
--- Server version: 10.6.11-MariaDB-0ubuntu0.22.10.1
--- PHP Version: 8.1.7-1ubuntu3.2
+-- Host: localhost:3306
+-- Generation Time: Mar 10, 2023 at 04:10 PM
+-- Server version: 10.6.12-MariaDB-0ubuntu0.22.10.1
+-- PHP Version: 8.1.7-1ubuntu3.3
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,21 +18,8 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `cptdb`
+-- Database: `tsv`
 --
-
--- --------------------------------------------------------
-
---
--- Table structure for table `address`
---
-
-CREATE TABLE `address` (
-  `address_id` mediumint(9) NOT NULL,
-  `city_code` mediumint(9) NOT NULL,
-  `city_name` varchar(30) NOT NULL,
-  `street` varchar(30) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -267,24 +254,19 @@ CREATE TABLE `users` (
 
 CREATE TABLE `user_detail` (
   `user_id` mediumint(9) NOT NULL,
-  `address_id` mediumint(9) DEFAULT NULL,
+  `address` varchar(60) DEFAULT NULL,
   `email` tinytext DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `iban` char(22) DEFAULT NULL,
   `birthday` date DEFAULT NULL,
   `gender` enum('MALE','FEMALE','OTHER') DEFAULT NULL,
-  `organization_id` mediumint(9) DEFAULT NULL
+  `organization_id` mediumint(9) DEFAULT NULL,
+  `mediapermission` tinyint(1) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Indexes for dumped tables
 --
-
---
--- Indexes for table `address`
---
-ALTER TABLE `address`
-  ADD PRIMARY KEY (`address_id`);
 
 --
 -- Indexes for table `branches`
@@ -414,18 +396,11 @@ ALTER TABLE `users`
 -- Indexes for table `user_detail`
 --
 ALTER TABLE `user_detail`
-  ADD PRIMARY KEY (`user_id`),
-  ADD KEY `address_id` (`address_id`);
+  ADD PRIMARY KEY (`user_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
 --
-
---
--- AUTO_INCREMENT for table `address`
---
-ALTER TABLE `address`
-  MODIFY `address_id` mediumint(9) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `branches`
@@ -515,9 +490,9 @@ ALTER TABLE `course_subscriptions`
 -- Constraints for table `inventory`
 --
 ALTER TABLE `inventory`
-  ADD CONSTRAINT `inventory_ibfk_1` FOREIGN KEY (`owner_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`possessor_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `inventory_ibfk_3` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `inventory_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`owner_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `inventory_ibfk_3` FOREIGN KEY (`possessor_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `items`
@@ -577,8 +552,7 @@ ALTER TABLE `terms`
 -- Constraints for table `user_detail`
 --
 ALTER TABLE `user_detail`
-  ADD CONSTRAINT `user_detail_ibfk_1` FOREIGN KEY (`address_id`) REFERENCES `address` (`address_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `user_detail_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE NO ACTION ON UPDATE CASCADE;
+  ADD CONSTRAINT `user_detail_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
