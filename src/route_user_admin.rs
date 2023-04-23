@@ -10,32 +10,23 @@ use crate::common::{User};
 pub fn user_list(session: UserSession, enabled: Option<bool>) -> Result<Json<Vec<User>>, ApiError> {
     if !session.right.admin_users {return Err(ApiError::RIGHT_NO_USER)};
 
-    match crate::db_user::list_user(enabled) {
-        None => Err(ApiError::DB_CONFLICT),
-        Some(users) => Ok(Json(users)),
-    }
+    let users = crate::db_user::list_user(enabled)?;
+    Ok(Json(users))
 }
 
 #[rocket::get("/admin/user_detailed?<user_id>")]
 pub fn user_detailed(session: UserSession, user_id: i64) -> Result<Json<User>, ApiError>{
     if !session.right.admin_users {return Err(ApiError::RIGHT_NO_USER)};
 
-    match crate::db_user::get_user_detailed(user_id) {
-        None => Err(ApiError::DB_CONFLICT),
-        Some(user) => Ok(Json(user)),
-    }
+    let user = crate::db_user::get_user_detailed(user_id)?;
+    Ok(Json(user))
 }
 
 #[rocket::post("/admin/user_create", format = "application/json", data = "<user>")]
 pub fn user_create(session: UserSession, mut user: Json<User>) -> Result<String, ApiError> {
     if !session.right.admin_users {return Err(ApiError::RIGHT_NO_USER)};
 
-    let user_id = match crate::db_user::create_user(&mut user) {
-        Err(e) => {
-            println!("{}", e.to_string()); return Err(e.into());
-        },
-        Ok(id) => id,
-    };
+    let user_id = crate::db_user::create_user(&mut user)?;
     Ok(user_id.to_string())
 }
 

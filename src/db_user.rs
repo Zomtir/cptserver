@@ -9,7 +9,7 @@ use crate::error::CptError;
  * METHODS
  */
 
-pub fn list_user(enabled: Option<bool>) -> Option<Vec<User>> {
+pub fn list_user(enabled: Option<bool>) -> Result<Vec<User>, CptError> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT user_id, user_key, firstname, lastname
@@ -24,13 +24,10 @@ pub fn list_user(enabled: Option<bool>) -> Option<Vec<User>> {
         User::from_info(user_id, user_key, firstname, lastname)
     };
 
-    match conn.exec_map(&stmt.unwrap(), &params, &map) {
-        Err(..) => None,
-        Ok(users) => Some(users),
-    }
+    Ok(conn.exec_map(&stmt.unwrap(), &params, &map)?)
 }
 
-pub fn get_user_detailed(user_id: i64) -> Option<User> {
+pub fn get_user_detailed(user_id: i64) -> Result<User,CptError> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
@@ -39,33 +36,57 @@ pub fn get_user_detailed(user_id: i64) -> Option<User> {
             enabled,
             firstname,
             lastname,
+            address,
             email,
             phone,
             iban,
             birthday,
+            birthlocation,
+            nationality
             gender,
-            organization_id,
-            mediapermission
+            federationNumber,
+            federationPermissionSolo,
+            federationPermissionTeam,
+            federationResidency,
+            dataDeclaration,
+            dataDisclaimer,
+            note
         FROM users
-        LEFT JOIN user_detail ON user_detail.user_id = users.user_id
-        WHERE users.user_id = :user_id;");
+        WHERE users.user_id = :user_id;")?;
 
     let params = params! {
         "user_id" => &user_id,
     };
 
-    let map = |(user_id, user_key, enabled, firstname, lastname,
-                email, phone, iban, birthday, gender, organization_id, mediapermission)| {
-        User{
-            id: user_id, key: user_key, enabled, firstname, lastname,
-            address: None, email, phone, iban, birthday, gender, organization_id, mediapermission
-        }
+    let mut row : mysql::Row = match conn.exec_first(&stmt,&params)? {
+        None => return Err(CptError::UserMissing),
+        Some(row) => row,
     };
 
-    match conn.exec_map(&stmt.unwrap(), &params, &map) {
-        Err(..) => None,
-        Ok(mut users) => Some(users.remove(0)),
-    }
+    let user = User{
+        id: row.take("user_id").unwrap(),
+        key: row.take("user_key").unwrap(),
+        enabled: row.take("user_key").unwrap(),
+        firstname: row.take("user_key").unwrap(),
+        lastname: row.take("user_key").unwrap(),
+        address: row.take("address").unwrap(),
+        email: row.take("email").unwrap(),
+        phone: row.take("phone").unwrap(),
+        iban: row.take("iban").unwrap(),
+        birthday: row.take("birthday").unwrap(),
+        birthlocation: row.take("birthlocation").unwrap(),
+        nationality: row.take("nationality").unwrap(),
+        gender: row.take("gender").unwrap(),
+        federationNumber: row.take("federationNumber").unwrap(),
+        federationPermissionSolo: row.take("federationPermissionSolo").unwrap(),
+        federationPermissionTeam: row.take("federationPermissionTeam").unwrap(),
+        federationResidency: row.take("federationResidency").unwrap(),
+        dataDeclaration: row.take("dataDeclaration").unwrap(),
+        dataDisclaimer: row.take("dataDisclaimer").unwrap(),
+        note: row.take("note").unwrap(),
+    };
+
+    Ok(user)
 }
 
 pub fn create_user(user: &mut User) -> Result<i64, CptError> {
@@ -73,40 +94,44 @@ pub fn create_user(user: &mut User) -> Result<i64, CptError> {
     user.email = crate::common::validate_email(&user.email)?;
 
     let mut conn: PooledConn = get_pool_conn();
-    let stmt1 = conn.prep(
-        "INSERT INTO users (user_key, pwd, pepper, salt, firstname, lastname, enabled)
-        VALUES (:user_key, :pwd, :pepper, :salt, :firstname, :lastname, :enabled);"
+    let stmt = conn.prep(
+        "INSERT INTO users (user_key, pwd, pepper, salt, enabled, firstname, lastname,
+            address, email, phone, iban, birthday, birthlocation, nationality, gender,
+            federationNumber, federationPermissionSolo, federationPermissionTeam, federationResidency,
+            dataDeclaration, dataDisclaimer, note)
+        VALUES (:user_key, :pwd, :pepper, :salt, :enabled, :firstname, :lastname,
+            :address, :email, :phone, :iban, :birthday, :birthlocation, :nationality, :gender,
+            :federationNumber, :federationPermissionSolo, :federationPermissionTeam, :federationResidency,
+            :dataDeclaration, :dataDisclaimer, :note);"
     );
-    let params1 = params! {
+    let params = params! {
         "user_key" => &user.key.as_ref().unwrap_or(&crate::common::random_string(6)),
         "pwd" => crate::common::random_string(10),
         "pepper" => crate::common::random_bytes(16),
         "salt" => crate::common::random_bytes(16),
+        "enabled" => user.enabled.unwrap_or(false),
         "firstname" => &user.firstname,
         "lastname" => &user.lastname,
-        "enabled" => user.enabled.unwrap_or(false),
-    };
-
-    conn.exec_drop(&stmt1.unwrap(), &params1)?;
-
-    let user_id = crate::db::get_last_id(&mut conn)?;
-
-    let stmt2 = conn.prep(  
-        "INSERT INTO user_detail (user_id, email, phone, iban, birthday, gender, organization_id)
-        VALUES (:user_id, :email, :phone, :iban, :birthday, :gender, :organization_id);",
-    );
-
-    let params2 = params! {
-        "user_id" => &user_id,
+        "address" => &user.address,
         "email" => &user.email,
         "phone" => &user.phone,
         "iban" => &user.iban,
         "birthday" => &user.birthday,
+        "birthlocation" => &user.birthlocation,
+        "nationality" => &user.nationality,
         "gender" => &user.gender,
-        "organization_id" => &user.organization_id,
+        "federationNumber" => &user.federationNumber,
+        "federationPermissionSolo" => &user.federationPermissionSolo,
+        "federationPermissionTeam" => &user.federationPermissionTeam,
+        "federationResidency" => &user.federationResidency,
+        "dataDeclaration" => &user.dataDeclaration,
+        "dataDisclaimer" => &user.dataDisclaimer,
+        "note" => &user.note,
     };
 
-    conn.exec_drop(&stmt2.unwrap(), &params2)?;
+    conn.exec_drop(&stmt.unwrap(), &params)?;
+
+    let user_id = crate::db::get_last_id(&mut conn)?;
 
     Ok(user_id)
 }
@@ -130,42 +155,53 @@ pub fn edit_user(user_id: i64, user: &mut User) -> Result<(),CptError> {
     user.email = crate::common::validate_email(&user.email)?;
     
     let mut conn: PooledConn = get_pool_conn();
-    let stmt1 = conn.prep(
+    let stmt = conn.prep(
         "UPDATE users SET
         user_key = :user_key,
+        enabled = :enabled,
         firstname = :firstname,
         lastname = :lastname,
-        enabled = :enabled
+        address = :address,
+        email = :email,
+        phone = :phone,
+        iban = :iban,
+        birthday = :birthday,
+        birthlocation = :birthlocation,
+        nationality = :nationality,
+        gender = :gender,
+        federationNumber = :federationNumber,
+        federationPermissionSolo = :federationPermissionSolo,
+        federationPermissionTeam = :federationPermissionTeam,
+        federationResidency = :federationResidency,
+        dataDeclaration = :dataDeclaration,
+        dataDisclaimer = :dataDisclaimer,
+        note = note:
         WHERE user_id = :user_id;",
-    );
-    let stmt2 = conn.prep(
-        "INSERT INTO user_detail (user_id, email, phone, iban, birthday, gender, organization_id)
-        VALUES (:user_id, :email, :phone, :iban, :birthday, :gender, :organization_id)
-        ON DUPLICATE KEY UPDATE
-            user_id = :user_id,
-            email = :email,
-            phone = :phone,
-            iban = :iban,
-            birthday = :birthday,
-            gender = :gender,
-            organization_id = :organization_id;",
     );
     let params = params! {
         "user_id" => &user_id,
         "user_key" => &user.key,
+        "enabled" => &user.enabled,
         "firstname" => &user.firstname,
         "lastname" => &user.lastname,
-        "enabled" => &user.enabled,
+        "address" => &user.address,
         "email" => &user.email,
         "phone" => &user.phone,
         "iban" => &user.iban,
         "birthday" => &user.birthday,
+        "birthlocation" => &user.birthlocation,
+        "nationality" => &user.nationality,
         "gender" => &user.gender,
-        "organization_id" => &user.organization_id,
+        "federationNumber" => &user.federationNumber,
+        "federationPermissionSolo" => &user.federationPermissionSolo,
+        "federationPermissionTeam" => &user.federationPermissionTeam,
+        "federationResidency" => &user.federationResidency,
+        "dataDeclaration" => &user.dataDeclaration,
+        "dataDisclaimer" => &user.dataDisclaimer,
+        "note" => &user.note,
     };
 
-    conn.exec_drop(&stmt1?, &params)?;
-    conn.exec_drop(&stmt2?, &params)?;
+    conn.exec_drop(&stmt?, &params)?;
     Ok(())
 }
 

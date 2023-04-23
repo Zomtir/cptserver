@@ -3,6 +3,7 @@
 pub enum CptError {
     RegexError,
     DbError,
+    UserMissing,
     UserKeyMissing,
     UserKeyBad,
     UserEmailBad,
@@ -15,6 +16,7 @@ impl std::fmt::Display for CptError {
         match self {
             CptError::RegexError => write!(f, "Regex error"),
             CptError::DbError => write!(f, "Database error"),
+            CptError::UserMissing => write!(f, "User is missing"),
             CptError::UserKeyMissing => write!(f, "User key is missing"),
             CptError::UserKeyBad => write!(f, "User key has bad format"),
             CptError::UserEmailBad => write!(f, "User email has bad format"),

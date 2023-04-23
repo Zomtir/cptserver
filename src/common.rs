@@ -5,6 +5,7 @@ use sha2::{Sha256, Digest};
 
 use crate::error::CptError;
 
+#[allow(non_snake_case)]
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct User {
     pub id: i64,
@@ -12,14 +13,21 @@ pub struct User {
     pub enabled: Option<bool>,
     pub firstname: String,
     pub lastname: String,
-    pub iban: Option<String>,
+    pub address: Option<String>,
     pub email: Option<String>,
     pub phone: Option<String>,
-    pub address: Option<String>,
-    pub birthday: Option<chrono::NaiveDateTime>,
+    pub iban: Option<String>,
+    pub birthday: Option<chrono::NaiveDate>,
+    pub birthlocation: Option<String>,
+    pub nationality: Option<String>,
     pub gender: Option<String>,
-    pub organization_id: Option<i64>,
-    pub mediapermission: Option<bool>,
+    pub federationNumber: Option<i64>,
+    pub federationPermissionSolo: Option<chrono::NaiveDate>,
+    pub federationPermissionTeam: Option<chrono::NaiveDate>,
+    pub federationResidency: Option<String>,
+    pub dataDeclaration: Option<bool>,
+    pub dataDisclaimer: Option<String>,
+    pub note: Option<String>,
 }
 
 impl User {
@@ -30,14 +38,21 @@ impl User {
             enabled: None,
             firstname: firstname,
             lastname: lastname,
-            iban: None,
+            address: None,
             email: None,
             phone: None,
-            address: None,
+            iban: None,
             birthday: None,
+            birthlocation: None,
+            nationality: None,
             gender: None,
-            organization_id: None,
-            mediapermission: None,
+            federationNumber: None,
+            federationPermissionSolo: None,
+            federationPermissionTeam: None,
+            federationResidency: None,
+            dataDeclaration: None,
+            dataDisclaimer: None,
+            note: None,
         }
     }
 }

@@ -42,8 +42,6 @@ pub fn user_password(session: UserSession, credit: Json<Credential>) -> Result<(
 // TODO only active members
 #[rocket::get("/member/user_list")]
 pub fn user_list(_session: UserSession) -> Result<Json<Vec<User>>,ApiError> {
-    match crate::db_user::list_user(Some(true)) {
-        None => Err(ApiError::DB_CONFLICT),
-        Some(users) => Ok(Json(users)),
-    }
+    let users = crate::db_user::list_user(Some(true))?;
+    Ok(Json(users))
 }

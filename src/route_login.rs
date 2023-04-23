@@ -24,10 +24,10 @@ pub fn user_login(credit: Json<Credential>) -> Result<String,ApiError> {
                           LEFT JOIN team_members ON (u.user_id = team_members.user_id)
                           LEFT JOIN teams ON (team_members.team_id = teams.team_id)
                           WHERE u.user_key = :user_key
-                          GROUP BY u.user_id").unwrap();
+                          GROUP BY u.user_id");
     let params = params! { "user_key" => credit.login.to_string() };
 
-    let mut row : mysql::Row = match conn.exec_first(&stmt,&params) {
+    let mut row : mysql::Row = match conn.exec_first(&stmt.unwrap(),&params) {
         Err(..) | Ok(None) => return Err(ApiError::USER_NO_ENTRY),
         Ok(Some(row)) => row,
     };
