@@ -7,6 +7,8 @@ use rocket::{
     data::ToByteUnit,
     form::{self, DataField, FromFormField, ValueField},
 };
+
+use crate::error::Error;
 pub struct WebDate(chrono::NaiveDate);
 pub struct WebDateTime(chrono::NaiveDateTime);
 
@@ -57,12 +59,9 @@ pub mod datetime_format {
     }
 }
 
-pub fn duration_round(naive_datetime: chrono::NaiveDateTime, duration: Duration) -> Result<chrono::NaiveDateTime, <DateTime<Utc> as DurationRound>::Err>
+pub fn duration_round(naive_datetime: chrono::NaiveDateTime, duration: Duration) -> Result<chrono::NaiveDateTime, Error>
 {
-    match DateTime::<Utc>::from_utc(naive_datetime, Utc).duration_round(duration) {
-        Err(e) => Err(e),
-        Ok(dt) => Ok(dt.naive_utc()),
-    }
+    Ok(DateTime::<Utc>::from_utc(naive_datetime, Utc).duration_round(duration)?.naive_utc())
 }
 
 impl WebDate {

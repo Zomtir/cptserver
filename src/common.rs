@@ -3,7 +3,7 @@ use regex::Regex;
 use serde::{Serialize, Deserialize};
 use sha2::{Sha256, Digest};
 
-use crate::error::CptError;
+use crate::error::Error;
 
 #[allow(non_snake_case)]
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
@@ -68,7 +68,7 @@ pub struct Slot {
     pub begin: chrono::NaiveDateTime,
     #[serde(with = "crate::clock::datetime_format")]
     pub end: chrono::NaiveDateTime,
-    pub status: Option<String>,
+    pub status: String,
     pub course_id: Option<u32>,
 }
 
@@ -145,7 +145,7 @@ pub fn random_string(size: usize) -> String {
     rand::thread_rng().sample_iter(&rand::distributions::Alphanumeric).take(size).map(char::from).collect()
 }
 
-pub fn validate_user_key(key: &Option<String>) -> Result<Option<String>, CptError> {
+pub fn validate_user_key(key: &Option<String>) -> Result<Option<String>, Error> {
     let text = match key {
         None => return Ok(None),
         Some(text) => text,
@@ -153,12 +153,12 @@ pub fn validate_user_key(key: &Option<String>) -> Result<Option<String>, CptErro
 
     if text.is_empty() { return Ok(None); };
 
-    if text.len() < 2 || text.len() > 20 {return Err(CptError::UserKeyBad)};
+    if text.len() < 2 || text.len() > 20 {return Err(Error::UserKeyInvalid)};
 
     Ok(key.clone())
 }
 
-pub fn validate_email(email: &Option<String>) -> Result<Option<String>, CptError> {
+pub fn validate_email(email: &Option<String>) -> Result<Option<String>, Error> {
     let text = match email {
         None => return Ok(None),
         Some(text) => text,
@@ -167,25 +167,20 @@ pub fn validate_email(email: &Option<String>) -> Result<Option<String>, CptError
     if text.is_empty() { return Ok(None); };
 
     match Regex::new(r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})") {
-        Err(..) => Err(CptError::RegexError),
+        Err(..) => Err(Error::RegexError),
         Ok(regex) => match regex.is_match(&text) {
-            false => Err(CptError::UserEmailBad),
+            false => Err(Error::UserEmailInvalid),
             true => Ok(email.clone()),
         },
     }
 }
 
-pub fn validate_clear_password(pwd: Option<String>) -> Option<String> {
-    let password = match pwd {
-        None => return None,
-        Some(password) => password,
-    };
-
+pub fn validate_clear_password(password: String) -> Result<String, Error> {
     if password.len() < 6 || password.len() > 50 {
-        return None;
+        return Err(Error::SlotPasswordInvalid);
     };
 
-    Some(password.to_string())
+    Ok(password.to_string())
 }
 
 pub fn decode_hash256(hash: & str) -> Option<Vec<u8>> {
@@ -234,16 +229,10 @@ pub fn is_slot_valid(slot: & Slot) -> bool {
     return slot.begin + crate::config::CONFIG_SLOT_WINDOW_MINIMUM() < slot.end;
 }
 
-pub fn validate_slot_dates(slot: &mut Slot) -> Option<()> {
-    slot.begin = match crate::clock::duration_round(slot.begin, crate::config::CONFIG_SLOT_WINDOW_SNAP()) {
-        Err(..) => return None,
-        Ok(dt) => dt,
-    };
+pub fn validate_slot_dates(slot: &mut Slot) -> Result<(), Error> {
+    slot.begin = crate::clock::duration_round(slot.begin, crate::config::CONFIG_SLOT_WINDOW_SNAP())?;
 
-    slot.end = match crate::clock::duration_round(slot.end, crate::config::CONFIG_SLOT_WINDOW_SNAP()) {
-        Err(..) => return None,
-        Ok(dt) => dt,
-    };
+    slot.end = crate::clock::duration_round(slot.end, crate::config::CONFIG_SLOT_WINDOW_SNAP())?;
 
     let earliest_end = slot.begin + crate::config::CONFIG_SLOT_WINDOW_MINIMUM();
 
@@ -251,5 +240,5 @@ pub fn validate_slot_dates(slot: &mut Slot) -> Option<()> {
         slot.end = earliest_end;
     }
 
-    return Some(())
+    Ok(())
 }

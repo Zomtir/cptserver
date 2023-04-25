@@ -1,6 +1,6 @@
 use rocket::serde::json::Json;
 
-use crate::api::ApiError;
+use crate::error::Error;
 use crate::session::{UserSession, Credential};
 use crate::common::{User, Right};
 
@@ -32,16 +32,14 @@ pub fn user_right(session: UserSession) -> Json<Right> {
 }
 
 #[rocket::post("/member/user_password", format = "application/json", data = "<credit>")]
-pub fn user_password(session: UserSession, credit: Json<Credential>) -> Result<(), ApiError> {
-    match crate::db_user::edit_user_password(session.user.id, &credit.password, &credit.salt) {
-        None => Err(ApiError::DB_CONFLICT),
-        Some(..) => Ok(()),
-    }
+pub fn user_password(session: UserSession, credit: Json<Credential>) -> Result<(), Error> {
+    crate::db_user::edit_user_password(session.user.id, &credit.password, &credit.salt)?;
+    Ok(())
 }
 
 // TODO only active members
 #[rocket::get("/member/user_list")]
-pub fn user_list(_session: UserSession) -> Result<Json<Vec<User>>,ApiError> {
+pub fn user_list(_session: UserSession) -> Result<Json<Vec<User>>, Error> {
     let users = crate::db_user::list_user(Some(true))?;
     Ok(Json(users))
 }

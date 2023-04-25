@@ -3,7 +3,7 @@ use mysql::{params, PooledConn};
 
 use crate::common::{Right, Team, User};
 use crate::db::get_pool_conn;
-use crate::error::CptError;
+use crate::error::Error;
 
 /*
  * METHODS
@@ -61,7 +61,7 @@ pub fn list_teams() -> Option<Vec<Team>> {
     }
 }
 
-pub fn create_team(team: &Team) -> Result<u32, CptError> {
+pub fn create_team(team: &Team) -> Result<u32, Error> {
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(

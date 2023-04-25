@@ -1,7 +1,7 @@
 use mysql::{Pool, PooledConn, params};
 use mysql::prelude::Queryable;
 
-use crate::error::CptError;
+use crate::error::Error;
 
 static mut POOL : Option<Pool> = None;
 
@@ -35,13 +35,12 @@ pub fn get_pool_conn() -> PooledConn {
     }
 }
 
-pub fn get_last_id<T: mysql::prelude::FromValue>(conn: &mut PooledConn) -> Result<T, CptError> {
+pub fn get_last_id<T: mysql::prelude::FromValue>(conn: &mut PooledConn) -> Result<T, Error> {
     let stmt = conn.prep("SELECT LAST_INSERT_ID()").unwrap();
     let params = params::Params::Empty;
 
-    match conn.exec_first::<T, _, _>(&stmt, &params) {
-        Err(..) => Err(CptError::DbError),
-        Ok(None) => Err(CptError::DbError),
-        Ok(Some(id)) => Ok(id),
+    match conn.exec_first::<T, _, _>(&stmt, &params)? {
+        None => Err(Error::DatabaseError),
+        Some(id) => Ok(id),
     }
 }

@@ -3,7 +3,7 @@ use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
 use crate::common::{User, Course, Branch};
-use crate::error::CptError;
+use crate::error::Error;
 
 /*
  * METHODS
@@ -101,7 +101,7 @@ pub fn responsible_courses(user_id: i64) -> Option<Vec<Course>> {
     }
 }
 
-pub fn create_course(course: &Course) -> Result<u32, CptError> {
+pub fn create_course(course: &Course) -> Result<u32, Error> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO courses (course_key, title, active, public, branch_id, threshold)
         VALUES (:course_key, :title, :active, :public, :branch_id, :threshold)");
@@ -140,23 +140,22 @@ pub fn list_course_moderators(course_id: i64) -> Option<Vec<User>> {
     }
 }
 
-pub fn is_course_moderator(course_id: i64, user_id: i64) -> Option<bool> {
+pub fn is_course_moderator(course_id: i64, user_id: i64) -> Result<bool, Error> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)
         FROM course_moderators
-        WHERE course_id = :course_id AND user_id = :user_id");
+        WHERE course_id = :course_id AND user_id = :user_id")?;
 
     let params = params! {
         "course_id" => course_id,
         "user_id" => user_id,
     };
 
-    match conn.exec_first::<u32,_,_>(&stmt.unwrap(), &params){
-        Err(..) => return None,
-        Ok(None) => return Some(false),
-        Ok(Some(count)) => return Some(count == 1),
-    };
+    match conn.exec_first::<u32,_,_>(&stmt, &params)? {
+        None => Ok(false),
+        Some(count) => Ok(count == 1),
+    }
 }
 
 pub fn add_course_moderator(course_id: i64, user_id: i64) -> Option<()> {

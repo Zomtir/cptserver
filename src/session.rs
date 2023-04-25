@@ -7,7 +7,7 @@ use serde::{Serialize, Deserialize};
 use std::sync::Mutex;
 use std::collections::HashMap;
 
-use crate::api::ApiError;
+use crate::error::Error;
 use crate::common::{User, Right};
 
 lazy_static::lazy_static! {
@@ -36,26 +36,26 @@ pub struct UserSession {
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for UserSession {
-    type Error = ApiError;
+    type Error = Error;
 
-    async fn from_request(request: &'r Request<'_>) -> Outcome<Self,ApiError> {
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self,Error> {
         let head_token = match request.headers().get_one("Token") {
-            None => return ApiError::SESSION_TOKEN_MISSING.outcome(),
+            None => return Error::SessionTokenMissing.outcome(),
             Some(token) => token,
         };
 
         let session : UserSession = match USERSESSIONS.lock().unwrap().get(&head_token.to_string()).cloned() {
-            None => { return ApiError::SESSION_TOKEN_INVALID.outcome(); },
+            None => { return Error::SessionTokenInvalid.outcome(); },
             Some(session) => session,
         };
 
         if session.token != head_token.to_string() {
-            return ApiError::SESSION_TOKEN_INVALID.outcome();
+            return Error::SessionTokenInvalid.outcome();
         }
 
         if session.expiry < chrono::Utc::now() {
             USERSESSIONS.lock().unwrap().remove(&session.token);
-            return ApiError::SESSION_TOKEN_EXPIRED.outcome();
+            return Error::SessionTokenExpired.outcome();
         }
         
         Success(session)
@@ -72,26 +72,26 @@ pub struct SlotSession {
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for SlotSession {
-    type Error = ApiError;
+    type Error = Error;
 
-    async fn from_request(request: &'r Request<'_>) -> Outcome<Self,ApiError> {
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self,Error> {
         let head_token = match request.headers().get_one("Token") {
-            None => return ApiError::SESSION_TOKEN_MISSING.outcome(),
+            None => return Error::SessionTokenMissing.outcome(),
             Some(token) => token,
         };
 
         let session : SlotSession = match SLOTSESSIONS.lock().unwrap().get(&head_token.to_string()).cloned() {
-            None => { return ApiError::SESSION_TOKEN_INVALID.outcome(); },
+            None => { return Error::SessionTokenInvalid.outcome(); },
             Some(session) => session,
         };
 
         if session.token != head_token.to_string() {
-            return ApiError::SESSION_TOKEN_INVALID.outcome();
+            return Error::SessionTokenInvalid.outcome();
         }
 
         if session.expiry < chrono::Utc::now() {
             SLOTSESSIONS.lock().unwrap().remove(&session.token);
-            return ApiError::SESSION_TOKEN_EXPIRED.outcome();
+            return Error::SessionTokenExpired.outcome();
         }
         
         Success(session)

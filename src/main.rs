@@ -68,7 +68,7 @@ fn rocket() -> _ {
     let allowed_origins = AllowedOrigins::all();
     let allowed_methods = vec![rocket::http::Method::Head,rocket::http::Method::Get,rocket::http::Method::Post,rocket::http::Method::Delete].into_iter().map(From::from).collect();
     let allowed_headers = AllowedHeaders::some(&["Token", "Accept", "Content-Type"]);
-    let expose_headers = HashSet::from(["Error-URI".to_string(), "Error-Message".to_string()]);
+    let expose_headers = HashSet::from(["Error-URI".to_string(), "Error-MSG".to_string()]);
 
     let cors = rocket_cors::CorsOptions {
         allowed_origins,
@@ -79,8 +79,6 @@ fn rocket() -> _ {
         ..Default::default()
     }
     .to_cors().unwrap();
-
-    //cors.expose_headers(&["Error-URI", "Error-Message"]);
 
     rocket::custom(&rocket_config)
         //.register(catchers![catchers::user_not_found])

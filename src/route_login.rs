@@ -4,13 +4,13 @@ use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
 use crate::db::get_pool_conn;
-use crate::api::ApiError;
+use crate::error::Error;
 use crate::session::{USERSESSIONS, SLOTSESSIONS, UserSession, SlotSession, Credential};
 use crate::common::{User, Right};
 
 
 #[rocket::post("/user_login", format = "application/json", data = "<credit>")]
-pub fn user_login(credit: Json<Credential>) -> Result<String,ApiError> {
+pub fn user_login(credit: Json<Credential>) -> Result<String,Error> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT u.user_id, u.pwd, u.pepper, u.enabled, u.firstname, u.lastname,
                           COALESCE(MAX(admin_courses),0) AS admin_courses,
@@ -28,19 +28,19 @@ pub fn user_login(credit: Json<Credential>) -> Result<String,ApiError> {
     let params = params! { "user_key" => credit.login.to_string() };
 
     let mut row : mysql::Row = match conn.exec_first(&stmt.unwrap(),&params) {
-        Err(..) | Ok(None) => return Err(ApiError::USER_NO_ENTRY),
+        Err(..) | Ok(None) => return Err(Error::UserMissing),
         Ok(Some(row)) => row,
     };
 
     // TODO should the client know the difference whether an account is exisiting or disabled? 
     let user_enabled : bool = row.take("enabled").unwrap();
     if user_enabled == false {
-        return Err(ApiError::USER_DISABLED);
+        return Err(Error::UserDisabled);
     }
 
     let bpassword : Vec<u8> = match crate::common::decode_hash256(&credit.password){
         Some(bpassword) => bpassword,
-        None => return Err(ApiError::USER_BAD_PASSWORD),
+        None => return Err(Error::UserPasswordInvalid),
     };
 
     let user_pepper : Vec<u8> = row.take("pepper").unwrap();
@@ -50,7 +50,7 @@ pub fn user_login(credit: Json<Credential>) -> Result<String,ApiError> {
 
     let user_pwd : Vec<u8> = row.take("pwd").unwrap();
     if user_pwd != user_shapwd {
-        return Err(ApiError::USER_WRONG_PASSWORD);
+        return Err(Error::UserLoginFail);
     };
 
     let user_token : String = crate::common::random_string(30);
@@ -82,7 +82,7 @@ pub fn user_login(credit: Json<Credential>) -> Result<String,ApiError> {
 }
 
 #[rocket::post("/slot_login", format = "application/json", data = "<credit>")]
-pub fn slot_login(credit: Json<Credential>) -> Result<String,ApiError> {
+pub fn slot_login(credit: Json<Credential>) -> Result<String,Error> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT slot_id, pwd FROM slots WHERE slot_key = :slot_key").unwrap();
     let params = params! {
@@ -91,13 +91,13 @@ pub fn slot_login(credit: Json<Credential>) -> Result<String,ApiError> {
 
     println!("{}", credit.login.to_string());
     let mut row : mysql::Row = match conn.exec_first(&stmt,&params) {
-        Err(..) | Ok(None) => return Err(ApiError::SLOT_NO_ENTRY),
+        Err(..) | Ok(None) => return Err(Error::SlotMissing),
         Ok(Some(row)) => row,
     };
     
     let slot_pwd : String = row.take("pwd").unwrap();
     if slot_pwd != credit.password {
-        return Err(ApiError::SLOT_WRONG_PASSWORD);
+        return Err(Error::SlotLoginFail);
     };
 
     let slot_token : String = crate::common::random_string(30);
@@ -118,7 +118,7 @@ pub fn slot_login(credit: Json<Credential>) -> Result<String,ApiError> {
 }
 
 #[rocket::get("/location_login?<location_key>")]
-pub fn location_login(location_key: String) -> Result<String,ApiError>  {
+pub fn location_login(location_key: String) -> Result<String,Error>  {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT s.slot_key, s.pwd
@@ -135,7 +135,7 @@ pub fn location_login(location_key: String) -> Result<String,ApiError>  {
     let credentials = conn.exec_map(&stmt,&params,&map).unwrap();
 
     if credentials.len() < 1 {
-        return Err(ApiError::SLOT_BAD_PASSWORD);
+        return Err(Error::SlotPasswordInvalid);
     };
     
     return slot_login(Json(credentials[0].clone()));

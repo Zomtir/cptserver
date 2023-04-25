@@ -6,7 +6,7 @@ use rocket::http::Status;
 use mysql::{PooledConn, params};
 use mysql::prelude::{Queryable};
 
-use crate::api::ApiError;
+use crate::error::Error;
 use crate::db::get_pool_conn;
 use crate::common::{Location, Branch};
 
@@ -44,7 +44,7 @@ pub fn branch_list() -> Result<Json<Vec<Branch>>,Status> {
 }
 
 #[rocket::get("/user_salt?<user_key>")]
-pub fn user_salt(user_key: String) -> Result<String, ApiError> {
+pub fn user_salt(user_key: String) -> Result<String, Error> {
     let mut conn : PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT salt FROM users WHERE user_key = :user_key");
     let params = params! {
@@ -52,7 +52,7 @@ pub fn user_salt(user_key: String) -> Result<String, ApiError> {
     };
 
     match conn.exec_first::<Vec<u8>, _, _>(&stmt.unwrap(), &params) {
-        Err(..) => Err(ApiError::DB_CONFLICT),
+        Err(..) => Err(Error::DatabaseError),
         Ok(None) => Ok(hex::encode(crate::common::hash128_string(&user_key))),
         Ok(Some(salt)) => Ok(hex::encode(salt)),
     }

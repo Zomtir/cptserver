@@ -1,5 +1,5 @@
 use rocket::serde::json::Json;
-use crate::api::ApiError;
+use crate::error::Error;
 
 use crate::session::UserSession;
 use crate::common::{Slot, User};
@@ -11,75 +11,51 @@ use crate::common::{Slot, User};
 // TODO, allow inviting member for draft
 // TODO, allow inviting groups for draft
 #[rocket::post("/owner/event_edit?<slot_id>", format = "application/json", data = "<slot>")]
-pub fn event_edit(session: UserSession, slot_id: i64, mut slot: Json<Slot>) -> Result<(), ApiError> {
-    match crate::db_slot::is_slot_owner(slot.id, session.user.id) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(false) => return Err(ApiError::RIGHT_CONFLICT),
-        Some(true) => (),
-    }
-
-    crate::common::validate_slot_dates(&mut slot);
-
-    let db_slot = match crate::db_slot::get_slot_info(slot_id) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(slot) => slot,
+pub fn event_edit(session: UserSession, slot_id: i64, mut slot: Json<Slot>) -> Result<(), Error> {
+    match crate::db_slot::is_slot_owner(slot_id, session.user.id)? {
+        false => return Err(Error::SlotOwnerPermission),
+        true => (),
     };
+
+    crate::common::validate_slot_dates(&mut slot)?;
+
+    let db_slot = crate::db_slot::get_slot_info(slot_id)?;
     
-    match db_slot.status {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(status) => match status.as_str() {
-            "DRAFT" => (),
-            _ => return Err(ApiError::SLOT_STATUS_INCOMPAT),
-        },
+    match db_slot.status.as_str() {
+        "DRAFT" => (),
+        _ => return Err(Error::SlotStatusConflict),
     }
 
-    match crate::db_slot::edit_slot(slot_id, &slot) {
-        None => Err(ApiError::DB_CONFLICT),
-        Some(()) => Ok(()),
-    }
+    crate::db_slot::edit_slot(slot_id, &slot)?;
+    Ok(())
 }
 
 #[rocket::post("/owner/event_edit_password?<slot_id>", format = "text/plain", data = "<password>")]
-pub fn event_edit_password(session: UserSession, slot_id: i64, password: String) -> Result<(), ApiError> {
-    match crate::db_slot::is_slot_owner(slot_id, session.user.id) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(false) => return Err(ApiError::RIGHT_CONFLICT),
-        Some(true) => (),
-    }
-
-    let password = match crate::common::validate_clear_password(Some(password)) {
-        None => return Err(ApiError::SLOT_BAD_PASSWORD),
-        Some(password) => password,
+pub fn event_edit_password(session: UserSession, slot_id: i64, password: String) -> Result<(), Error> {
+    match crate::db_slot::is_slot_owner(slot_id, session.user.id)? {
+        false => return Err(Error::SlotOwnerPermission),
+        true => (),
     };
 
-    match crate::db_slot::edit_slot_password(slot_id, password) {
-        None => Err(ApiError::DB_CONFLICT),
-        Some(..) => Ok(()),
-    }
+    crate::db_slot::edit_slot_password(slot_id, password)?;
+    Ok(())
 }
 
 #[rocket::head("/owner/event_submit?<slot_id>")]
-pub fn event_submit(session: UserSession, slot_id: i64) -> Result<(),ApiError> {
-    match crate::db_slot::is_slot_owner(slot_id, session.user.id) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(false) => return Err(ApiError::RIGHT_CONFLICT),
-        Some(true) => (),
-    }
-
-    let slot : Slot = match crate::db_slot::get_slot_info(slot_id){
-        None => return Err(ApiError::SLOT_NO_ENTRY),
-        Some(slot) => slot,
+pub fn event_submit(session: UserSession, slot_id: i64) -> Result<(),Error> {
+    match crate::db_slot::is_slot_owner(slot_id, session.user.id)? {
+        false => return Err(Error::SlotOwnerPermission),
+        true => (),
     };
+
+    let slot : Slot = crate::db_slot::get_slot_info(slot_id)?;
 
     // The check is here intentional to be able to return early although it is also checked during is_slot_free
     if !crate::common::is_slot_valid(&slot) {
-        return Err(ApiError::SLOT_BAD_TIME);
+        return Err(Error::SlotWindowInvalid);
     }
 
-    let is_free : bool = match crate::db_slot::is_slot_free(&slot) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(is_free) => is_free,
-    };
+    let is_free : bool = crate::db_slot::is_slot_free(&slot)?;
 
     let status_update = match crate::config::CONFIG_RESERVATION_AUTO_CHECK {
         false => "PENDING",
@@ -89,120 +65,92 @@ pub fn event_submit(session: UserSession, slot_id: i64) -> Result<(),ApiError> {
         },
     };
     
-    match crate::db_slot::edit_slot_status(slot.id, "DRAFT", status_update) {
-        None => Err(ApiError::DB_CONFLICT),
-        Some(..) => Ok(()),
-    }
+    crate::db_slot::edit_slot_status(slot.id, "DRAFT", status_update)?;
+    Ok(())
 }
 
 #[rocket::head("/owner/event_withdraw?<slot_id>")]
-pub fn event_withdraw(session: UserSession, slot_id: i64) -> Result<(),ApiError> {
-    match crate::db_slot::is_slot_owner(slot_id, session.user.id) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(false) => return Err(ApiError::RIGHT_CONFLICT),
-        Some(true) => (),
-    }
+pub fn event_withdraw(session: UserSession, slot_id: i64) -> Result<(),Error> {
+    match crate::db_slot::is_slot_owner(slot_id, session.user.id)? {
+        false => return Err(Error::SlotOwnerPermission),
+        true => (),
+    };
 
-    match crate::db_slot::edit_slot_status(slot_id, "PENDING", "DRAFT") {
-        None => Err(ApiError::DB_CONFLICT),
-        Some(..) => Ok(()),
-    }
+    crate::db_slot::edit_slot_status(slot_id, "PENDING", "DRAFT")?;
+    Ok(())
 }
 
 #[rocket::head("/owner/event_cancel?<slot_id>")]
-pub fn event_cancel(session: UserSession, slot_id: i64) -> Result<(),ApiError> {
-    match crate::db_slot::is_slot_owner(slot_id, session.user.id) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(false) => return Err(ApiError::RIGHT_CONFLICT),
-        Some(true) => (),
-    }
+pub fn event_cancel(session: UserSession, slot_id: i64) -> Result<(),Error> {
+    match crate::db_slot::is_slot_owner(slot_id, session.user.id)? {
+        false => return Err(Error::SlotOwnerPermission),
+        true => (),
+    };
 
-    match crate::db_slot::edit_slot_status(slot_id, "OCCURRING", "CANCELED") {
-        None => Err(ApiError::DB_CONFLICT),
-        Some(..) => Ok(()),
-    }
+    crate::db_slot::edit_slot_status(slot_id, "OCCURRING", "CANCELED")?;
+    Ok(())
 }
 
 #[rocket::head("/owner/event_recycle?<slot_id>")]
-pub fn event_recycle(session: UserSession, slot_id: i64) -> Result<(),ApiError> {
-    match crate::db_slot::is_slot_owner(slot_id, session.user.id) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(false) => return Err(ApiError::RIGHT_CONFLICT),
-        Some(true) => (),
-    }
+pub fn event_recycle(session: UserSession, slot_id: i64) -> Result<(),Error> {
+    match crate::db_slot::is_slot_owner(slot_id, session.user.id)? {
+        false => return Err(Error::SlotOwnerPermission),
+        true => (),
+    };
 
-    match crate::db_slot::edit_slot_status(slot_id, "REJECTED", "DRAFT") {
-        None => Err(ApiError::DB_CONFLICT),
-        Some(..) => Ok(()),
-    }
+    crate::db_slot::edit_slot_status(slot_id, "REJECTED", "DRAFT")?;
+    Ok(())
 }
 
 #[rocket::head("/owner/event_delete?<slot_id>")]
-pub fn event_delete(session: UserSession, slot_id: i64) -> Result<(),ApiError> {
-    match crate::db_slot::is_slot_owner(slot_id, session.user.id){
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(false) => return Err(ApiError::RIGHT_CONFLICT),
-        Some(true) => (),
+pub fn event_delete(session: UserSession, slot_id: i64) -> Result<(),Error> {
+    match crate::db_slot::is_slot_owner(slot_id, session.user.id)? {
+        false => return Err(Error::SlotOwnerPermission),
+        true => (),
     };
 
-    let slot : Slot = match crate::db_slot::get_slot_info(slot_id){
-        None => return Err(ApiError::SLOT_NO_ENTRY),
-        Some(slot) => slot,
+    let slot = crate::db_slot::get_slot_info(slot_id)?;
+
+    match slot.status.as_str() {
+        "DRAFT" => (),
+        _ => return Err(Error::SlotStatusConflict),
     };
 
-    match slot.status {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(status) => match status.as_str() {
-            "DRAFT" => (),
-            _ => return Err(ApiError::SLOT_STATUS_INCOMPAT),
-        },
-    }
-
-    match crate::db_slot::delete_slot(slot.id) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(()) => Ok(()),
-    }
+    crate::db_slot::delete_slot(slot.id)?;
+    Ok(())
 }
 
 
 #[rocket::get("/owner/event_owner_list?<slot_id>")]
-pub fn event_owner_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<User>>,ApiError> {
-    match crate::db_slot::is_slot_owner(slot_id, session.user.id) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(false) => return Err(ApiError::SLOT_NO_OWNER),
-        Some(true) => (),
+pub fn event_owner_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<User>>,Error> {
+    match crate::db_slot::is_slot_owner(slot_id, session.user.id)? {
+        false => return Err(Error::SlotOwnerPermission),
+        true => (),
     };
 
-    match crate::db_slot::get_slot_owners(slot_id) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(users) => Ok(Json(users)),
+    match crate::db_slot::get_slot_owners(slot_id)? {
+        users => Ok(Json(users)),
     }
 }
 
 #[rocket::head("/owner/event_owner_add?<slot_id>&<user_id>")]
-pub fn event_owner_add(session: UserSession, slot_id: i64, user_id: i64) -> Result<(),ApiError> {
-    match crate::db_slot::is_slot_owner(slot_id, session.user.id) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(false) => return Err(ApiError::SLOT_NO_OWNER),
-        Some(true) => (),
-    }
+pub fn event_owner_add(session: UserSession, slot_id: i64, user_id: i64) -> Result<(),Error> {
+    match crate::db_slot::is_slot_owner(slot_id, session.user.id)? {
+        false => return Err(Error::SlotOwnerPermission),
+        true => (),
+    };
 
-    match crate::db_slot::add_slot_owner(slot_id, user_id) {
-        None => Err(ApiError::DB_CONFLICT),
-        Some(()) => Ok(()),
-    }
+    crate::db_slot::add_slot_owner(slot_id, user_id)?;
+    Ok(())
 }
 
 #[rocket::head("/owner/event_owner_remove?<slot_id>&<user_id>")]
-pub fn event_owner_remove(session: UserSession, slot_id: i64, user_id: i64) -> Result<(),ApiError> {
-    match crate::db_slot::is_slot_owner(slot_id, session.user.id) {
-        None => return Err(ApiError::DB_CONFLICT),
-        Some(false) => return Err(ApiError::SLOT_NO_OWNER),
-        Some(true) => (),
-    }
+pub fn event_owner_remove(session: UserSession, slot_id: i64, user_id: i64) -> Result<(),Error> {
+    match crate::db_slot::is_slot_owner(slot_id, session.user.id)? {
+        false => return Err(Error::SlotOwnerPermission),
+        true => (),
+    };
 
-    match crate::db_slot::remove_slot_owner(slot_id, user_id) {
-        None => Err(ApiError::DB_CONFLICT),
-        Some(()) => Ok(()),
-    }
+    crate::db_slot::remove_slot_owner(slot_id, user_id)?;
+    Ok(())
 }

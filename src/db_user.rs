@@ -3,13 +3,13 @@ use mysql::{params, PooledConn};
 
 use crate::common::User;
 use crate::db::get_pool_conn;
-use crate::error::CptError;
+use crate::error::Error;
 
 /*
  * METHODS
  */
 
-pub fn list_user(enabled: Option<bool>) -> Result<Vec<User>, CptError> {
+pub fn list_user(enabled: Option<bool>) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT user_id, user_key, firstname, lastname
@@ -27,7 +27,7 @@ pub fn list_user(enabled: Option<bool>) -> Result<Vec<User>, CptError> {
     Ok(conn.exec_map(&stmt.unwrap(), &params, &map)?)
 }
 
-pub fn get_user_detailed(user_id: i64) -> Result<User,CptError> {
+pub fn get_user_detailed(user_id: i64) -> Result<User,Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
@@ -59,7 +59,7 @@ pub fn get_user_detailed(user_id: i64) -> Result<User,CptError> {
     };
 
     let mut row : mysql::Row = match conn.exec_first(&stmt,&params)? {
-        None => return Err(CptError::UserMissing),
+        None => return Err(Error::UserMissing),
         Some(row) => row,
     };
 
@@ -89,7 +89,7 @@ pub fn get_user_detailed(user_id: i64) -> Result<User,CptError> {
     Ok(user)
 }
 
-pub fn create_user(user: &mut User) -> Result<i64, CptError> {
+pub fn create_user(user: &mut User) -> Result<i64, Error> {
     user.key = crate::common::validate_user_key(&user.key)?;
     user.email = crate::common::validate_email(&user.email)?;
 
@@ -145,11 +145,11 @@ pub fn is_user_created(user_key: &str) -> Option<bool> {
     return Some(count.unwrap() == 1);
 }
 
-pub fn edit_user(user_id: i64, user: &mut User) -> Result<(),CptError> {
+pub fn edit_user(user_id: i64, user: &mut User) -> Result<(),Error> {
     user.key = crate::common::validate_user_key(&user.key)?;
 
     if user.key.is_none() {
-        return Err(CptError::UserKeyMissing);
+        return Err(Error::UserMissing);
     };
 
     user.email = crate::common::validate_email(&user.email)?;
@@ -205,22 +205,22 @@ pub fn edit_user(user_id: i64, user: &mut User) -> Result<(),CptError> {
     Ok(())
 }
 
-pub fn edit_user_password(user_id: i64, password: &String, salt: &String) -> Option<()> {
+pub fn edit_user_password(user_id: i64, password: &String, salt: &String) -> Result<(), Error> {
     let bpassword: Vec<u8> = match crate::common::decode_hash256(password) {
         Some(bpassword) => bpassword,
-        None => return None,
+        None => return Err(Error::UserPasswordInvalid),
     };
 
     let bsalt: Vec<u8> = match crate::common::decode_hash128(salt) {
         Some(bsalt) => bsalt,
-        None => return None,
+        None => return Err(Error::UserPasswordInvalid),
     };
 
     let bpepper: Vec<u8> = crate::common::random_bytes(16);
     let shapassword: Vec<u8> = crate::common::hash_sha256(&bpassword, &bpepper);
 
     let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep("UPDATE users SET pwd = :pwd, pepper = :pepper, salt = :salt WHERE user_id = :user_id");
+    let stmt = conn.prep("UPDATE users SET pwd = :pwd, pepper = :pepper, salt = :salt WHERE user_id = :user_id")?;
     let params = params! {
         "user_id" => &user_id,
         "pwd" => &shapassword,
@@ -228,21 +228,17 @@ pub fn edit_user_password(user_id: i64, password: &String, salt: &String) -> Opt
         "salt" => &bsalt,
     };
 
-    match conn.exec_drop(&stmt.unwrap(), &params) {
-        Err(..) => None,
-        Ok(..) => Some(()),
-    }
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
 }
 
-pub fn delete_user(user_id: i64) -> Option<()> {
+pub fn delete_user(user_id: i64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep("DELETE u FROM users u WHERE u.user_id = :user_id");
+    let stmt = conn.prep("DELETE u FROM users u WHERE u.user_id = :user_id")?;
     let params = params! {
         "user_id" => user_id,
     };
 
-    match conn.exec_drop(&stmt.unwrap(), &params) {
-        Err(..) => None,
-        Ok(..) => Some(()),
-    }
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
 }
