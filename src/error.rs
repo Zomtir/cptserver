@@ -7,8 +7,10 @@ use rocket::response::{self, Responder, Response};
 pub enum Error {
     Default,
 
-    RegexError,
+    DatabaseURL,
+    DatabaseConnection,
     DatabaseError,
+    RegexError,
     TimeError,
 
     SessionTokenMissing,
@@ -57,8 +59,10 @@ impl Error {
         let kind = match self {
             Error::Default => "DEFAULT",
 
-            Error::RegexError => "REGEX_ERROR",
+            Error::DatabaseURL => "DATABASE_URL",
+            Error::DatabaseConnection => "DATABASE_CONNECTION",
             Error::DatabaseError => "DATABASE_ERROR",
+            Error::RegexError => "REGEX_ERROR",
             Error::TimeError => "TIME_ERROR",
 
             Error::SessionTokenMissing => "SESSION_TOKEN_MISSING",
@@ -108,8 +112,10 @@ impl std::fmt::Display for Error {
         match self {
             Error::Default => write!(f, "Default error"),
 
-            Error::RegexError => write!(f, "Regex error"),
+            Error::DatabaseURL => write!(f, "Database URL error"),
+            Error::DatabaseConnection => write!(f, "Database connection error"),
             Error::DatabaseError => write!(f, "Database error"),
+            Error::RegexError => write!(f, "Regex error"),
             Error::TimeError => write!(f, "Time error"),
 
             Error::SessionTokenMissing => write!(f, "Session token missing"),
@@ -137,9 +143,7 @@ impl std::fmt::Display for Error {
 
             Error::CourseMissing => write!(f, "Course is missing"),
             Error::CourseModeratorMissing => write!(f, "Course moderator is missing"),
-            Error::CourseModeratorPermission => {
-                write!(f, "The user has insufficient course moderator permissions")
-            }
+            Error::CourseModeratorPermission => write!(f, "The user has insufficient course moderator permissions"),
             Error::CourseLoginFail => write!(f, "Course login failed"),
             Error::CourseKeyInvalid => write!(f, "Course key has an invalid format"),
 
@@ -152,6 +156,12 @@ impl std::fmt::Display for Error {
             Error::RightTermMissing => write!(f, "Term permissions are missing"),
             Error::RightUserMissing => write!(f, "User permissions are missing"),
         }
+    }
+}
+
+impl From<mysql::UrlError> for Error {
+    fn from(_: mysql::UrlError) -> Self {
+        Error::DatabaseURL
     }
 }
 

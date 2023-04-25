@@ -54,7 +54,10 @@ fn index() -> &'static str {
 fn rocket() -> _ {
     let server_config = config::readConfig();
 
-    db::connect_db(&server_config);
+    match db::connect_db(&server_config) {
+        Err(..) => panic!("Database connection failed"),
+        Ok(..) => (),
+    };
 
     let rocket_config = rocket::Config {
         address: server_config

@@ -5,7 +5,7 @@ use crate::error::Error;
 
 static mut POOL: Option<Pool> = None;
 
-pub fn connect_db(server_conf: &crate::config::ServerConfig) {
+pub fn connect_db(server_conf: &crate::config::ServerConfig) -> Result<(), Error> {
     let db_url = format!(
         "mysql://{user}:{password}@{server}:{port}/{database}",
         server = server_conf.db_server.clone().unwrap_or("127.0.0.1".into()),
@@ -16,13 +16,11 @@ pub fn connect_db(server_conf: &crate::config::ServerConfig) {
     );
 
     unsafe {
-        POOL = match mysql::Pool::new(mysql::Opts::from_url(&db_url).unwrap()) {
-            Err(error) => {
-                panic!(" => DB connection failed: {:?}", error)
-            }
-            Ok(pool) => Some(pool),
+        POOL = match mysql::Pool::new(mysql::Opts::from_url(&db_url)?)? {
+            pool => Some(pool),
         };
     }
+    Ok(())
 }
 
 pub fn get_pool_conn() -> PooledConn {
