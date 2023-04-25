@@ -1,8 +1,8 @@
 use rocket::serde::json::Json;
 
+use crate::common::{Right, User};
 use crate::error::Error;
-use crate::session::{UserSession, Credential};
-use crate::common::{User, Right};
+use crate::session::{Credential, UserSession};
 
 /*
  * ROUTES
@@ -20,7 +20,7 @@ pub fn user_info(session: UserSession) -> Json<User> {
 
 #[rocket::get("/member/user_right")]
 pub fn user_right(session: UserSession) -> Json<Right> {
-    Json(Right{
+    Json(Right {
         admin_courses: session.right.admin_courses,
         admin_inventory: session.right.admin_inventory,
         admin_rankings: session.right.admin_rankings,

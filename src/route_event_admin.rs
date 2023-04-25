@@ -1,8 +1,8 @@
 use rocket::serde::json::Json;
 
-use crate::error::Error;
 use crate::clock::WebDate;
-use crate::common::{Slot};
+use crate::common::Slot;
+use crate::error::Error;
 use crate::session::UserSession;
 
 #[rocket::get("/admin/event_list?<begin>&<end>&<status>&<owner_id>")]

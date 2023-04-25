@@ -1,7 +1,7 @@
-use rocket::request::{Request, Outcome};
-use rocket::response::{self, Response, Responder};
-use rocket::outcome::Outcome::{Failure};
 use rocket::http::Status;
+use rocket::outcome::Outcome::Failure;
+use rocket::request::{Outcome, Request};
+use rocket::response::{self, Responder, Response};
 
 #[derive(Debug)]
 pub enum Error {
@@ -137,7 +137,9 @@ impl std::fmt::Display for Error {
 
             Error::CourseMissing => write!(f, "Course is missing"),
             Error::CourseModeratorMissing => write!(f, "Course moderator is missing"),
-            Error::CourseModeratorPermission => write!(f, "The user has insufficient course moderator permissions"),
+            Error::CourseModeratorPermission => {
+                write!(f, "The user has insufficient course moderator permissions")
+            }
             Error::CourseLoginFail => write!(f, "Course login failed"),
             Error::CourseKeyInvalid => write!(f, "Course key has an invalid format"),
 
@@ -176,7 +178,7 @@ impl<'r> Responder<'r, 'static> for Error {
 }
 
 impl Error {
-    pub fn outcome<T>(self) -> Outcome<T,Error> {
-        Failure((Status::BadRequest,self))
+    pub fn outcome<T>(self) -> Outcome<T, Error> {
+        Failure((Status::BadRequest, self))
     }
 }

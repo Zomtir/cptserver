@@ -59,9 +59,13 @@ pub mod datetime_format {
     }
 }
 
-pub fn duration_round(naive_datetime: chrono::NaiveDateTime, duration: Duration) -> Result<chrono::NaiveDateTime, Error>
-{
-    Ok(DateTime::<Utc>::from_utc(naive_datetime, Utc).duration_round(duration)?.naive_utc())
+pub fn duration_round(
+    naive_datetime: chrono::NaiveDateTime,
+    duration: Duration,
+) -> Result<chrono::NaiveDateTime, Error> {
+    Ok(DateTime::<Utc>::from_utc(naive_datetime, Utc)
+        .duration_round(duration)?
+        .naive_utc())
 }
 
 impl WebDate {
@@ -72,7 +76,9 @@ impl WebDate {
         }
     }
 
-    pub fn to_naive(self) -> chrono::NaiveDate { self.0 }
+    pub fn to_naive(self) -> chrono::NaiveDate {
+        self.0
+    }
 }
 
 #[rocket::async_trait]
@@ -85,7 +91,7 @@ impl<'r> FromFormField<'r> for WebDate {
     }
 
     async fn from_data(field: DataField<'r, '_>) -> form::Result<'r, Self> {
-        let web_string : String = match field.data.open(200.bytes()).into_string().await {
+        let web_string: String = match field.data.open(200.bytes()).into_string().await {
             Err(..) => return Err(form::Errors::default()),
             Ok(string) => string.into_inner(),
         };

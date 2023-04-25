@@ -1,7 +1,7 @@
 use rocket::serde::json::Json;
 
+use crate::common::{Course, User};
 use crate::error::Error;
-use crate::common::{User, Course};
 use crate::session::UserSession;
 
 #[rocket::get("/mod/course_responsiblity")]
@@ -13,10 +13,7 @@ pub fn course_responsiblity(session: UserSession) -> Result<Json<Vec<Course>>, E
 }
 
 #[rocket::get("/mod/course_moderator_list?<course_id>")]
-pub fn course_moderator_list(
-    session: UserSession,
-    course_id: i64,
-) -> Result<Json<Vec<User>>, Error> {
+pub fn course_moderator_list(session: UserSession, course_id: i64) -> Result<Json<Vec<User>>, Error> {
     match crate::db_course::is_course_moderator(course_id, session.user.id)? {
         false => return Err(Error::CourseModeratorPermission),
         true => (),
@@ -29,11 +26,7 @@ pub fn course_moderator_list(
 }
 
 #[rocket::head("/mod/course_moderator_add?<course_id>&<user_id>")]
-pub fn course_moderator_add(
-    session: UserSession,
-    course_id: i64,
-    user_id: i64,
-) -> Result<(), Error> {
+pub fn course_moderator_add(session: UserSession, course_id: i64, user_id: i64) -> Result<(), Error> {
     match crate::db_course::is_course_moderator(course_id, session.user.id)? {
         false => return Err(Error::CourseModeratorPermission),
         true => (),
@@ -46,11 +39,7 @@ pub fn course_moderator_add(
 }
 
 #[rocket::head("/mod/course_moderator_remove?<course_id>&<user_id>")]
-pub fn course_moderator_remove(
-    session: UserSession,
-    course_id: i64,
-    user_id: i64,
-) -> Result<(), Error> {
+pub fn course_moderator_remove(session: UserSession, course_id: i64, user_id: i64) -> Result<(), Error> {
     match crate::db_course::is_course_moderator(course_id, session.user.id)? {
         false => return Err(Error::CourseModeratorPermission),
         true => (),

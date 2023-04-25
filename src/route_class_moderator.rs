@@ -1,7 +1,7 @@
 use rocket::serde::json::Json;
 
-use crate::error::Error;
 use crate::common::Slot;
+use crate::error::Error;
 use crate::session::UserSession;
 
 #[rocket::get("/mod/class_list?<course_id>")]
@@ -16,16 +16,8 @@ pub fn class_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Slot>
     }
 }
 
-#[rocket::post(
-    "/mod/class_create?<course_id>",
-    format = "application/json",
-    data = "<slot>"
-)]
-pub fn class_create(
-    session: UserSession,
-    course_id: i64,
-    mut slot: Json<Slot>,
-) -> Result<String, Error> {
+#[rocket::post("/mod/class_create?<course_id>", format = "application/json", data = "<slot>")]
+pub fn class_create(session: UserSession, course_id: i64, mut slot: Json<Slot>) -> Result<String, Error> {
     match crate::db_course::is_course_moderator(course_id, session.user.id)? {
         false => return Err(Error::CourseModeratorPermission),
         true => (),
@@ -34,20 +26,12 @@ pub fn class_create(
     crate::common::validate_slot_dates(&mut slot)?;
 
     match crate::db_slot::create_slot(&slot, "OCCURRING", Some(course_id))? {
-        id => Ok(id.to_string())
+        id => Ok(id.to_string()),
     }
 }
 
-#[rocket::post(
-    "/mod/class_edit?<slot_id>",
-    format = "application/json",
-    data = "<slot>"
-)]
-pub fn class_edit(
-    session: UserSession,
-    slot_id: i64,
-    mut slot: Json<Slot>,
-) -> Result<(), Error> {
+#[rocket::post("/mod/class_edit?<slot_id>", format = "application/json", data = "<slot>")]
+pub fn class_edit(session: UserSession, slot_id: i64, mut slot: Json<Slot>) -> Result<(), Error> {
     match crate::db_slot::is_slot_moderator(slot_id, session.user.id)? {
         false => return Err(Error::CourseModeratorPermission),
         true => (),

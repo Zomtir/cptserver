@@ -1,7 +1,7 @@
 use rocket::serde::json::Json;
 
-use crate::error::Error;
 use crate::common::{Course, Slot};
+use crate::error::Error;
 use crate::session::UserSession;
 
 /*

@@ -1,7 +1,7 @@
 use rand::Rng;
 use regex::Regex;
-use serde::{Serialize, Deserialize};
-use sha2::{Sha256, Digest};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 
 use crate::error::Error;
 
@@ -136,13 +136,16 @@ pub struct Term {
     pub end: chrono::NaiveDateTime,
 }
 
-
 /*
  * METHODS
  */
 
 pub fn random_string(size: usize) -> String {
-    rand::thread_rng().sample_iter(&rand::distributions::Alphanumeric).take(size).map(char::from).collect()
+    rand::thread_rng()
+        .sample_iter(&rand::distributions::Alphanumeric)
+        .take(size)
+        .map(char::from)
+        .collect()
 }
 
 pub fn validate_user_key(key: &Option<String>) -> Result<Option<String>, Error> {
@@ -151,9 +154,13 @@ pub fn validate_user_key(key: &Option<String>) -> Result<Option<String>, Error> 
         Some(text) => text,
     };
 
-    if text.is_empty() { return Ok(None); };
+    if text.is_empty() {
+        return Ok(None);
+    };
 
-    if text.len() < 2 || text.len() > 20 {return Err(Error::UserKeyInvalid)};
+    if text.len() < 2 || text.len() > 20 {
+        return Err(Error::UserKeyInvalid);
+    };
 
     Ok(key.clone())
 }
@@ -164,7 +171,9 @@ pub fn validate_email(email: &Option<String>) -> Result<Option<String>, Error> {
         Some(text) => text,
     };
 
-    if text.is_empty() { return Ok(None); };
+    if text.is_empty() {
+        return Ok(None);
+    };
 
     match Regex::new(r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})") {
         Err(..) => Err(Error::RegexError),
@@ -183,7 +192,7 @@ pub fn validate_clear_password(password: String) -> Result<String, Error> {
     Ok(password.to_string())
 }
 
-pub fn decode_hash256(hash: & str) -> Option<Vec<u8>> {
+pub fn decode_hash256(hash: &str) -> Option<Vec<u8>> {
     match &hash.len() {
         // Sha256 is 64 chars long
         64 => match hex::decode(&hash) {
@@ -194,7 +203,7 @@ pub fn decode_hash256(hash: & str) -> Option<Vec<u8>> {
     }
 }
 
-pub fn decode_hash128(hash: & str) -> Option<Vec<u8>> {
+pub fn decode_hash128(hash: &str) -> Option<Vec<u8>> {
     match &hash.len() {
         // 128 bits are 32 chars long
         32 => match hex::decode(&hash) {
@@ -206,7 +215,7 @@ pub fn decode_hash128(hash: & str) -> Option<Vec<u8>> {
 }
 
 pub fn hash_sha256(meal: &Vec<u8>, pepper: &Vec<u8>) -> Vec<u8> {
-    let spiced_meal : Vec<u8> = meal.iter().cloned().chain(pepper.iter().cloned()).collect();
+    let spiced_meal: Vec<u8> = meal.iter().cloned().chain(pepper.iter().cloned()).collect();
     let digested_meal = Sha256::digest(&spiced_meal);
 
     // println!("spiced meal: {:?}", spiced_meal);
@@ -222,10 +231,13 @@ pub fn hash128_string(meal: &String) -> Vec<u8> {
 }
 
 pub fn random_bytes(size: usize) -> Vec<u8> {
-    rand::thread_rng().sample_iter(rand::distributions::Standard).take(size).collect()
+    rand::thread_rng()
+        .sample_iter(rand::distributions::Standard)
+        .take(size)
+        .collect()
 }
 
-pub fn is_slot_valid(slot: & Slot) -> bool {
+pub fn is_slot_valid(slot: &Slot) -> bool {
     return slot.begin + crate::config::CONFIG_SLOT_WINDOW_MINIMUM() < slot.end;
 }
 

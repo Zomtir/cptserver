@@ -1,43 +1,49 @@
 extern crate lazy_static;
 
-use rocket::serde::json::Json;
 use rocket::http::Status;
+use rocket::serde::json::Json;
 
-use mysql::{PooledConn, params};
-use mysql::prelude::{Queryable};
+use mysql::prelude::Queryable;
+use mysql::{params, PooledConn};
 
-use crate::error::Error;
+use crate::common::{Branch, Location};
 use crate::db::get_pool_conn;
-use crate::common::{Location, Branch};
+use crate::error::Error;
 
 #[rocket::head("/status")]
-pub fn status() -> Status {    
+pub fn status() -> Status {
     Status::Ok
 }
 
 #[rocket::get("/location_list")]
 pub fn location_list() -> Result<Json<Vec<Location>>, Status> {
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT location_id, location_key, title FROM locations").unwrap();
-    let map = |(location_id, location_key, title): (u32, _, _,)| {
-        Location {id: location_id, key: location_key, title}
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn
+        .prep("SELECT location_id, location_key, title FROM locations")
+        .unwrap();
+    let map = |(location_id, location_key, title): (u32, _, _)| Location {
+        id: location_id,
+        key: location_key,
+        title,
     };
 
-    match conn.exec_map(&stmt,params::Params::Empty,&map) {
+    match conn.exec_map(&stmt, params::Params::Empty, &map) {
         Err(..) => Err(Status::Conflict),
         Ok(locations) => Ok(Json(locations)),
     }
 }
 
 #[rocket::get("/branch_list")]
-pub fn branch_list() -> Result<Json<Vec<Branch>>,Status> {
-    let mut conn : PooledConn = get_pool_conn();
+pub fn branch_list() -> Result<Json<Vec<Branch>>, Status> {
+    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT branch_id, branch_key, title FROM branches").unwrap();
-    let map = |(branch_id, branch_key, title): (u16, String, String)| {
-        Branch {id: branch_id, key: branch_key, title}
+    let map = |(branch_id, branch_key, title): (u16, String, String)| Branch {
+        id: branch_id,
+        key: branch_key,
+        title,
     };
 
-    match conn.exec_map(&stmt,params::Params::Empty,&map) {
+    match conn.exec_map(&stmt, params::Params::Empty, &map) {
         Err(..) => Err(Status::Conflict),
         Ok(branches) => Ok(Json(branches)),
     }
@@ -45,7 +51,7 @@ pub fn branch_list() -> Result<Json<Vec<Branch>>,Status> {
 
 #[rocket::get("/user_salt?<user_key>")]
 pub fn user_salt(user_key: String) -> Result<String, Error> {
-    let mut conn : PooledConn = get_pool_conn();
+    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep("SELECT salt FROM users WHERE user_key = :user_key");
     let params = params! {
         "user_key" => &user_key

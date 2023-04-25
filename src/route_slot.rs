@@ -1,8 +1,8 @@
 use rocket::serde::json::Json;
 
+use crate::common::{Slot, User};
 use crate::error::Error;
 use crate::session::SlotSession;
-use crate::common::{Slot, User};
 
 /*
  * ROUTES

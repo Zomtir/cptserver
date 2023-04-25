@@ -23,7 +23,8 @@ pub fn list_rankings(
         JOIN users u ON (r.user_id = u.user_id)
         JOIN users j ON (r.judge_id = j.user_id)
         WHERE (:user_id IS NULL OR r.user_id = :user_id)
-        AND ((:branch_id IS NULL) OR (r.branch_id = :branch_id AND r.rank >= :rank_min AND r.rank <= :rank_max))");
+        AND ((:branch_id IS NULL) OR (r.branch_id = :branch_id AND r.rank >= :rank_min AND r.rank <= :rank_max))",
+    );
 
     let params = params! {
         "user_id" => user_id,
@@ -154,7 +155,7 @@ pub fn summarize_rankings(user_id: i64) -> Option<Vec<(Branch, i16)>> {
             maxrank,
         )
     };
-    
+
     match conn.exec_map(&stmt.unwrap(), &params, &map) {
         Err(..) => None,
         Ok(summary) => Some(summary),

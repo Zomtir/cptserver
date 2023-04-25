@@ -1,17 +1,19 @@
-use mysql::{PooledConn, params};
-use mysql::prelude::{Queryable};
+use mysql::prelude::Queryable;
+use mysql::{params, PooledConn};
 
 use rocket::serde::json::Json;
 
-use crate::error::Error;
-use crate::db::get_pool_conn;
-use crate::session::{UserSession};
 use crate::common::{Course, User};
+use crate::db::get_pool_conn;
+use crate::error::Error;
+use crate::session::UserSession;
 
 #[rocket::get("/admin/course_list?<mod_id>")]
 pub fn course_list(session: UserSession, mod_id: Option<i64>) -> Result<Json<Vec<Course>>, Error> {
-    if !session.right.admin_courses {return Err(Error::RightCourseMissing)};
-    
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
+
     match crate::db_course::list_courses(mod_id) {
         None => Err(Error::DatabaseError),
         Some(courses) => Ok(Json(courses)),
@@ -20,25 +22,33 @@ pub fn course_list(session: UserSession, mod_id: Option<i64>) -> Result<Json<Vec
 
 #[rocket::post("/admin/course_create", format = "application/json", data = "<course>")]
 pub fn course_create(session: UserSession, course: Json<Course>) -> Result<String, Error> {
-    if !session.right.admin_courses {return Err(Error::RightCourseMissing)};
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
 
     let id = crate::db_course::create_course(&course)?;
     Ok(id.to_string())
 }
 
 #[rocket::post("/admin/course_edit", format = "application/json", data = "<course>")]
-pub fn course_edit(session: UserSession, course: Json<Course>) -> Result<(),Error> {
-    if !session.right.admin_courses {return Err(Error::RightCourseMissing)};
+pub fn course_edit(session: UserSession, course: Json<Course>) -> Result<(), Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
 
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("UPDATE courses SET
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn
+        .prep(
+            "UPDATE courses SET
         course_key = :course_key,
         title = :title,
         active = :active,
         public = :public,
         branch_id = :branch_id,
         threshold = :threshold
-        WHERE course_id = :course_id").unwrap();
+        WHERE course_id = :course_id",
+        )
+        .unwrap();
 
     let params = params! {
         "course_id" => &course.id,
@@ -50,22 +60,28 @@ pub fn course_edit(session: UserSession, course: Json<Course>) -> Result<(),Erro
         "threshold" => &course.threshold,
     };
 
-    match conn.exec_drop(&stmt,&params) {
+    match conn.exec_drop(&stmt, &params) {
         Err(..) => Err(Error::DatabaseError),
         Ok(..) => Ok(()),
     }
 }
 
 #[rocket::head("/admin/course_delete?<course_id>")]
-pub fn course_delete(session: UserSession, course_id: i64) -> Result<(),Error> {
-    if !session.right.admin_courses {return Err(Error::RightCourseMissing)};
+pub fn course_delete(session: UserSession, course_id: i64) -> Result<(), Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
 
-    let mut conn : PooledConn = get_pool_conn();
-    let stmt = conn.prep("DELETE c FROM courses c
-                          WHERE c.course_id = :course_id").unwrap();
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn
+        .prep(
+            "DELETE c FROM courses c
+                          WHERE c.course_id = :course_id",
+        )
+        .unwrap();
     let params = params! {"course_id" => &course_id};
 
-    match conn.exec_drop(&stmt,&params) {
+    match conn.exec_drop(&stmt, &params) {
         Err(..) => Err(Error::DatabaseError),
         Ok(..) => Ok(()),
     }
@@ -73,7 +89,9 @@ pub fn course_delete(session: UserSession, course_id: i64) -> Result<(),Error> {
 
 #[rocket::get("/admin/course_moderator_list?<course_id>")]
 pub fn course_moderator_list(session: UserSession, course_id: i64) -> Result<Json<Vec<User>>, Error> {
-    if !session.right.admin_courses {return Err(Error::RightCourseMissing)};
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
 
     match crate::db_course::list_course_moderators(course_id) {
         None => return Err(Error::DatabaseError),
@@ -82,8 +100,10 @@ pub fn course_moderator_list(session: UserSession, course_id: i64) -> Result<Jso
 }
 
 #[rocket::head("/admin/course_moderator_add?<course_id>&<user_id>")]
-pub fn course_moderator_add(session: UserSession, course_id: i64, user_id: i64) -> Result<(),Error> {
-    if !session.right.admin_courses {return Err(Error::RightCourseMissing)};
+pub fn course_moderator_add(session: UserSession, course_id: i64, user_id: i64) -> Result<(), Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
 
     match crate::db_course::add_course_moderator(course_id, user_id) {
         None => Err(Error::DatabaseError),
@@ -92,8 +112,10 @@ pub fn course_moderator_add(session: UserSession, course_id: i64, user_id: i64) 
 }
 
 #[rocket::head("/admin/course_moderator_remove?<course_id>&<user_id>")]
-pub fn course_moderator_remove(session: UserSession, course_id: i64, user_id: i64) -> Result<(),Error> {
-    if !session.right.admin_courses {return Err(Error::RightCourseMissing)};
+pub fn course_moderator_remove(session: UserSession, course_id: i64, user_id: i64) -> Result<(), Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
 
     match crate::db_course::remove_course_moderator(course_id, user_id) {
         None => Err(Error::DatabaseError),

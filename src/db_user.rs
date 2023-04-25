@@ -14,20 +14,19 @@ pub fn list_user(enabled: Option<bool>) -> Result<Vec<User>, Error> {
     let stmt = conn.prep(
         "SELECT user_id, user_key, firstname, lastname
         FROM users
-        WHERE :enabled IS NULL OR :enabled = enabled;");
+        WHERE :enabled IS NULL OR :enabled = enabled;",
+    );
 
     let params = params! {
         "enabled" => &enabled,
     };
 
-    let map = |(user_id, user_key, firstname, lastname)| {
-        User::from_info(user_id, user_key, firstname, lastname)
-    };
+    let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
 
     Ok(conn.exec_map(&stmt.unwrap(), &params, &map)?)
 }
 
-pub fn get_user_detailed(user_id: i64) -> Result<User,Error> {
+pub fn get_user_detailed(user_id: i64) -> Result<User, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
@@ -52,18 +51,19 @@ pub fn get_user_detailed(user_id: i64) -> Result<User,Error> {
             dataDisclaimer,
             note
         FROM users
-        WHERE users.user_id = :user_id;")?;
+        WHERE users.user_id = :user_id;",
+    )?;
 
     let params = params! {
         "user_id" => &user_id,
     };
 
-    let mut row : mysql::Row = match conn.exec_first(&stmt,&params)? {
+    let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
         None => return Err(Error::UserMissing),
         Some(row) => row,
     };
 
-    let user = User{
+    let user = User {
         id: row.take("user_id").unwrap(),
         key: row.take("user_key").unwrap(),
         enabled: row.take("user_key").unwrap(),
@@ -102,7 +102,7 @@ pub fn create_user(user: &mut User) -> Result<i64, Error> {
         VALUES (:user_key, :pwd, :pepper, :salt, :enabled, :firstname, :lastname,
             :address, :email, :phone, :iban, :birthday, :birthlocation, :nationality, :gender,
             :federationNumber, :federationPermissionSolo, :federationPermissionTeam, :federationResidency,
-            :dataDeclaration, :dataDisclaimer, :note);"
+            :dataDeclaration, :dataDisclaimer, :note);",
     );
     let params = params! {
         "user_key" => &user.key.as_ref().unwrap_or(&crate::common::random_string(6)),
@@ -145,7 +145,7 @@ pub fn is_user_created(user_key: &str) -> Option<bool> {
     return Some(count.unwrap() == 1);
 }
 
-pub fn edit_user(user_id: i64, user: &mut User) -> Result<(),Error> {
+pub fn edit_user(user_id: i64, user: &mut User) -> Result<(), Error> {
     user.key = crate::common::validate_user_key(&user.key)?;
 
     if user.key.is_none() {
@@ -153,7 +153,7 @@ pub fn edit_user(user_id: i64, user: &mut User) -> Result<(),Error> {
     };
 
     user.email = crate::common::validate_email(&user.email)?;
-    
+
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE users SET

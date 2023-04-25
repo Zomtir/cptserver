@@ -20,32 +20,24 @@ pub fn get_slot_info(slot_id: i64) -> Result<Slot, Error> {
     let params = params! {
         "slot_id" => slot_id,
     };
-    let map = |(
-        slot_id,
-        slot_key,
-        slot_title,
-        location_id,
-        location_key,
-        location_title,
-        begin,
-        end,
-        status,
-        course_id,
-    )| Slot {
-        id: slot_id,
-        key: slot_key,
-        pwd: None,
-        title: slot_title,
-        begin,
-        end,
-        status: status,
-        location: Location {
-            id: location_id,
-            key: location_key,
-            title: location_title,
-        },
-        course_id: course_id,
-    };
+    let map =
+        |(slot_id, slot_key, slot_title, location_id, location_key, location_title, begin, end, status, course_id)| {
+            Slot {
+                id: slot_id,
+                key: slot_key,
+                pwd: None,
+                title: slot_title,
+                begin,
+                end,
+                status: status,
+                location: Location {
+                    id: location_id,
+                    key: location_key,
+                    title: location_title,
+                },
+                course_id: course_id,
+            }
+        };
 
     let mut slots = conn.exec_map(&stmt, &params, &map)?;
 
@@ -75,7 +67,8 @@ pub fn list_slots(
         AND (:status IS NULL OR :status = s.status)
         AND (:course_id IS NULL OR :course_id = s.course_id)
         AND (:owner_id IS NULL OR :owner_id = o.user_id)
-        GROUP BY s.slot_id")?;
+        GROUP BY s.slot_id",
+    )?;
 
     if begin.is_none() || begin < crate::config::CONFIG_SLOT_DATE_MIN() {
         begin = crate::config::CONFIG_SLOT_DATE_MIN();
@@ -93,17 +86,17 @@ pub fn list_slots(
         "owner_id" => &owner_id,
     };
 
-    let map = |(
-        slot_id,
-        slot_key,
-        slot_title,
-        location_id,
-        location_key,
-        location_title,
-        begin,
-        end,
-        status,
-    ): (i64, String, String, u32, _, _, _, _, String)| Slot {
+    let map = |(slot_id, slot_key, slot_title, location_id, location_key, location_title, begin, end, status): (
+        i64,
+        String,
+        String,
+        u32,
+        _,
+        _,
+        _,
+        _,
+        String,
+    )| Slot {
         id: slot_id,
         key: slot_key,
         pwd: None,
@@ -127,7 +120,8 @@ pub fn create_slot(slot: &Slot, status: &str, course_id: Option<i64>) -> Result<
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO slots (slot_key, pwd, title, status, autologin, location_id, begin, end, course_id)
-        SELECT :slot_key, :pwd, :title, :status, :autologin, :location_id, :begin, :end, :course_id");
+        SELECT :slot_key, :pwd, :title, :status, :autologin, :location_id, :begin, :end, :course_id",
+    );
 
     let params = params! {
         "slot_key" => crate::common::random_string(8),
@@ -251,18 +245,19 @@ pub fn is_slot_free(slot: &Slot) -> Result<bool, Error> {
 /* PARTICIPANT RELATED */
 
 pub fn get_slot_candidates(slot_id: i64) -> Result<Vec<User>, Error> {
-    let mut conn : PooledConn = get_pool_conn();
+    let mut conn: PooledConn = get_pool_conn();
     // TODO this is way more complicated than just then enabled users...
     // course invites, slot invites, team invites
-    let stmt = conn.prep("SELECT user_id, user_key, firstname, lastname FROM users
-                          WHERE enabled = TRUE")?;
+    let stmt = conn.prep(
+        "SELECT user_id, user_key, firstname, lastname FROM users
+                          WHERE enabled = TRUE",
+    )?;
 
-    let map = |(user_id, user_key, firstname, lastname)|
-        User::from_info(user_id, user_key, firstname, lastname);
+    let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
 
     // TODO level check threshold if existent
 
-    let users = conn.exec_map(&stmt,params::Params::Empty,&map)?;
+    let users = conn.exec_map(&stmt, params::Params::Empty, &map)?;
     Ok(users)
 }
 
@@ -424,9 +419,7 @@ pub fn list_slot_participants(slot_id: i64) -> Result<Vec<User>, Error> {
     let params = params! {
         "slot_id" => slot_id,
     };
-    let map = |(user_id, user_key, firstname, lastname)| {
-        User::from_info(user_id, user_key, firstname, lastname)
-    };
+    let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
 
     let users = conn.exec_map(&stmt, &params, &map)?;
     Ok(users)

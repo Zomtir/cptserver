@@ -1,19 +1,25 @@
-use rocket::serde::json::Json;
 use crate::error::Error;
+use rocket::serde::json::Json;
 
+use crate::common::Slot;
 use crate::session::UserSession;
-use crate::common::{Slot};
 
 /*
  * ROUTES
  */
 
 #[rocket::get("/member/event_list?<status>")]
-pub fn event_list(session: UserSession, status: Option<String>) -> Result<Json<Vec<Slot>>,Error> {
+pub fn event_list(session: UserSession, status: Option<String>) -> Result<Json<Vec<Slot>>, Error> {
     let begin = chrono::Utc::now().naive_utc() - chrono::Duration::days(30);
     let end = chrono::Utc::now().naive_utc() + chrono::Duration::days(90);
 
-    match crate::db_slot::list_slots(Some(begin.date()), Some(end.date()), status, None, Some(session.user.id))? {
+    match crate::db_slot::list_slots(
+        Some(begin.date()),
+        Some(end.date()),
+        status,
+        None,
+        Some(session.user.id),
+    )? {
         slots => Ok(Json(slots)),
     }
 }
