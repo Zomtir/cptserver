@@ -24,7 +24,7 @@ pub struct User {
     pub federationNumber: Option<i64>,
     pub federationPermissionSolo: Option<chrono::NaiveDate>,
     pub federationPermissionTeam: Option<chrono::NaiveDate>,
-    pub federationResidency: Option<String>,
+    pub federationResidency: Option<chrono::NaiveDate>,
     pub dataDeclaration: Option<bool>,
     pub dataDisclaimer: Option<String>,
     pub note: Option<String>,
