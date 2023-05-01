@@ -85,7 +85,7 @@ pub fn create_ranking(ranking: &Ranking) -> Result<u32, Error> {
 
     conn.exec_drop(&stmt.unwrap(), &params)?;
 
-    crate::db::get_last_id(&mut conn)
+    Ok(conn.last_insert_id() as u32)
 }
 
 pub fn edit_ranking(ranking_id: i64, ranking: &Ranking) -> Option<()> {

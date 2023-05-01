@@ -93,9 +93,8 @@ pub fn course_moderator_list(session: UserSession, course_id: i64) -> Result<Jso
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_course::list_course_moderators(course_id) {
-        None => return Err(Error::DatabaseError),
-        Some(moderators) => Ok(Json(moderators)),
+    match crate::db_course::list_course_moderators(course_id)? {
+        moderators => Ok(Json(moderators)),
     }
 }
 

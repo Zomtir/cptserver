@@ -181,8 +181,8 @@ impl<'r> Responder<'r, 'static> for Error {
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
         Response::build()
             .status(Status::BadRequest)
-            .raw_header("Error-URI", self.kind())
-            .raw_header("Error-MSG", self.to_string())
+            .raw_header("error-uri", self.kind())
+            .raw_header("error-msg", self.to_string())
             .ok()
     }
 }

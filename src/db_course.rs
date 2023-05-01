@@ -97,17 +97,16 @@ pub fn available_courses(user_id: i64) -> Option<Vec<Course>> {
     }
 }
 
-pub fn responsible_courses(user_id: i64) -> Option<Vec<Course>> {
+pub fn responsible_courses(user_id: i64) -> Result<Vec<Course>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "
-        SELECT c.course_id, c.course_key, c.title, c.active, c.public,
+        "SELECT c.course_id, c.course_key, c.title, c.active, c.public,
             b.branch_id, b.branch_key, b.title, c.threshold
         FROM courses c
         JOIN branches b ON c.branch_id = b.branch_id
         JOIN course_moderators m ON c.course_id = m.course_id
         WHERE m.user_id = :user_id",
-    );
+    )?;
 
     let params = params! {
         "user_id" => user_id,
@@ -130,9 +129,8 @@ pub fn responsible_courses(user_id: i64) -> Option<Vec<Course>> {
             }
         };
 
-    match conn.exec_map(&stmt.unwrap(), &params, &map) {
-        Err(..) => None,
-        Ok(courses) => Some(courses),
+    match conn.exec_map(&stmt, &params, &map)? {
+        courses => Ok(courses),
     }
 }
 
@@ -141,7 +139,7 @@ pub fn create_course(course: &Course) -> Result<u32, Error> {
     let stmt = conn.prep(
         "INSERT INTO courses (course_key, title, active, public, branch_id, threshold)
         VALUES (:course_key, :title, :active, :public, :branch_id, :threshold)",
-    );
+    )?;
     let params = params! {
         "course_key" => crate::common::random_string(10),
         "title" => &course.title,
@@ -151,28 +149,27 @@ pub fn create_course(course: &Course) -> Result<u32, Error> {
         "threshold" => &course.threshold,
     };
 
-    conn.exec_drop(&stmt.unwrap(), &params)?;
+    conn.exec_drop(&stmt, &params)?;
 
-    crate::db::get_last_id(&mut conn)
+    Ok(conn.last_insert_id() as u32)
 }
 
-pub fn list_course_moderators(course_id: i64) -> Option<Vec<User>> {
+pub fn list_course_moderators(course_id: i64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname
         FROM users u
         JOIN course_moderators m ON m.user_id = u.user_id
         WHERE m.course_id = :course_id",
-    );
+    )?;
 
     let params = params! {
         "course_id" => course_id,
     };
     let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
 
-    match conn.exec_map(&stmt.unwrap(), &params, &map) {
-        Err(..) => None,
-        Ok(members) => Some(members),
+    match conn.exec_map(&stmt, &params, &map)? {
+        members => Ok(members),
     }
 }
 

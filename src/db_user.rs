@@ -41,7 +41,7 @@ pub fn get_user_detailed(user_id: i64) -> Result<User, Error> {
             iban,
             birthday,
             birthlocation,
-            nationality
+            nationality,
             gender,
             federationNumber,
             federationPermissionSolo,
@@ -66,9 +66,9 @@ pub fn get_user_detailed(user_id: i64) -> Result<User, Error> {
     let user = User {
         id: row.take("user_id").unwrap(),
         key: row.take("user_key").unwrap(),
-        enabled: row.take("user_key").unwrap(),
-        firstname: row.take("user_key").unwrap(),
-        lastname: row.take("user_key").unwrap(),
+        enabled: row.take("enabled").unwrap(),
+        firstname: row.take("firstname").unwrap(),
+        lastname: row.take("lastname").unwrap(),
         address: row.take("address").unwrap(),
         email: row.take("email").unwrap(),
         phone: row.take("phone").unwrap(),
@@ -131,9 +131,7 @@ pub fn create_user(user: &mut User) -> Result<i64, Error> {
 
     conn.exec_drop(&stmt.unwrap(), &params)?;
 
-    let user_id = crate::db::get_last_id(&mut conn)?;
-
-    Ok(user_id)
+    Ok(conn.last_insert_id() as i64)
 }
 
 pub fn is_user_created(user_key: &str) -> Option<bool> {
@@ -157,51 +155,52 @@ pub fn edit_user(user_id: i64, user: &mut User) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE users SET
-        user_key = :user_key,
-        enabled = :enabled,
-        firstname = :firstname,
-        lastname = :lastname,
-        address = :address,
-        email = :email,
-        phone = :phone,
-        iban = :iban,
-        birthday = :birthday,
-        birthlocation = :birthlocation,
-        nationality = :nationality,
-        gender = :gender,
-        federationNumber = :federationNumber,
-        federationPermissionSolo = :federationPermissionSolo,
-        federationPermissionTeam = :federationPermissionTeam,
-        federationResidency = :federationResidency,
-        dataDeclaration = :dataDeclaration,
-        dataDisclaimer = :dataDisclaimer,
-        note = note:
-        WHERE user_id = :user_id;",
-    );
-    let params = params! {
-        "user_id" => &user_id,
-        "user_key" => &user.key,
-        "enabled" => &user.enabled,
-        "firstname" => &user.firstname,
-        "lastname" => &user.lastname,
-        "address" => &user.address,
-        "email" => &user.email,
-        "phone" => &user.phone,
-        "iban" => &user.iban,
-        "birthday" => &user.birthday,
-        "birthlocation" => &user.birthlocation,
-        "nationality" => &user.nationality,
-        "gender" => &user.gender,
-        "federationNumber" => &user.federationNumber,
-        "federationPermissionSolo" => &user.federationPermissionSolo,
-        "federationPermissionTeam" => &user.federationPermissionTeam,
-        "federationResidency" => &user.federationResidency,
-        "dataDeclaration" => &user.dataDeclaration,
-        "dataDisclaimer" => &user.dataDisclaimer,
-        "note" => &user.note,
-    };
+        user_key = ?,
+        enabled = ?,
+        firstname = ?,
+        lastname = ?,
+        address = ?,
+        email = ?,
+        phone = ?,
+        iban = ?,
+        birthday = ?,
+        birthlocation = ?,
+        nationality = ?,
+        gender = ?,
+        federationNumber = ?,
+        federationPermissionSolo = ?,
+        federationPermissionTeam = ?,
+        federationResidency = ?,
+        dataDeclaration = ?,
+        dataDisclaimer = ?,
+        note = ?
+        WHERE user_id = ?;",
+    )?;
 
-    conn.exec_drop(&stmt?, &params)?;
+    let mut params = Vec::<mysql::Value>::with_capacity(20);
+
+    params.push(user.key.clone().into());
+    params.push(user.enabled.clone().into());
+    params.push(user.firstname.clone().into());
+    params.push(user.lastname.clone().into());
+    params.push(user.address.clone().into());
+    params.push(user.email.clone().into());
+    params.push(user.phone.clone().into());
+    params.push(user.iban.clone().into());
+    params.push(user.birthday.clone().into());
+    params.push(user.birthlocation.clone().into());
+    params.push(user.nationality.clone().into());
+    params.push(user.gender.clone().clone().into());
+    params.push(user.federationNumber.clone().into());
+    params.push(user.federationPermissionSolo.clone().into());
+    params.push(user.federationPermissionTeam.clone().into());
+    params.push(user.federationResidency.clone().into());
+    params.push(user.dataDeclaration.clone().into());
+    params.push(user.dataDisclaimer.clone().into());
+    params.push(user.note.clone().into());
+    params.push(user_id.clone().into());
+
+    conn.exec_drop(&stmt, &params)?;
     Ok(())
 }
 

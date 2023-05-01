@@ -47,7 +47,7 @@ pub fn create_term(term: &Term) -> Result<u32, Error> {
 
     conn.exec_drop(&stmt.unwrap(), &params)?;
 
-    crate::db::get_last_id(&mut conn)
+    Ok(conn.last_insert_id() as u32)
 }
 
 pub fn edit_term(term_id: i64, term: &Term) -> Option<()> {

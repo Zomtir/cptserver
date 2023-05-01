@@ -99,7 +99,7 @@ pub fn create_team(team: &Team) -> Result<u32, Error> {
 
     conn.exec_drop(&stmt.unwrap(), &params)?;
 
-    crate::db::get_last_id(&mut conn)
+    Ok(conn.last_insert_id() as u32)
 }
 
 pub fn edit_team(team_id: &u32, team: &Team) -> Option<()> {

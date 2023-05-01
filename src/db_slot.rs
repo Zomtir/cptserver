@@ -137,7 +137,7 @@ pub fn create_slot(slot: &Slot, status: &str, course_id: Option<i64>) -> Result<
 
     conn.exec_drop(&stmt.unwrap(), &params)?;
 
-    crate::db::get_last_id(&mut conn)
+    Ok(conn.last_insert_id() as i64)
 }
 
 pub fn edit_slot(slot_id: i64, slot: &Slot) -> Result<(), Error> {
