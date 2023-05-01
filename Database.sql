@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.1.4deb1
+-- version 5.2.1deb1
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost:3306
--- Generation Time: Mar 10, 2023 at 04:10 PM
--- Server version: 10.6.12-MariaDB-0ubuntu0.22.10.1
--- PHP Version: 8.1.7-1ubuntu3.3
+-- Host: localhost:8001
+-- Generation Time: May 01, 2023 at 11:32 AM
+-- Server version: 10.11.2-MariaDB-1
+-- PHP Version: 8.1.12-1ubuntu4
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `tsv`
+-- Database: `cptdb`
 --
 
 -- --------------------------------------------------------
@@ -237,32 +237,29 @@ CREATE TABLE `terms` (
 
 CREATE TABLE `users` (
   `user_id` mediumint(9) NOT NULL,
-  `user_key` char(6) NOT NULL,
+  `user_key` char(10) NOT NULL,
   `pwd` binary(32) NOT NULL,
   `pepper` binary(16) NOT NULL,
   `salt` binary(16) NOT NULL,
-  `firstname` tinytext NOT NULL,
-  `lastname` tinytext NOT NULL,
-  `enabled` tinyint(1) NOT NULL DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `user_detail`
---
-
-CREATE TABLE `user_detail` (
-  `user_id` mediumint(9) NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT 0,
+  `firstname` varchar(20) NOT NULL,
+  `lastname` varchar(20) NOT NULL,
   `address` varchar(60) DEFAULT NULL,
-  `email` tinytext DEFAULT NULL,
+  `email` varchar(40) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `iban` char(22) DEFAULT NULL,
   `birthday` date DEFAULT NULL,
+  `birthlocation` varchar(60) DEFAULT NULL,
+  `nationality` varchar(40) DEFAULT NULL,
   `gender` enum('MALE','FEMALE','OTHER') DEFAULT NULL,
-  `organization_id` mediumint(9) DEFAULT NULL,
-  `mediapermission` tinyint(1) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `federationNumber` mediumint(9) DEFAULT NULL,
+  `federationPermissionSolo` date DEFAULT NULL,
+  `federationPermissionTeam` date DEFAULT NULL,
+  `federationResidency` date DEFAULT NULL,
+  `dataDeclaration` tinyint(1) DEFAULT NULL,
+  `dataDisclaimer` text DEFAULT NULL,
+  `note` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Indexes for dumped tables
@@ -393,12 +390,6 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `KEY` (`user_key`);
 
 --
--- Indexes for table `user_detail`
---
-ALTER TABLE `user_detail`
-  ADD PRIMARY KEY (`user_id`);
-
---
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -490,9 +481,9 @@ ALTER TABLE `course_subscriptions`
 -- Constraints for table `inventory`
 --
 ALTER TABLE `inventory`
-  ADD CONSTRAINT `inventory_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`owner_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `inventory_ibfk_3` FOREIGN KEY (`possessor_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `inventory_ibfk_1` FOREIGN KEY (`owner_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`possessor_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `inventory_ibfk_3` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `items`
@@ -547,12 +538,6 @@ ALTER TABLE `team_members`
 --
 ALTER TABLE `terms`
   ADD CONSTRAINT `terms_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`);
-
---
--- Constraints for table `user_detail`
---
-ALTER TABLE `user_detail`
-  ADD CONSTRAINT `user_detail_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
