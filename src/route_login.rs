@@ -124,27 +124,56 @@ pub fn slot_login(credit: Json<Credential>) -> Result<String, Error> {
     return Ok(slot_token);
 }
 
-#[rocket::get("/location_login?<location_key>")]
-pub fn location_login(location_key: String) -> Result<String, Error> {
+
+#[rocket::get("/course_login?<course_key>")]
+pub fn course_login(course_key: String) -> Result<String, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn
         .prep(
-            "SELECT s.slot_key, s.pwd
+        "SELECT s.slot_key, s.pwd
         FROM slots s
-        JOIN locations l ON l.location_id = slots.
-        WHERE l.location_key = :location_key
+        JOIN courses c ON c.course_id = s.course_id
+        WHERE c.course_key = :course_key
         AND s.begin <= UTC_TIMESTAMP() AND s.end >= UTC_TIMESTAMP()
         AND autologin = 1",
-        )
-        .unwrap();
-    let params = params! { "location_key" => location_key, };
-    let map = |(slot_key, slot_pwd): (i64, String)| Credential {
+        )?;
+    let params = params! { "course_key" => course_key, };
+    let map = |(slot_key, slot_pwd): (String, String)| Credential {
         login: slot_key.to_string(),
         password: slot_pwd,
         salt: "".into(),
     };
 
-    let credentials = conn.exec_map(&stmt, &params, &map).unwrap();
+    let credentials = conn.exec_map(&stmt, &params, &map)?;
+
+    if credentials.len() < 1 {
+        return Err(Error::SlotPasswordInvalid);
+    };
+
+    return slot_login(Json(credentials[0].clone()));
+}
+
+
+#[rocket::get("/location_login?<location_key>")]
+pub fn location_login(location_key: String) -> Result<String, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn
+        .prep(
+        "SELECT s.slot_key, s.pwd
+        FROM slots s
+        JOIN locations l ON l.location_id = s.location_id
+        WHERE l.location_key = :location_key
+        AND s.begin <= UTC_TIMESTAMP() AND s.end >= UTC_TIMESTAMP()
+        AND autologin = 1",
+        )?;
+    let params = params! { "location_key" => location_key, };
+    let map = |(slot_key, slot_pwd): (String, String)| Credential {
+        login: slot_key.to_string(),
+        password: slot_pwd,
+        salt: "".into(),
+    };
+
+    let credentials = conn.exec_map(&stmt, &params, &map)?;
 
     if credentials.len() < 1 {
         return Err(Error::SlotPasswordInvalid);

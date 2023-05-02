@@ -111,6 +111,7 @@ fn rocket() -> _ {
                 route_anon::user_salt,
                 route_login::user_login,
                 route_login::slot_login,
+                route_login::course_login,
                 route_login::location_login,
                 route_user_admin::user_list,
                 route_user_admin::user_detailed,
