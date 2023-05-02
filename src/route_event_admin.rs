@@ -20,9 +20,9 @@ pub fn event_list(
     let frame_start = begin.to_naive();
     let frame_stop = end.to_naive();
 
-    let window = frame_stop.signed_duration_since(frame_start).num_days();
+    let window = frame_stop.signed_duration_since(frame_start);
 
-    if window < crate::config::CONFIG_SLOT_WINDOW_DAY_MIN || window > crate::config::CONFIG_SLOT_WINDOW_DAY_MAX {
+    if window < crate::config::CONFIG_SLOT_LIST_TIME_MIN() || window > crate::config::CONFIG_SLOT_LIST_TIME_MAX() {
         return Err(Error::SlotWindowInvalid);
     }
 

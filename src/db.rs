@@ -1,5 +1,4 @@
-use mysql::prelude::Queryable;
-use mysql::{params, Pool, PooledConn};
+use mysql::{Pool, PooledConn};
 
 use crate::error::Error;
 

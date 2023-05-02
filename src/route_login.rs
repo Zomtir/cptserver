@@ -134,10 +134,14 @@ pub fn course_login(course_key: String) -> Result<String, Error> {
         FROM slots s
         JOIN courses c ON c.course_id = s.course_id
         WHERE c.course_key = :course_key
-        AND s.begin <= UTC_TIMESTAMP() AND s.end >= UTC_TIMESTAMP()
+        AND s.begin >= :date_min AND s.end <= :date_max
         AND autologin = 1",
         )?;
-    let params = params! { "course_key" => course_key, };
+    let params = params! {
+        "course_key" => course_key,
+        "date_min" => (chrono::Utc::now() - crate::config::CONFIG_SLOT_AUTOLOGIN_TIME()).naive_utc(),
+        "date_max" => (chrono::Utc::now() + crate::config::CONFIG_SLOT_AUTOLOGIN_TIME()).naive_utc(),
+    };
     let map = |(slot_key, slot_pwd): (String, String)| Credential {
         login: slot_key.to_string(),
         password: slot_pwd,
