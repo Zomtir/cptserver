@@ -1,7 +1,7 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Branch, Course, User};
+use crate::common::{Branch, Course, Team, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
@@ -53,8 +53,7 @@ pub fn list_courses(mod_id: Option<i64>) -> Option<Vec<Course>> {
 pub fn available_courses(user_id: i64) -> Option<Vec<Course>> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "
-        SELECT c.course_id, c.course_key, c.title, c.active, c.public,
+        "SELECT c.course_id, c.course_key, c.title, c.active, c.public,
             b.branch_id, b.branch_key, b.title, c.threshold
         FROM courses c
         JOIN branches b ON c.branch_id = b.branch_id
@@ -214,7 +213,7 @@ pub fn remove_course_moderator(course_id: i64, user_id: i64) -> Option<()> {
     let stmt = conn
         .prep(
             "DELETE e FROM course_moderators e
-                          WHERE course_id = :course_id AND user_id = :user_id",
+            WHERE course_id = :course_id AND user_id = :user_id",
         )
         .unwrap();
     let params = params! {
@@ -226,4 +225,57 @@ pub fn remove_course_moderator(course_id: i64, user_id: i64) -> Option<()> {
         Err(..) => None,
         Ok(..) => Some(()),
     }
+}
+
+pub fn list_course_teaminvites(course_id: i64) -> Result<Vec<Team>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT t.team_id, t.name, t.description
+        FROM course_teaminvites c
+        LEFT JOIN teams t ON c.team_id = t.team_id
+        WHERE course_id = :course_id;",
+    )?;
+    let params = params! {
+        "course_id" => course_id,
+    };
+    let map = |(team_id, name, description)| Team {
+        id: team_id,
+        name,
+        description,
+        right: None,
+    };
+
+    let teams = conn.exec_map(&stmt, &params, &map)?;
+    Ok(teams)
+}
+
+pub fn add_course_teaminvite(course_id: i64, team_id: i64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "INSERT INTO course_teaminvites (course_id, team_id)
+        VALUES (:course_id, :team_id);",
+    )?;
+    let params = params! {
+        "course_id" => &course_id,
+        "team_id" => &team_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+pub fn remove_course_teaminvite(course_id: i64, team_id: i64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "DELETE FROM course_teaminvites
+        WHERE course_id = :course_id AND user_id = :team_id;",
+    )?;
+
+    let params = params! {
+        "course_id" => &course_id,
+        "team_id" => &team_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
 }

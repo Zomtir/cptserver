@@ -34,10 +34,8 @@ pub fn team_edit(session: UserSession, team_id: u32, team: Json<Team>) -> Result
         return Err(Error::RightTeamMissing);
     };
 
-    match crate::db_team::edit_team(&team_id, &team) {
-        None => Err(Error::DatabaseError),
-        Some(..) => Ok(()),
-    }
+    crate::db_team::edit_team(&team_id, &team)?;
+    Ok(())
 }
 
 #[rocket::head("/admin/team_delete?<team_id>")]
@@ -46,10 +44,8 @@ pub fn team_delete(session: UserSession, team_id: u32) -> Result<(), Error> {
         return Err(Error::RightTeamMissing);
     };
 
-    match crate::db_team::delete_team(&team_id) {
-        None => Err(Error::DatabaseError),
-        Some(..) => Ok(()),
-    }
+    crate::db_team::delete_team(&team_id)?;
+    Ok(())
 }
 
 #[rocket::get("/admin/team_member_list?<team_id>")]
@@ -58,9 +54,8 @@ pub fn team_member_list(session: UserSession, team_id: u32) -> Result<Json<Vec<U
         return Err(Error::RightTeamMissing);
     };
 
-    match crate::db_team::list_team_members(team_id) {
-        None => Err(Error::DatabaseError),
-        Some(users) => Ok(Json(users)),
+    match crate::db_team::list_team_members(team_id)? {
+        users => Ok(Json(users)),
     }
 }
 

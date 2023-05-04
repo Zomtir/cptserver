@@ -40,7 +40,7 @@ pub fn list_teams() -> Option<Vec<Team>> {
         id: team_id,
         name,
         description,
-        right: Right {
+        right: Some(Right {
             admin_courses,
             admin_event,
             admin_inventory,
@@ -48,7 +48,7 @@ pub fn list_teams() -> Option<Vec<Team>> {
             admin_teams,
             admin_term,
             admin_users,
-        },
+        }),
     };
 
     let params = params::Params::Empty;
@@ -85,16 +85,21 @@ pub fn create_team(team: &Team) -> Result<u32, Error> {
             :admin_users)",
     );
 
+    let rights = match &team.right {
+        None => return Err(Error::Default),
+        Some(r) => r.clone(),
+    };
+
     let params = params! {
         "name" => &team.name,
         "description" => &team.description,
-        "admin_courses" => &team.right.admin_courses,
-        "admin_event" => &team.right.admin_event,
-        "admin_inventory" => &team.right.admin_inventory,
-        "admin_rankings" => &team.right.admin_rankings,
-        "admin_teams" => &team.right.admin_teams,
-        "admin_term" => &team.right.admin_term,
-        "admin_users" => &team.right.admin_users,
+        "admin_courses" => &rights.admin_courses,
+        "admin_event" => &rights.admin_event,
+        "admin_inventory" => &rights.admin_inventory,
+        "admin_rankings" => &rights.admin_rankings,
+        "admin_teams" => &rights.admin_teams,
+        "admin_term" => &rights.admin_term,
+        "admin_users" => &rights.admin_users,
     };
 
     conn.exec_drop(&stmt.unwrap(), &params)?;
@@ -102,7 +107,7 @@ pub fn create_team(team: &Team) -> Result<u32, Error> {
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn edit_team(team_id: &u32, team: &Team) -> Option<()> {
+pub fn edit_team(team_id: &u32, team: &Team) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE teams SET
@@ -116,55 +121,55 @@ pub fn edit_team(team_id: &u32, team: &Team) -> Option<()> {
             admin_term = :admin_term,
             admin_users = :admin_users
         WHERE team_id = :team_id",
-    );
+    )?;
+
+    let rights = match &team.right {
+        None => return Err(Error::Default),
+        Some(r) => r.clone(),
+    };
 
     let params = params! {
         "team_id" => &team_id,
         "name" => &team.name,
         "description" => &team.description,
-        "admin_courses" => &team.right.admin_courses,
-        "admin_event" => &team.right.admin_event,
-        "admin_inventory" => &team.right.admin_inventory,
-        "admin_rankings" => &team.right.admin_rankings,
-        "admin_teams" => &team.right.admin_teams,
-        "admin_term" => &team.right.admin_term,
-        "admin_users" => &team.right.admin_users,
+        "admin_courses" => &rights.admin_courses,
+        "admin_event" => &rights.admin_event,
+        "admin_inventory" => &rights.admin_inventory,
+        "admin_rankings" => &rights.admin_rankings,
+        "admin_teams" => &rights.admin_teams,
+        "admin_term" => &rights.admin_term,
+        "admin_users" => &rights.admin_users,
     };
 
-    match conn.exec_drop(&stmt.unwrap(), &params) {
-        Err(..) => None,
-        Ok(..) => Some(()),
-    }
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
 }
 
-pub fn delete_team(team_id: &u32) -> Option<()> {
+pub fn delete_team(team_id: &u32) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep("DELETE t FROM teams t WHERE t.team_id = :team_id");
+    let stmt = conn.prep("DELETE t FROM teams t WHERE t.team_id = :team_id")?;
     let params = params! {"team_id" => team_id};
 
-    match conn.exec_drop(&stmt.unwrap(), &params) {
-        Err(..) => None,
-        Ok(..) => Some(()),
-    }
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
 }
 
-pub fn list_team_members(team_id: u32) -> Option<Vec<User>> {
+pub fn list_team_members(team_id: u32) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname
         FROM users u
         JOIN team_members m ON m.user_id = u.user_id
         WHERE m.team_id = :team_id",
-    );
+    )?;
 
     let params = params! {
         "team_id" => team_id,
     };
     let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
 
-    match conn.exec_map(&stmt.unwrap(), &params, &map) {
-        Err(..) => None,
-        Ok(members) => Some(members),
+    match conn.exec_map(&stmt, &params, &map)? {
+        members => Ok(members),
     }
 }
 

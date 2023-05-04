@@ -3,7 +3,7 @@ use mysql::{params, PooledConn};
 
 use rocket::serde::json::Json;
 
-use crate::common::{Course, User};
+use crate::common::{Course, Team, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 use crate::session::UserSession;
@@ -120,4 +120,35 @@ pub fn course_moderator_remove(session: UserSession, course_id: i64, user_id: i6
         None => Err(Error::DatabaseError),
         Some(..) => Ok(()),
     }
+}
+
+#[rocket::get("/admin/course_teaminvite_list?<course_id>")]
+pub fn course_teaminvite_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Team>>, Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
+
+    match crate::db_course::list_course_teaminvites(course_id)? {
+        teams => Ok(Json(teams)),
+    }
+}
+
+#[rocket::head("/admin/course_teaminvite_add?<course_id>&<user_id>")]
+pub fn course_teaminvite_add(session: UserSession, course_id: i64, user_id: i64) -> Result<(), Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
+
+    crate::db_course::add_course_teaminvite(course_id, user_id)?;
+    Ok(())
+}
+
+#[rocket::head("/admin/course_teaminvite_remove?<course_id>&<user_id>")]
+pub fn course_teaminvite_remove(session: UserSession, course_id: i64, user_id: i64) -> Result<(), Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
+
+    crate::db_course::remove_course_teaminvite(course_id, user_id)?;
+    Ok(())
 }

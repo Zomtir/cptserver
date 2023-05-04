@@ -412,8 +412,8 @@ pub fn list_slot_participants(slot_id: i64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname
-        FROM slot_enrollments e
-        JOIN users u ON u.user_id = e.user_id
+        FROM slot_participants p
+        JOIN users u ON u.user_id = p.user_id
         WHERE slot_id = :slot_id;",
     )?;
     let params = params! {
@@ -428,7 +428,7 @@ pub fn list_slot_participants(slot_id: i64) -> Result<Vec<User>, Error> {
 pub fn add_slot_participant(slot_id: i64, user_id: i64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "INSERT INTO slot_enrollments (slot_id, user_id)
+        "INSERT INTO slot_participants (slot_id, user_id)
         VALUES (:slot_id, :user_id);",
     )?;
     let params = params! {

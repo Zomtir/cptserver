@@ -99,7 +99,7 @@ pub struct Team {
     pub id: u32,
     pub name: String,
     pub description: String,
-    pub right: Right,
+    pub right: Option<Right>,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
