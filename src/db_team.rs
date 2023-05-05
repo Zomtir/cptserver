@@ -186,7 +186,7 @@ pub fn add_team_member(team_id: &u32, user_id: &u32) -> Result<(), Error> {
 
 pub fn remove_team_member(team_id: &u32, user_id: &u32) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep("DELETE FROM team_members WHERE team_id = :team_id AND e.user_id = :user_id")?;
+    let stmt = conn.prep("DELETE FROM team_members WHERE team_id = :team_id AND user_id = :user_id")?;
     let params = params! {
         "team_id" => &team_id,
         "user_id" => &user_id,
