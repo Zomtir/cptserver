@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8001
--- Generation Time: May 01, 2023 at 11:32 AM
+-- Generation Time: May 05, 2023 at 08:14 PM
 -- Server version: 10.11.2-MariaDB-1
 -- PHP Version: 8.1.12-1ubuntu4
 
@@ -70,6 +70,17 @@ CREATE TABLE `course_subscriptions` (
   `course_id` mediumint(9) NOT NULL,
   `user_id` mediumint(9) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_teaminvites`
+--
+
+CREATE TABLE `course_teaminvites` (
+  `course_id` mediumint(9) NOT NULL,
+  `team_id` mediumint(9) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -156,17 +167,6 @@ CREATE TABLE `slots` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `slot_enrollments`
---
-
-CREATE TABLE `slot_enrollments` (
-  `slot_id` int(11) NOT NULL,
-  `user_id` mediumint(9) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `slot_invites`
 --
 
@@ -185,6 +185,17 @@ CREATE TABLE `slot_owners` (
   `slot_id` int(11) NOT NULL,
   `user_id` mediumint(9) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `slot_participants`
+--
+
+CREATE TABLE `slot_participants` (
+  `slot_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -295,6 +306,13 @@ ALTER TABLE `course_subscriptions`
   ADD KEY `user_id` (`user_id`);
 
 --
+-- Indexes for table `course_teaminvites`
+--
+ALTER TABLE `course_teaminvites`
+  ADD PRIMARY KEY (`course_id`,`team_id`),
+  ADD KEY `team_id` (`team_id`);
+
+--
 -- Indexes for table `inventory`
 --
 ALTER TABLE `inventory`
@@ -342,13 +360,6 @@ ALTER TABLE `slots`
   ADD KEY `REF_location` (`location_id`);
 
 --
--- Indexes for table `slot_enrollments`
---
-ALTER TABLE `slot_enrollments`
-  ADD PRIMARY KEY (`slot_id`,`user_id`),
-  ADD KEY `user_id` (`user_id`);
-
---
 -- Indexes for table `slot_invites`
 --
 ALTER TABLE `slot_invites`
@@ -361,6 +372,13 @@ ALTER TABLE `slot_invites`
 ALTER TABLE `slot_owners`
   ADD PRIMARY KEY (`slot_id`,`user_id`),
   ADD KEY `REF_user` (`user_id`);
+
+--
+-- Indexes for table `slot_participants`
+--
+ALTER TABLE `slot_participants`
+  ADD PRIMARY KEY (`slot_id`,`user_id`),
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- Indexes for table `teams`
@@ -478,6 +496,13 @@ ALTER TABLE `course_subscriptions`
   ADD CONSTRAINT `course_subscriptions_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
+-- Constraints for table `course_teaminvites`
+--
+ALTER TABLE `course_teaminvites`
+  ADD CONSTRAINT `course_teaminvites_ibfk_2` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `course_teaminvites_ibfk_3` FOREIGN KEY (`team_id`) REFERENCES `teams` (`team_id`) ON UPDATE CASCADE;
+
+--
 -- Constraints for table `inventory`
 --
 ALTER TABLE `inventory`
@@ -507,12 +532,6 @@ ALTER TABLE `slots`
   ADD CONSTRAINT `slots_ibfk_2` FOREIGN KEY (`location_id`) REFERENCES `locations` (`location_id`) ON UPDATE CASCADE;
 
 --
--- Constraints for table `slot_enrollments`
---
-ALTER TABLE `slot_enrollments`
-  ADD CONSTRAINT `slot_enrollments_ibfk_2` FOREIGN KEY (`slot_id`) REFERENCES `slots` (`slot_id`) ON UPDATE CASCADE;
-
---
 -- Constraints for table `slot_invites`
 --
 ALTER TABLE `slot_invites`
@@ -525,6 +544,13 @@ ALTER TABLE `slot_invites`
 ALTER TABLE `slot_owners`
   ADD CONSTRAINT `slot_owners_ibfk_1` FOREIGN KEY (`slot_id`) REFERENCES `slots` (`slot_id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `slot_owners_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `slot_participants`
+--
+ALTER TABLE `slot_participants`
+  ADD CONSTRAINT `slot_participants_ibfk_2` FOREIGN KEY (`slot_id`) REFERENCES `slots` (`slot_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `slot_participants_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `team_members`
