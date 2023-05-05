@@ -12,9 +12,8 @@ pub fn team_list(session: UserSession) -> Result<Json<Vec<Team>>, Error> {
         return Err(Error::RightTeamMissing);
     };
 
-    match crate::db_team::list_teams() {
-        None => Err(Error::DatabaseError),
-        Some(teams) => Ok(Json(teams)),
+    match crate::db_team::list_teams()? {
+        teams => Ok(Json(teams)),
     }
 }
 
@@ -65,10 +64,8 @@ pub fn team_member_add(session: UserSession, team_id: u32, user_id: u32) -> Resu
         return Err(Error::RightTeamMissing);
     };
 
-    match crate::db_team::add_team_member(&team_id, &user_id) {
-        None => Err(Error::DatabaseError),
-        Some(..) => Ok(()),
-    }
+    crate::db_team::add_team_member(&team_id, &user_id)?;
+    Ok(())
 
     // TODO: remove/add permissions of currently logged-in users
 }
@@ -79,10 +76,8 @@ pub fn team_member_remove(session: UserSession, team_id: u32, user_id: u32) -> R
         return Err(Error::RightTeamMissing);
     };
 
-    match crate::db_team::remove_team_member(&team_id, &user_id) {
-        None => Err(Error::DatabaseError),
-        Some(..) => Ok(()),
-    }
+    crate::db_team::remove_team_member(&team_id, &user_id)?;
+    Ok(())
 
     // TODO: remove/add permissions of currently logged-in users
 }

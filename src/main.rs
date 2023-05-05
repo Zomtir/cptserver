@@ -41,6 +41,8 @@ mod route_ranking_admin;
 mod route_ranking_member;
 
 mod route_team_admin;
+mod route_team_member;
+
 mod route_term_admin;
 
 mod route_slot;
@@ -179,6 +181,7 @@ fn rocket() -> _ {
                 route_team_admin::team_member_list,
                 route_team_admin::team_member_add,
                 route_team_admin::team_member_remove,
+                route_team_member::team_list,
                 route_term_admin::term_list,
                 route_term_admin::term_create,
                 route_term_admin::term_edit,

@@ -9,7 +9,7 @@ use crate::error::Error;
  * METHODS
  */
 
-pub fn list_teams() -> Option<Vec<Team>> {
+pub fn list_teams() -> Result<Vec<Team>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
@@ -24,7 +24,7 @@ pub fn list_teams() -> Option<Vec<Team>> {
             admin_term,
             admin_users
         FROM teams",
-    );
+    )?;
     let map = |(
         team_id,
         name,
@@ -53,9 +53,8 @@ pub fn list_teams() -> Option<Vec<Team>> {
 
     let params = params::Params::Empty;
 
-    match conn.exec_map(&stmt.unwrap(), &params, &map) {
-        Err(..) => None,
-        Ok(teams) => Some(teams),
+    match conn.exec_map(&stmt, &params, &map)? {
+        teams => Ok(teams),
     }
 }
 
@@ -173,30 +172,26 @@ pub fn list_team_members(team_id: u32) -> Result<Vec<User>, Error> {
     }
 }
 
-pub fn add_team_member(team_id: &u32, user_id: &u32) -> Option<()> {
+pub fn add_team_member(team_id: &u32, user_id: &u32) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep("INSERT INTO team_members (team_id, user_id) SELECT :team_id, :user_id");
+    let stmt = conn.prep("INSERT INTO team_members (team_id, user_id) SELECT :team_id, :user_id")?;
     let params = params! {
         "team_id" => &team_id,
         "user_id" => &user_id,
     };
 
-    match conn.exec_drop(&stmt.unwrap(), &params) {
-        Err(..) => None,
-        Ok(..) => Some(()),
-    }
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
 }
 
-pub fn remove_team_member(team_id: &u32, user_id: &u32) -> Option<()> {
+pub fn remove_team_member(team_id: &u32, user_id: &u32) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep("DELETE FROM team_members WHERE team_id = :team_id AND e.user_id = :user_id");
+    let stmt = conn.prep("DELETE FROM team_members WHERE team_id = :team_id AND e.user_id = :user_id")?;
     let params = params! {
         "team_id" => &team_id,
         "user_id" => &user_id,
     };
 
-    match conn.exec_drop(&stmt.unwrap(), &params) {
-        Err(..) => None,
-        Ok(..) => Some(()),
-    }
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
 }

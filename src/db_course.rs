@@ -268,7 +268,7 @@ pub fn remove_course_teaminvite(course_id: i64, team_id: i64) -> Result<(), Erro
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "DELETE FROM course_teaminvites
-        WHERE course_id = :course_id AND user_id = :team_id;",
+        WHERE course_id = :course_id AND team_id = :team_id;",
     )?;
 
     let params = params! {

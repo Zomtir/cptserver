@@ -133,22 +133,22 @@ pub fn course_teaminvite_list(session: UserSession, course_id: i64) -> Result<Js
     }
 }
 
-#[rocket::head("/admin/course_teaminvite_add?<course_id>&<user_id>")]
-pub fn course_teaminvite_add(session: UserSession, course_id: i64, user_id: i64) -> Result<(), Error> {
+#[rocket::head("/admin/course_teaminvite_add?<course_id>&<team_id>")]
+pub fn course_teaminvite_add(session: UserSession, course_id: i64, team_id: i64) -> Result<(), Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
 
-    crate::db_course::add_course_teaminvite(course_id, user_id)?;
+    crate::db_course::add_course_teaminvite(course_id, team_id)?;
     Ok(())
 }
 
-#[rocket::head("/admin/course_teaminvite_remove?<course_id>&<user_id>")]
-pub fn course_teaminvite_remove(session: UserSession, course_id: i64, user_id: i64) -> Result<(), Error> {
+#[rocket::head("/admin/course_teaminvite_remove?<course_id>&<team_id>")]
+pub fn course_teaminvite_remove(session: UserSession, course_id: i64, team_id: i64) -> Result<(), Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
 
-    crate::db_course::remove_course_teaminvite(course_id, user_id)?;
+    crate::db_course::remove_course_teaminvite(course_id, team_id)?;
     Ok(())
 }
