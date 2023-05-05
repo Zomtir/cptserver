@@ -390,7 +390,7 @@ checksum = "e496a50fda8aacccc86d7529e2c1e0892dbd0f898a6b5645b5561b89c3210efa"
 
 [[package]]
 name = "cptserver"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "chrono",
  "confy",
