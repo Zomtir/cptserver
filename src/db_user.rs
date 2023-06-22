@@ -99,48 +99,49 @@ pub fn create_user(user: &mut User) -> Result<i64, Error> {
             address, email, phone, iban, birthday, birthlocation, nationality, gender,
             federationNumber, federationPermissionSolo, federationPermissionTeam, federationResidency,
             dataDeclaration, dataDisclaimer, note)
-        VALUES (:user_key, :pwd, :pepper, :salt, :enabled, :firstname, :lastname,
-            :address, :email, :phone, :iban, :birthday, :birthlocation, :nationality, :gender,
-            :federationNumber, :federationPermissionSolo, :federationPermissionTeam, :federationResidency,
-            :dataDeclaration, :dataDisclaimer, :note);",
-    );
-    let params = params! {
-        "user_key" => &user.key.as_ref().unwrap_or(&crate::common::random_string(6)),
-        "pwd" => crate::common::random_string(10),
-        "pepper" => crate::common::random_bytes(16),
-        "salt" => crate::common::random_bytes(16),
-        "enabled" => user.enabled.unwrap_or(false),
-        "firstname" => &user.firstname,
-        "lastname" => &user.lastname,
-        "address" => &user.address,
-        "email" => &user.email,
-        "phone" => &user.phone,
-        "iban" => &user.iban,
-        "birthday" => &user.birthday,
-        "birthlocation" => &user.birthlocation,
-        "nationality" => &user.nationality,
-        "gender" => &user.gender,
-        "federationNumber" => &user.federationNumber,
-        "federationPermissionSolo" => &user.federationPermissionSolo,
-        "federationPermissionTeam" => &user.federationPermissionTeam,
-        "federationResidency" => &user.federationResidency,
-        "dataDeclaration" => &user.dataDeclaration,
-        "dataDisclaimer" => &user.dataDisclaimer,
-        "note" => &user.note,
-    };
+        VALUES (?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?,
+            ?, ?, ?);",
+    )?;
 
-    conn.exec_drop(&stmt.unwrap(), &params)?;
+    let mut params = Vec::<mysql::Value>::with_capacity(20);
+
+    params.push(user.key.as_ref().unwrap_or(&crate::common::random_string(6)).into()); // user_key
+    params.push(crate::common::random_string(10).into()); // pwd
+    params.push(crate::common::random_bytes(16).into()); // pepper
+    params.push(crate::common::random_bytes(16).into()); // salt
+    params.push(user.enabled.unwrap_or(false).into()); // enabled
+    params.push(user.firstname.clone().into());
+    params.push(user.lastname.clone().into());
+    params.push(user.address.clone().into());
+    params.push(user.email.clone().into());
+    params.push(user.phone.clone().into());
+    params.push(user.iban.clone().into());
+    params.push(user.birthday.clone().into());
+    params.push(user.birthlocation.clone().into());
+    params.push(user.nationality.clone().into());
+    params.push(user.gender.clone().clone().into());
+    params.push(user.federationNumber.clone().into());
+    params.push(user.federationPermissionSolo.clone().into());
+    params.push(user.federationPermissionTeam.clone().into());
+    params.push(user.federationResidency.clone().into());
+    params.push(user.dataDeclaration.clone().into());
+    params.push(user.dataDisclaimer.clone().into());
+    params.push(user.note.clone().into());
+
+    conn.exec_drop(&stmt, &params)?;
 
     Ok(conn.last_insert_id() as i64)
 }
 
-pub fn is_user_created(user_key: &str) -> Option<bool> {
+pub fn is_user_created(user_key: &str) -> Result<bool, Error> {
     let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT COUNT(1) FROM users WHERE user_key = :user_key");
+    let stmt = conn.prep("SELECT COUNT(1) FROM users WHERE user_key = :user_key")?;
     let params = params! { "user_key" => user_key };
-    let count: Option<i32> = conn.exec_first(&stmt.unwrap(), &params).ok()?;
+    let count: Option<i32> = conn.exec_first(&stmt, &params)?;
 
-    return Some(count.unwrap() == 1);
+    return Ok(count.unwrap() == 1);
 }
 
 pub fn edit_user(user_id: i64, user: &mut User) -> Result<(), Error> {

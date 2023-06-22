@@ -33,6 +33,7 @@ pub fn user_create(session: UserSession, mut user: Json<User>) -> Result<String,
     };
 
     let user_id = crate::db_user::create_user(&mut user)?;
+
     Ok(user_id.to_string())
 }
 

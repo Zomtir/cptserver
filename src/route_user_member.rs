@@ -37,7 +37,6 @@ pub fn user_password(session: UserSession, credit: Json<Credential>) -> Result<(
     Ok(())
 }
 
-// TODO only active members
 #[rocket::get("/member/user_list")]
 pub fn user_list(_session: UserSession) -> Result<Json<Vec<User>>, Error> {
     let users = crate::db_user::list_user(Some(true))?;
