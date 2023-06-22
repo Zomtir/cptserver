@@ -8,15 +8,15 @@ edition = "2021"
 
 [dependencies]
 mysql = "^24.0"
-mysql_common = {version = "^0.29.2", features = ["time03", "chrono", "frunk"]}
+mysql_common = {version = "^0.30.6", features = ["chrono", "frunk"]}
+chrono = { version = "^0.4.23", features = ["serde"]}
 http = "0.2"
-rocket = { version = "0.5.0-rc.2", features = ["json"] }
+rocket = { version = "0.5.0-rc.3", features = ["json"] }
 #rocket_cors = "0.6.0-alpha1"
 rocket_cors = { git = "https://github.com/lawliet89/rocket_cors", branch = "master" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 lazy_static = "1.4"
-chrono = { version = "^0.4.23", features = ["serde"]}
 rand = "0.8"
 regex = "1.6"
 hex = "0.4.3"
