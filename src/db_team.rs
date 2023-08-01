@@ -82,7 +82,7 @@ pub fn create_team(team: &Team) -> Result<u32, Error> {
             :admin_teams,
             :admin_term,
             :admin_users)",
-    );
+    )?;
 
     let rights = match &team.right {
         None => return Err(Error::Default),
@@ -101,7 +101,7 @@ pub fn create_team(team: &Team) -> Result<u32, Error> {
         "admin_users" => &rights.admin_users,
     };
 
-    conn.exec_drop(&stmt.unwrap(), &params)?;
+    conn.exec_drop(&stmt, &params)?;
 
     Ok(conn.last_insert_id() as u32)
 }

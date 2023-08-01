@@ -127,7 +127,7 @@ pub fn event_owner_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<U
         true => (),
     };
 
-    match crate::db_slot::get_slot_owners(slot_id)? {
+    match crate::db_slot::slot_owner_list(slot_id)? {
         users => Ok(Json(users)),
     }
 }
@@ -139,7 +139,7 @@ pub fn event_owner_add(session: UserSession, slot_id: i64, user_id: i64) -> Resu
         true => (),
     };
 
-    crate::db_slot::add_slot_owner(slot_id, user_id)?;
+    crate::db_slot::slot_owner_add(slot_id, user_id)?;
     Ok(())
 }
 
@@ -150,6 +150,6 @@ pub fn event_owner_remove(session: UserSession, slot_id: i64, user_id: i64) -> R
         true => (),
     };
 
-    crate::db_slot::remove_slot_owner(slot_id, user_id)?;
+    crate::db_slot::slot_owner_remove(slot_id, user_id)?;
     Ok(())
 }

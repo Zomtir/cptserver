@@ -242,28 +242,10 @@ pub fn is_slot_free(slot: &Slot) -> Result<bool, Error> {
     }
 }
 
-/* PARTICIPANT RELATED */
-
-pub fn get_slot_candidates(slot_id: i64) -> Result<Vec<User>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
-    // TODO this is way more complicated than just then enabled users...
-    // course invites, slot invites, team invites
-    let stmt = conn.prep(
-        "SELECT user_id, user_key, firstname, lastname FROM users
-                          WHERE enabled = TRUE",
-    )?;
-
-    let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
-
-    // TODO level check threshold if existent
-
-    let users = conn.exec_map(&stmt, params::Params::Empty, &map)?;
-    Ok(users)
-}
 
 /* EVENT RELATED */
 
-pub fn get_slot_owners(slot_id: i64) -> Result<Vec<User>, Error> {
+pub fn slot_owner_list(slot_id: i64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname
@@ -282,6 +264,37 @@ pub fn get_slot_owners(slot_id: i64) -> Result<Vec<User>, Error> {
     Ok(users)
 }
 
+pub fn slot_owner_add(slot_id: i64, user_id: i64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "INSERT INTO slot_owners (slot_id, user_id)
+        VALUES (:slot_id, :user_id)",
+    )?;
+    let params = params! {
+        "slot_id" => &slot_id,
+        "user_id" => &user_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+pub fn slot_owner_remove(slot_id: i64, user_id: i64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "DELETE FROM slot_owners
+        WHERE slot_id = :slot_id AND user_id = :user_id",
+    )?;
+
+    let params = params! {
+        "slot_id" => &slot_id,
+        "user_id" => &user_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
 pub fn is_slot_owner(slot_id: i64, user_id: i64) -> Result<bool, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
@@ -298,37 +311,6 @@ pub fn is_slot_owner(slot_id: i64, user_id: i64) -> Result<bool, Error> {
         None => Ok(false),
         Some(count) => Ok(count == 1),
     }
-}
-
-pub fn add_slot_owner(slot_id: i64, user_id: i64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep(
-        "INSERT INTO slot_owners (slot_id, user_id)
-        VALUES (:slot_id, :user_id)",
-    )?;
-    let params = params! {
-        "slot_id" => &slot_id,
-        "user_id" => &user_id,
-    };
-
-    conn.exec_drop(&stmt, &params)?;
-    Ok(())
-}
-
-pub fn remove_slot_owner(slot_id: i64, user_id: i64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep(
-        "DELETE FROM slot_owners
-        WHERE slot_id = :slot_id AND user_id = :user_id",
-    )?;
-
-    let params = params! {
-        "slot_id" => &slot_id,
-        "user_id" => &user_id,
-    };
-
-    conn.exec_drop(&stmt, &params)?;
-    Ok(())
 }
 
 /* COURSE RELATED */
@@ -408,7 +390,32 @@ pub fn is_slot_in_any_course(slot_id: i64) -> Result<bool, Error> {
 
 /* PARTICIPANT RELATED */
 
-pub fn list_slot_participants(slot_id: i64) -> Result<Vec<User>, Error> {
+pub fn slot_participant_pool(slot_id: i64) -> Result<Vec<User>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    // TODO UNION slot invites, team invites
+    // TODO level check threshold if existent
+
+    let stmt = conn.prep(
+        "SELECT users.user_id, users.user_key, users.firstname, users.lastname
+        FROM course_teaminvites AS ct
+        JOIN teams ON teams.team_id = ct.team_id
+        JOIN team_members tm ON teams.team_id = tm.team_id
+        JOIN users ON tm.user_id = users.user_id
+        JOIN slots ON slots.course_id = ct.course_id
+        WHERE slots.slot_id = :slot_id AND users.enabled = TRUE
+        GROUP BY users.user_id",
+    )?;
+
+    let params = params! {
+        "slot_id" => slot_id,
+    };
+    let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
+
+    let users = conn.exec_map(&stmt, params::Params::Empty, &map)?;
+    Ok(users)
+}
+
+pub fn slot_participant_list(slot_id: i64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname
@@ -425,7 +432,7 @@ pub fn list_slot_participants(slot_id: i64) -> Result<Vec<User>, Error> {
     Ok(users)
 }
 
-pub fn add_slot_participant(slot_id: i64, user_id: i64) -> Result<(), Error> {
+pub fn slot_participant_add(slot_id: i64, user_id: i64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO slot_participants (slot_id, user_id)
@@ -440,7 +447,7 @@ pub fn add_slot_participant(slot_id: i64, user_id: i64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn remove_slot_participant(slot_id: i64, user_id: i64) -> Result<(), Error> {
+pub fn slot_participant_remove(slot_id: i64, user_id: i64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "DELETE FROM slot_enrollments

@@ -27,11 +27,12 @@ mod route_user_admin;
 mod route_user_member;
 
 mod route_course_admin;
-mod route_course_member;
 mod route_course_moderator;
+mod route_course_member;
 
 mod route_class_admin;
 mod route_class_moderator;
+mod route_class_member;
 
 mod route_event_admin;
 mod route_event_member;
@@ -136,7 +137,6 @@ fn rocket() -> _ {
                 route_course_admin::course_teaminvite_add,
                 route_course_admin::course_teaminvite_remove,
                 route_course_member::course_availiblity,
-                route_course_member::course_class_list,
                 route_course_moderator::course_responsiblity,
                 route_course_moderator::course_moderator_list,
                 route_course_moderator::course_moderator_add,
@@ -149,6 +149,7 @@ fn rocket() -> _ {
                 route_class_admin::class_owner_list,
                 route_class_admin::class_owner_add,
                 route_class_admin::class_owner_remove,
+                route_class_admin::class_participant_pool,
                 route_class_admin::class_participant_list,
                 route_class_admin::class_participant_add,
                 route_class_admin::class_participant_remove,
@@ -157,6 +158,7 @@ fn rocket() -> _ {
                 route_class_moderator::class_edit,
                 route_class_moderator::class_edit_password,
                 route_class_moderator::class_delete,
+                route_class_member::class_list,
                 route_event_admin::event_list,
                 route_event_admin::event_accept,
                 route_event_admin::event_deny,

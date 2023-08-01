@@ -80,7 +80,7 @@ pub fn class_owner_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<U
         true => (),
     };
 
-    match crate::db_slot::get_slot_owners(slot_id)? {
+    match crate::db_slot::slot_owner_list(slot_id)? {
         users => Ok(Json(users)),
     }
 }
@@ -96,7 +96,7 @@ pub fn class_owner_add(session: UserSession, slot_id: i64, user_id: i64) -> Resu
         true => (),
     };
 
-    crate::db_slot::add_slot_owner(slot_id, user_id)?;
+    crate::db_slot::slot_owner_add(slot_id, user_id)?;
     Ok(())
 }
 
@@ -111,8 +111,24 @@ pub fn class_owner_remove(session: UserSession, slot_id: i64, user_id: i64) -> R
         true => (),
     };
 
-    crate::db_slot::remove_slot_owner(slot_id, user_id)?;
+    crate::db_slot::slot_owner_remove(slot_id, user_id)?;
     Ok(())
+}
+
+#[rocket::get("/admin/class_participant_pool?<slot_id>")]
+pub fn class_participant_pool(session: UserSession, slot_id: i64) -> Result<Json<Vec<User>>, Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
+
+    match crate::db_slot::is_slot_in_any_course(slot_id)? {
+        false => return Err(Error::SlotCourseMissing),
+        true => (),
+    };
+
+    match crate::db_slot::slot_participant_pool(slot_id)? {
+        users => Ok(Json(users)),
+    }
 }
 
 #[rocket::get("/admin/class_participant_list?<slot_id>")]
@@ -126,7 +142,7 @@ pub fn class_participant_list(session: UserSession, slot_id: i64) -> Result<Json
         true => (),
     };
 
-    match crate::db_slot::list_slot_participants(slot_id)? {
+    match crate::db_slot::slot_participant_list(slot_id)? {
         users => Ok(Json(users)),
     }
 }
@@ -142,7 +158,7 @@ pub fn class_participant_add(session: UserSession, slot_id: i64, user_id: i64) -
         true => (),
     };
 
-    crate::db_slot::add_slot_participant(slot_id, user_id)?;
+    crate::db_slot::slot_participant_add(slot_id, user_id)?;
     Ok(())
 }
 
@@ -157,6 +173,6 @@ pub fn class_participant_remove(session: UserSession, slot_id: i64, user_id: i64
         true => (),
     };
 
-    crate::db_slot::remove_slot_participant(slot_id, user_id)?;
+    crate::db_slot::slot_participant_remove(slot_id, user_id)?;
     Ok(())
 }
