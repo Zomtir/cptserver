@@ -411,7 +411,7 @@ pub fn slot_participant_pool(slot_id: i64) -> Result<Vec<User>, Error> {
     };
     let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
 
-    let users = conn.exec_map(&stmt, params::Params::Empty, &map)?;
+    let users = conn.exec_map(&stmt, &params, &map)?;
     Ok(users)
 }
 
@@ -450,7 +450,7 @@ pub fn slot_participant_add(slot_id: i64, user_id: i64) -> Result<(), Error> {
 pub fn slot_participant_remove(slot_id: i64, user_id: i64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "DELETE FROM slot_enrollments
+        "DELETE FROM slot_participants
         WHERE slot_id = :slot_id AND user_id = :user_id;",
     )?;
 
