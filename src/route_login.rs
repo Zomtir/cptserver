@@ -48,7 +48,7 @@ pub fn user_login(credit: Json<Credential>) -> Result<String, Error> {
     let user_shapwd: Vec<u8> = crate::common::hash_sha256(&bpassword, &user_pepper);
 
     println!(
-        "User {} tries to login with hash {}",
+        "User {} login attempt with hash {}",
         credit.login,
         hex::encode(user_shapwd.clone())
     );
@@ -96,7 +96,11 @@ pub fn slot_login(credit: Json<Credential>) -> Result<String, Error> {
         "slot_key" => credit.login.to_string(),
     };
 
-    println!("{}", credit.login.to_string());
+    println!(
+        "Slot {} login attempt with hash {}",
+        credit.login,
+        credit.password
+    );
     let mut row: mysql::Row = match conn.exec_first(&stmt, &params) {
         Err(..) | Ok(None) => return Err(Error::SlotMissing),
         Ok(Some(row)) => row,

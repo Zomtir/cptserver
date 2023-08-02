@@ -145,6 +145,7 @@ pub fn edit_slot(slot_id: i64, slot: &Slot) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE slots
         SET
+            slot_key = :slot_key,
             title = :title,
             location_id = :location_id,
             begin = :begin,
@@ -154,6 +155,7 @@ pub fn edit_slot(slot_id: i64, slot: &Slot) -> Result<(), Error> {
 
     let params = params! {
         "slot_id" => &slot_id,
+        "slot_key" => &slot.key,
         "title" => &slot.title,
         "location_id" => &slot.location.id,
         "begin" => &slot.begin,
