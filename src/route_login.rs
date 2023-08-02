@@ -97,7 +97,7 @@ pub fn slot_login(credit: Json<Credential>) -> Result<String, Error> {
     };
 
     println!(
-        "Slot {} login attempt with hash {}",
+        "Slot {} login attempt with password {}",
         credit.login,
         credit.password
     );
@@ -137,12 +137,12 @@ pub fn course_login(course_key: String) -> Result<String, Error> {
         JOIN courses c ON c.course_id = s.course_id
         WHERE c.course_key = :course_key
         AND s.begin >= :date_min AND s.end <= :date_max
-        AND autologin = 1",
+        AND public = 1",
     )?;
     let params = params! {
         "course_key" => course_key,
-        "date_min" => (chrono::Utc::now() - crate::config::CONFIG_SLOT_AUTOLOGIN_TIME()).naive_utc(),
-        "date_max" => (chrono::Utc::now() + crate::config::CONFIG_SLOT_AUTOLOGIN_TIME()).naive_utc(),
+        "date_min" => (chrono::Utc::now() - crate::config::CONFIG_SLOT_PUBLIC_LOGIN_TIME()).naive_utc(),
+        "date_max" => (chrono::Utc::now() + crate::config::CONFIG_SLOT_PUBLIC_LOGIN_TIME()).naive_utc(),
     };
     let map = |(slot_key, slot_pwd): (String, String)| Credential {
         login: slot_key.to_string(),
@@ -168,7 +168,7 @@ pub fn location_login(location_key: String) -> Result<String, Error> {
         JOIN locations l ON l.location_id = s.location_id
         WHERE l.location_key = :location_key
         AND s.begin <= UTC_TIMESTAMP() AND s.end >= UTC_TIMESTAMP()
-        AND autologin = 1",
+        AND public = 1",
     )?;
     let params = params! { "location_key" => location_key, };
     let map = |(slot_key, slot_pwd): (String, String)| Credential {

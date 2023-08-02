@@ -90,19 +90,19 @@ pub fn delete_term(term_id: i64) -> Option<()> {
     }
 }
 
-pub fn get_user_membership_days(enabled: Option<bool>) -> Option<Vec<(i64, i64)>> {
+pub fn get_user_membership_days(active: Option<bool>) -> Option<Vec<(i64, i64)>> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT t.user_id, SUM(DATEDIFF(t.term_end, t.term_begin)) as active_days 
         FROM terms t
         JOIN users u ON u.user_id = t.user_id
-        WHERE (:enabled IS NULL OR :enabled = u.enabled)
+        WHERE (:active IS NULL OR :active = u.active)
         GROUP BY t.user_id
         ORDER BY active_days DESC;",
     );
 
     let params = params! {
-        "enabled" => &enabled,
+        "active" => &active,
     };
 
     let map = |(user_id, active_days): (i64, i64)| (user_id, active_days);
@@ -113,7 +113,7 @@ pub fn get_user_membership_days(enabled: Option<bool>) -> Option<Vec<(i64, i64)>
     }
 }
 
-pub fn get_wrong_enabled_users() -> Option<Vec<User>> {
+pub fn get_wrong_active_users() -> Option<Vec<User>> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname
@@ -126,7 +126,7 @@ pub fn get_wrong_enabled_users() -> Option<Vec<User>> {
             AND IFNULL(t.term_end,'9999-12-31') > UTC_DATE()
             GROUP BY t.user_id
         ) AS termstatus ON u.user_id = termstatus.user_id
-        WHERE u.enabled = TRUE
+        WHERE u.active = TRUE
         AND termstatus.valid IS NULL;",
     );
 
@@ -140,7 +140,7 @@ pub fn get_wrong_enabled_users() -> Option<Vec<User>> {
     }
 }
 
-pub fn get_wrong_disabled_users() -> Option<Vec<User>> {
+pub fn get_wrong_inactive_users() -> Option<Vec<User>> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname
@@ -153,7 +153,7 @@ pub fn get_wrong_disabled_users() -> Option<Vec<User>> {
             AND IFNULL(t.term_end,'9999-12-31') > UTC_DATE()
             GROUP BY t.user_id
         ) AS termstatus ON u.user_id = termstatus.user_id
-        WHERE u.enabled = FALSE
+        WHERE u.active = FALSE
         AND termstatus.valid = TRUE;",
     );
 

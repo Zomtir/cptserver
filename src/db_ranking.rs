@@ -10,7 +10,7 @@ pub fn list_rankings(
     branch_id: Option<i64>,
     rank_min: i16,
     rank_max: i16,
-) -> Option<Vec<Ranking>> {
+) -> Result<Vec<Ranking>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT r.ranking_id,
@@ -24,7 +24,7 @@ pub fn list_rankings(
         JOIN users j ON (r.judge_id = j.user_id)
         WHERE (:user_id IS NULL OR r.user_id = :user_id)
         AND ((:branch_id IS NULL) OR (r.branch_id = :branch_id AND r.rank >= :rank_min AND r.rank <= :rank_max))",
-    );
+    )?;
 
     let params = params! {
         "user_id" => user_id,
@@ -33,10 +33,7 @@ pub fn list_rankings(
         "rank_max" => rank_max,
     };
 
-    let rows: Vec<mysql::Row> = match conn.exec(&stmt.unwrap(), &params) {
-        Err(..) => return None,
-        Ok(rows) => rows,
-    };
+    let rows: Vec<mysql::Row> = conn.exec(&stmt, &params)?;
 
     let mut rankings: Vec<Ranking> = Vec::new();
 
@@ -66,7 +63,7 @@ pub fn list_rankings(
         rankings.push(r);
     }
 
-    return Some(rankings);
+    return Ok(rankings);
 }
 
 pub fn create_ranking(ranking: &Ranking) -> Result<u32, Error> {
@@ -130,7 +127,7 @@ pub fn delete_ranking(ranking_id: i64) -> Option<()> {
     }
 }
 
-pub fn summarize_rankings(user_id: i64) -> Option<Vec<(Branch, i16)>> {
+pub fn summarize_rankings(user_id: i64) -> Result<Vec<(Branch, i16)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT b.branch_id, b.branch_key, b.title, MAX(r.rank)
@@ -139,7 +136,7 @@ pub fn summarize_rankings(user_id: i64) -> Option<Vec<(Branch, i16)>> {
         JOIN users j ON (r.judge_id = j.user_id)
         WHERE r.user_id = :user_id
         GROUP BY b.branch_id;",
-    );
+    )?;
 
     let params = params! {
         "user_id" => user_id,
@@ -156,8 +153,5 @@ pub fn summarize_rankings(user_id: i64) -> Option<Vec<(Branch, i16)>> {
         )
     };
 
-    match conn.exec_map(&stmt.unwrap(), &params, &map) {
-        Err(..) => None,
-        Ok(summary) => Some(summary),
-    }
+    Ok(conn.exec_map(&stmt, &params, &map)?)
 }

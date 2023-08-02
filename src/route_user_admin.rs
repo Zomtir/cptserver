@@ -6,13 +6,13 @@ use crate::session::{Credential, UserSession};
 
 /* ROUTES */
 
-#[rocket::get("/admin/user_list?<enabled>")]
-pub fn user_list(session: UserSession, enabled: Option<bool>) -> Result<Json<Vec<User>>, Error> {
+#[rocket::get("/admin/user_list?<active>")]
+pub fn user_list(session: UserSession, active: Option<bool>) -> Result<Json<Vec<User>>, Error> {
     if !session.right.admin_users {
         return Err(Error::RightUserMissing);
     };
 
-    let users = crate::db_user::list_user(enabled)?;
+    let users = crate::db_user::list_user(active)?;
     Ok(Json(users))
 }
 

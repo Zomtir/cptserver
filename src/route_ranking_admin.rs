@@ -16,9 +16,8 @@ pub fn ranking_list(
         return Err(Error::RightRankingMissing);
     };
 
-    match crate::db_ranking::list_rankings(user_id, branch_id, min.unwrap_or(0), max.unwrap_or(10)) {
-        None => Err(Error::DatabaseError),
-        Some(rankings) => Ok(Json(rankings)),
+    match crate::db_ranking::list_rankings(user_id, branch_id, min.unwrap_or(0), max.unwrap_or(10))? {
+        rankings => Ok(Json(rankings)),
     }
 }
 

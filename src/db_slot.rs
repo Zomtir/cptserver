@@ -12,7 +12,7 @@ use crate::error::Error;
 pub fn get_slot_info(slot_id: i64) -> Result<Slot, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title, s.begin, s.end, s.status, s.course_id
+        "SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title AS location_title, s.begin, s.end, s.status, s.public, s.obscured, s.course_id
         FROM slots s
         JOIN locations l ON l.location_id = s.location_id
         WHERE slot_id = :slot_id",
@@ -20,35 +20,34 @@ pub fn get_slot_info(slot_id: i64) -> Result<Slot, Error> {
     let params = params! {
         "slot_id" => slot_id,
     };
-    let map =
-        |(slot_id, slot_key, slot_title, location_id, location_key, location_title, begin, end, status, course_id)| {
-            Slot {
-                id: slot_id,
-                key: slot_key,
-                pwd: None,
-                title: slot_title,
-                begin,
-                end,
-                status: status,
-                location: Location {
-                    id: location_id,
-                    key: location_key,
-                    title: location_title,
-                },
-                course_id: course_id,
-            }
-        };
 
-    let mut slots = conn.exec_map(&stmt, &params, &map)?;
 
-    match slots.pop() {
-        None => Err(Error::SlotMissing),
-        Some(slot) => Ok(slot),
-    }
+    let mut row: mysql::Row = conn.exec_first(&stmt, &params)?.ok_or_else(|| Error::SlotMissing)?;
+
+    let slot = Slot {
+        id: row.take("slot_id").unwrap(),
+        key: row.take("slot_key").unwrap(),
+        pwd: None,
+        title: row.take("title").unwrap(),
+        begin: row.take("begin").unwrap(),
+        end: row.take("end").unwrap(),
+        location: Location {
+            id: row.take("location_id").unwrap(),
+            key: row.take("location_key").unwrap(),
+            title: row.take("location_title").unwrap(),
+        },
+        status: row.take("status").unwrap(),
+        public: row.take("public").unwrap(),
+        obscured: row.take("obscured").unwrap(),
+        course_id: row.take("course_id").unwrap(),
+    };
+
+    Ok(slot)
 }
 
 // TODO make a check that status is not an invalid string by implementing a proper trait
-// TODO should status even be a searchable criteria? if so, please make it enum with FromFormValue::default()
+// TODO should "status" even be a searchable criteria? if so, please make it enum with FromFormValue::default()
+// TODO should "public" and "obscured" be included?
 pub fn list_slots(
     mut begin: Option<chrono::NaiveDate>,
     mut end: Option<chrono::NaiveDate>,
@@ -58,7 +57,7 @@ pub fn list_slots(
 ) -> Result<Vec<Slot>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT s.slot_id, s.slot_key, s.title, l.location_id, l.location_key, l.title, s.begin, s.end, s.status
+        "SELECT s.slot_id, s.slot_key, s.title, l.location_id, l.location_key, l.title AS location_title, s.begin, s.end, s.status, s.public, s.obscured
         FROM slots s
         JOIN locations l ON l.location_id = s.location_id
         LEFT JOIN slot_owners o ON s.slot_id = o.slot_id
@@ -86,56 +85,54 @@ pub fn list_slots(
         "owner_id" => &owner_id,
     };
 
-    let map = |(slot_id, slot_key, slot_title, location_id, location_key, location_title, begin, end, status): (
-        i64,
-        String,
-        String,
-        u32,
-        _,
-        _,
-        _,
-        _,
-        String,
-    )| Slot {
-        id: slot_id,
-        key: slot_key,
-        pwd: None,
-        title: slot_title,
-        begin,
-        end,
-        status,
-        location: Location {
-            id: location_id,
-            key: location_key,
-            title: location_title,
-        },
-        course_id: None,
-    };
+    let rows: Vec<mysql::Row> = conn.exec(&stmt, &params)?;
+    let mut slots: Vec<Slot> = Vec::new();
 
-    let slots = conn.exec_map(&stmt, &params, &map)?;
+    for mut row in rows {
+        let item = Slot {
+            id: row.take("slot_id").unwrap(),
+            key: row.take("slot_key").unwrap(),
+            pwd: None,
+            title: row.take("title").unwrap(),
+            begin: row.take("begin").unwrap(),
+            end: row.take("end").unwrap(),
+            location: Location {
+                id: row.take("location_id").unwrap(),
+                key: row.take("location_key").unwrap(),
+                title: row.take("location_title").unwrap(),
+            },
+            status: row.take("status").unwrap(),
+            public: row.take("public").unwrap(),
+            obscured: row.take("obscured").unwrap(),
+            course_id: None,
+        };
+        slots.push(item);
+    }
+
     Ok(slots)
 }
 
 pub fn create_slot(slot: &Slot, status: &str, course_id: Option<i64>) -> Result<i64, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "INSERT INTO slots (slot_key, pwd, title, status, autologin, location_id, begin, end, course_id)
-        SELECT :slot_key, :pwd, :title, :status, :autologin, :location_id, :begin, :end, :course_id",
-    );
+        "INSERT INTO slots (slot_key, pwd, title, location_id, begin, end, status, public, obscured, course_id)
+        SELECT :slot_key, :pwd, :title, :location_id, :begin, :end, :status, :public, :obscured, :course_id",
+    )?;
 
     let params = params! {
         "slot_key" => crate::common::random_string(8),
         "pwd" => crate::common::random_string(8),
         "title" => &slot.title,
-        "status" => status,
-        "autologin" => false,
         "location_id" => &slot.location.id,
         "begin" => &slot.begin,
         "end" => &slot.end,
+        "status" => status,
+        "public" => slot.public,
+        "obscured" => slot.obscured,
         "course_id" => &course_id,
     };
 
-    conn.exec_drop(&stmt.unwrap(), &params)?;
+    conn.exec_drop(&stmt, &params)?;
 
     Ok(conn.last_insert_id() as i64)
 }
@@ -149,7 +146,8 @@ pub fn edit_slot(slot_id: i64, slot: &Slot) -> Result<(), Error> {
             title = :title,
             location_id = :location_id,
             begin = :begin,
-            end = :end
+            end = :end,
+            public = :public,
         WHERE slot_id = :slot_id",
     )?;
 
@@ -160,6 +158,7 @@ pub fn edit_slot(slot_id: i64, slot: &Slot) -> Result<(), Error> {
         "location_id" => &slot.location.id,
         "begin" => &slot.begin,
         "end" => &slot.end,
+        "public" => slot.public,
     };
 
     conn.exec_drop(&stmt, &params)?;
@@ -404,7 +403,7 @@ pub fn slot_participant_pool(slot_id: i64) -> Result<Vec<User>, Error> {
         JOIN team_members tm ON teams.team_id = tm.team_id
         JOIN users ON tm.user_id = users.user_id
         JOIN slots ON slots.course_id = ct.course_id
-        WHERE slots.slot_id = :slot_id AND users.enabled = TRUE
+        WHERE slots.slot_id = :slot_id AND users.active = TRUE
         GROUP BY users.user_id",
     )?;
 

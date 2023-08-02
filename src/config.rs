@@ -84,7 +84,7 @@ pub fn CONFIG_SLOT_LIST_TIME_MAX() -> chrono::Duration {
     chrono::Duration::days(366)
 }
 
-pub fn CONFIG_SLOT_AUTOLOGIN_TIME() -> chrono::Duration {
+pub fn CONFIG_SLOT_PUBLIC_LOGIN_TIME() -> chrono::Duration {
     chrono::Duration::hours(24)
 }
 

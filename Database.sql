@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8001
--- Generation Time: May 05, 2023 at 08:14 PM
+-- Generation Time: Aug 02, 2023 at 05:32 PM
 -- Server version: 10.11.2-MariaDB-1
--- PHP Version: 8.1.12-1ubuntu4
+-- PHP Version: 8.1.12-1ubuntu4.2
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -160,7 +160,8 @@ CREATE TABLE `slots` (
   `begin` datetime NOT NULL,
   `end` datetime NOT NULL,
   `status` enum('DRAFT','PENDING','OCCURRING','CANCELED','REJECTED') NOT NULL DEFAULT 'PENDING',
-  `autologin` tinyint(1) NOT NULL DEFAULT 0,
+  `public` tinyint(1) NOT NULL DEFAULT 0,
+  `obscured` tinyint(1) NOT NULL DEFAULT 0,
   `course_id` mediumint(9) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -253,6 +254,7 @@ CREATE TABLE `users` (
   `pepper` binary(16) NOT NULL,
   `salt` binary(16) NOT NULL,
   `enabled` tinyint(1) NOT NULL DEFAULT 0,
+  `active` tinyint(1) NOT NULL DEFAULT 1,
   `firstname` varchar(20) NOT NULL,
   `lastname` varchar(20) NOT NULL,
   `address` varchar(60) DEFAULT NULL,

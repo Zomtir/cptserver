@@ -11,6 +11,7 @@ pub struct User {
     pub id: i64,
     pub key: Option<String>,
     pub enabled: Option<bool>,
+    pub active: Option<bool>,
     pub firstname: String,
     pub lastname: String,
     pub address: Option<String>,
@@ -36,6 +37,7 @@ impl User {
             id: id,
             key: Some(key),
             enabled: None,
+            active: None,
             firstname: firstname,
             lastname: lastname,
             address: None,
@@ -69,6 +71,8 @@ pub struct Slot {
     #[serde(with = "crate::clock::datetime_format")]
     pub end: chrono::NaiveDateTime,
     pub status: String,
+    pub public: bool,
+    pub obscured: bool,
     pub course_id: Option<u32>,
 }
 

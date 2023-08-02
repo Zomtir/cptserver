@@ -9,16 +9,16 @@ use crate::error::Error;
  * METHODS
  */
 
-pub fn list_user(enabled: Option<bool>) -> Result<Vec<User>, Error> {
+pub fn list_user(active: Option<bool>) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT user_id, user_key, firstname, lastname
         FROM users
-        WHERE :enabled IS NULL OR :enabled = enabled;",
+        WHERE :active IS NULL OR :active = active;",
     );
 
     let params = params! {
-        "enabled" => &enabled,
+        "active" => &active,
     };
 
     let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
@@ -33,6 +33,7 @@ pub fn get_user_detailed(user_id: i64) -> Result<User, Error> {
             users.user_id,
             user_key,
             enabled,
+            active,
             firstname,
             lastname,
             address,
@@ -67,6 +68,7 @@ pub fn get_user_detailed(user_id: i64) -> Result<User, Error> {
         id: row.take("user_id").unwrap(),
         key: row.take("user_key").unwrap(),
         enabled: row.take("enabled").unwrap(),
+        active: row.take("active").unwrap(),
         firstname: row.take("firstname").unwrap(),
         lastname: row.take("lastname").unwrap(),
         address: row.take("address").unwrap(),
@@ -95,7 +97,7 @@ pub fn create_user(user: &mut User) -> Result<i64, Error> {
 
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "INSERT INTO users (user_key, pwd, pepper, salt, enabled, firstname, lastname,
+        "INSERT INTO users (user_key, pwd, pepper, salt, enabled, active, firstname, lastname,
             address, email, phone, iban, birthday, birthlocation, nationality, gender,
             federationNumber, federationPermissionSolo, federationPermissionTeam, federationResidency,
             dataDeclaration, dataDisclaimer, note)
@@ -112,6 +114,7 @@ pub fn create_user(user: &mut User) -> Result<i64, Error> {
     params.push(crate::common::random_bytes(16).into()); // pepper
     params.push(crate::common::random_bytes(16).into()); // salt
     params.push(user.enabled.unwrap_or(false).into()); // enabled
+    params.push(user.active.unwrap_or(true).into()); // active
     params.push(user.firstname.clone().into());
     params.push(user.lastname.clone().into());
     params.push(user.address.clone().into());
@@ -158,6 +161,7 @@ pub fn edit_user(user_id: i64, user: &mut User) -> Result<(), Error> {
         "UPDATE users SET
         user_key = ?,
         enabled = ?,
+        active = ?,
         firstname = ?,
         lastname = ?,
         address = ?,
@@ -182,6 +186,7 @@ pub fn edit_user(user_id: i64, user: &mut User) -> Result<(), Error> {
 
     params.push(user.key.clone().into());
     params.push(user.enabled.clone().into());
+    params.push(user.active.clone().into());
     params.push(user.firstname.clone().into());
     params.push(user.lastname.clone().into());
     params.push(user.address.clone().into());
