@@ -265,12 +265,12 @@ CREATE TABLE `users` (
   `birthlocation` varchar(60) DEFAULT NULL,
   `nationality` varchar(40) DEFAULT NULL,
   `gender` enum('MALE','FEMALE','OTHER') DEFAULT NULL,
-  `federationNumber` mediumint(9) DEFAULT NULL,
-  `federationPermissionSolo` date DEFAULT NULL,
-  `federationPermissionTeam` date DEFAULT NULL,
-  `federationResidency` date DEFAULT NULL,
-  `dataDeclaration` tinyint(1) DEFAULT NULL,
-  `dataDisclaimer` text DEFAULT NULL,
+  `federationnumber` mediumint(9) DEFAULT NULL,
+  `federationpermissionsolo` date DEFAULT NULL,
+  `federationpermissionteam` date DEFAULT NULL,
+  `federationresidency` date DEFAULT NULL,
+  `datadeclaration` tinyint(1) DEFAULT NULL,
+  `datadisclaimer` text DEFAULT NULL,
   `note` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

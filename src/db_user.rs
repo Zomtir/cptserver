@@ -44,12 +44,12 @@ pub fn get_user_detailed(user_id: i64) -> Result<User, Error> {
             birthlocation,
             nationality,
             gender,
-            federationNumber,
-            federationPermissionSolo,
-            federationPermissionTeam,
-            federationResidency,
-            dataDeclaration,
-            dataDisclaimer,
+            federationnumber,
+            federationpermissionsolo,
+            federationpermissionteam,
+            federationresidency,
+            datadeclaration,
+            datadisclaimer,
             note
         FROM users
         WHERE users.user_id = :user_id;",
@@ -79,12 +79,12 @@ pub fn get_user_detailed(user_id: i64) -> Result<User, Error> {
         birthlocation: row.take("birthlocation").unwrap(),
         nationality: row.take("nationality").unwrap(),
         gender: row.take("gender").unwrap(),
-        federationNumber: row.take("federationNumber").unwrap(),
-        federationPermissionSolo: row.take("federationPermissionSolo").unwrap(),
-        federationPermissionTeam: row.take("federationPermissionTeam").unwrap(),
-        federationResidency: row.take("federationResidency").unwrap(),
-        dataDeclaration: row.take("dataDeclaration").unwrap(),
-        dataDisclaimer: row.take("dataDisclaimer").unwrap(),
+        federationnumber: row.take("federationnumber").unwrap(),
+        federationpermissionsolo: row.take("federationpermissionsolo").unwrap(),
+        federationpermissionteam: row.take("federationpermissionteam").unwrap(),
+        federationresidency: row.take("federationresidency").unwrap(),
+        datadeclaration: row.take("datadeclaration").unwrap(),
+        datadisclaimer: row.take("datadisclaimer").unwrap(),
         note: row.take("note").unwrap(),
     };
 
@@ -96,42 +96,42 @@ pub fn create_user(user: &mut User) -> Result<i64, Error> {
     user.email = crate::common::validate_email(&user.email)?;
 
     let mut conn: PooledConn = get_pool_conn();
+
     let stmt = conn.prep(
-        "INSERT INTO users (user_key, pwd, pepper, salt, enabled, active, firstname, lastname,
-            address, email, phone, iban, birthday, birthlocation, nationality, gender,
-            federationNumber, federationPermissionSolo, federationPermissionTeam, federationResidency,
-            dataDeclaration, dataDisclaimer, note)
-        VALUES (?, ?, ?, ?, ?, ?, ?,
-            ?, ?, ?, ?, ?, ?, ?, ?,
-            ?, ?, ?, ?,
-            ?, ?, ?);",
-    )?;
+    "INSERT INTO users (user_key, pwd, pepper, salt, enabled, active, firstname, lastname,
+        address, email, phone, iban, birthday, birthlocation, nationality, gender,
+        federationnumber, federationpermissionsolo, federationpermissionteam, federationresidency,
+        datadeclaration, datadisclaimer, note)
+    VALUES (:user_key, :pwd, :pepper, :salt, :enabled, :active, :firstname, :lastname,
+        :address, :email, :phone, :iban, :birthday, :birthlocation, :nationality, :gender,
+        :federationnumber, :federationpermissionsolo, :federationpermissionteam, :federationresidency,
+        :datadeclaration, :datadisclaimer, :note);")?;
 
-    let mut params = Vec::<mysql::Value>::with_capacity(20);
-
-    params.push(user.key.as_ref().unwrap_or(&crate::common::random_string(6)).into()); // user_key
-    params.push(crate::common::random_string(10).into()); // pwd
-    params.push(crate::common::random_bytes(16).into()); // pepper
-    params.push(crate::common::random_bytes(16).into()); // salt
-    params.push(user.enabled.unwrap_or(false).into()); // enabled
-    params.push(user.active.unwrap_or(true).into()); // active
-    params.push(user.firstname.clone().into());
-    params.push(user.lastname.clone().into());
-    params.push(user.address.clone().into());
-    params.push(user.email.clone().into());
-    params.push(user.phone.clone().into());
-    params.push(user.iban.clone().into());
-    params.push(user.birthday.clone().into());
-    params.push(user.birthlocation.clone().into());
-    params.push(user.nationality.clone().into());
-    params.push(user.gender.clone().clone().into());
-    params.push(user.federationNumber.clone().into());
-    params.push(user.federationPermissionSolo.clone().into());
-    params.push(user.federationPermissionTeam.clone().into());
-    params.push(user.federationResidency.clone().into());
-    params.push(user.dataDeclaration.clone().into());
-    params.push(user.dataDisclaimer.clone().into());
-    params.push(user.note.clone().into());
+    let params = params! {
+        "user.key" => crate::common::random_string(6),
+        "pwd" => crate::common::random_string(10),
+        "pepper" => crate::common::random_bytes(16), 
+        "salt" => crate::common::random_bytes(16),
+        "enabled" => user.enabled.unwrap_or(false),
+        "active" => user.active.unwrap_or(true),
+        "firstname" => &user.firstname,
+        "lastname" => &user.lastname,
+        "address" => &user.address,
+        "email" => &user.email,
+        "phone" => &user.phone,
+        "iban" => &user.iban,
+        "birthday" => &user.birthday,
+        "birthlocation" => &user.birthlocation,
+        "nationality" => &user.nationality,
+        "gender" => &user.gender,
+        "federationnumber" => &user.federationnumber,
+        "federationpermissionsolo" => &user.federationpermissionsolo,
+        "federationpermissionteam" => &user.federationpermissionteam,
+        "federationresidency" => &user.federationresidency,
+        "datadeclaration" => &user.datadeclaration,
+        "datadisclaimer" => &user.datadisclaimer,
+        "note" => &user.note,
+    };
 
     conn.exec_drop(&stmt, &params)?;
 
@@ -172,12 +172,12 @@ pub fn edit_user(user_id: i64, user: &mut User) -> Result<(), Error> {
         birthlocation = ?,
         nationality = ?,
         gender = ?,
-        federationNumber = ?,
-        federationPermissionSolo = ?,
-        federationPermissionTeam = ?,
-        federationResidency = ?,
-        dataDeclaration = ?,
-        dataDisclaimer = ?,
+        federationnumber = ?,
+        federationpermissionsolo = ?,
+        federationpermissionteam = ?,
+        federationresidency = ?,
+        datadeclaration = ?,
+        datadisclaimer = ?,
         note = ?
         WHERE user_id = ?;",
     )?;
@@ -197,12 +197,12 @@ pub fn edit_user(user_id: i64, user: &mut User) -> Result<(), Error> {
     params.push(user.birthlocation.clone().into());
     params.push(user.nationality.clone().into());
     params.push(user.gender.clone().clone().into());
-    params.push(user.federationNumber.clone().into());
-    params.push(user.federationPermissionSolo.clone().into());
-    params.push(user.federationPermissionTeam.clone().into());
-    params.push(user.federationResidency.clone().into());
-    params.push(user.dataDeclaration.clone().into());
-    params.push(user.dataDisclaimer.clone().into());
+    params.push(user.federationnumber.clone().into());
+    params.push(user.federationpermissionsolo.clone().into());
+    params.push(user.federationpermissionteam.clone().into());
+    params.push(user.federationresidency.clone().into());
+    params.push(user.datadeclaration.clone().into());
+    params.push(user.datadisclaimer.clone().into());
     params.push(user.note.clone().into());
     params.push(user_id.clone().into());
 
