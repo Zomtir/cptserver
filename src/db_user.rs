@@ -108,7 +108,7 @@ pub fn create_user(user: &mut User) -> Result<i64, Error> {
         :datadeclaration, :datadisclaimer, :note);")?;
 
     let params = params! {
-        "user.key" => crate::common::random_string(6),
+        "user_key" => crate::common::random_string(6),
         "pwd" => crate::common::random_string(10),
         "pepper" => crate::common::random_bytes(16), 
         "salt" => crate::common::random_bytes(16),
