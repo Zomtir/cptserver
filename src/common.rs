@@ -73,6 +73,7 @@ pub struct Slot {
     pub status: String,
     pub public: bool,
     pub obscured: bool,
+    pub note: String,
     pub course_id: Option<u32>,
 }
 
