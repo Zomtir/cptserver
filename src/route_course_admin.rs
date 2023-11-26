@@ -14,9 +14,8 @@ pub fn course_list(session: UserSession, mod_id: Option<i64>) -> Result<Json<Vec
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_course::list_courses(mod_id) {
-        None => Err(Error::DatabaseError),
-        Some(courses) => Ok(Json(courses)),
+    match crate::db_course::list_courses(mod_id, None, None)? {
+        courses => Ok(Json(courses)),
     }
 }
 

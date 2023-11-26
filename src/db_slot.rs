@@ -151,6 +151,8 @@ pub fn edit_slot(slot_id: i64, slot: &Slot) -> Result<(), Error> {
             begin = :begin,
             end = :end,
             public = :public,
+            obscured = :obscured,
+            note = :note
         WHERE slot_id = :slot_id",
     )?;
 

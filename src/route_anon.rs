@@ -6,7 +6,7 @@ use rocket::serde::json::Json;
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Branch, Location};
+use crate::common::{Branch, Location, Course};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
@@ -57,9 +57,15 @@ pub fn user_salt(user_key: String) -> Result<String, Error> {
         "user_key" => &user_key
     };
 
-    match conn.exec_first::<Vec<u8>, _, _>(&stmt.unwrap(), &params) {
-        Err(..) => Err(Error::DatabaseError),
-        Ok(None) => Ok(hex::encode(crate::common::hash128_string(&user_key))),
-        Ok(Some(salt)) => Ok(hex::encode(salt)),
+    match conn.exec_first::<Vec<u8>, _, _>(&stmt.unwrap(), &params)? {
+        None => Ok(hex::encode(crate::common::hash128_string(&user_key))),
+        Some(salt) => Ok(hex::encode(salt)),
+    }
+}
+
+#[rocket::get("/anon/course_list")]
+pub fn course_list() -> Result<Json<Vec<Course>>, Error> {
+    match crate::db_course::list_courses(None, Some(true), Some(true))? {
+        courses => Ok(Json(courses)),
     }
 }

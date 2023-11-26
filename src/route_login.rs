@@ -137,7 +137,7 @@ pub fn course_login(course_key: String) -> Result<String, Error> {
         JOIN courses c ON c.course_id = s.course_id
         WHERE c.course_key = :course_key
         AND s.begin >= :date_min AND s.end <= :date_max
-        AND public = 1",
+        AND c.active = TRUE",
     )?;
     let params = params! {
         "course_key" => course_key,

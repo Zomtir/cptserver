@@ -112,6 +112,7 @@ fn rocket() -> _ {
                 route_anon::location_list,
                 route_anon::branch_list,
                 route_anon::user_salt,
+                route_anon::course_list,
                 route_login::user_login,
                 route_login::slot_login,
                 route_login::course_login,

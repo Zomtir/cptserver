@@ -9,7 +9,7 @@ use crate::error::Error;
  * METHODS
  */
 
-pub fn list_courses(mod_id: Option<i64>) -> Option<Vec<Course>> {
+pub fn list_courses(mod_id: Option<i64>, active: Option<bool>, public: Option<bool>) -> Result<Vec<Course>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT c.course_id, c.course_key, c.title, c.active, c.public,
@@ -18,13 +18,16 @@ pub fn list_courses(mod_id: Option<i64>) -> Option<Vec<Course>> {
         JOIN branches b ON c.branch_id = b.branch_id
         LEFT JOIN course_moderators m ON c.course_id = m.course_id
         WHERE (:mod_id IS NULL OR m.user_id = :mod_id)
+        AND (:active IS NULL OR c.active = :active)
+        AND (:public IS NULL OR c.public = :public)
         GROUP BY c.course_id",
-    );
-    // TODO the WHERE and GROUP BY clause can be removed, if the user filter is deemed to be useless
-    // TODO add filter whether or not the course is active
+    )?;
+    // TODO the WHERE and GROUP BY clause can be removed, if the user moderator filter is deemed to be useless
 
     let params = params! {
         "mod_id" => mod_id,
+        "active" => active,
+        "public" => public,
     };
 
     let map =
@@ -44,13 +47,12 @@ pub fn list_courses(mod_id: Option<i64>) -> Option<Vec<Course>> {
             }
         };
 
-    match conn.exec_map(&stmt.unwrap(), &params, &map) {
-        Err(..) => None,
-        Ok(courses) => Some(courses),
+    match conn.exec_map(&stmt, &params, &map)? {
+        courses => Ok(courses),
     }
 }
 
-pub fn available_courses(user_id: i64) -> Option<Vec<Course>> {
+pub fn available_courses(user_id: i64) -> Result<Vec<Course>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT c.course_id, c.course_key, c.title, c.active, c.public,
@@ -67,7 +69,7 @@ pub fn available_courses(user_id: i64) -> Option<Vec<Course>> {
         ) AS skill ON c.branch_id = skill.branch_id
         WHERE c.active = TRUE
         AND c.threshold <= COALESCE(skill.rank,0)",
-    );
+    )?;
 
     let params = params! {
         "user_id" => user_id,
@@ -90,9 +92,8 @@ pub fn available_courses(user_id: i64) -> Option<Vec<Course>> {
             }
         };
 
-    match conn.exec_map(&stmt.unwrap(), &params, &map) {
-        Err(..) => None,
-        Ok(courses) => Some(courses),
+    match conn.exec_map(&stmt, &params, &map)? {
+        courses => Ok(courses),
     }
 }
 
