@@ -16,7 +16,7 @@ pub fn term_list(session: UserSession, user_id: Option<i64>) -> Result<Json<Vec<
     }
 }
 
-#[rocket::post("/term_create", format = "application/json", data = "<term>")]
+#[rocket::post("/admin/term_create", format = "application/json", data = "<term>")]
 pub fn term_create(session: UserSession, term: Json<Term>) -> Result<String, Error> {
     if !session.right.admin_term {
         return Err(Error::RightTermMissing);
@@ -26,7 +26,7 @@ pub fn term_create(session: UserSession, term: Json<Term>) -> Result<String, Err
     Ok(id.to_string())
 }
 
-#[rocket::post("/term_edit?<term_id>", format = "application/json", data = "<term>")]
+#[rocket::post("/admin/term_edit?<term_id>", format = "application/json", data = "<term>")]
 pub fn term_edit(session: UserSession, term_id: i64, term: Json<Term>) -> Result<(), Error> {
     if !session.right.admin_term {
         return Err(Error::RightTermMissing);
@@ -38,7 +38,7 @@ pub fn term_edit(session: UserSession, term_id: i64, term: Json<Term>) -> Result
     }
 }
 
-#[rocket::head("/term_delete?<term_id>")]
+#[rocket::head("/admin/term_delete?<term_id>")]
 pub fn term_delete(session: UserSession, term_id: i64) -> Result<(), Error> {
     if !session.right.admin_term {
         return Err(Error::RightTermMissing);
