@@ -10,9 +10,8 @@ pub fn term_list(session: UserSession, user_id: Option<i64>) -> Result<Json<Vec<
         return Err(Error::RightTermMissing);
     };
 
-    match crate::db_term::list_terms(user_id) {
-        None => Err(Error::DatabaseError),
-        Some(terms) => Ok(Json(terms)),
+    match crate::db_term::list_terms(user_id)? {
+        terms => Ok(Json(terms)),
     }
 }
 
@@ -32,10 +31,8 @@ pub fn term_edit(session: UserSession, term_id: i64, term: Json<Term>) -> Result
         return Err(Error::RightTermMissing);
     };
 
-    match crate::db_term::edit_term(term_id, &term) {
-        None => Err(Error::DatabaseError),
-        Some(..) => Ok(()),
-    }
+    crate::db_term::edit_term(term_id, &term)?;
+    Ok(())
 }
 
 #[rocket::head("/admin/term_delete?<term_id>")]
@@ -44,8 +41,6 @@ pub fn term_delete(session: UserSession, term_id: i64) -> Result<(), Error> {
         return Err(Error::RightTermMissing);
     };
 
-    match crate::db_term::delete_term(term_id) {
-        None => Err(Error::DatabaseError),
-        Some(..) => Ok(()),
-    }
+    crate::db_term::delete_term(term_id)?;
+    Ok(())
 }

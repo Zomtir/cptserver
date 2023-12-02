@@ -5,7 +5,7 @@ use crate::common::{Term, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
-pub fn list_terms(user_id: Option<i64>) -> Option<Vec<Term>> {
+pub fn list_terms(user_id: Option<i64>) -> Result<Vec<Term>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT t.term_id,
@@ -14,7 +14,7 @@ pub fn list_terms(user_id: Option<i64>) -> Option<Vec<Term>> {
         FROM terms t
         JOIN users u ON (t.user_id = u.user_id)
         WHERE (:user_id IS NULL OR :user_id = t.user_id);",
-    );
+    )?;
 
     let params = params! {
         "user_id" => user_id,
@@ -27,41 +27,38 @@ pub fn list_terms(user_id: Option<i64>) -> Option<Vec<Term>> {
         end,
     };
 
-    match conn.exec_map(&stmt.unwrap(), &params, &map) {
-        Err(..) => None,
-        Ok(terms) => Some(terms),
+    match conn.exec_map(&stmt, &params, &map)? {
+        terms => Ok(terms),
     }
 }
 
 pub fn create_term(term: &Term) -> Result<u32, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "INSERT INTO terms (user_id, begin, end)
+        "INSERT INTO terms (user_id, term_begin, term_end)
         VALUES (:user_id, :begin, :end)",
-    );
+    )?;
     let params = params! {
         "user_id" => term.user.id,
         "begin" => &term.begin,
         "end" => &term.end,
     };
 
-    conn.exec_drop(&stmt.unwrap(), &params)?;
+    conn.exec_drop(&stmt, &params)?;
 
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn edit_term(term_id: i64, term: &Term) -> Option<()> {
+pub fn edit_term(term_id: i64, term: &Term) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn
         .prep(
-            "
-        UPDATE terms SET
+        "UPDATE terms SET
             user_id  = :user_id,
-            begin = :begin,
-            end = :end,
+            term_begin = :begin,
+            term_end = :end,
         WHERE term_id = :term_id",
-        )
-        .unwrap();
+        )?;
 
     let params = params! {
         "term_id" => &term_id,
@@ -70,27 +67,23 @@ pub fn edit_term(term_id: i64, term: &Term) -> Option<()> {
         "end" => &term.end,
     };
 
-    match conn.exec_drop(&stmt, &params) {
-        Err(..) => None,
-        Ok(..) => Some(()),
-    }
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
 }
 
-pub fn delete_term(term_id: i64) -> Option<()> {
+pub fn delete_term(term_id: i64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep("DELETE t FROM terms t WHERE t.term_id_id = :term_id");
+    let stmt = conn.prep("DELETE t FROM terms t WHERE t.term_id_id = :term_id")?;
 
     let params = params! {
         "term_id" => term_id
     };
 
-    match conn.exec_drop(&stmt.unwrap(), &params) {
-        Err(..) => None,
-        Ok(..) => Some(()),
-    }
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
 }
 
-pub fn get_user_membership_days(active: Option<bool>) -> Option<Vec<(i64, i64)>> {
+pub fn get_user_membership_days(active: Option<bool>) -> Result<Vec<(i64, i64)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT t.user_id, SUM(DATEDIFF(t.term_end, t.term_begin)) as active_days 
@@ -99,7 +92,7 @@ pub fn get_user_membership_days(active: Option<bool>) -> Option<Vec<(i64, i64)>>
         WHERE (:active IS NULL OR :active = u.active)
         GROUP BY t.user_id
         ORDER BY active_days DESC;",
-    );
+    )?;
 
     let params = params! {
         "active" => &active,
@@ -107,13 +100,12 @@ pub fn get_user_membership_days(active: Option<bool>) -> Option<Vec<(i64, i64)>>
 
     let map = |(user_id, active_days): (i64, i64)| (user_id, active_days);
 
-    match conn.exec_map(&stmt.unwrap(), &params, &map) {
-        Err(..) => None,
-        Ok(leaderboard) => Some(leaderboard),
+    match conn.exec_map(&stmt, &params, &map)? {
+        leaderboard => Ok(leaderboard),
     }
 }
 
-pub fn get_wrong_active_users() -> Option<Vec<User>> {
+pub fn get_wrong_active_users() -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname
@@ -128,19 +120,18 @@ pub fn get_wrong_active_users() -> Option<Vec<User>> {
         ) AS termstatus ON u.user_id = termstatus.user_id
         WHERE u.active = TRUE
         AND termstatus.valid IS NULL;",
-    );
+    )?;
 
     let params = params::Params::Empty;
 
     let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
 
-    match conn.exec_map(&stmt.unwrap(), &params, &map) {
-        Err(..) => None,
-        Ok(users) => Some(users),
+    match conn.exec_map(&stmt, &params, &map)? {
+        users => Ok(users),
     }
 }
 
-pub fn get_wrong_inactive_users() -> Option<Vec<User>> {
+pub fn get_wrong_inactive_users() -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname
@@ -155,14 +146,13 @@ pub fn get_wrong_inactive_users() -> Option<Vec<User>> {
         ) AS termstatus ON u.user_id = termstatus.user_id
         WHERE u.active = FALSE
         AND termstatus.valid = TRUE;",
-    );
+    )?;
 
     let params = params::Params::Empty;
 
     let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
 
-    match conn.exec_map(&stmt.unwrap(), &params, &map) {
-        Err(..) => None,
-        Ok(users) => Some(users),
+    match conn.exec_map(&stmt, &params, &map)? {
+        users => Ok(users),
     }
 }
