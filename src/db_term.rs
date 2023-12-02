@@ -73,7 +73,7 @@ pub fn edit_term(term_id: i64, term: &Term) -> Result<(), Error> {
 
 pub fn delete_term(term_id: i64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep("DELETE t FROM terms t WHERE t.term_id_id = :term_id")?;
+    let stmt = conn.prep("DELETE t FROM terms t WHERE t.term_id = :term_id")?;
 
     let params = params! {
         "term_id" => term_id
