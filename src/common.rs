@@ -135,10 +135,8 @@ pub struct Ranking {
 pub struct Term {
     pub id: i64,
     pub user: User,
-    #[serde(with = "crate::clock::datetime_format")]
-    pub begin: chrono::NaiveDateTime,
-    #[serde(with = "crate::clock::datetime_format")]
-    pub end: chrono::NaiveDateTime,
+    pub begin: Option<chrono::NaiveDate>,
+    pub end: Option<chrono::NaiveDate>,
 }
 
 /*
