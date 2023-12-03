@@ -138,7 +138,7 @@ fn rocket() -> _ {
                 route_course_admin::course_teaminvite_add,
                 route_course_admin::course_teaminvite_remove,
                 route_course_member::course_availiblity,
-                route_course_moderator::course_responsiblity,
+                route_course_moderator::course_responsibility,
                 route_course_moderator::course_moderator_list,
                 route_course_moderator::course_moderator_add,
                 route_course_moderator::course_moderator_remove,
