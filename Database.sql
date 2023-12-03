@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1deb1
+-- version 5.2.1deb1ubuntu1
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8001
--- Generation Time: Aug 02, 2023 at 05:32 PM
--- Server version: 10.11.2-MariaDB-1
--- PHP Version: 8.1.12-1ubuntu4.2
+-- Generation Time: Dec 03, 2023 at 11:51 AM
+-- Server version: 10.11.4-MariaDB-1
+-- PHP Version: 8.2.10-2ubuntu1
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -85,19 +85,6 @@ CREATE TABLE `course_teaminvites` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `inventory`
---
-
-CREATE TABLE `inventory` (
-  `item_id` int(11) NOT NULL,
-  `owner_id` mediumint(9) NOT NULL,
-  `possessor_id` mediumint(9) NOT NULL,
-  `count` tinyint(4) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `items`
 --
 
@@ -117,6 +104,30 @@ CREATE TABLE `item_category` (
   `category_id` smallint(6) NOT NULL,
   `name` varchar(30) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `item_owners`
+--
+
+CREATE TABLE `item_owners` (
+  `item_id` int(11) NOT NULL,
+  `owner_id` mediumint(9) NOT NULL,
+  `count` tinyint(4) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `item_possessors`
+--
+
+CREATE TABLE `item_possessors` (
+  `item_id` int(11) NOT NULL,
+  `possessor_id` mediumint(9) NOT NULL,
+  `count` tinyint(4) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -162,6 +173,7 @@ CREATE TABLE `slots` (
   `status` enum('DRAFT','PENDING','OCCURRING','CANCELED','REJECTED') NOT NULL DEFAULT 'PENDING',
   `public` tinyint(1) NOT NULL DEFAULT 0,
   `obscured` tinyint(1) NOT NULL DEFAULT 0,
+  `note` text NOT NULL DEFAULT '',
   `course_id` mediumint(9) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -265,12 +277,12 @@ CREATE TABLE `users` (
   `birthlocation` varchar(60) DEFAULT NULL,
   `nationality` varchar(40) DEFAULT NULL,
   `gender` enum('MALE','FEMALE','OTHER') DEFAULT NULL,
-  `federationnumber` mediumint(9) DEFAULT NULL,
-  `federationpermissionsolo` date DEFAULT NULL,
-  `federationpermissionteam` date DEFAULT NULL,
-  `federationresidency` date DEFAULT NULL,
-  `datadeclaration` tinyint(1) DEFAULT NULL,
-  `datadisclaimer` text DEFAULT NULL,
+  `federationNumber` mediumint(9) DEFAULT NULL,
+  `federationPermissionSolo` date DEFAULT NULL,
+  `federationPermissionTeam` date DEFAULT NULL,
+  `federationResidency` date DEFAULT NULL,
+  `dataDeclaration` tinyint(1) DEFAULT NULL,
+  `dataDisclaimer` text DEFAULT NULL,
   `note` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -315,14 +327,6 @@ ALTER TABLE `course_teaminvites`
   ADD KEY `team_id` (`team_id`);
 
 --
--- Indexes for table `inventory`
---
-ALTER TABLE `inventory`
-  ADD PRIMARY KEY (`item_id`,`owner_id`,`possessor_id`),
-  ADD KEY `owner_id` (`owner_id`),
-  ADD KEY `possessor_id` (`possessor_id`);
-
---
 -- Indexes for table `items`
 --
 ALTER TABLE `items`
@@ -334,6 +338,20 @@ ALTER TABLE `items`
 --
 ALTER TABLE `item_category`
   ADD PRIMARY KEY (`category_id`);
+
+--
+-- Indexes for table `item_owners`
+--
+ALTER TABLE `item_owners`
+  ADD PRIMARY KEY (`item_id`,`owner_id`) USING BTREE,
+  ADD KEY `item_owners_ibfk_2` (`owner_id`);
+
+--
+-- Indexes for table `item_possessors`
+--
+ALTER TABLE `item_possessors`
+  ADD PRIMARY KEY (`item_id`,`possessor_id`) USING BTREE,
+  ADD KEY `item_possessors_ibfk_2` (`possessor_id`);
 
 --
 -- Indexes for table `locations`
@@ -505,18 +523,24 @@ ALTER TABLE `course_teaminvites`
   ADD CONSTRAINT `course_teaminvites_ibfk_3` FOREIGN KEY (`team_id`) REFERENCES `teams` (`team_id`) ON UPDATE CASCADE;
 
 --
--- Constraints for table `inventory`
---
-ALTER TABLE `inventory`
-  ADD CONSTRAINT `inventory_ibfk_1` FOREIGN KEY (`owner_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`possessor_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `inventory_ibfk_3` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON UPDATE CASCADE;
-
---
 -- Constraints for table `items`
 --
 ALTER TABLE `items`
   ADD CONSTRAINT `items_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `item_category` (`category_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `item_owners`
+--
+ALTER TABLE `item_owners`
+  ADD CONSTRAINT `item_owners_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `item_owners_ibfk_2` FOREIGN KEY (`owner_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `item_possessors`
+--
+ALTER TABLE `item_possessors`
+  ADD CONSTRAINT `item_possessors_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `item_possessors_ibfk_2` FOREIGN KEY (`possessor_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `rankings`
