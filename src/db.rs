@@ -40,17 +40,14 @@ SELECT :slot_key, :pwd, :title, :location_id, :begin, :end, :status, :public, :o
 println!("SQL: {}", crate::db::as_sql(&query, &params).unwrap()); 
  */
 #[allow(dead_code)]
-pub fn as_sql(query: &str, params: &mysql::Params) -> Result<String, Error> {
+pub fn print_sql(query: &str, params: &mysql::Params) {
     let (placeholder, real_query) : (Vec<Vec<u8>>, Vec<u8>) = match mysql_common::named_params::parse_named_params(query.as_bytes()).unwrap() {
         (p,q) => (p.unwrap(), q.into_owned()), 
     };
 
-    println!("Real Query: {}", String::from_utf8(real_query.clone()).unwrap());
-    println!("Named Param Size: {}", placeholder.len());
-
     let replacement_map = match params {
         mysql::Params::Named(map) => map,
-        _ => return Err(Error::Default),
+        _ => return,
     };
 
     let input_string = String::from_utf8(real_query.clone()).unwrap();
@@ -68,6 +65,5 @@ pub fn as_sql(query: &str, params: &mysql::Params) -> Result<String, Error> {
         }
     }
 
-    output_string.push_str("#END");
-    Ok(output_string)
+    println!("{}",output_string);
 }

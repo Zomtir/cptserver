@@ -5,6 +5,11 @@ use sha2::{Digest, Sha256};
 
 use crate::error::Error;
 
+use rocket::{
+    data::ToByteUnit,
+    form::{self, DataField, FromFormField, ValueField},
+};
+
 #[allow(non_snake_case)]
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct User {
@@ -75,6 +80,66 @@ pub struct Slot {
     pub obscured: bool,
     pub note: String,
     pub course_id: Option<u32>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum SlotStatus {
+    DRAFT,
+    PENDING,
+    OCCURRING,
+    REJECTED,
+    CANCELED,
+}
+
+impl SlotStatus {
+    fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "DRAFT" => Some(SlotStatus::DRAFT),
+            "PENDING" => Some(SlotStatus::PENDING),
+            "OCCURRING" => Some(SlotStatus::OCCURRING),
+            "REJECTED" => Some(SlotStatus::REJECTED),
+            "CANCELED" => Some(SlotStatus::CANCELED),
+            _ => None,
+        }
+    }
+
+    fn to_str(&self) -> &str {
+        match self {
+            SlotStatus::DRAFT => "DRAFT",
+            SlotStatus::PENDING => "PENDING",
+            SlotStatus::OCCURRING => "OCCURRING",
+            SlotStatus::REJECTED => "REJECTED",
+            SlotStatus::CANCELED => "CANCELED",
+        }
+    }
+}
+
+impl core::convert::From<SlotStatus> for mysql_common::Value {
+    fn from(s: SlotStatus) -> Self {
+        mysql_common::Value::Bytes(s.to_str().to_string().into_bytes())
+    }
+}
+
+#[rocket::async_trait]
+impl<'r> FromFormField<'r> for SlotStatus {
+    fn from_value(field: ValueField<'r>) -> form::Result<'r, Self> {
+        match SlotStatus::from_str(field.value) {
+            None => return Err(form::Errors::default()),
+            Some(slot_status) => return Ok(slot_status),
+        }
+    }
+
+    async fn from_data(field: DataField<'r, '_>) -> form::Result<'r, Self> {
+        let web_string: String = match field.data.open(200.bytes()).into_string().await {
+            Err(..) => return Err(form::Errors::default()),
+            Ok(string) => string.into_inner(),
+        };
+
+        match SlotStatus::from_str(&web_string) {
+            None => return Err(form::Errors::default()),
+            Some(slot_status) => return Ok(slot_status),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]

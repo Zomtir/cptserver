@@ -69,7 +69,7 @@ pub fn duration_round(
 }
 
 impl WebDate {
-    fn parse_from_str(s: &str) -> Option<WebDate> {
+    fn from_str(s: &str) -> Option<WebDate> {
         match chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d") {
             Err(..) => None,
             Ok(naive_date) => Some(WebDate(naive_date)),
@@ -84,7 +84,7 @@ impl WebDate {
 #[rocket::async_trait]
 impl<'r> FromFormField<'r> for WebDate {
     fn from_value(field: ValueField<'r>) -> form::Result<'r, Self> {
-        match WebDate::parse_from_str(field.value) {
+        match WebDate::from_str(field.value) {
             None => return Err(form::Errors::default()),
             Some(web_date) => return Ok(web_date),
         }
@@ -96,7 +96,7 @@ impl<'r> FromFormField<'r> for WebDate {
             Ok(string) => string.into_inner(),
         };
 
-        match WebDate::parse_from_str(&web_string) {
+        match WebDate::from_str(&web_string) {
             None => return Err(form::Errors::default()),
             Some(web_date) => return Ok(web_date),
         }

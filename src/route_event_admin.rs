@@ -1,7 +1,7 @@
 use rocket::serde::json::Json;
 
 use crate::clock::WebDate;
-use crate::common::Slot;
+use crate::common::{Slot, SlotStatus};
 use crate::error::Error;
 use crate::session::UserSession;
 
@@ -10,7 +10,7 @@ pub fn event_list(
     session: UserSession,
     begin: WebDate,
     end: WebDate,
-    status: Option<String>,
+    status: Option<SlotStatus>,
     location_id: Option<i64>,
     owner_id: Option<i64>,
 ) -> Result<Json<Vec<Slot>>, Error> {

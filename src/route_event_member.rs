@@ -2,7 +2,7 @@ use crate::clock::WebDate;
 use crate::error::Error;
 use rocket::serde::json::Json;
 
-use crate::common::Slot;
+use crate::common::{Slot, SlotStatus};
 use crate::session::UserSession;
 
 /*
@@ -15,7 +15,7 @@ pub fn event_list(
     session: UserSession,
     begin: WebDate,
     end: WebDate,
-    status: Option<String>,
+    status: Option<SlotStatus>,
     location_id: Option<i64>) -> Result<Json<Vec<Slot>>, Error> {
 
     let frame_start = begin.to_naive();

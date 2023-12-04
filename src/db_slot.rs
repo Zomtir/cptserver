@@ -1,7 +1,7 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Location, Slot, User};
+use crate::common::{Location, Slot, User, SlotStatus};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
@@ -20,7 +20,6 @@ pub fn get_slot_info(slot_id: i64) -> Result<Slot, Error> {
     let params = params! {
         "slot_id" => slot_id,
     };
-
 
     let mut row: mysql::Row = conn.exec_first(&stmt, &params)?.ok_or_else(|| Error::SlotMissing)?;
 
@@ -46,13 +45,12 @@ pub fn get_slot_info(slot_id: i64) -> Result<Slot, Error> {
     Ok(slot)
 }
 
-// TODO make a check that status is not an invalid string by implementing a proper trait
-// TODO should "status" even be a searchable criteria? if so, please make it enum with FromFormValue::default()
+
 // TODO should "public" and "obscured" be included?
 pub fn list_slots(
     mut begin: Option<chrono::NaiveDate>,
     mut end: Option<chrono::NaiveDate>,
-    status: Option<String>,
+    status: Option<SlotStatus>,
     location_id: Option<i64>,
     course_id: Option<i64>,
     owner_id: Option<i64>,
@@ -76,7 +74,7 @@ pub fn list_slots(
         begin = crate::config::CONFIG_SLOT_DATE_MIN();
     }
 
-    if end.is_none() || end < crate::config::CONFIG_SLOT_DATE_MAX() {
+    if end.is_none() || end > crate::config::CONFIG_SLOT_DATE_MAX() {
         end = crate::config::CONFIG_SLOT_DATE_MAX();
     }
 
@@ -118,6 +116,10 @@ pub fn list_slots(
 }
 
 pub fn create_slot(slot: &Slot, status: &str, course_id: Option<i64>) -> Result<i64, Error> {
+    if slot.key.len() < 3  || slot.key.len() > 12 {
+        return Err(Error::SlotKeyInvalid);
+    }
+
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO slots (slot_key, pwd, title, location_id, begin, end, status, public, obscured, note, course_id)
@@ -125,7 +127,7 @@ pub fn create_slot(slot: &Slot, status: &str, course_id: Option<i64>) -> Result<
     )?;
 
     let params = params! {
-        "slot_key" => crate::common::random_string(8),
+        "slot_key" => &slot.key,
         "pwd" => crate::common::random_string(8),
         "title" => &slot.title,
         "location_id" => &slot.location.id,
