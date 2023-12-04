@@ -33,3 +33,41 @@ pub fn get_pool_conn() -> PooledConn {
         }
     }
 }
+
+/*
+let query = "INSERT INTO slots (slot_key, pwd, title, location_id, begin, end, status, public, obscured, note, course_id)
+SELECT :slot_key, :pwd, :title, :location_id, :begin, :end, :status, :public, :obscured, :note, :course_id;";
+println!("SQL: {}", crate::db::as_sql(&query, &params).unwrap()); 
+ */
+#[allow(dead_code)]
+pub fn as_sql(query: &str, params: &mysql::Params) -> Result<String, Error> {
+    let (placeholder, real_query) : (Vec<Vec<u8>>, Vec<u8>) = match mysql_common::named_params::parse_named_params(query.as_bytes()).unwrap() {
+        (p,q) => (p.unwrap(), q.into_owned()), 
+    };
+
+    println!("Real Query: {}", String::from_utf8(real_query.clone()).unwrap());
+    println!("Named Param Size: {}", placeholder.len());
+
+    let replacement_map = match params {
+        mysql::Params::Named(map) => map,
+        _ => return Err(Error::Default),
+    };
+
+    let input_string = String::from_utf8(real_query.clone()).unwrap();
+    let mut param_index = 0;
+    let mut output_string = String::new();
+
+    for char in input_string.chars() {
+        match char {
+            '?' => {
+                let s = replacement_map.get(&placeholder[param_index]).unwrap().as_sql(true);
+                param_index += 1;
+                output_string.push_str(&s);
+            },
+            s => output_string.push_str(s.to_string().as_str()),
+        }
+    }
+
+    output_string.push_str("#END");
+    Ok(output_string)
+}
