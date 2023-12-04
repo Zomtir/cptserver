@@ -1,5 +1,4 @@
 use rocket::http::Status;
-use rocket::outcome::Outcome::Failure;
 use rocket::request::{Outcome, Request};
 use rocket::response::{self, Responder, Response};
 
@@ -189,6 +188,6 @@ impl<'r> Responder<'r, 'static> for Error {
 
 impl Error {
     pub fn outcome<T>(self) -> Outcome<T, Error> {
-        Failure((Status::BadRequest, self))
+        rocket::outcome::Outcome::Error((Status::BadRequest, self))
     }
 }
