@@ -5,12 +5,13 @@ use crate::common::Slot;
 use crate::error::Error;
 use crate::session::UserSession;
 
-#[rocket::get("/admin/event_list?<begin>&<end>&<status>&<owner_id>")]
+#[rocket::get("/admin/event_list?<begin>&<end>&<status>&<location_id>&<owner_id>")]
 pub fn event_list(
     session: UserSession,
     begin: WebDate,
     end: WebDate,
     status: Option<String>,
+    location_id: Option<i64>,
     owner_id: Option<i64>,
 ) -> Result<Json<Vec<Slot>>, Error> {
     if !session.right.admin_event {
@@ -26,7 +27,13 @@ pub fn event_list(
         return Err(Error::SlotWindowInvalid);
     }
 
-    match crate::db_slot::list_slots(Some(frame_start), Some(frame_stop), status, None, owner_id)? {
+    match crate::db_slot::list_slots(
+        Some(frame_start),
+        Some(frame_stop),
+        status,
+        location_id,
+        None,
+        owner_id)? {
         slots => Ok(Json(slots)),
     }
 }

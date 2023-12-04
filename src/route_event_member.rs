@@ -1,3 +1,4 @@
+use crate::clock::WebDate;
 use crate::error::Error;
 use rocket::serde::json::Json;
 
@@ -8,15 +9,29 @@ use crate::session::UserSession;
  * ROUTES
  */
 
-#[rocket::get("/member/event_list?<status>")]
-pub fn event_list(session: UserSession, status: Option<String>) -> Result<Json<Vec<Slot>>, Error> {
-    let begin = chrono::Utc::now().naive_utc() - chrono::Duration::days(30);
-    let end = chrono::Utc::now().naive_utc() + chrono::Duration::days(90);
+
+#[rocket::get("/member/event_list?<begin>&<end>&<status>&<location_id>")]
+pub fn event_list(
+    session: UserSession,
+    begin: WebDate,
+    end: WebDate,
+    status: Option<String>,
+    location_id: Option<i64>) -> Result<Json<Vec<Slot>>, Error> {
+
+    let frame_start = begin.to_naive();
+    let frame_stop = end.to_naive();
+
+    let window = frame_stop.signed_duration_since(frame_start);
+
+    if window < crate::config::CONFIG_SLOT_LIST_TIME_MIN() || window > crate::config::CONFIG_SLOT_LIST_TIME_MAX() {
+        return Err(Error::SlotWindowInvalid);
+    }
 
     match crate::db_slot::list_slots(
-        Some(begin.date()),
-        Some(end.date()),
+        Some(frame_start),
+        Some(frame_stop),
         status,
+        location_id,
         None,
         Some(session.user.id),
     )? {
