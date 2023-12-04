@@ -44,7 +44,7 @@ pub fn event_create(session: UserSession, mut slot: Json<Slot>) -> Result<String
     crate::common::validate_slot_dates(&mut slot)?;
 
     let slot_id = crate::db_slot::create_slot(&mut slot, &"DRAFT", None)?;
-    crate::db_slot::slot_owner_add(slot.id, session.user.id)?;
+    crate::db_slot::slot_owner_add(slot_id, session.user.id)?;
     Ok(slot_id.to_string())
 }
 

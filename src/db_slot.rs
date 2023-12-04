@@ -277,6 +277,7 @@ pub fn slot_owner_list(slot_id: i64) -> Result<Vec<User>, Error> {
 
 pub fn slot_owner_add(slot_id: i64, user_id: i64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
+
     let stmt = conn.prep(
         "INSERT INTO slot_owners (slot_id, user_id)
         VALUES (:slot_id, :user_id)",
