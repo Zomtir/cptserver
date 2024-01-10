@@ -77,7 +77,7 @@ pub struct Slot {
     pub end: chrono::NaiveDateTime,
     pub status: String,
     pub public: bool,
-    pub obscured: bool,
+    pub scrutable: bool,
     pub note: String,
     pub course_id: Option<u32>,
 }

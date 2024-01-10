@@ -172,7 +172,7 @@ CREATE TABLE `slots` (
   `end` datetime NOT NULL,
   `status` enum('DRAFT','PENDING','OCCURRING','CANCELED','REJECTED') NOT NULL DEFAULT 'PENDING',
   `public` tinyint(1) NOT NULL DEFAULT 0,
-  `obscured` tinyint(1) NOT NULL DEFAULT 0,
+  `scrutable` tinyint(1) NOT NULL DEFAULT 1,
   `note` text NOT NULL DEFAULT '',
   `course_id` mediumint(9) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

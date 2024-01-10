@@ -7,7 +7,7 @@
 * Add a SQL debug function
 * Add location as slot filter
 * Database layout updates
-* Added a few visibility/access tags: public, obscured, active
+* Added a few visibility/access tags: public, scrutable, active
 * Visibility of courses
 * Optional date for terms
 * Allow to change slot key

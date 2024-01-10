@@ -12,7 +12,7 @@ use crate::error::Error;
 pub fn get_slot_info(slot_id: i64) -> Result<Slot, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title AS location_title, s.begin, s.end, s.status, s.public, s.obscured, s.note, s.course_id
+        "SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title AS location_title, s.begin, s.end, s.status, s.public, s.scrutable, s.note, s.course_id
         FROM slots s
         JOIN locations l ON l.location_id = s.location_id
         WHERE slot_id = :slot_id",
@@ -37,7 +37,7 @@ pub fn get_slot_info(slot_id: i64) -> Result<Slot, Error> {
         },
         status: row.take("status").unwrap(),
         public: row.take("public").unwrap(),
-        obscured: row.take("obscured").unwrap(),
+        scrutable: row.take("scrutable").unwrap(),
         note: row.take("note").unwrap(),
         course_id: row.take("course_id").unwrap(),
     };
@@ -46,7 +46,7 @@ pub fn get_slot_info(slot_id: i64) -> Result<Slot, Error> {
 }
 
 
-// TODO should "public" and "obscured" be included?
+// TODO should "public" and "scrutable" be included?
 pub fn list_slots(
     mut begin: Option<chrono::NaiveDate>,
     mut end: Option<chrono::NaiveDate>,
@@ -57,7 +57,7 @@ pub fn list_slots(
 ) -> Result<Vec<Slot>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT s.slot_id, s.slot_key, s.title, l.location_id, l.location_key, l.title AS location_title, s.begin, s.end, s.status, s.public, s.obscured, s.note
+        "SELECT s.slot_id, s.slot_key, s.title, l.location_id, l.location_key, l.title AS location_title, s.begin, s.end, s.status, s.public, s.scrutable, s.note
         FROM slots s
         JOIN locations l ON l.location_id = s.location_id
         LEFT JOIN slot_owners o ON s.slot_id = o.slot_id
@@ -105,7 +105,7 @@ pub fn list_slots(
             },
             status: row.take("status").unwrap(),
             public: row.take("public").unwrap(),
-            obscured: row.take("obscured").unwrap(),
+            scrutable: row.take("scrutable").unwrap(),
             note: row.take("note").unwrap(),
             course_id: None,
         };
@@ -122,8 +122,8 @@ pub fn create_slot(slot: &Slot, status: &str, course_id: Option<i64>) -> Result<
 
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "INSERT INTO slots (slot_key, pwd, title, location_id, begin, end, status, public, obscured, note, course_id)
-        SELECT :slot_key, :pwd, :title, :location_id, :begin, :end, :status, :public, :obscured, :note, :course_id",
+        "INSERT INTO slots (slot_key, pwd, title, location_id, begin, end, status, public, scrutable, note, course_id)
+        SELECT :slot_key, :pwd, :title, :location_id, :begin, :end, :status, :public, :scrutable, :note, :course_id",
     )?;
 
     let params = params! {
@@ -135,7 +135,7 @@ pub fn create_slot(slot: &Slot, status: &str, course_id: Option<i64>) -> Result<
         "end" => &slot.end,
         "status" => status,
         "public" => slot.public,
-        "obscured" => &slot.obscured,
+        "scrutable" => &slot.scrutable,
         "note" => &slot.note,
         "course_id" => &course_id,
     };
@@ -156,7 +156,7 @@ pub fn edit_slot(slot_id: i64, slot: &Slot) -> Result<(), Error> {
             begin = :begin,
             end = :end,
             public = :public,
-            obscured = :obscured,
+            scrutable = :scrutable,
             note = :note
         WHERE slot_id = :slot_id",
     )?;
@@ -169,7 +169,7 @@ pub fn edit_slot(slot_id: i64, slot: &Slot) -> Result<(), Error> {
         "begin" => &slot.begin,
         "end" => &slot.end,
         "public" => &slot.public,
-        "obscured" => &slot.obscured,
+        "scrutable" => &slot.scrutable,
         "note" => &slot.note,
     };
 

@@ -35,8 +35,8 @@ pub fn get_pool_conn() -> PooledConn {
 }
 
 /*
-let query = "INSERT INTO slots (slot_key, pwd, title, location_id, begin, end, status, public, obscured, note, course_id)
-SELECT :slot_key, :pwd, :title, :location_id, :begin, :end, :status, :public, :obscured, :note, :course_id;";
+let query = "INSERT INTO slots (slot_key, pwd, title, location_id, begin, end, status, public, scrutable, note, course_id)
+SELECT :slot_key, :pwd, :title, :location_id, :begin, :end, :status, :public, :scrutable, :note, :course_id;";
 println!("SQL: {}", crate::db::as_sql(&query, &params).unwrap()); 
  */
 #[allow(dead_code)]
