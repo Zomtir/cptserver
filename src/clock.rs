@@ -2,13 +2,12 @@
  * Time and chronology related stuff
  */
 
-use chrono::{DateTime, Duration, DurationRound, Utc};
+
 use rocket::{
     data::ToByteUnit,
     form::{self, DataField, FromFormField, ValueField},
 };
 
-use crate::error::Error;
 pub struct WebDate(chrono::NaiveDate);
 pub struct WebDateTime(chrono::NaiveDateTime);
 
@@ -57,15 +56,6 @@ pub mod datetime_format {
         let s = String::deserialize(deserializer)?;
         chrono::NaiveDateTime::parse_from_str(&s, _FORMAT).map_err(serde::de::Error::custom)
     }
-}
-
-pub fn duration_round(
-    naive_datetime: chrono::NaiveDateTime,
-    duration: Duration,
-) -> Result<chrono::NaiveDateTime, Error> {
-    Ok(DateTime::<Utc>::from_utc(naive_datetime, Utc)
-        .duration_round(duration)?
-        .naive_utc())
 }
 
 impl WebDate {

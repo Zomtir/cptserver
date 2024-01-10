@@ -9,7 +9,7 @@ edition = "2021"
 [dependencies]
 mysql = "^24.0"
 mysql_common = {version = "^0.30.6", features = ["chrono", "frunk"]}
-chrono = { version = "^0.4.23", features = ["serde"]}
+chrono = { version = "^0.4.31", features = ["serde"]}
 http = "0.2"
 rocket = { version = "0.5.0", features = ["json"] }
 rocket_cors = "0.6.0"

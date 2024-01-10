@@ -2,6 +2,7 @@ use rand::Rng;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use chrono::DurationRound;
 
 use crate::error::Error;
 
@@ -310,9 +311,9 @@ pub fn is_slot_valid(slot: &Slot) -> bool {
 }
 
 pub fn validate_slot_dates(slot: &mut Slot) -> Result<(), Error> {
-    slot.begin = crate::clock::duration_round(slot.begin, crate::config::CONFIG_SLOT_WINDOW_SNAP())?;
+    slot.begin = slot.begin.duration_round(crate::config::CONFIG_SLOT_WINDOW_SNAP())?;
 
-    slot.end = crate::clock::duration_round(slot.end, crate::config::CONFIG_SLOT_WINDOW_SNAP())?;
+    slot.end = slot.end.duration_round(crate::config::CONFIG_SLOT_WINDOW_SNAP())?;
 
     let earliest_end = slot.begin + crate::config::CONFIG_SLOT_WINDOW_MINIMUM();
 
