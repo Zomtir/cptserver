@@ -154,6 +154,18 @@ pub fn event_owner_remove(session: UserSession, slot_id: i64, user_id: i64) -> R
     Ok(())
 }
 
+#[rocket::get("/owner/event_participant_list?<slot_id>")]
+pub fn event_participant_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<User>>, Error> {
+    match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
+        false => return Err(Error::SlotOwnerPermission),
+        true => (),
+    };
+    
+    match crate::db_slot::slot_participant_list(slot_id)? {
+        users => Ok(Json(users)),
+    }
+}
+
 #[rocket::head("/owner/event_participant_add?<slot_id>&<user_id>")]
 pub fn event_participant_add(session: UserSession, slot_id: i64, user_id: i64) -> Result<(), Error> {
     match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
@@ -169,11 +181,6 @@ pub fn event_participant_add(session: UserSession, slot_id: i64, user_id: i64) -
 pub fn event_participant_remove(session: UserSession, slot_id: i64, user_id: i64) -> Result<(), Error> {
     match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
         false => return Err(Error::SlotOwnerPermission),
-        true => (),
-    };
-
-    match crate::db_slot::slot_course_any(slot_id)? {
-        false => return Err(Error::SlotCourseMissing),
         true => (),
     };
 
