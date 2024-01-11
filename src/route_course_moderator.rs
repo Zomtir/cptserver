@@ -18,7 +18,7 @@ pub fn course_moderator_list(session: UserSession, course_id: i64) -> Result<Jso
         true => (),
     };
 
-    match crate::db_course::list_course_moderators(course_id)? {
+    match crate::db_course::course_moderator_list(course_id)? {
         moderators => Ok(Json(moderators)),
     }
 }
@@ -30,7 +30,7 @@ pub fn course_moderator_add(session: UserSession, course_id: i64, user_id: i64) 
         true => (),
     };
 
-    match crate::db_course::add_course_moderator(course_id, user_id) {
+    match crate::db_course::course_moderator_add(course_id, user_id) {
         None => Err(Error::DatabaseError),
         Some(..) => Ok(()),
     }
@@ -43,7 +43,7 @@ pub fn course_moderator_remove(session: UserSession, course_id: i64, user_id: i6
         true => (),
     };
 
-    match crate::db_course::remove_course_moderator(course_id, user_id) {
+    match crate::db_course::course_moderator_remove(course_id, user_id) {
         None => Err(Error::DatabaseError),
         Some(..) => Ok(()),
     }

@@ -25,7 +25,7 @@ pub fn class_create(session: UserSession, course_id: i64, mut slot: Json<Slot>) 
 
     crate::common::validate_slot_dates(&mut slot)?;
 
-    match crate::db_slot::create_slot(&slot, "OCCURRING", Some(course_id))? {
+    match crate::db_slot::slot_create(&slot, "OCCURRING", Some(course_id))? {
         id => Ok(id.to_string()),
     }
 }
@@ -61,6 +61,6 @@ pub fn class_delete(session: UserSession, slot_id: i64) -> Result<(), Error> {
         true => (),
     };
 
-    crate::db_slot::delete_slot(slot_id)?;
+    crate::db_slot::slot_delete(slot_id)?;
     Ok(())
 }

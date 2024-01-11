@@ -115,7 +115,7 @@ pub fn list_slots(
     Ok(slots)
 }
 
-pub fn create_slot(slot: &Slot, status: &str, course_id: Option<i64>) -> Result<i64, Error> {
+pub fn slot_create(slot: &Slot, status: &str, course_id: Option<i64>) -> Result<i64, Error> {
     if slot.key.len() < 3  || slot.key.len() > 12 {
         return Err(Error::SlotKeyInvalid);
     }
@@ -213,7 +213,7 @@ pub fn edit_slot_password(slot_id: i64, password: String) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn delete_slot(slot_id: i64) -> Result<(), Error> {
+pub fn slot_delete(slot_id: i64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "DELETE s

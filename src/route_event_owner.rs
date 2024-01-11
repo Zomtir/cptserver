@@ -116,7 +116,7 @@ pub fn event_delete(session: UserSession, slot_id: i64) -> Result<(), Error> {
         _ => return Err(Error::SlotStatusConflict),
     };
 
-    crate::db_slot::delete_slot(slot.id)?;
+    crate::db_slot::slot_delete(slot.id)?;
     Ok(())
 }
 

@@ -134,7 +134,7 @@ pub fn responsible_courses(user_id: i64) -> Result<Vec<Course>, Error> {
     }
 }
 
-pub fn create_course(course: &Course) -> Result<u32, Error> {
+pub fn course_create(course: &Course) -> Result<u32, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO courses (course_key, title, active, public, branch_id, threshold)
@@ -154,7 +154,7 @@ pub fn create_course(course: &Course) -> Result<u32, Error> {
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn list_course_moderators(course_id: i64) -> Result<Vec<User>, Error> {
+pub fn course_moderator_list(course_id: i64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname
@@ -192,7 +192,7 @@ pub fn is_course_moderator(course_id: i64, user_id: i64) -> Result<bool, Error> 
     }
 }
 
-pub fn add_course_moderator(course_id: i64, user_id: i64) -> Option<()> {
+pub fn course_moderator_add(course_id: i64, user_id: i64) -> Option<()> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO course_moderators (course_id, user_id)
@@ -209,7 +209,7 @@ pub fn add_course_moderator(course_id: i64, user_id: i64) -> Option<()> {
     }
 }
 
-pub fn remove_course_moderator(course_id: i64, user_id: i64) -> Option<()> {
+pub fn course_moderator_remove(course_id: i64, user_id: i64) -> Option<()> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn
         .prep(
@@ -228,7 +228,7 @@ pub fn remove_course_moderator(course_id: i64, user_id: i64) -> Option<()> {
     }
 }
 
-pub fn list_course_teaminvites(course_id: i64) -> Result<Vec<Team>, Error> {
+pub fn course_teaminvite_list(course_id: i64) -> Result<Vec<Team>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT t.team_id, t.name, t.description
@@ -250,7 +250,7 @@ pub fn list_course_teaminvites(course_id: i64) -> Result<Vec<Team>, Error> {
     Ok(teams)
 }
 
-pub fn add_course_teaminvite(course_id: i64, team_id: i64) -> Result<(), Error> {
+pub fn course_teaminvite_add(course_id: i64, team_id: i64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO course_teaminvites (course_id, team_id)
@@ -265,7 +265,7 @@ pub fn add_course_teaminvite(course_id: i64, team_id: i64) -> Result<(), Error> 
     Ok(())
 }
 
-pub fn remove_course_teaminvite(course_id: i64, team_id: i64) -> Result<(), Error> {
+pub fn course_teaminvite_remove(course_id: i64, team_id: i64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "DELETE FROM course_teaminvites

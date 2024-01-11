@@ -25,7 +25,7 @@ pub fn course_create(session: UserSession, course: Json<Course>) -> Result<Strin
         return Err(Error::RightCourseMissing);
     };
 
-    let id = crate::db_course::create_course(&course)?;
+    let id = crate::db_course::course_create(&course)?;
     Ok(id.to_string())
 }
 
@@ -92,7 +92,7 @@ pub fn course_moderator_list(session: UserSession, course_id: i64) -> Result<Jso
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_course::list_course_moderators(course_id)? {
+    match crate::db_course::course_moderator_list(course_id)? {
         moderators => Ok(Json(moderators)),
     }
 }
@@ -103,7 +103,7 @@ pub fn course_moderator_add(session: UserSession, course_id: i64, user_id: i64) 
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_course::add_course_moderator(course_id, user_id) {
+    match crate::db_course::course_moderator_add(course_id, user_id) {
         None => Err(Error::DatabaseError),
         Some(..) => Ok(()),
     }
@@ -115,7 +115,7 @@ pub fn course_moderator_remove(session: UserSession, course_id: i64, user_id: i6
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_course::remove_course_moderator(course_id, user_id) {
+    match crate::db_course::course_moderator_remove(course_id, user_id) {
         None => Err(Error::DatabaseError),
         Some(..) => Ok(()),
     }
@@ -127,7 +127,7 @@ pub fn course_teaminvite_list(session: UserSession, course_id: i64) -> Result<Js
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_course::list_course_teaminvites(course_id)? {
+    match crate::db_course::course_teaminvite_list(course_id)? {
         teams => Ok(Json(teams)),
     }
 }
@@ -138,7 +138,7 @@ pub fn course_teaminvite_add(session: UserSession, course_id: i64, team_id: i64)
         return Err(Error::RightCourseMissing);
     };
 
-    crate::db_course::add_course_teaminvite(course_id, team_id)?;
+    crate::db_course::course_teaminvite_add(course_id, team_id)?;
     Ok(())
 }
 
@@ -148,6 +148,6 @@ pub fn course_teaminvite_remove(session: UserSession, course_id: i64, team_id: i
         return Err(Error::RightCourseMissing);
     };
 
-    crate::db_course::remove_course_teaminvite(course_id, team_id)?;
+    crate::db_course::course_teaminvite_remove(course_id, team_id)?;
     Ok(())
 }
