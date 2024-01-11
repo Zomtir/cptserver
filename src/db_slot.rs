@@ -309,7 +309,7 @@ pub fn slot_owner_remove(slot_id: i64, user_id: i64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn is_slot_owner(slot_id: i64, user_id: i64) -> Result<bool, Error> {
+pub fn slot_owner_true(slot_id: i64, user_id: i64) -> Result<bool, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)
@@ -385,7 +385,7 @@ pub fn is_slot_in_course(slot_id: i64, course_id: i64) -> Result<bool, Error> {
     }
 }
 
-pub fn is_slot_in_any_course(slot_id: i64) -> Result<bool, Error> {
+pub fn slot_course_any(slot_id: i64) -> Result<bool, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)

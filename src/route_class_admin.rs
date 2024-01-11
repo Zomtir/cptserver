@@ -33,7 +33,7 @@ pub fn class_edit(session: UserSession, slot_id: i64, mut slot: Json<Slot>) -> R
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_slot::is_slot_in_any_course(slot_id)? {
+    match crate::db_slot::slot_course_any(slot_id)? {
         false => return Err(Error::SlotCourseMissing),
         true => (),
     };
@@ -50,7 +50,7 @@ pub fn class_edit_password(session: UserSession, slot_id: i64, password: String)
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_slot::is_slot_in_any_course(slot_id)? {
+    match crate::db_slot::slot_course_any(slot_id)? {
         false => return Err(Error::SlotCourseMissing),
         true => (),
     };
@@ -75,7 +75,7 @@ pub fn class_owner_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<U
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_slot::is_slot_in_any_course(slot_id)? {
+    match crate::db_slot::slot_course_any(slot_id)? {
         false => return Err(Error::SlotCourseMissing),
         true => (),
     };
@@ -91,7 +91,7 @@ pub fn class_owner_add(session: UserSession, slot_id: i64, user_id: i64) -> Resu
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_slot::is_slot_in_any_course(slot_id)? {
+    match crate::db_slot::slot_course_any(slot_id)? {
         false => return Err(Error::SlotCourseMissing),
         true => (),
     };
@@ -106,7 +106,7 @@ pub fn class_owner_remove(session: UserSession, slot_id: i64, user_id: i64) -> R
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_slot::is_slot_in_any_course(slot_id)? {
+    match crate::db_slot::slot_course_any(slot_id)? {
         false => return Err(Error::SlotCourseMissing),
         true => (),
     };
@@ -121,7 +121,7 @@ pub fn class_participant_pool(session: UserSession, slot_id: i64) -> Result<Json
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_slot::is_slot_in_any_course(slot_id)? {
+    match crate::db_slot::slot_course_any(slot_id)? {
         false => return Err(Error::SlotCourseMissing),
         true => (),
     };
@@ -137,7 +137,7 @@ pub fn class_participant_list(session: UserSession, slot_id: i64) -> Result<Json
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_slot::is_slot_in_any_course(slot_id)? {
+    match crate::db_slot::slot_course_any(slot_id)? {
         false => return Err(Error::SlotCourseMissing),
         true => (),
     };
@@ -153,7 +153,7 @@ pub fn class_participant_add(session: UserSession, slot_id: i64, user_id: i64) -
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_slot::is_slot_in_any_course(slot_id)? {
+    match crate::db_slot::slot_course_any(slot_id)? {
         false => return Err(Error::SlotCourseMissing),
         true => (),
     };
@@ -168,7 +168,7 @@ pub fn class_participant_remove(session: UserSession, slot_id: i64, user_id: i64
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_slot::is_slot_in_any_course(slot_id)? {
+    match crate::db_slot::slot_course_any(slot_id)? {
         false => return Err(Error::SlotCourseMissing),
         true => (),
     };

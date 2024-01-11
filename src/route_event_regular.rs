@@ -50,7 +50,7 @@ pub fn event_create(session: UserSession, mut slot: Json<Slot>) -> Result<String
 
 #[rocket::get("/regular/event_owner_condition?<slot_id>")]
 pub fn event_owner_condition(session: UserSession, slot_id: i64) -> Result<Json<bool>, Error> {
-    match crate::db_slot::is_slot_owner(slot_id, session.user.id)? {
+    match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
         condition => Ok(Json(condition)),
     }
 }

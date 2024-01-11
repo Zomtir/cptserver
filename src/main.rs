@@ -177,6 +177,8 @@ fn rocket() -> _ {
                 route_event_owner::event_owner_list,
                 route_event_owner::event_owner_add,
                 route_event_owner::event_owner_remove,
+                route_event_owner::event_participant_add,
+                route_event_owner::event_participant_remove,
                 route_team_admin::team_list,
                 route_team_admin::team_create,
                 route_team_admin::team_edit,
