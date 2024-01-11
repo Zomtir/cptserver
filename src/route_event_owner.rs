@@ -1,12 +1,41 @@
 use crate::error::Error;
 use rocket::serde::json::Json;
 
-use crate::common::{Slot, User};
+use crate::clock::WebDate;
+use crate::common::{Slot, User, SlotStatus};
 use crate::session::UserSession;
 
 /*
  * ROUTES
  */
+
+ #[rocket::get("/owner/event_list?<begin>&<end>&<status>&<location_id>")]
+pub fn event_list(
+    session: UserSession,
+    begin: WebDate,
+    end: WebDate,
+    status: Option<SlotStatus>,
+    location_id: Option<i64>,
+) -> Result<Json<Vec<Slot>>, Error> {
+    let frame_start = begin.to_naive();
+    let frame_stop = end.to_naive();
+
+    let window = frame_stop.signed_duration_since(frame_start);
+
+    if window < crate::config::CONFIG_SLOT_LIST_TIME_MIN() || window > crate::config::CONFIG_SLOT_LIST_TIME_MAX() {
+        return Err(Error::SlotWindowInvalid);
+    }
+
+    match crate::db_slot::list_slots(
+        Some(frame_start),
+        Some(frame_stop),
+        status,
+        location_id,
+        None,
+        Some(session.user.id))? {
+        slots => Ok(Json(slots)),
+    }
+}
 
 // TODO, allow inviting member for draft
 // TODO, allow inviting groups for draft
