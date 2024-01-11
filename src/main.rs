@@ -24,25 +24,25 @@ mod session;
 mod route_anon;
 
 mod route_user_admin;
-mod route_user_member;
+mod route_user_regular;
 
 mod route_course_admin;
 mod route_course_moderator;
-mod route_course_member;
+mod route_course_regular;
 
 mod route_class_admin;
 mod route_class_moderator;
-mod route_class_member;
+mod route_class_regular;
 
 mod route_event_admin;
-mod route_event_member;
+mod route_event_regular;
 mod route_event_owner;
 
 mod route_ranking_admin;
-mod route_ranking_member;
+mod route_ranking_regular;
 
 mod route_team_admin;
-mod route_team_member;
+mod route_team_regular;
 
 mod route_term_admin;
 
@@ -123,10 +123,10 @@ fn rocket() -> _ {
                 route_user_admin::user_edit,
                 route_user_admin::user_edit_password,
                 route_user_admin::user_delete,
-                route_user_member::user_info,
-                route_user_member::user_right,
-                route_user_member::user_password,
-                route_user_member::user_list,
+                route_user_regular::user_info,
+                route_user_regular::user_right,
+                route_user_regular::user_password,
+                route_user_regular::user_list,
                 route_course_admin::course_list,
                 route_course_admin::course_create,
                 route_course_admin::course_edit,
@@ -137,7 +137,7 @@ fn rocket() -> _ {
                 route_course_admin::course_teaminvite_list,
                 route_course_admin::course_teaminvite_add,
                 route_course_admin::course_teaminvite_remove,
-                route_course_member::course_availiblity,
+                route_course_regular::course_availiblity,
                 route_course_moderator::course_responsibility,
                 route_course_moderator::course_moderator_list,
                 route_course_moderator::course_moderator_add,
@@ -159,14 +159,14 @@ fn rocket() -> _ {
                 route_class_moderator::class_edit,
                 route_class_moderator::class_edit_password,
                 route_class_moderator::class_delete,
-                route_class_member::class_list,
+                route_class_regular::class_list,
                 route_event_admin::event_list,
                 route_event_admin::event_accept,
                 route_event_admin::event_deny,
                 route_event_admin::event_cancel,
-                route_event_member::event_list,
-                route_event_member::event_create,
-                route_event_member::event_owner_condition,
+                route_event_regular::event_list,
+                route_event_regular::event_create,
+                route_event_regular::event_owner_condition,
                 route_event_owner::event_edit,
                 route_event_owner::event_edit_password,
                 route_event_owner::event_delete,
@@ -184,7 +184,7 @@ fn rocket() -> _ {
                 route_team_admin::team_member_list,
                 route_team_admin::team_member_add,
                 route_team_admin::team_member_remove,
-                route_team_member::team_list,
+                route_team_regular::team_list,
                 route_term_admin::term_list,
                 route_term_admin::term_create,
                 route_term_admin::term_edit,
@@ -193,8 +193,8 @@ fn rocket() -> _ {
                 route_ranking_admin::ranking_create,
                 route_ranking_admin::ranking_edit,
                 route_ranking_admin::ranking_delete,
-                route_ranking_member::ranking_list,
-                route_ranking_member::ranking_summary,
+                route_ranking_regular::ranking_list,
+                route_ranking_regular::ranking_summary,
                 route_slot::slot_info,
                 route_slot::slot_candidates,
                 route_slot::slot_participant_list,

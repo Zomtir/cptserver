@@ -10,7 +10,7 @@ use crate::session::UserSession;
  */
 
 
-#[rocket::get("/member/event_list?<begin>&<end>&<status>&<location_id>")]
+#[rocket::get("/regular/event_list?<begin>&<end>&<status>&<location_id>")]
 pub fn event_list(
     session: UserSession,
     begin: WebDate,
@@ -39,7 +39,7 @@ pub fn event_list(
     }
 }
 
-#[rocket::post("/member/event_create", format = "application/json", data = "<slot>")]
+#[rocket::post("/regular/event_create", format = "application/json", data = "<slot>")]
 pub fn event_create(session: UserSession, mut slot: Json<Slot>) -> Result<String, Error> {
     crate::common::validate_slot_dates(&mut slot)?;
 
@@ -48,7 +48,7 @@ pub fn event_create(session: UserSession, mut slot: Json<Slot>) -> Result<String
     Ok(slot_id.to_string())
 }
 
-#[rocket::get("/member/event_owner_condition?<slot_id>")]
+#[rocket::get("/regular/event_owner_condition?<slot_id>")]
 pub fn event_owner_condition(session: UserSession, slot_id: i64) -> Result<Json<bool>, Error> {
     match crate::db_slot::is_slot_owner(slot_id, session.user.id)? {
         condition => Ok(Json(condition)),

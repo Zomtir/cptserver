@@ -8,7 +8,7 @@ use crate::session::{Credential, UserSession};
  * ROUTES
  */
 
-#[rocket::get("/member/user_info")]
+#[rocket::get("/regular/user_info")]
 pub fn user_info(session: UserSession) -> Json<User> {
     Json(User::from_info(
         session.user.id,
@@ -18,7 +18,7 @@ pub fn user_info(session: UserSession) -> Json<User> {
     ))
 }
 
-#[rocket::get("/member/user_right")]
+#[rocket::get("/regular/user_right")]
 pub fn user_right(session: UserSession) -> Json<Right> {
     Json(Right {
         admin_courses: session.right.admin_courses,
@@ -31,13 +31,13 @@ pub fn user_right(session: UserSession) -> Json<Right> {
     })
 }
 
-#[rocket::post("/member/user_password", format = "application/json", data = "<credit>")]
+#[rocket::post("/regular/user_password", format = "application/json", data = "<credit>")]
 pub fn user_password(session: UserSession, credit: Json<Credential>) -> Result<(), Error> {
     crate::db_user::edit_user_password(session.user.id, &credit.password, &credit.salt)?;
     Ok(())
 }
 
-#[rocket::get("/member/user_list")]
+#[rocket::get("/regular/user_list")]
 pub fn user_list(_session: UserSession) -> Result<Json<Vec<User>>, Error> {
     let users = crate::db_user::list_user(Some(true))?;
     Ok(Json(users))

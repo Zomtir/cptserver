@@ -4,7 +4,7 @@ use crate::common::Slot;
 use crate::error::Error;
 use crate::session::UserSession;
 
-#[rocket::get("/member/class_list?<course_id>")]
+#[rocket::get("/regular/class_list?<course_id>")]
 pub fn class_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Slot>>, Error> {
     // TODO check if course is public
     // TODO check if member is part of course

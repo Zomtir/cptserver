@@ -8,7 +8,7 @@ use crate::session::UserSession;
  * ROUTES
  */
 
-#[rocket::get("/member/course_availiblity")]
+#[rocket::get("/regular/course_availiblity")]
 pub fn course_availiblity(session: UserSession) -> Result<Json<Vec<Course>>, Error> {
     match crate::db_course::available_courses(session.user.id)? {
         courses => Ok(Json(courses)),
