@@ -46,7 +46,7 @@ mod route_team_regular;
 
 mod route_term_admin;
 
-mod route_slot;
+mod route_slot_service;
 
 #[rocket::get("/")]
 fn index() -> &'static str {
@@ -195,11 +195,11 @@ fn rocket() -> _ {
                 route_ranking_admin::ranking_delete,
                 route_ranking_regular::ranking_list,
                 route_ranking_regular::ranking_summary,
-                route_slot::slot_info,
-                route_slot::slot_candidates,
-                route_slot::slot_participant_list,
-                route_slot::slot_participant_add,
-                route_slot::slot_participant_remove,
+                route_slot_service::slot_info,
+                route_slot_service::slot_candidates,
+                route_slot_service::slot_participant_list,
+                route_slot_service::slot_participant_add,
+                route_slot_service::slot_participant_remove,
             ],
         )
         .attach(cors)
