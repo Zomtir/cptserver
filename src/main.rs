@@ -160,6 +160,8 @@ fn rocket() -> _ {
                 route_class_moderator::class_edit_password,
                 route_class_moderator::class_delete,
                 route_class_regular::class_list,
+                route_class_regular::class_participant_add,
+                route_class_regular::class_participant_remove,
                 route_event_admin::event_list,
                 route_event_admin::event_accept,
                 route_event_admin::event_deny,

@@ -148,8 +148,6 @@ pub struct Course {
     pub id: u32,
     pub key: String,
     pub title: String,
-    pub branch: Branch,
-    pub threshold: u8,
     pub active: bool,
     pub public: bool,
 }

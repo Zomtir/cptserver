@@ -1,7 +1,7 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Branch, Course, Team, User};
+use crate::common::{Course, Team, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
@@ -12,10 +12,8 @@ use crate::error::Error;
 pub fn list_courses(mod_id: Option<i64>, active: Option<bool>, public: Option<bool>) -> Result<Vec<Course>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT c.course_id, c.course_key, c.title, c.active, c.public,
-            b.branch_id, b.branch_key, b.title, c.threshold
+        "SELECT c.course_id, c.course_key, c.title, c.active, c.public
         FROM courses c
-        JOIN branches b ON c.branch_id = b.branch_id
         LEFT JOIN course_moderators m ON c.course_id = m.course_id
         WHERE (:mod_id IS NULL OR m.user_id = :mod_id)
         AND (:active IS NULL OR c.active = :active)
@@ -31,19 +29,13 @@ pub fn list_courses(mod_id: Option<i64>, active: Option<bool>, public: Option<bo
     };
 
     let map =
-        |(course_id, course_key, course_title, active, public, branch_id, branch_key, branch_title, threshold)| {
+        |(course_id, course_key, course_title, active, public)| {
             Course {
                 id: course_id,
                 key: course_key,
                 title: course_title,
                 active,
                 public,
-                branch: Branch {
-                    id: branch_id,
-                    key: branch_key,
-                    title: branch_title,
-                },
-                threshold,
             }
         };
 
@@ -55,20 +47,11 @@ pub fn list_courses(mod_id: Option<i64>, active: Option<bool>, public: Option<bo
 pub fn available_courses(user_id: i64) -> Result<Vec<Course>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT c.course_id, c.course_key, c.title, c.active, c.public,
-            b.branch_id, b.branch_key, b.title, c.threshold
+        "SELECT DISTINCT c.course_id, c.title
         FROM courses c
-        JOIN branches b ON c.branch_id = b.branch_id
-        LEFT JOIN
-        (
-            SELECT b.branch_id as branch_id, COALESCE(MAX(r.rank),0) as rank
-            FROM rankings r
-            JOIN branches b ON r.branch_id = b.branch_id
-            WHERE r.user_id = :user_id
-            GROUP BY r.branch_id
-        ) AS skill ON c.branch_id = skill.branch_id
-        WHERE c.active = TRUE
-        AND c.threshold <= COALESCE(skill.rank,0)",
+        INNER JOIN course_requirements cr ON c.course_id = cr.course_id
+        LEFT JOIN user_rankings ur ON ur.branch_id = cr.branch_id AND ur.rank >= cr.rank AND ur.user_id = :user_id
+        WHERE ur.user_id IS NOT NULL;",
     )?;
 
     let params = params! {
@@ -76,19 +59,13 @@ pub fn available_courses(user_id: i64) -> Result<Vec<Course>, Error> {
     };
 
     let map =
-        |(course_id, course_key, course_title, active, public, branch_id, branch_key, branch_title, threshold)| {
+        |(course_id, course_key, course_title, active, public)| {
             Course {
                 id: course_id,
                 key: course_key,
                 title: course_title,
                 active,
                 public,
-                branch: Branch {
-                    id: branch_id,
-                    key: branch_key,
-                    title: branch_title,
-                },
-                threshold,
             }
         };
 
@@ -100,10 +77,8 @@ pub fn available_courses(user_id: i64) -> Result<Vec<Course>, Error> {
 pub fn responsible_courses(user_id: i64) -> Result<Vec<Course>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT c.course_id, c.course_key, c.title, c.active, c.public,
-            b.branch_id, b.branch_key, b.title, c.threshold
+        "SELECT c.course_id, c.course_key, c.title, c.active, c.public
         FROM courses c
-        JOIN branches b ON c.branch_id = b.branch_id
         JOIN course_moderators m ON c.course_id = m.course_id
         WHERE m.user_id = :user_id",
     )?;
@@ -113,19 +88,13 @@ pub fn responsible_courses(user_id: i64) -> Result<Vec<Course>, Error> {
     };
 
     let map =
-        |(course_id, course_key, course_title, active, public, branch_id, branch_key, branch_title, threshold)| {
+        |(course_id, course_key, course_title, active, public)| {
             Course {
                 id: course_id,
                 key: course_key,
                 title: course_title,
                 active,
                 public,
-                branch: Branch {
-                    id: branch_id,
-                    key: branch_key,
-                    title: branch_title,
-                },
-                threshold,
             }
         };
 
@@ -137,16 +106,14 @@ pub fn responsible_courses(user_id: i64) -> Result<Vec<Course>, Error> {
 pub fn course_create(course: &Course) -> Result<u32, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "INSERT INTO courses (course_key, title, active, public, branch_id, threshold)
-        VALUES (:course_key, :title, :active, :public, :branch_id, :threshold)",
+        "INSERT INTO courses (course_key, title, active, public)
+        VALUES (:course_key, :title, :active, :public)",
     )?;
     let params = params! {
         "course_key" => crate::common::random_string(10),
         "title" => &course.title,
         "active" => &course.active,
         "public" => &course.public,
-        "branch_id" => &course.branch.id,
-        "threshold" => &course.threshold,
     };
 
     conn.exec_drop(&stmt, &params)?;

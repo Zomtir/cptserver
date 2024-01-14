@@ -18,7 +18,7 @@ pub fn list_rankings(
             b.branch_id, b.branch_key, b.title,
             r.rank, r.date,
             j.user_id, j.user_key, j.firstname, j.lastname
-        FROM rankings r
+        FROM user_rankings r
         JOIN branches b ON (r.branch_id = b.branch_id)
         JOIN users u ON (r.user_id = u.user_id)
         JOIN users j ON (r.judge_id = j.user_id)
@@ -115,7 +115,7 @@ pub fn edit_ranking(ranking_id: i64, ranking: &Ranking) -> Option<()> {
 
 pub fn delete_ranking(ranking_id: i64) -> Option<()> {
     let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep("DELETE r FROM rankings r WHERE r.ranking_id = :ranking_id");
+    let stmt = conn.prep("DELETE r FROM user_rankings r WHERE r.ranking_id = :ranking_id");
 
     let params = params! {
         "ranking_id" => ranking_id
@@ -131,7 +131,7 @@ pub fn summarize_rankings(user_id: i64) -> Result<Vec<(Branch, i16)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT b.branch_id, b.branch_key, b.title, MAX(r.rank)
-        FROM rankings r
+        FROM user_rankings r
         JOIN branches b ON (r.branch_id = b.branch_id)
         JOIN users j ON (r.judge_id = j.user_id)
         WHERE r.user_id = :user_id

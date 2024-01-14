@@ -8,13 +8,13 @@ use crate::db::get_pool_conn;
 use crate::error::Error;
 use crate::session::UserSession;
 
-#[rocket::get("/admin/course_list?<mod_id>")]
-pub fn course_list(session: UserSession, mod_id: Option<i64>) -> Result<Json<Vec<Course>>, Error> {
+#[rocket::get("/admin/course_list?<mod_id>&<active>&<public>")]
+pub fn course_list(session: UserSession, mod_id: Option<i64>, active: Option<bool>, public: Option<bool>) -> Result<Json<Vec<Course>>, Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_course::list_courses(mod_id, None, None)? {
+    match crate::db_course::list_courses(mod_id, active, public)? {
         courses => Ok(Json(courses)),
     }
 }
@@ -38,14 +38,12 @@ pub fn course_edit(session: UserSession, course: Json<Course>) -> Result<(), Err
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn
         .prep(
-            "UPDATE courses SET
-        course_key = :course_key,
-        title = :title,
-        active = :active,
-        public = :public,
-        branch_id = :branch_id,
-        threshold = :threshold
-        WHERE course_id = :course_id",
+        "UPDATE courses SET
+            course_key = :course_key,
+            title = :title,
+            active = :active,
+            public = :public,
+            WHERE course_id = :course_id",
         )
         .unwrap();
 
@@ -55,8 +53,6 @@ pub fn course_edit(session: UserSession, course: Json<Course>) -> Result<(), Err
         "title" => &course.title,
         "active" => &course.active,
         "public" => &course.public,
-        "branch_id" => &course.branch.id,
-        "threshold" => &course.threshold,
     };
 
     match conn.exec_drop(&stmt, &params) {
@@ -74,8 +70,8 @@ pub fn course_delete(session: UserSession, course_id: i64) -> Result<(), Error> 
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn
         .prep(
-            "DELETE c FROM courses c
-                          WHERE c.course_id = :course_id",
+        "DELETE c FROM courses c
+        WHERE c.course_id = :course_id",
         )
         .unwrap();
     let params = params! {"course_id" => &course_id};

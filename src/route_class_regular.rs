@@ -13,3 +13,21 @@ pub fn class_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Slot>
         slots => Ok(Json(slots)),
     }
 }
+
+#[rocket::head("/regular/class_participant_add?<slot_id>")]
+pub fn class_participant_add(session: UserSession, slot_id: i64) -> Result<(), Error> {
+    // TODO check if course is public
+    // TODO check if member is part of course
+
+    crate::db_slot::slot_participant_add(slot_id, session.user.id)?;
+    Ok(())
+}
+
+#[rocket::head("/regular/class_participant_remove?<slot_id>")]
+pub fn class_participant_remove(session: UserSession, slot_id: i64) -> Result<(), Error> {
+    // TODO check if course is public
+    // TODO check if member is part of course
+
+    crate::db_slot::slot_participant_remove(slot_id, session.user.id)?;
+    Ok(())
+}
