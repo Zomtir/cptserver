@@ -46,7 +46,7 @@ pub fn course_list(mod_id: Option<i64>, active: Option<bool>, public: Option<boo
 pub fn course_available(user_id: i64) -> Result<Vec<Course>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT DISTINCT c.course_id, c.title
+        "SELECT DISTINCT c.course_id, c.course_key, c.title, c.active, c.public
         FROM courses c
         INNER JOIN course_requirements cr ON c.course_id = cr.course_id
         LEFT JOIN user_rankings ur ON ur.branch_id = cr.branch_id AND ur.rank >= cr.rank AND ur.user_id = :user_id
