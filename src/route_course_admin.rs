@@ -1,10 +1,6 @@
-use mysql::prelude::Queryable;
-use mysql::{params, PooledConn};
-
 use rocket::serde::json::Json;
 
 use crate::common::{Course, Team, User};
-use crate::db::get_pool_conn;
 use crate::error::Error;
 use crate::session::UserSession;
 
@@ -29,36 +25,14 @@ pub fn course_create(session: UserSession, course: Json<Course>) -> Result<Strin
     Ok(id.to_string())
 }
 
-#[rocket::post("/admin/course_edit", format = "application/json", data = "<course>")]
-pub fn course_edit(session: UserSession, course: Json<Course>) -> Result<(), Error> {
+#[rocket::post("/admin/course_edit?<course_id>", format = "application/json", data = "<course>")]
+pub fn course_edit(session: UserSession, course_id: i64, course: Json<Course>) -> Result<(), Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
 
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn
-        .prep(
-        "UPDATE courses SET
-            course_key = :course_key,
-            title = :title,
-            active = :active,
-            public = :public,
-            WHERE course_id = :course_id",
-        )
-        .unwrap();
-
-    let params = params! {
-        "course_id" => &course.id,
-        "course_key" => &course.key,
-        "title" => &course.title,
-        "active" => &course.active,
-        "public" => &course.public,
-    };
-
-    match conn.exec_drop(&stmt, &params) {
-        Err(..) => Err(Error::DatabaseError),
-        Ok(..) => Ok(()),
-    }
+    crate::db_course::course_edit(course_id, &course)?;
+    Ok(())
 }
 
 #[rocket::head("/admin/course_delete?<course_id>")]
@@ -67,19 +41,8 @@ pub fn course_delete(session: UserSession, course_id: i64) -> Result<(), Error> 
         return Err(Error::RightCourseMissing);
     };
 
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn
-        .prep(
-        "DELETE c FROM courses c
-        WHERE c.course_id = :course_id",
-        )
-        .unwrap();
-    let params = params! {"course_id" => &course_id};
-
-    match conn.exec_drop(&stmt, &params) {
-        Err(..) => Err(Error::DatabaseError),
-        Ok(..) => Ok(()),
-    }
+    crate::db_course::course_delete(course_id)?;
+    Ok(())
 }
 
 #[rocket::get("/admin/course_moderator_list?<course_id>")]

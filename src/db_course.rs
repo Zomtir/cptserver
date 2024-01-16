@@ -91,6 +91,44 @@ pub fn course_create(course: &Course) -> Result<u32, Error> {
     Ok(conn.last_insert_id() as u32)
 }
 
+pub fn course_edit(course_id: i64, course: &Course) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "UPDATE courses SET
+            course_key = :course_key,
+            title = :title,
+            active = :active,
+            public = :public,
+            WHERE course_id = :course_id")?;
+
+    let params = params! {
+        "course_id" => &course_id,
+        "course_key" => &course.key,
+        "title" => &course.title,
+        "active" => &course.active,
+        "public" => &course.public,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+
+    Ok(())
+}
+
+pub fn course_delete(course_id: i64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "DELETE c FROM courses c
+        WHERE c.course_id = :course_id")?;
+
+    let params = params! {
+        "course_id" => &course_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+
+    Ok(())
+}
+
 pub fn course_moderator_list(course_id: i64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
