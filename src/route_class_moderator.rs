@@ -6,7 +6,7 @@ use crate::session::UserSession;
 
 #[rocket::get("/mod/class_list?<course_id>")]
 pub fn class_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Slot>>, Error> {
-    match crate::db_course::is_course_moderator(course_id, session.user.id)? {
+    match crate::db_course::course_moderator_true(course_id, session.user.id)? {
         false => return Err(Error::CourseModeratorPermission),
         true => (),
     };
@@ -18,7 +18,7 @@ pub fn class_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Slot>
 
 #[rocket::post("/mod/class_create?<course_id>", format = "application/json", data = "<slot>")]
 pub fn class_create(session: UserSession, course_id: i64, mut slot: Json<Slot>) -> Result<String, Error> {
-    match crate::db_course::is_course_moderator(course_id, session.user.id)? {
+    match crate::db_course::course_moderator_true(course_id, session.user.id)? {
         false => return Err(Error::CourseModeratorPermission),
         true => (),
     };

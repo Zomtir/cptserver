@@ -110,7 +110,7 @@ pub fn course_moderator_list(course_id: i64) -> Result<Vec<User>, Error> {
     }
 }
 
-pub fn is_course_moderator(course_id: i64, user_id: i64) -> Result<bool, Error> {
+pub fn course_moderator_true(course_id: i64, user_id: i64) -> Result<bool, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)
