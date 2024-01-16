@@ -9,7 +9,7 @@ use crate::error::Error;
  * METHODS
  */
 
-pub fn list_courses(mod_id: Option<i64>, active: Option<bool>, public: Option<bool>) -> Result<Vec<Course>, Error> {
+pub fn course_list(mod_id: Option<i64>, active: Option<bool>, public: Option<bool>) -> Result<Vec<Course>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT c.course_id, c.course_key, c.title, c.active, c.public
@@ -20,7 +20,6 @@ pub fn list_courses(mod_id: Option<i64>, active: Option<bool>, public: Option<bo
         AND (:public IS NULL OR c.public = :public)
         GROUP BY c.course_id",
     )?;
-    // TODO the WHERE and GROUP BY clause can be removed, if the user moderator filter is deemed to be useless
 
     let params = params! {
         "mod_id" => mod_id,
@@ -44,7 +43,7 @@ pub fn list_courses(mod_id: Option<i64>, active: Option<bool>, public: Option<bo
     }
 }
 
-pub fn available_courses(user_id: i64) -> Result<Vec<Course>, Error> {
+pub fn course_available(user_id: i64) -> Result<Vec<Course>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT DISTINCT c.course_id, c.title
@@ -52,35 +51,6 @@ pub fn available_courses(user_id: i64) -> Result<Vec<Course>, Error> {
         INNER JOIN course_requirements cr ON c.course_id = cr.course_id
         LEFT JOIN user_rankings ur ON ur.branch_id = cr.branch_id AND ur.rank >= cr.rank AND ur.user_id = :user_id
         WHERE ur.user_id IS NOT NULL;",
-    )?;
-
-    let params = params! {
-        "user_id" => user_id,
-    };
-
-    let map =
-        |(course_id, course_key, course_title, active, public)| {
-            Course {
-                id: course_id,
-                key: course_key,
-                title: course_title,
-                active,
-                public,
-            }
-        };
-
-    match conn.exec_map(&stmt, &params, &map)? {
-        courses => Ok(courses),
-    }
-}
-
-pub fn responsible_courses(user_id: i64) -> Result<Vec<Course>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep(
-        "SELECT c.course_id, c.course_key, c.title, c.active, c.public
-        FROM courses c
-        JOIN course_moderators m ON c.course_id = m.course_id
-        WHERE m.user_id = :user_id",
     )?;
 
     let params = params! {

@@ -65,7 +65,7 @@ pub fn user_salt(user_key: String) -> Result<String, Error> {
 
 #[rocket::get("/anon/course_list")]
 pub fn course_list() -> Result<Json<Vec<Course>>, Error> {
-    match crate::db_course::list_courses(None, Some(true), Some(true))? {
+    match crate::db_course::course_list(None, Some(true), Some(true))? {
         courses => Ok(Json(courses)),
     }
 }

@@ -4,9 +4,9 @@ use crate::common::{Course, User};
 use crate::error::Error;
 use crate::session::UserSession;
 
-#[rocket::get("/mod/course_responsibility")]
-pub fn course_responsibility(session: UserSession) -> Result<Json<Vec<Course>>, Error> {
-    match crate::db_course::responsible_courses(session.user.id)? {
+#[rocket::get("/mod/course_responsibility?<active>&<public>")]
+pub fn course_responsibility(session: UserSession, active: Option<bool>, public: Option<bool>) -> Result<Json<Vec<Course>>, Error> {
+    match crate::db_course::course_list(Some(session.user.id), active, public)? {
         courses => Ok(Json(courses)),
     }
 }

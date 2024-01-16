@@ -14,7 +14,7 @@ pub fn course_list(session: UserSession, mod_id: Option<i64>, active: Option<boo
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_course::list_courses(mod_id, active, public)? {
+    match crate::db_course::course_list(mod_id, active, public)? {
         courses => Ok(Json(courses)),
     }
 }
