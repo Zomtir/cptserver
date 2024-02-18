@@ -171,6 +171,7 @@ fn rocket() -> _ {
                 route_event_regular::event_create,
                 route_event_regular::event_owner_condition,
                 route_event_owner::event_list,
+                route_event_owner::event_info,
                 route_event_owner::event_edit,
                 route_event_owner::event_edit_password,
                 route_event_owner::event_delete,

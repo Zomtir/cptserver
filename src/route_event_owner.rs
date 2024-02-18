@@ -37,6 +37,16 @@ pub fn event_list(
     }
 }
 
+#[rocket::get("/owner/event_info?<slot_id>")]
+pub fn event_info(session: UserSession, slot_id: i64) -> Result<Json<Slot>, Error> {
+    match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
+        false => return Err(Error::SlotOwnerPermission),
+        true => (),
+    };
+
+    Ok(Json(crate::db_slot::slot_info(slot_id)?))
+}
+
 // TODO, allow inviting member for draft
 // TODO, allow inviting groups for draft
 #[rocket::post("/owner/event_edit?<slot_id>", format = "application/json", data = "<slot>")]
