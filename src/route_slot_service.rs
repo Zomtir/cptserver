@@ -10,7 +10,7 @@ use crate::session::SlotSession;
 
 #[rocket::get("/service/slot_info")]
 pub fn slot_info(session: SlotSession) -> Result<Json<Slot>, Error> {
-    Ok(Json(crate::db_slot::get_slot_info(session.slot_id)?))
+    Ok(Json(crate::db_slot::slot_info(session.slot_id)?))
 }
 
 #[rocket::get("/service/slot_participant_pool")]

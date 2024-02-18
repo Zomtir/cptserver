@@ -9,7 +9,7 @@ use crate::error::Error;
  * METHODS
  */
 
-pub fn get_slot_info(slot_id: i64) -> Result<Slot, Error> {
+pub fn slot_info(slot_id: i64) -> Result<Slot, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title AS location_title, s.begin, s.end, s.status, s.public, s.scrutable, s.note, s.course_id

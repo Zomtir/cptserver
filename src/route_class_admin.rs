@@ -15,6 +15,20 @@ pub fn class_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Slot>
     }
 }
 
+#[rocket::get("/admin/class_info?<slot_id>")]
+pub fn class_info(session: UserSession, slot_id: i64) -> Result<Json<Slot>, Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
+
+    match crate::db_slot::slot_course_any(slot_id)? {
+        false => return Err(Error::SlotCourseMissing),
+        true => (),
+    };
+
+    Ok(Json(crate::db_slot::slot_info(slot_id)?))
+}
+
 #[rocket::post("/admin/class_create?<course_id>", format = "application/json", data = "<slot>")]
 pub fn class_create(session: UserSession, course_id: i64, mut slot: Json<Slot>) -> Result<String, Error> {
     if !session.right.admin_courses {

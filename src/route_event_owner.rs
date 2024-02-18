@@ -48,7 +48,7 @@ pub fn event_edit(session: UserSession, slot_id: i64, mut slot: Json<Slot>) -> R
 
     crate::common::validate_slot_dates(&mut slot)?;
 
-    let db_slot = crate::db_slot::get_slot_info(slot_id)?;
+    let db_slot = crate::db_slot::slot_info(slot_id)?;
 
     match db_slot.status.as_str() {
         "DRAFT" => (),
@@ -77,7 +77,7 @@ pub fn event_submit(session: UserSession, slot_id: i64) -> Result<(), Error> {
         true => (),
     };
 
-    let slot: Slot = crate::db_slot::get_slot_info(slot_id)?;
+    let slot: Slot = crate::db_slot::slot_info(slot_id)?;
 
     // The check is here intentional to be able to return early although it is also checked during is_slot_free
     if !crate::common::is_slot_valid(&slot) {
@@ -138,7 +138,7 @@ pub fn event_delete(session: UserSession, slot_id: i64) -> Result<(), Error> {
         true => (),
     };
 
-    let slot = crate::db_slot::get_slot_info(slot_id)?;
+    let slot = crate::db_slot::slot_info(slot_id)?;
 
     match slot.status.as_str() {
         "DRAFT" => (),

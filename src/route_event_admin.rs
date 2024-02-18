@@ -45,7 +45,7 @@ pub fn event_accept(session: UserSession, slot_id: i64) -> Result<(), Error> {
     };
 
     // Perhaps lock the DB during checking and potentially accepting the request
-    let slot: Slot = crate::db_slot::get_slot_info(slot_id)?;
+    let slot: Slot = crate::db_slot::slot_info(slot_id)?;
 
     // The check is here intentional to be able to return early although it is also checked during is_slot_free
     if !crate::common::is_slot_valid(&slot) {

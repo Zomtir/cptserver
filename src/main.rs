@@ -143,6 +143,7 @@ fn rocket() -> _ {
                 route_course_moderator::course_moderator_add,
                 route_course_moderator::course_moderator_remove,
                 route_class_admin::class_list,
+                route_class_admin::class_info,
                 route_class_admin::class_create,
                 route_class_admin::class_edit,
                 route_class_admin::class_edit_password,
