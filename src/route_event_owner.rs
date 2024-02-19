@@ -105,7 +105,7 @@ pub fn event_submit(session: UserSession, slot_id: i64) -> Result<(), Error> {
         },
     };
 
-    crate::db_slot::edit_slot_status(slot.id, "DRAFT", status_update)?;
+    crate::db_slot::edit_slot_status(slot.id, Some("DRAFT"), status_update)?;
     Ok(())
 }
 
@@ -116,7 +116,7 @@ pub fn event_withdraw(session: UserSession, slot_id: i64) -> Result<(), Error> {
         true => (),
     };
 
-    crate::db_slot::edit_slot_status(slot_id, "PENDING", "DRAFT")?;
+    crate::db_slot::edit_slot_status(slot_id, Some("PENDING"), "DRAFT")?;
     Ok(())
 }
 
@@ -127,7 +127,7 @@ pub fn event_cancel(session: UserSession, slot_id: i64) -> Result<(), Error> {
         true => (),
     };
 
-    crate::db_slot::edit_slot_status(slot_id, "OCCURRING", "CANCELED")?;
+    crate::db_slot::edit_slot_status(slot_id, Some("OCCURRING"), "CANCELED")?;
     Ok(())
 }
 
@@ -138,7 +138,7 @@ pub fn event_recycle(session: UserSession, slot_id: i64) -> Result<(), Error> {
         true => (),
     };
 
-    crate::db_slot::edit_slot_status(slot_id, "REJECTED", "DRAFT")?;
+    crate::db_slot::edit_slot_status(slot_id, Some("REJECTED"), "DRAFT")?;
     Ok(())
 }
 

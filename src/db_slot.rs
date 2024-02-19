@@ -177,12 +177,13 @@ pub fn edit_slot(slot_id: i64, slot: &Slot) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn edit_slot_status(slot_id: i64, status_required: &str, status_update: &str) -> Result<(), Error> {
+pub fn edit_slot_status(slot_id: i64, status_required: Option<&str>, status_update: &str) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE slots SET
         status = :status_update
-        WHERE slot_id = :slot_id AND status = :status_required",
+        WHERE slot_id = :slot_id
+        AND (:status_required IS NULL OR status = :status_required)",
     )?;
     let params = params! {
         "slot_id" => slot_id,

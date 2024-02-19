@@ -171,6 +171,7 @@ fn rocket() -> _ {
                 route_event_admin::event_accept,
                 route_event_admin::event_deny,
                 route_event_admin::event_cancel,
+                route_event_admin::event_suspend,
                 route_event_regular::event_list,
                 route_event_regular::event_create,
                 route_event_regular::event_owner_condition,

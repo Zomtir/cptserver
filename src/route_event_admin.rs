@@ -100,7 +100,7 @@ pub fn event_accept(session: UserSession, slot_id: i64) -> Result<(), Error> {
         true => "OCCURRING",
     };
 
-    crate::db_slot::edit_slot_status(slot.id, "PENDING", status_update)?;
+    crate::db_slot::edit_slot_status(slot.id, Some("PENDING"), status_update)?;
     Ok(())
 }
 
@@ -110,7 +110,7 @@ pub fn event_deny(session: UserSession, slot_id: i64) -> Result<(), Error> {
         return Err(Error::RightEventMissing);
     };
 
-    crate::db_slot::edit_slot_status(slot_id, "PENDING", "REJECTED")?;
+    crate::db_slot::edit_slot_status(slot_id, Some("PENDING"), "REJECTED")?;
     Ok(())
 }
 
@@ -120,6 +120,22 @@ pub fn event_cancel(session: UserSession, slot_id: i64) -> Result<(), Error> {
         return Err(Error::RightEventMissing);
     };
 
-    crate::db_slot::edit_slot_status(slot_id, "OCCURRING", "REJECTED")?;
+    crate::db_slot::edit_slot_status(slot_id, Some("OCCURRING"), "REJECTED")?;
+    Ok(())
+}
+
+#[rocket::head("/admin/event_suspend?<slot_id>")]
+pub fn event_suspend(session: UserSession, slot_id: i64) -> Result<(), Error> {
+    if !session.right.admin_event {
+        return Err(Error::RightEventMissing);
+    };
+
+    let slot: Slot = crate::db_slot::slot_info(slot_id)?;
+
+    if slot.status != "OCCURRING" && slot.status != "REJECTED" {
+        return Err(Error::SlotStatusConflict)
+    }
+
+    crate::db_slot::edit_slot_status(slot_id, None, "PENDING")?;
     Ok(())
 }
