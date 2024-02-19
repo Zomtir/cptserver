@@ -39,6 +39,48 @@ pub fn event_list(
     }
 }
 
+
+#[rocket::get("/admin/event_info?<slot_id>")]
+pub fn event_info(session: UserSession, slot_id: i64) -> Result<Json<Slot>, Error> {
+    if !session.right.admin_event {
+        return Err(Error::RightEventMissing);
+    };
+
+    Ok(Json(crate::db_slot::slot_info(slot_id)?))
+}
+
+#[rocket::post("/admin/event_edit?<slot_id>", format = "application/json", data = "<slot>")]
+pub fn event_edit(session: UserSession, slot_id: i64, mut slot: Json<Slot>) -> Result<(), Error> {
+    if !session.right.admin_event {
+        return Err(Error::RightEventMissing);
+    };
+
+    crate::common::validate_slot_dates(&mut slot)?;
+
+    crate::db_slot::edit_slot(slot_id, &slot)?;
+    Ok(())
+}
+
+#[rocket::post("/admin/event_edit_password?<slot_id>", format = "text/plain", data = "<password>")]
+pub fn event_edit_password(session: UserSession, slot_id: i64, password: String) -> Result<(), Error> {
+    if !session.right.admin_event {
+        return Err(Error::RightEventMissing);
+    };
+
+    crate::db_slot::edit_slot_password(slot_id, password)?;
+    Ok(())
+}
+
+#[rocket::head("/admin/event_delete?<slot_id>")]
+pub fn event_delete(session: UserSession, slot_id: i64) -> Result<(), Error> {
+    if !session.right.admin_event {
+        return Err(Error::RightEventMissing);
+    };
+
+    crate::db_slot::slot_delete(slot_id)?;
+    Ok(())
+}
+
 #[rocket::head("/admin/event_accept?<slot_id>")]
 pub fn event_accept(session: UserSession, slot_id: i64) -> Result<(), Error> {
     if !session.right.admin_event {
