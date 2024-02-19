@@ -32,6 +32,7 @@ pub fn event_list(
         Some(frame_stop),
         status,
         location_id,
+        Some(false),
         None,
         owner_id)? {
         slots => Ok(Json(slots)),

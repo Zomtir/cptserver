@@ -45,13 +45,12 @@ pub fn slot_info(slot_id: i64) -> Result<Slot, Error> {
     Ok(slot)
 }
 
-
-// TODO should "public" and "scrutable" be included?
 pub fn list_slots(
     mut begin: Option<chrono::NaiveDate>,
     mut end: Option<chrono::NaiveDate>,
     status: Option<SlotStatus>,
     location_id: Option<i64>,
+    course_true: Option<bool>,
     course_id: Option<i64>,
     owner_id: Option<i64>,
 ) -> Result<Vec<Slot>, Error> {
@@ -65,7 +64,7 @@ pub fn list_slots(
         AND (:frame_stop IS NULL OR :frame_stop > s.begin)
         AND (:status IS NULL OR :status = s.status)
         AND (:location_id IS NULL OR :location_id = l.location_id)
-        AND (:course_id IS NULL OR :course_id = s.course_id)
+        AND (:course_true IS NULL OR (:course_true = TRUE AND :course_id = s.course_id) OR (:course_true = FALSE AND s.course_id IS NULL))
         AND (:owner_id IS NULL OR :owner_id = o.user_id)
         GROUP BY s.slot_id",
     )?;
@@ -83,6 +82,7 @@ pub fn list_slots(
         "frame_stop" => &end,
         "status" => &status,
         "location_id" => &location_id,
+        "course_true" => &course_true,
         "course_id" => &course_id,
         "owner_id" => &owner_id,
     };

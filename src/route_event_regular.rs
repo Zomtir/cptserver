@@ -32,6 +32,7 @@ pub fn event_list(
         Some(frame_stop),
         status,
         location_id,
+        Some(false),
         None,
         Some(session.user.id),
     )? {

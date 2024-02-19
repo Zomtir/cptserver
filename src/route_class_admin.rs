@@ -10,7 +10,7 @@ pub fn class_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Slot>
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_slot::list_slots(None, None, None, None, Some(course_id), None)? {
+    match crate::db_slot::list_slots(None, None, None, None, Some(true), Some(course_id), None)? {
         slots => Ok(Json(slots)),
     }
 }
