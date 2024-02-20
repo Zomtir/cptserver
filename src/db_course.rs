@@ -98,7 +98,7 @@ pub fn course_edit(course_id: i64, course: &Course) -> Result<(), Error> {
             course_key = :course_key,
             title = :title,
             active = :active,
-            public = :public,
+            public = :public
             WHERE course_id = :course_id")?;
 
     let params = params! {
