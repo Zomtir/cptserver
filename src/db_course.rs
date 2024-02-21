@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
@@ -254,4 +255,35 @@ pub fn course_teaminvite_remove(course_id: i64, team_id: i64) -> Result<(), Erro
 
     conn.exec_drop(&stmt, &params)?;
     Ok(())
+}
+
+pub fn course_statistic_class(course_id: i64) -> Result<Vec<(i64, String, NaiveDateTime, i64, i64)>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT 
+            slots.slot_id,
+            slots.title,
+            slots.begin,
+            COUNT(DISTINCT slot_participants.user_id) AS participant_count,
+            COUNT(DISTINCT slot_owners.user_id) AS owner_count
+        FROM
+            slots
+        LEFT JOIN
+            slot_participants ON slots.slot_id = slot_participants.slot_id
+        LEFT JOIN
+            slot_owners ON slots.slot_id = slot_owners.slot_id
+        WHERE
+            slots.course_id = :course_id
+        GROUP BY
+            slots.slot_id;",
+    )?;
+
+    let params = params! {
+        "course_id" => &course_id,
+    };
+
+    let map = |(course_id, course_name, begin, participants, owners) | (course_id, course_name, begin, participants, owners);
+
+    let stats = conn.exec_map(&stmt, &params, &map)?;
+    Ok(stats)
 }
