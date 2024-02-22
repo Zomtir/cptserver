@@ -134,6 +134,17 @@ pub fn course_statistic_participant(session: UserSession, course_id: i64) -> Res
     }
 }
 
+#[rocket::get("/admin/course_statistic_participant1?<course_id>&<participant_id>")]
+pub fn course_statistic_participant1(session: UserSession, course_id: i64, participant_id: i64) -> Result<Json<Vec<(i64, String, NaiveDateTime, NaiveDateTime)>>, Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
+
+    match crate::db_course::course_statistic_participant1(course_id, participant_id)? {
+        stats => Ok(Json(stats)),
+    }
+}
+
 #[rocket::get("/admin/course_statistic_owner?<course_id>")]
 pub fn course_statistic_owner(session: UserSession, course_id: i64) -> Result<Json<Vec<(i64, String, String, i64)>>, Error> {
     if !session.right.admin_courses {
@@ -141,6 +152,17 @@ pub fn course_statistic_owner(session: UserSession, course_id: i64) -> Result<Js
     };
 
     match crate::db_course::course_statistic_owner(course_id)? {
+        stats => Ok(Json(stats)),
+    }
+}
+
+#[rocket::get("/admin/course_statistic_owner1?<course_id>&<owner_id>")]
+pub fn course_statistic_owner1(session: UserSession, course_id: i64, owner_id: i64) -> Result<Json<Vec<(i64, String, NaiveDateTime, NaiveDateTime)>>, Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
+
+    match crate::db_course::course_statistic_owner1(course_id, owner_id)? {
         stats => Ok(Json(stats)),
     }
 }

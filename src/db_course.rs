@@ -319,6 +319,33 @@ pub fn course_statistic_participant(course_id: i64) -> Result<Vec<(i64, String, 
     Ok(stats)
 }
 
+pub fn course_statistic_participant1(course_id: i64, participant_id: i64) -> Result<Vec<(i64, String, NaiveDateTime, NaiveDateTime)>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT
+            slots.slot_id,
+            slots.title,
+            slots.begin,
+            slots.end
+        FROM
+            slots
+        JOIN
+            slot_participants p ON slots.slot_id = p.slot_id
+        WHERE
+            slots.course_id = :course_id AND p.user_id = :participant_id;",
+    )?;
+
+    let params = params! {
+        "course_id" => &course_id,
+        "participant_id" => &participant_id,
+    };
+
+    let map = |(slot_id, title, begin, end)| (slot_id, title, begin, end);
+
+    let stats = conn.exec_map(&stmt, &params, &map)?;
+    Ok(stats)
+}
+
 pub fn course_statistic_owner(course_id: i64) -> Result<Vec<(i64, String, String, i64)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
@@ -344,6 +371,33 @@ pub fn course_statistic_owner(course_id: i64) -> Result<Vec<(i64, String, String
     };
 
     let map = |(user_id, firstname, lastname, count)| (user_id, firstname, lastname, count);
+
+    let stats = conn.exec_map(&stmt, &params, &map)?;
+    Ok(stats)
+}
+
+pub fn course_statistic_owner1(course_id: i64, owner_id: i64) -> Result<Vec<(i64, String, NaiveDateTime, NaiveDateTime)>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT
+            slots.slot_id,
+            slots.title,
+            slots.begin,
+            slots.end
+        FROM
+            slots
+        JOIN
+            slot_owners p ON slots.slot_id = p.slot_id
+        WHERE
+            slots.course_id = :course_id AND p.user_id = :owner_id;",
+    )?;
+
+    let params = params! {
+        "course_id" => &course_id,
+        "owner_id" => &owner_id,
+    };
+
+    let map = |(slot_id, title, begin, end)| (slot_id, title, begin, end);
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
