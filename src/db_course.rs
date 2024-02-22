@@ -257,13 +257,14 @@ pub fn course_teaminvite_remove(course_id: i64, team_id: i64) -> Result<(), Erro
     Ok(())
 }
 
-pub fn course_statistic_class(course_id: i64) -> Result<Vec<(i64, String, NaiveDateTime, i64, i64)>, Error> {
+pub fn course_statistic_class(course_id: i64) -> Result<Vec<(i64, String, NaiveDateTime, NaiveDateTime, i64, i64)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT 
             slots.slot_id,
             slots.title,
             slots.begin,
+            slots.end,
             COUNT(DISTINCT slot_participants.user_id) AS participant_count,
             COUNT(DISTINCT slot_owners.user_id) AS owner_count
         FROM
@@ -282,7 +283,7 @@ pub fn course_statistic_class(course_id: i64) -> Result<Vec<(i64, String, NaiveD
         "course_id" => &course_id,
     };
 
-    let map = |(course_id, course_name, begin, participants, owners) | (course_id, course_name, begin, participants, owners);
+    let map = |(course_id, course_name, begin, end, participants, owners) | (course_id, course_name, begin, end, participants, owners);
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)

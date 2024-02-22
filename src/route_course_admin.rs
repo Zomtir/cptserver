@@ -113,7 +113,7 @@ pub fn course_teaminvite_remove(session: UserSession, course_id: i64, team_id: i
 }
 
 #[rocket::get("/admin/course_statistic_class?<course_id>")]
-pub fn course_statistic_class(session: UserSession, course_id: i64) -> Result<Json<Vec<(i64,String,NaiveDateTime,i64,i64)>>, Error> {
+pub fn course_statistic_class(session: UserSession, course_id: i64) -> Result<Json<Vec<(i64,String,NaiveDateTime,NaiveDateTime,i64,i64)>>, Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
