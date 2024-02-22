@@ -283,7 +283,67 @@ pub fn course_statistic_class(course_id: i64) -> Result<Vec<(i64, String, NaiveD
         "course_id" => &course_id,
     };
 
-    let map = |(course_id, course_name, begin, end, participants, owners) | (course_id, course_name, begin, end, participants, owners);
+    let map = |(course_id, course_name, begin, end, participants, owners)| (course_id, course_name, begin, end, participants, owners);
+
+    let stats = conn.exec_map(&stmt, &params, &map)?;
+    Ok(stats)
+}
+
+pub fn course_statistic_participant(course_id: i64) -> Result<Vec<(i64, String, String, i64)>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT
+            u.user_id,
+            u.firstname,
+            u.lastname,
+            COUNT(p.slot_id)
+        FROM
+            users u
+        JOIN
+            slot_participants p ON u.user_id = p.user_id
+        JOIN
+            slots ON p.slot_id = slots.slot_id
+        WHERE
+            slots.course_id = :course_id
+        GROUP BY
+            u.user_id;",
+    )?;
+
+    let params = params! {
+        "course_id" => &course_id,
+    };
+
+    let map = |(user_id, firstname, lastname, count)| (user_id, firstname, lastname, count);
+
+    let stats = conn.exec_map(&stmt, &params, &map)?;
+    Ok(stats)
+}
+
+pub fn course_statistic_owner(course_id: i64) -> Result<Vec<(i64, String, String, i64)>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT
+            u.user_id,
+            u.firstname,
+            u.lastname,
+            COUNT(p.slot_id)
+        FROM
+            users u
+        JOIN
+            slot_owners p ON u.user_id = p.user_id
+        JOIN
+            slots ON p.slot_id = slots.slot_id
+        WHERE
+            slots.course_id = :course_id
+        GROUP BY
+            u.user_id;",
+    )?;
+
+    let params = params! {
+        "course_id" => &course_id,
+    };
+
+    let map = |(user_id, firstname, lastname, count)| (user_id, firstname, lastname, count);
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)

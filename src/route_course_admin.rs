@@ -122,3 +122,25 @@ pub fn course_statistic_class(session: UserSession, course_id: i64) -> Result<Js
         stats => Ok(Json(stats)),
     }
 }
+
+#[rocket::get("/admin/course_statistic_participant?<course_id>")]
+pub fn course_statistic_participant(session: UserSession, course_id: i64) -> Result<Json<Vec<(i64, String, String, i64)>>, Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
+
+    match crate::db_course::course_statistic_participant(course_id)? {
+        stats => Ok(Json(stats)),
+    }
+}
+
+#[rocket::get("/admin/course_statistic_owner?<course_id>")]
+pub fn course_statistic_owner(session: UserSession, course_id: i64) -> Result<Json<Vec<(i64, String, String, i64)>>, Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
+
+    match crate::db_course::course_statistic_owner(course_id)? {
+        stats => Ok(Json(stats)),
+    }
+}
