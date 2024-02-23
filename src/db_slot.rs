@@ -259,6 +259,29 @@ pub fn is_slot_free(slot: &Slot) -> Result<bool, Error> {
 
 /* EVENT RELATED */
 
+pub fn slot_owner_pool(slot_id: i64) -> Result<Vec<User>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+
+    let stmt = conn.prep(
+        "SELECT users.user_id, users.user_key, users.firstname, users.lastname
+        FROM course_owner_teams AS cot
+        JOIN teams ON teams.team_id = cot.team_id
+        JOIN team_members tm ON teams.team_id = tm.team_id
+        JOIN users ON tm.user_id = users.user_id
+        JOIN slots ON slots.course_id = cot.course_id
+        WHERE slots.slot_id = :slot_id AND users.active = TRUE
+        GROUP BY users.user_id",
+    )?;
+
+    let params = params! {
+        "slot_id" => slot_id,
+    };
+    let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
+
+    let users = conn.exec_map(&stmt, &params, &map)?;
+    Ok(users)
+}
+
 pub fn slot_owner_list(slot_id: i64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
@@ -412,11 +435,11 @@ pub fn slot_participant_pool(slot_id: i64) -> Result<Vec<User>, Error> {
 
     let stmt = conn.prep(
         "SELECT users.user_id, users.user_key, users.firstname, users.lastname
-        FROM course_teaminvites AS ct
-        JOIN teams ON teams.team_id = ct.team_id
+        FROM course_participant_teams AS cpt
+        JOIN teams ON teams.team_id = cpt.team_id
         JOIN team_members tm ON teams.team_id = tm.team_id
         JOIN users ON tm.user_id = users.user_id
-        JOIN slots ON slots.course_id = ct.course_id
+        JOIN slots ON slots.course_id = cpt.course_id
         WHERE slots.slot_id = :slot_id AND users.active = TRUE
         GROUP BY users.user_id",
     )?;

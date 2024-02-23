@@ -81,34 +81,65 @@ pub fn course_moderator_remove(session: UserSession, course_id: i64, user_id: i6
     }
 }
 
-#[rocket::get("/admin/course_teaminvite_list?<course_id>")]
-pub fn course_teaminvite_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Team>>, Error> {
+#[rocket::get("/admin/course_participant_team_list?<course_id>")]
+pub fn course_participant_team_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Team>>, Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_course::course_teaminvite_list(course_id)? {
+    match crate::db_course::course_participant_team_list(course_id)? {
         teams => Ok(Json(teams)),
     }
 }
 
-#[rocket::head("/admin/course_teaminvite_add?<course_id>&<team_id>")]
-pub fn course_teaminvite_add(session: UserSession, course_id: i64, team_id: i64) -> Result<(), Error> {
+#[rocket::head("/admin/course_participant_team_add?<course_id>&<team_id>")]
+pub fn course_participant_team_add(session: UserSession, course_id: i64, team_id: i64) -> Result<(), Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
 
-    crate::db_course::course_teaminvite_add(course_id, team_id)?;
+    crate::db_course::course_participant_team_add(course_id, team_id)?;
     Ok(())
 }
 
-#[rocket::head("/admin/course_teaminvite_remove?<course_id>&<team_id>")]
-pub fn course_teaminvite_remove(session: UserSession, course_id: i64, team_id: i64) -> Result<(), Error> {
+#[rocket::head("/admin/course_participant_team_remove?<course_id>&<team_id>")]
+pub fn course_participant_team_remove(session: UserSession, course_id: i64, team_id: i64) -> Result<(), Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
 
-    crate::db_course::course_teaminvite_remove(course_id, team_id)?;
+    crate::db_course::course_participant_team_remove(course_id, team_id)?;
+    Ok(())
+}
+
+#[rocket::get("/admin/course_owner_team_list?<course_id>")]
+pub fn course_owner_team_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Team>>, Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
+
+    match crate::db_course::course_owner_team_list(course_id)? {
+        teams => Ok(Json(teams)),
+    }
+}
+
+#[rocket::head("/admin/course_owner_team_add?<course_id>&<team_id>")]
+pub fn course_owner_team_add(session: UserSession, course_id: i64, team_id: i64) -> Result<(), Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
+
+    crate::db_course::course_owner_team_add(course_id, team_id)?;
+    Ok(())
+}
+
+#[rocket::head("/admin/course_owner_team_remove?<course_id>&<team_id>")]
+pub fn course_owner_team_remove(session: UserSession, course_id: i64, team_id: i64) -> Result<(), Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
+
+    crate::db_course::course_owner_team_remove(course_id, team_id)?;
     Ok(())
 }
 

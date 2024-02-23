@@ -83,6 +83,22 @@ pub fn class_delete(session: UserSession, slot_id: i64) -> Result<(), Error> {
     Ok(())
 }
 
+#[rocket::get("/admin/class_owner_pool?<slot_id>")]
+pub fn class_owner_pool(session: UserSession, slot_id: i64) -> Result<Json<Vec<User>>, Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
+
+    match crate::db_slot::slot_course_any(slot_id)? {
+        false => return Err(Error::SlotCourseMissing),
+        true => (),
+    };
+
+    match crate::db_slot::slot_owner_pool(slot_id)? {
+        users => Ok(Json(users)),
+    }
+}
+
 #[rocket::get("/admin/class_owner_list?<slot_id>")]
 pub fn class_owner_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<User>>, Error> {
     if !session.right.admin_courses {

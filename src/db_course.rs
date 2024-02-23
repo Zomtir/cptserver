@@ -204,11 +204,11 @@ pub fn course_moderator_remove(course_id: i64, user_id: i64) -> Option<()> {
     }
 }
 
-pub fn course_teaminvite_list(course_id: i64) -> Result<Vec<Team>, Error> {
+pub fn course_participant_team_list(course_id: i64) -> Result<Vec<Team>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT t.team_id, t.name, t.description
-        FROM course_teaminvites c
+        FROM course_participant_teams c
         LEFT JOIN teams t ON c.team_id = t.team_id
         WHERE course_id = :course_id;",
     )?;
@@ -226,10 +226,10 @@ pub fn course_teaminvite_list(course_id: i64) -> Result<Vec<Team>, Error> {
     Ok(teams)
 }
 
-pub fn course_teaminvite_add(course_id: i64, team_id: i64) -> Result<(), Error> {
+pub fn course_participant_team_add(course_id: i64, team_id: i64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "INSERT INTO course_teaminvites (course_id, team_id)
+        "INSERT INTO course_participant_teams (course_id, team_id)
         VALUES (:course_id, :team_id);",
     )?;
     let params = params! {
@@ -241,10 +241,63 @@ pub fn course_teaminvite_add(course_id: i64, team_id: i64) -> Result<(), Error> 
     Ok(())
 }
 
-pub fn course_teaminvite_remove(course_id: i64, team_id: i64) -> Result<(), Error> {
+pub fn course_participant_team_remove(course_id: i64, team_id: i64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "DELETE FROM course_teaminvites
+        "DELETE FROM course_participant_teams
+        WHERE course_id = :course_id AND team_id = :team_id;",
+    )?;
+
+    let params = params! {
+        "course_id" => &course_id,
+        "team_id" => &team_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+pub fn course_owner_team_list(course_id: i64) -> Result<Vec<Team>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT t.team_id, t.name, t.description
+        FROM course_owner_teams c
+        LEFT JOIN teams t ON c.team_id = t.team_id
+        WHERE course_id = :course_id;",
+    )?;
+    let params = params! {
+        "course_id" => course_id,
+    };
+    let map = |(team_id, name, description)| Team {
+        id: team_id,
+        name,
+        description,
+        right: None,
+    };
+
+    let teams = conn.exec_map(&stmt, &params, &map)?;
+    Ok(teams)
+}
+
+pub fn course_owner_team_add(course_id: i64, team_id: i64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "INSERT INTO course_owner_teams (course_id, team_id)
+        VALUES (:course_id, :team_id);",
+    )?;
+    let params = params! {
+        "course_id" => &course_id,
+        "team_id" => &team_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+pub fn course_owner_team_remove(course_id: i64, team_id: i64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "DELETE FROM course_owner_teams
         WHERE course_id = :course_id AND team_id = :team_id;",
     )?;
 
