@@ -242,7 +242,7 @@ pub fn validate_email(email: &Option<String>) -> Result<Option<String>, Error> {
         return Ok(None);
     };
 
-    match Regex::new(r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})") {
+    match Regex::new(r"^([a-z0-9._\-]([a-z0-9._\-+]*)?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})") {
         Err(..) => Err(Error::RegexError),
         Ok(regex) => match regex.is_match(&text) {
             false => Err(Error::UserEmailInvalid),
