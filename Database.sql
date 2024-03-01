@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8001
--- Generation Time: Feb 27, 2024 at 10:44 PM
+-- Generation Time: Mar 01, 2024 at 10:51 PM
 -- Server version: 10.11.6-MariaDB-0ubuntu0.23.10.2
 -- PHP Version: 8.2.10-2ubuntu1
 
@@ -278,6 +278,7 @@ CREATE TABLE `users` (
   `active` tinyint(1) NOT NULL DEFAULT 1,
   `firstname` varchar(20) NOT NULL,
   `lastname` varchar(20) NOT NULL,
+  `nickname` varchar(20) DEFAULT NULL,
   `address` varchar(60) DEFAULT NULL,
   `email` varchar(40) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,

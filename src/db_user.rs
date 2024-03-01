@@ -36,6 +36,7 @@ pub fn get_user_detailed(user_id: i64) -> Result<User, Error> {
             active,
             firstname,
             lastname,
+            nickname,
             address,
             email,
             phone,
@@ -71,6 +72,7 @@ pub fn get_user_detailed(user_id: i64) -> Result<User, Error> {
         active: row.take("active").unwrap(),
         firstname: row.take("firstname").unwrap(),
         lastname: row.take("lastname").unwrap(),
+        nickname: row.take("nickname").unwrap(),
         address: row.take("address").unwrap(),
         email: row.take("email").unwrap(),
         phone: row.take("phone").unwrap(),
@@ -98,11 +100,11 @@ pub fn create_user(user: &mut User) -> Result<i64, Error> {
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(
-    "INSERT INTO users (user_key, pwd, pepper, salt, enabled, active, firstname, lastname,
+    "INSERT INTO users (user_key, pwd, pepper, salt, enabled, active, firstname, lastname, nickname
         address, email, phone, iban, birthday, birthlocation, nationality, gender,
         federationnumber, federationpermissionsolo, federationpermissionteam, federationresidency,
         datadeclaration, datadisclaimer, note)
-    VALUES (:user_key, :pwd, :pepper, :salt, :enabled, :active, :firstname, :lastname,
+    VALUES (:user_key, :pwd, :pepper, :salt, :enabled, :active, :firstname, :lastname, :nickname,
         :address, :email, :phone, :iban, :birthday, :birthlocation, :nationality, :gender,
         :federationnumber, :federationpermissionsolo, :federationpermissionteam, :federationresidency,
         :datadeclaration, :datadisclaimer, :note);")?;
@@ -116,6 +118,7 @@ pub fn create_user(user: &mut User) -> Result<i64, Error> {
         "active" => user.active.unwrap_or(true),
         "firstname" => &user.firstname,
         "lastname" => &user.lastname,
+        "nickname" => &user.nickname,
         "address" => &user.address,
         "email" => &user.email,
         "phone" => &user.phone,
@@ -164,6 +167,7 @@ pub fn edit_user(user_id: i64, user: &mut User) -> Result<(), Error> {
         active = ?,
         firstname = ?,
         lastname = ?,
+        nickname = ?,
         address = ?,
         email = ?,
         phone = ?,
@@ -189,6 +193,7 @@ pub fn edit_user(user_id: i64, user: &mut User) -> Result<(), Error> {
     params.push(user.active.clone().into());
     params.push(user.firstname.clone().into());
     params.push(user.lastname.clone().into());
+    params.push(user.nickname.clone().into());
     params.push(user.address.clone().into());
     params.push(user.email.clone().into());
     params.push(user.phone.clone().into());
