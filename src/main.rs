@@ -218,10 +218,15 @@ fn rocket() -> _ {
                 route_ranking_regular::ranking_list,
                 route_ranking_regular::ranking_summary,
                 route_slot_service::slot_info,
-                route_slot_service::slot_candidates,
+                route_slot_service::slot_note_edit,
+                route_slot_service::slot_participant_pool,
                 route_slot_service::slot_participant_list,
                 route_slot_service::slot_participant_add,
                 route_slot_service::slot_participant_remove,
+                route_slot_service::slot_owner_pool,
+                route_slot_service::slot_owner_list,
+                route_slot_service::slot_owner_add,
+                route_slot_service::slot_owner_remove,
             ],
         )
         .attach(cors)

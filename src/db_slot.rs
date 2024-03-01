@@ -214,6 +214,23 @@ pub fn edit_slot_password(slot_id: i64, password: String) -> Result<(), Error> {
     Ok(())
 }
 
+pub fn slot_note_edit(slot_id: i64, note: &String) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "UPDATE slots
+        SET note = :note
+        WHERE slot_id = :slot_id",
+    )?;
+
+    let params = params! {
+        "slot_id" => &slot_id,
+        "note" => &note,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
 pub fn slot_delete(slot_id: i64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
