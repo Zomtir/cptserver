@@ -1,15 +1,13 @@
+use crate::common::{Slot, SlotStatus, User, WebDate};
 use crate::error::Error;
-use rocket::serde::json::Json;
-
-use crate::clock::WebDate;
-use crate::common::{Slot, User, SlotStatus};
 use crate::session::UserSession;
+use rocket::serde::json::Json;
 
 /*
  * ROUTES
  */
 
- #[rocket::get("/owner/event_list?<begin>&<end>&<status>&<location_id>")]
+#[rocket::get("/owner/event_list?<begin>&<end>&<status>&<location_id>")]
 pub fn event_list(
     session: UserSession,
     begin: WebDate,
@@ -26,16 +24,16 @@ pub fn event_list(
         return Err(Error::SlotWindowInvalid);
     }
 
-    match crate::db_slot::list_slots(
+    let slots = crate::db_slot::list_slots(
         Some(frame_start),
         Some(frame_stop),
         status,
         location_id,
         Some(false),
         None,
-        Some(session.user.id))? {
-        slots => Ok(Json(slots)),
-    }
+        Some(session.user.id),
+    )?;
+    Ok(Json(slots))
 }
 
 #[rocket::get("/owner/event_info?<slot_id>")]
@@ -167,9 +165,8 @@ pub fn event_owner_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<U
         true => (),
     };
 
-    match crate::db_slot::slot_owner_list(slot_id)? {
-        users => Ok(Json(users)),
-    }
+    let users = crate::db_slot::slot_owner_list(slot_id)?;
+    Ok(Json(users))
 }
 
 #[rocket::head("/owner/event_owner_add?<slot_id>&<user_id>")]
@@ -200,10 +197,9 @@ pub fn event_participant_list(session: UserSession, slot_id: i64) -> Result<Json
         false => return Err(Error::SlotOwnerPermission),
         true => (),
     };
-    
-    match crate::db_slot::slot_participant_list(slot_id)? {
-        users => Ok(Json(users)),
-    }
+
+    let users = crate::db_slot::slot_participant_list(slot_id)?;
+    Ok(Json(users))
 }
 
 #[rocket::head("/owner/event_participant_add?<slot_id>&<user_id>")]

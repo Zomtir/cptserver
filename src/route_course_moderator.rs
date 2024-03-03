@@ -5,10 +5,13 @@ use crate::error::Error;
 use crate::session::UserSession;
 
 #[rocket::get("/mod/course_responsibility?<active>&<public>")]
-pub fn course_responsibility(session: UserSession, active: Option<bool>, public: Option<bool>) -> Result<Json<Vec<Course>>, Error> {
-    match crate::db_course::course_list(Some(session.user.id), active, public)? {
-        courses => Ok(Json(courses)),
-    }
+pub fn course_responsibility(
+    session: UserSession,
+    active: Option<bool>,
+    public: Option<bool>,
+) -> Result<Json<Vec<Course>>, Error> {
+    let courses = crate::db_course::course_list(Some(session.user.id), active, public)?;
+    Ok(Json(courses))
 }
 
 #[rocket::get("/mod/course_moderator_list?<course_id>")]
@@ -18,9 +21,8 @@ pub fn course_moderator_list(session: UserSession, course_id: i64) -> Result<Jso
         true => (),
     };
 
-    match crate::db_course::course_moderator_list(course_id)? {
-        moderators => Ok(Json(moderators)),
-    }
+    let moderators = crate::db_course::course_moderator_list(course_id)?;
+    Ok(Json(moderators))
 }
 
 #[rocket::head("/mod/course_moderator_add?<course_id>&<user_id>")]
@@ -43,8 +45,6 @@ pub fn course_moderator_remove(session: UserSession, course_id: i64, user_id: i6
         true => (),
     };
 
-    match crate::db_course::course_moderator_remove(course_id, user_id) {
-        None => Err(Error::DatabaseError),
-        Some(..) => Ok(()),
-    }
+    crate::db_course::course_moderator_remove(course_id, user_id)?;
+    Ok(())
 }

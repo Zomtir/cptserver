@@ -12,9 +12,8 @@ pub fn team_list(session: UserSession) -> Result<Json<Vec<Team>>, Error> {
         return Err(Error::RightTeamMissing);
     };
 
-    match crate::db_team::list_teams()? {
-        teams => Ok(Json(teams)),
-    }
+    let teams = crate::db_team::list_teams()?;
+    Ok(Json(teams))
 }
 
 #[rocket::post("/admin/team_create", format = "application/json", data = "<team>")]
@@ -53,9 +52,8 @@ pub fn team_member_list(session: UserSession, team_id: u32) -> Result<Json<Vec<U
         return Err(Error::RightTeamMissing);
     };
 
-    match crate::db_team::list_team_members(team_id)? {
-        users => Ok(Json(users)),
-    }
+    let users = crate::db_team::list_team_members(team_id)?;
+    Ok(Json(users))
 }
 
 #[rocket::head("/admin/team_member_add?<team_id>&<user_id>")]

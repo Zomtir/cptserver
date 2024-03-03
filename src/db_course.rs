@@ -28,20 +28,16 @@ pub fn course_list(mod_id: Option<i64>, active: Option<bool>, public: Option<boo
         "public" => public,
     };
 
-    let map =
-        |(course_id, course_key, course_title, active, public)| {
-            Course {
-                id: course_id,
-                key: course_key,
-                title: course_title,
-                active,
-                public,
-            }
-        };
+    let map = |(course_id, course_key, course_title, active, public)| Course {
+        id: course_id,
+        key: course_key,
+        title: course_title,
+        active,
+        public,
+    };
 
-    match conn.exec_map(&stmt, &params, &map)? {
-        courses => Ok(courses),
-    }
+    let courses = conn.exec_map(&stmt, &params, &map)?;
+    Ok(courses)
 }
 
 pub fn course_available(user_id: i64) -> Result<Vec<Course>, Error> {
@@ -50,28 +46,24 @@ pub fn course_available(user_id: i64) -> Result<Vec<Course>, Error> {
         "SELECT DISTINCT c.course_id, c.course_key, c.title, c.active, c.public
         FROM courses c
         INNER JOIN course_requirements cr ON c.course_id = cr.course_id
-        LEFT JOIN user_rankings ur ON ur.branch_id = cr.branch_id AND ur.rank >= cr.rank AND ur.user_id = :user_id
-        WHERE ur.user_id IS NOT NULL;",
+        LEFT JOIN user_competences ur ON uc.skill_id = cr.skill_id AND uc.rank >= cr.rank AND uc.user_id = :user_id
+        WHERE uc.user_id IS NOT NULL;",
     )?;
 
     let params = params! {
         "user_id" => user_id,
     };
 
-    let map =
-        |(course_id, course_key, course_title, active, public)| {
-            Course {
-                id: course_id,
-                key: course_key,
-                title: course_title,
-                active,
-                public,
-            }
-        };
+    let map = |(course_id, course_key, course_title, active, public)| Course {
+        id: course_id,
+        key: course_key,
+        title: course_title,
+        active,
+        public,
+    };
 
-    match conn.exec_map(&stmt, &params, &map)? {
-        courses => Ok(courses),
-    }
+    let courses = conn.exec_map(&stmt, &params, &map)?;
+    Ok(courses)
 }
 
 pub fn course_create(course: &Course) -> Result<u32, Error> {
@@ -100,7 +92,8 @@ pub fn course_edit(course_id: i64, course: &Course) -> Result<(), Error> {
             title = :title,
             active = :active,
             public = :public
-            WHERE course_id = :course_id")?;
+            WHERE course_id = :course_id",
+    )?;
 
     let params = params! {
         "course_id" => &course_id,
@@ -119,7 +112,8 @@ pub fn course_delete(course_id: i64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "DELETE c FROM courses c
-        WHERE c.course_id = :course_id")?;
+        WHERE c.course_id = :course_id",
+    )?;
 
     let params = params! {
         "course_id" => &course_id,
@@ -144,9 +138,8 @@ pub fn course_moderator_list(course_id: i64) -> Result<Vec<User>, Error> {
     };
     let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
 
-    match conn.exec_map(&stmt, &params, &map)? {
-        members => Ok(members),
-    }
+    let members = conn.exec_map(&stmt, &params, &map)?;
+    Ok(members)
 }
 
 pub fn course_moderator_true(course_id: i64, user_id: i64) -> Result<bool, Error> {
@@ -185,7 +178,7 @@ pub fn course_moderator_add(course_id: i64, user_id: i64) -> Option<()> {
     }
 }
 
-pub fn course_moderator_remove(course_id: i64, user_id: i64) -> Option<()> {
+pub fn course_moderator_remove(course_id: i64, user_id: i64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn
         .prep(
@@ -199,8 +192,8 @@ pub fn course_moderator_remove(course_id: i64, user_id: i64) -> Option<()> {
     };
 
     match conn.exec_drop(&stmt, &params) {
-        Err(..) => None,
-        Ok(..) => Some(()),
+        Err(..) => Err(Error::DatabaseError),
+        Ok(..) => Ok(()),
     }
 }
 
@@ -310,7 +303,9 @@ pub fn course_owner_team_remove(course_id: i64, team_id: i64) -> Result<(), Erro
     Ok(())
 }
 
-pub fn course_statistic_class(course_id: i64) -> Result<Vec<(i64, String, NaiveDateTime, NaiveDateTime, i64, i64)>, Error> {
+pub fn course_statistic_class(
+    course_id: i64,
+) -> Result<Vec<(i64, String, NaiveDateTime, NaiveDateTime, i64, i64)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT 
@@ -336,7 +331,9 @@ pub fn course_statistic_class(course_id: i64) -> Result<Vec<(i64, String, NaiveD
         "course_id" => &course_id,
     };
 
-    let map = |(course_id, course_name, begin, end, participants, owners)| (course_id, course_name, begin, end, participants, owners);
+    let map = |(course_id, course_name, begin, end, participants, owners)| {
+        (course_id, course_name, begin, end, participants, owners)
+    };
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
@@ -372,7 +369,10 @@ pub fn course_statistic_participant(course_id: i64) -> Result<Vec<(i64, String, 
     Ok(stats)
 }
 
-pub fn course_statistic_participant1(course_id: i64, participant_id: i64) -> Result<Vec<(i64, String, NaiveDateTime, NaiveDateTime)>, Error> {
+pub fn course_statistic_participant1(
+    course_id: i64,
+    participant_id: i64,
+) -> Result<Vec<(i64, String, NaiveDateTime, NaiveDateTime)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
@@ -429,7 +429,10 @@ pub fn course_statistic_owner(course_id: i64) -> Result<Vec<(i64, String, String
     Ok(stats)
 }
 
-pub fn course_statistic_owner1(course_id: i64, owner_id: i64) -> Result<Vec<(i64, String, NaiveDateTime, NaiveDateTime)>, Error> {
+pub fn course_statistic_owner1(
+    course_id: i64,
+    owner_id: i64,
+) -> Result<Vec<(i64, String, NaiveDateTime, NaiveDateTime)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT

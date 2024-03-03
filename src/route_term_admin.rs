@@ -10,9 +10,8 @@ pub fn term_list(session: UserSession, user_id: Option<i64>) -> Result<Json<Vec<
         return Err(Error::RightTermMissing);
     };
 
-    match crate::db_term::list_terms(user_id)? {
-        terms => Ok(Json(terms)),
-    }
+    let terms = crate::db_term::list_terms(user_id)?;
+    Ok(Json(terms))
 }
 
 #[rocket::post("/admin/term_create", format = "application/json", data = "<term>")]

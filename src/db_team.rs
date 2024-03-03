@@ -16,10 +16,10 @@ pub fn list_teams() -> Result<Vec<Team>, Error> {
             team_id,
             name,
             description,
+            admin_competence,
             admin_courses,
             admin_event,
             admin_inventory,
-            admin_rankings,
             admin_teams,
             admin_term,
             admin_users
@@ -29,10 +29,10 @@ pub fn list_teams() -> Result<Vec<Team>, Error> {
         team_id,
         name,
         description,
+        admin_competence,
         admin_courses,
         admin_event,
         admin_inventory,
-        admin_rankings,
         admin_teams,
         admin_term,
         admin_users,
@@ -41,10 +41,10 @@ pub fn list_teams() -> Result<Vec<Team>, Error> {
         name,
         description,
         right: Some(Right {
+            admin_competence,
             admin_courses,
             admin_event,
             admin_inventory,
-            admin_rankings,
             admin_teams,
             admin_term,
             admin_users,
@@ -53,9 +53,8 @@ pub fn list_teams() -> Result<Vec<Team>, Error> {
 
     let params = params::Params::Empty;
 
-    match conn.exec_map(&stmt, &params, &map)? {
-        teams => Ok(teams),
-    }
+    let teams = conn.exec_map(&stmt, &params, &map)?;
+    Ok(teams)
 }
 
 pub fn create_team(team: &Team) -> Result<u32, Error> {
@@ -65,10 +64,10 @@ pub fn create_team(team: &Team) -> Result<u32, Error> {
         "INSERT INTO teams (
             name,
             description,
+            admin_competence,
             admin_courses,
             admin_event,
             admin_inventory,
-            admin_rankings,
             admin_teams,
             admin_term,
             admin_users)
@@ -78,7 +77,7 @@ pub fn create_team(team: &Team) -> Result<u32, Error> {
             :admin_courses,
             :admin_event,
             :admin_inventory,
-            :admin_rankings,
+            :admin_competence,
             :admin_teams,
             :admin_term,
             :admin_users)",
@@ -95,7 +94,7 @@ pub fn create_team(team: &Team) -> Result<u32, Error> {
         "admin_courses" => &rights.admin_courses,
         "admin_event" => &rights.admin_event,
         "admin_inventory" => &rights.admin_inventory,
-        "admin_rankings" => &rights.admin_rankings,
+        "admin_competence," => &rights.admin_competence,
         "admin_teams" => &rights.admin_teams,
         "admin_term" => &rights.admin_term,
         "admin_users" => &rights.admin_users,
@@ -112,10 +111,10 @@ pub fn edit_team(team_id: &u32, team: &Team) -> Result<(), Error> {
         "UPDATE teams SET
             name = :name,
             description = :description,
+            admin_competence = :admin_competence,
             admin_courses = :admin_courses,
             admin_event = :admin_event,
             admin_inventory = :admin_inventory,
-            admin_rankings = :admin_rankings,
             admin_teams = :admin_teams,
             admin_term = :admin_term,
             admin_users = :admin_users
@@ -131,10 +130,10 @@ pub fn edit_team(team_id: &u32, team: &Team) -> Result<(), Error> {
         "team_id" => &team_id,
         "name" => &team.name,
         "description" => &team.description,
+        "admin_competence" => &rights.admin_competence,
         "admin_courses" => &rights.admin_courses,
         "admin_event" => &rights.admin_event,
         "admin_inventory" => &rights.admin_inventory,
-        "admin_rankings" => &rights.admin_rankings,
         "admin_teams" => &rights.admin_teams,
         "admin_term" => &rights.admin_term,
         "admin_users" => &rights.admin_users,
@@ -167,9 +166,8 @@ pub fn list_team_members(team_id: u32) -> Result<Vec<User>, Error> {
     };
     let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
 
-    match conn.exec_map(&stmt, &params, &map)? {
-        members => Ok(members),
-    }
+    let members = conn.exec_map(&stmt, &params, &map)?;
+    Ok(members)
 }
 
 pub fn add_team_member(team_id: &u32, user_id: &u32) -> Result<(), Error> {

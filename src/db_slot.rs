@@ -1,7 +1,7 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Location, Slot, User, SlotStatus};
+use crate::common::{Location, Slot, SlotStatus, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
@@ -21,7 +21,7 @@ pub fn slot_info(slot_id: i64) -> Result<Slot, Error> {
         "slot_id" => slot_id,
     };
 
-    let mut row: mysql::Row = conn.exec_first(&stmt, &params)?.ok_or_else(|| Error::SlotMissing)?;
+    let mut row: mysql::Row = conn.exec_first(&stmt, &params)?.ok_or(Error::SlotMissing)?;
 
     let slot = Slot {
         id: row.take("slot_id").unwrap(),
@@ -116,7 +116,7 @@ pub fn list_slots(
 }
 
 pub fn slot_create(slot: &Slot, status: &str, course_id: Option<i64>) -> Result<i64, Error> {
-    if slot.key.len() < 3  || slot.key.len() > 12 {
+    if slot.key.len() < 3 || slot.key.len() > 12 {
         return Err(Error::SlotKeyInvalid);
     }
 
@@ -272,7 +272,6 @@ pub fn is_slot_free(slot: &Slot) -> Result<bool, Error> {
         Some(count) => Ok(count == 0),
     }
 }
-
 
 /* EVENT RELATED */
 

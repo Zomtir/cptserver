@@ -29,6 +29,8 @@ DEVELOPEMENT
 
 ```BASH
 cargo build
+cargo fmt
+cargo clippy
 cargo run
 ```
 
@@ -46,7 +48,6 @@ TODO
 
 - Change slots.status to "DRAFT,PENDING,ACCEPTED,REJECTED"  with another boolean slots.active
 - Move server behaviour settings to the settings file
-- Rename rankings to qualifications
 - Server action log file
 - The response should contain what call stack did result in the repsonse? So that you can track what client action cause the response in shared code
     //Err(crate::Error::user_missing(origin.path()))

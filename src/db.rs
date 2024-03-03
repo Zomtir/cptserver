@@ -8,16 +8,15 @@ pub fn connect_db(server_conf: &crate::config::ServerConfig) -> Result<(), Error
     let db_url = format!(
         "mysql://{user}:{password}@{server}:{port}/{database}",
         server = server_conf.db_server.clone().unwrap_or("127.0.0.1".into()),
-        port = server_conf.db_port.clone().unwrap_or(3306),
+        port = server_conf.db_port.unwrap_or(3306),
         database = server_conf.db_database.clone().unwrap_or("cptdb".into()),
         user = server_conf.db_user.clone().unwrap_or("cptdb-user".into()),
         password = server_conf.db_password.clone().unwrap_or_default(),
     );
 
     unsafe {
-        POOL = match mysql::Pool::new(mysql::Opts::from_url(&db_url)?)? {
-            pool => Some(pool),
-        };
+        let pool = mysql::Pool::new(mysql::Opts::from_url(&db_url)?)?;
+        POOL = Some(pool);
     }
     Ok(())
 }
@@ -37,13 +36,12 @@ pub fn get_pool_conn() -> PooledConn {
 /*
 let query = "INSERT INTO slots (slot_key, pwd, title, location_id, begin, end, status, public, scrutable, note, course_id)
 SELECT :slot_key, :pwd, :title, :location_id, :begin, :end, :status, :public, :scrutable, :note, :course_id;";
-println!("SQL: {}", crate::db::as_sql(&query, &params).unwrap()); 
+println!("SQL: {}", crate::db::as_sql(&query, &params).unwrap());
  */
 #[allow(dead_code)]
 pub fn print_sql(query: &str, params: &mysql::Params) {
-    let (placeholder, real_query) : (Vec<Vec<u8>>, Vec<u8>) = match mysql_common::named_params::parse_named_params(query.as_bytes()).unwrap() {
-        (p,q) => (p.unwrap(), q.into_owned()), 
-    };
+    let (p, q) = mysql_common::named_params::parse_named_params(query.as_bytes()).unwrap();
+    let (placeholder, real_query) = (p.unwrap(), q.into_owned());
 
     let replacement_map = match params {
         mysql::Params::Named(map) => map,
@@ -60,10 +58,10 @@ pub fn print_sql(query: &str, params: &mysql::Params) {
                 let s = replacement_map.get(&placeholder[param_index]).unwrap().as_sql(true);
                 param_index += 1;
                 output_string.push_str(&s);
-            },
+            }
             s => output_string.push_str(s.to_string().as_str()),
         }
     }
 
-    println!("{}",output_string);
+    println!("{}", output_string);
 }

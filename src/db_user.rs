@@ -100,19 +100,20 @@ pub fn create_user(user: &mut User) -> Result<i64, Error> {
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(
-    "INSERT INTO users (user_key, pwd, pepper, salt, enabled, active, firstname, lastname, nickname
+        "INSERT INTO users (user_key, pwd, pepper, salt, enabled, active, firstname, lastname, nickname
         address, email, phone, iban, birthday, birthlocation, nationality, gender,
         federationnumber, federationpermissionsolo, federationpermissionteam, federationresidency,
         datadeclaration, datadisclaimer, note)
     VALUES (:user_key, :pwd, :pepper, :salt, :enabled, :active, :firstname, :lastname, :nickname,
         :address, :email, :phone, :iban, :birthday, :birthlocation, :nationality, :gender,
         :federationnumber, :federationpermissionsolo, :federationpermissionteam, :federationresidency,
-        :datadeclaration, :datadisclaimer, :note);")?;
+        :datadeclaration, :datadisclaimer, :note);",
+    )?;
 
     let params = params! {
         "user_key" => crate::common::random_string(6),
         "pwd" => crate::common::random_string(10),
-        "pepper" => crate::common::random_bytes(16), 
+        "pepper" => crate::common::random_bytes(16),
         "salt" => crate::common::random_bytes(16),
         "enabled" => user.enabled.unwrap_or(false),
         "active" => user.active.unwrap_or(true),
@@ -147,7 +148,7 @@ pub fn is_user_created(user_key: &str) -> Result<bool, Error> {
     let params = params! { "user_key" => user_key };
     let count: Option<i32> = conn.exec_first(&stmt, &params)?;
 
-    return Ok(count.unwrap() == 1);
+    Ok(count.unwrap() == 1)
 }
 
 pub fn edit_user(user_id: i64, user: &mut User) -> Result<(), Error> {
@@ -186,36 +187,36 @@ pub fn edit_user(user_id: i64, user: &mut User) -> Result<(), Error> {
         WHERE user_id = ?;",
     )?;
 
-    let mut params = Vec::<mysql::Value>::with_capacity(20);
-
-    params.push(user.key.clone().into());
-    params.push(user.enabled.clone().into());
-    params.push(user.active.clone().into());
-    params.push(user.firstname.clone().into());
-    params.push(user.lastname.clone().into());
-    params.push(user.nickname.clone().into());
-    params.push(user.address.clone().into());
-    params.push(user.email.clone().into());
-    params.push(user.phone.clone().into());
-    params.push(user.iban.clone().into());
-    params.push(user.birthday.clone().into());
-    params.push(user.birthlocation.clone().into());
-    params.push(user.nationality.clone().into());
-    params.push(user.gender.clone().clone().into());
-    params.push(user.federationnumber.clone().into());
-    params.push(user.federationpermissionsolo.clone().into());
-    params.push(user.federationpermissionteam.clone().into());
-    params.push(user.federationresidency.clone().into());
-    params.push(user.datadeclaration.clone().into());
-    params.push(user.datadisclaimer.clone().into());
-    params.push(user.note.clone().into());
-    params.push(user_id.clone().into());
+    let params : Vec::<mysql::Value> = vec![
+        user.key.clone().into(),
+        user.enabled.into(),
+        user.active.into(),
+        user.firstname.clone().into(),
+        user.lastname.clone().into(),
+        user.nickname.clone().into(),
+        user.address.clone().into(),
+        user.email.clone().into(),
+        user.phone.clone().into(),
+        user.iban.clone().into(),
+        user.birthday.into(),
+        user.birthlocation.clone().into(),
+        user.nationality.clone().into(),
+        user.gender.clone().clone().into(),
+        user.federationnumber.into(),
+        user.federationpermissionsolo.into(),
+        user.federationpermissionteam.into(),
+        user.federationresidency.into(),
+        user.datadeclaration.into(),
+        user.datadisclaimer.clone().into(),
+        user.note.clone().into(),
+        user_id.into(),
+    ];
 
     conn.exec_drop(&stmt, &params)?;
     Ok(())
 }
 
-pub fn edit_user_password(user_id: i64, password: &String, salt: &String) -> Result<(), Error> {
+pub fn edit_user_password(user_id: i64, password: &str, salt: &str) -> Result<(), Error> {
     let bpassword: Vec<u8> = match crate::common::decode_hash256(password) {
         Some(bpassword) => bpassword,
         None => return Err(Error::UserPasswordInvalid),

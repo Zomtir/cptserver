@@ -51,7 +51,7 @@ impl<'r> FromRequest<'r> for UserSession {
             Some(session) => session,
         };
 
-        if session.token != head_token.to_string() {
+        if session.token != *head_token {
             return Error::SessionTokenInvalid.outcome();
         }
 
@@ -89,7 +89,7 @@ impl<'r> FromRequest<'r> for SlotSession {
             Some(session) => session,
         };
 
-        if session.token != head_token.to_string() {
+        if session.token != *head_token {
             return Error::SessionTokenInvalid.outcome();
         }
 

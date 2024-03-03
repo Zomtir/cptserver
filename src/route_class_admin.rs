@@ -10,9 +10,8 @@ pub fn class_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Slot>
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_slot::list_slots(None, None, None, None, Some(true), Some(course_id), None)? {
-        slots => Ok(Json(slots)),
-    }
+    let slots = crate::db_slot::list_slots(None, None, None, None, Some(true), Some(course_id), None)?;
+    Ok(Json(slots))
 }
 
 #[rocket::get("/admin/class_info?<slot_id>")]
@@ -94,9 +93,8 @@ pub fn class_owner_pool(session: UserSession, slot_id: i64) -> Result<Json<Vec<U
         true => (),
     };
 
-    match crate::db_slot::slot_owner_pool(slot_id)? {
-        users => Ok(Json(users)),
-    }
+    let users = crate::db_slot::slot_owner_pool(slot_id)?;
+    Ok(Json(users))
 }
 
 #[rocket::get("/admin/class_owner_list?<slot_id>")]
@@ -110,9 +108,8 @@ pub fn class_owner_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<U
         true => (),
     };
 
-    match crate::db_slot::slot_owner_list(slot_id)? {
-        users => Ok(Json(users)),
-    }
+    let users = crate::db_slot::slot_owner_list(slot_id)?;
+    Ok(Json(users))
 }
 
 #[rocket::head("/admin/class_owner_add?<slot_id>&<user_id>")]
@@ -156,9 +153,8 @@ pub fn class_participant_pool(session: UserSession, slot_id: i64) -> Result<Json
         true => (),
     };
 
-    match crate::db_slot::slot_participant_pool(slot_id)? {
-        users => Ok(Json(users)),
-    }
+    let users = crate::db_slot::slot_participant_pool(slot_id)?;
+    Ok(Json(users))
 }
 
 #[rocket::get("/admin/class_participant_list?<slot_id>")]
@@ -172,9 +168,8 @@ pub fn class_participant_list(session: UserSession, slot_id: i64) -> Result<Json
         true => (),
     };
 
-    match crate::db_slot::slot_participant_list(slot_id)? {
-        users => Ok(Json(users)),
-    }
+    let users = crate::db_slot::slot_participant_list(slot_id)?;
+    Ok(Json(users))
 }
 
 #[rocket::head("/admin/class_participant_add?<slot_id>&<user_id>")]

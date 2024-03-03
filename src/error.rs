@@ -2,6 +2,7 @@ use rocket::http::Status;
 use rocket::request::{Outcome, Request};
 use rocket::response::{self, Responder, Response};
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum Error {
     Default,
@@ -42,10 +43,10 @@ pub enum Error {
     CourseKeyInvalid,
 
     RightConflict,
+    RightCompetenceMissing,
     RightCourseMissing,
     RightEventMissing,
     RightInventoryMissing,
-    RightRankingMissing,
     RightTeamMissing,
     RightTermMissing,
     RightUserMissing,
@@ -94,10 +95,10 @@ impl Error {
             Error::CourseKeyInvalid => "COURSE_KEY_INVALID",
 
             Error::RightConflict => "RIGHT_CONFLICT",
+            Error::RightCompetenceMissing => "RIGHT_COMPETENCE_MISSING",
             Error::RightCourseMissing => "RIGHT_COURSE_MISSING",
             Error::RightEventMissing => "RIGHT_EVENT_MISSING",
             Error::RightInventoryMissing => "RIGHT_INVENTORY_MISSING",
-            Error::RightRankingMissing => "RIGHT_RANKING_MISSING",
             Error::RightTeamMissing => "RIGHT_TEAM_MISSING",
             Error::RightTermMissing => "RIGHT_TERM_MISSING",
             Error::RightUserMissing => "RIGHT_USER_MISSING",
@@ -147,10 +148,10 @@ impl std::fmt::Display for Error {
             Error::CourseKeyInvalid => write!(f, "Course key has an invalid format"),
 
             Error::RightConflict => write!(f, "Conflicting right permissions"),
+            Error::RightCompetenceMissing => write!(f, "Competence permissions are missing"),
             Error::RightCourseMissing => write!(f, "Course permissions are missing"),
             Error::RightEventMissing => write!(f, "Event permissions are missing"),
             Error::RightInventoryMissing => write!(f, "Inventory permissions are missing"),
-            Error::RightRankingMissing => write!(f, "Ranking permissions are missing"),
             Error::RightTeamMissing => write!(f, "Team permissions are missing"),
             Error::RightTermMissing => write!(f, "Term permissions are missing"),
             Error::RightUserMissing => write!(f, "User permissions are missing"),

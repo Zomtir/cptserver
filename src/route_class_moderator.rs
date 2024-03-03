@@ -11,9 +11,8 @@ pub fn class_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Slot>
         true => (),
     };
 
-    match crate::db_slot::list_slots(None, None, None, None, Some(true), Some(course_id), None)? {
-        slots => Ok(Json(slots)),
-    }
+    let slots = crate::db_slot::list_slots(None, None, None, None, Some(true), Some(course_id), None)?;
+    Ok(Json(slots))
 }
 
 #[rocket::post("/mod/class_create?<course_id>", format = "application/json", data = "<slot>")]
@@ -25,9 +24,8 @@ pub fn class_create(session: UserSession, course_id: i64, mut slot: Json<Slot>) 
 
     crate::common::validate_slot_dates(&mut slot)?;
 
-    match crate::db_slot::slot_create(&slot, "OCCURRING", Some(course_id))? {
-        id => Ok(id.to_string()),
-    }
+    let id = crate::db_slot::slot_create(&slot, "OCCURRING", Some(course_id))?;
+    Ok(id.to_string())
 }
 
 #[rocket::post("/mod/class_edit?<slot_id>", format = "application/json", data = "<slot>")]

@@ -1,7 +1,7 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Term, User};
+use crate::common::{Club, Term, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
@@ -10,9 +10,11 @@ pub fn list_terms(user_id: Option<i64>) -> Result<Vec<Term>, Error> {
     let stmt = conn.prep(
         "SELECT t.term_id,
             u.user_id, u.user_key, u.firstname, u.lastname,
+            c.club_id, c.name, c.description,
             t.term_begin, t.term_end
         FROM terms t
-        JOIN users u ON (t.user_id = u.user_id)
+        JOIN users u ON (u.user_id = t.user_id)
+        JOIN clubs c ON (c.club_id = t.club_id)
         WHERE (:user_id IS NULL OR :user_id = t.user_id);",
     )?;
 
@@ -20,16 +22,21 @@ pub fn list_terms(user_id: Option<i64>) -> Result<Vec<Term>, Error> {
         "user_id" => user_id,
     };
 
-    let map = |(term_id, user_id, user_key, firstname, lastname, begin, end)| Term {
-        id: term_id,
-        user: User::from_info(user_id, user_key, firstname, lastname),
-        begin,
-        end,
-    };
+    let map =
+        |(term_id, user_id, user_key, firstname, lastname, club_id, club_name, club_description, begin, end)| Term {
+            id: term_id,
+            user: User::from_info(user_id, user_key, firstname, lastname),
+            club: Club {
+                id: club_id,
+                name: club_name,
+                description: club_description,
+            },
+            begin,
+            end,
+        };
 
-    match conn.exec_map(&stmt, &params, &map)? {
-        terms => Ok(terms),
-    }
+    let terms = conn.exec_map(&stmt, &params, &map)?;
+    Ok(terms)
 }
 
 pub fn create_term(term: &Term) -> Result<u32, Error> {
@@ -51,14 +58,13 @@ pub fn create_term(term: &Term) -> Result<u32, Error> {
 
 pub fn edit_term(term_id: i64, term: &Term) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn
-        .prep(
+    let stmt = conn.prep(
         "UPDATE terms SET
             user_id  = :user_id,
             term_begin = :begin,
             term_end = :end,
         WHERE term_id = :term_id",
-        )?;
+    )?;
 
     let params = params! {
         "term_id" => &term_id,
@@ -100,9 +106,8 @@ pub fn get_user_membership_days(active: Option<bool>) -> Result<Vec<(i64, i64)>,
 
     let map = |(user_id, active_days): (i64, i64)| (user_id, active_days);
 
-    match conn.exec_map(&stmt, &params, &map)? {
-        leaderboard => Ok(leaderboard),
-    }
+    let leaderboard = conn.exec_map(&stmt, &params, &map)?;
+    Ok(leaderboard)
 }
 
 pub fn get_wrong_active_users() -> Result<Vec<User>, Error> {
@@ -126,9 +131,8 @@ pub fn get_wrong_active_users() -> Result<Vec<User>, Error> {
 
     let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
 
-    match conn.exec_map(&stmt, &params, &map)? {
-        users => Ok(users),
-    }
+    let users = conn.exec_map(&stmt, &params, &map)?;
+    Ok(users)
 }
 
 pub fn get_wrong_inactive_users() -> Result<Vec<User>, Error> {
@@ -152,7 +156,6 @@ pub fn get_wrong_inactive_users() -> Result<Vec<User>, Error> {
 
     let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
 
-    match conn.exec_map(&stmt, &params, &map)? {
-        users => Ok(users),
-    }
+    let users = conn.exec_map(&stmt, &params, &map)?;
+    Ok(users)
 }

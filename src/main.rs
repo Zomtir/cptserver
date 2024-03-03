@@ -8,14 +8,13 @@ extern crate mysql_common;
 
 mod config;
 mod db;
+mod db_competence;
 mod db_course;
-mod db_ranking;
 mod db_slot;
 mod db_team;
 mod db_term;
 mod db_user;
 
-pub mod clock;
 mod common;
 mod error;
 mod route_login;
@@ -35,11 +34,11 @@ mod route_class_moderator;
 mod route_class_regular;
 
 mod route_event_admin;
-mod route_event_regular;
 mod route_event_owner;
+mod route_event_regular;
 
-mod route_ranking_admin;
-mod route_ranking_regular;
+mod route_competence_admin;
+mod route_competence_regular;
 
 mod route_team_admin;
 mod route_team_regular;
@@ -57,9 +56,8 @@ fn index() -> &'static str {
 fn rocket() -> _ {
     let server_config = config::readConfig();
 
-    match db::connect_db(&server_config) {
-        Err(..) => panic!("Database connection failed"),
-        Ok(..) => (),
+    if db::connect_db(&server_config).is_err() {
+        panic!("Database connection failed")
     };
 
     let rocket_config = rocket::Config {
@@ -96,7 +94,7 @@ fn rocket() -> _ {
         allowed_methods,
         allowed_headers,
         allow_credentials: true,
-        expose_headers: expose_headers,
+        expose_headers,
         ..Default::default()
     }
     .to_cors()
@@ -110,7 +108,7 @@ fn rocket() -> _ {
                 index,
                 route_anon::status,
                 route_anon::location_list,
-                route_anon::branch_list,
+                route_anon::skill_list,
                 route_anon::user_salt,
                 route_anon::course_list,
                 route_login::user_login,
@@ -211,12 +209,12 @@ fn rocket() -> _ {
                 route_term_admin::term_create,
                 route_term_admin::term_edit,
                 route_term_admin::term_delete,
-                route_ranking_admin::ranking_list,
-                route_ranking_admin::ranking_create,
-                route_ranking_admin::ranking_edit,
-                route_ranking_admin::ranking_delete,
-                route_ranking_regular::ranking_list,
-                route_ranking_regular::ranking_summary,
+                route_competence_admin::competence_list,
+                route_competence_admin::competence_create,
+                route_competence_admin::competence_edit,
+                route_competence_admin::competence_delete,
+                route_competence_regular::competence_list,
+                route_competence_regular::competence_summary,
                 route_slot_service::slot_info,
                 route_slot_service::slot_note_edit,
                 route_slot_service::slot_participant_pool,

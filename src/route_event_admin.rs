@@ -1,7 +1,6 @@
 use rocket::serde::json::Json;
 
-use crate::clock::WebDate;
-use crate::common::{Slot, SlotStatus};
+use crate::common::{Slot, SlotStatus, WebDate};
 use crate::error::Error;
 use crate::session::UserSession;
 
@@ -27,18 +26,17 @@ pub fn event_list(
         return Err(Error::SlotWindowInvalid);
     }
 
-    match crate::db_slot::list_slots(
+    let slots = crate::db_slot::list_slots(
         Some(frame_start),
         Some(frame_stop),
         status,
         location_id,
         Some(false),
         None,
-        owner_id)? {
-        slots => Ok(Json(slots)),
-    }
+        owner_id,
+    )?;
+    Ok(Json(slots))
 }
-
 
 #[rocket::get("/admin/event_info?<slot_id>")]
 pub fn event_info(session: UserSession, slot_id: i64) -> Result<Json<Slot>, Error> {
@@ -133,7 +131,7 @@ pub fn event_suspend(session: UserSession, slot_id: i64) -> Result<(), Error> {
     let slot: Slot = crate::db_slot::slot_info(slot_id)?;
 
     if slot.status != "OCCURRING" && slot.status != "REJECTED" {
-        return Err(Error::SlotStatusConflict)
+        return Err(Error::SlotStatusConflict);
     }
 
     crate::db_slot::edit_slot_status(slot_id, None, "PENDING")?;

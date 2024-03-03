@@ -56,7 +56,7 @@ pub fn readConfig() -> ServerConfig {
     println!("    => database: {:?}", server_conf.db_database);
     println!("    => user: {:?}", server_conf.db_user);
 
-    return server_conf;
+    server_conf
 }
 
 /*
