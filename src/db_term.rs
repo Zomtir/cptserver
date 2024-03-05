@@ -42,11 +42,12 @@ pub fn list_terms(user_id: Option<i64>) -> Result<Vec<Term>, Error> {
 pub fn create_term(term: &Term) -> Result<u32, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "INSERT INTO terms (user_id, term_begin, term_end)
-        VALUES (:user_id, :begin, :end)",
+        "INSERT INTO terms (user_id, club_id, term_begin, term_end)
+        VALUES (:user_id, :club_id, :begin, :end)",
     )?;
     let params = params! {
         "user_id" => term.user.id,
+        "club_id" => term.club.id,
         "begin" => &term.begin,
         "end" => &term.end,
     };
@@ -61,6 +62,7 @@ pub fn edit_term(term_id: i64, term: &Term) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE terms SET
             user_id  = :user_id,
+            club_id = :club_id,
             term_begin = :begin,
             term_end = :end,
         WHERE term_id = :term_id",
@@ -69,6 +71,7 @@ pub fn edit_term(term_id: i64, term: &Term) -> Result<(), Error> {
     let params = params! {
         "term_id" => &term_id,
         "user_id" => &term.user.id,
+        "club_id" => term.club.id,
         "begin" => &term.begin,
         "end" => &term.end,
     };

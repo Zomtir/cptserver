@@ -6,7 +6,7 @@ use rocket::serde::json::Json;
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Course, Location, Skill};
+use crate::common::{Club, Course, Location, Skill};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
@@ -49,6 +49,18 @@ pub fn skill_list() -> Result<Json<Vec<Skill>>, Status> {
     }
 }
 
+#[rocket::get("/anon/club_list")]
+pub fn club_list() -> Result<Json<Vec<Club>>, Error> {
+    let clubs = crate::db_club::club_list()?;
+    Ok(Json(clubs))
+}
+
+#[rocket::get("/anon/course_list")]
+pub fn course_list() -> Result<Json<Vec<Course>>, Error> {
+    let courses = crate::db_course::course_list(None, Some(true), Some(true))?;
+    Ok(Json(courses))
+}
+
 #[rocket::get("/user_salt?<user_key>")]
 pub fn user_salt(user_key: String) -> Result<String, Error> {
     let mut conn: PooledConn = get_pool_conn();
@@ -62,10 +74,4 @@ pub fn user_salt(user_key: String) -> Result<String, Error> {
         None => Ok(hex::encode(crate::common::hash128_string(&user_key))),
         Some(salt) => Ok(hex::encode(salt)),
     }
-}
-
-#[rocket::get("/anon/course_list")]
-pub fn course_list() -> Result<Json<Vec<Course>>, Error> {
-    let courses = crate::db_course::course_list(None, Some(true), Some(true))?;
-    Ok(Json(courses))
 }

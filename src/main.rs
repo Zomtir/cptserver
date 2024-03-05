@@ -8,6 +8,7 @@ extern crate mysql_common;
 
 mod config;
 mod db;
+mod db_club;
 mod db_competence;
 mod db_course;
 mod db_slot;
@@ -109,8 +110,9 @@ fn rocket() -> _ {
                 route_anon::status,
                 route_anon::location_list,
                 route_anon::skill_list,
-                route_anon::user_salt,
+                route_anon::club_list,
                 route_anon::course_list,
+                route_anon::user_salt,
                 route_login::user_login,
                 route_login::slot_login,
                 route_login::course_login,

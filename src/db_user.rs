@@ -187,7 +187,7 @@ pub fn edit_user(user_id: i64, user: &mut User) -> Result<(), Error> {
         WHERE user_id = ?;",
     )?;
 
-    let params : Vec::<mysql::Value> = vec![
+    let params: Vec<mysql::Value> = vec![
         user.key.clone().into(),
         user.enabled.into(),
         user.active.into(),
