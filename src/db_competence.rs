@@ -15,11 +15,11 @@ pub fn competence_list(
     let stmt = conn.prep(
         "SELECT uc.skill_id,
             u.user_id, u.user_key, u.firstname, u.lastname,
-            b.skill_id, b.branch_key, b.title,
+            s.skill_id, s.skill_key, s.title,
             uc.rank, uc.date,
             j.user_id, j.user_key, j.firstname, j.lastname
         FROM user_competences uc
-        JOIN branches b ON (uc.skill_id = b.skill_id)
+        JOIN skills s ON (uc.skill_id = s.skill_id)
         JOIN users u ON (uc.user_id = u.user_id)
         JOIN users j ON (uc.judge_id = j.user_id)
         WHERE (:user_id IS NULL OR uc.user_id = :user_id)
@@ -130,24 +130,24 @@ pub fn competence_delete(skill_id: i64) -> Option<()> {
 pub fn competence_summary(user_id: i64) -> Result<Vec<(Skill, i16)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT b.skill_id, b.branch_key, b.title, MAX(uc.rank)
+        "SELECT s.skill_id, s.skill_key, s.title, MAX(uc.rank)
         FROM user_competences uc
-        JOIN branches b ON (uc.skill_id = b.skill_id)
+        JOIN skills s ON (uc.skill_id = s.skill_id)
         JOIN users j ON (uc.judge_id = j.user_id)
         WHERE uc.user_id = :user_id
-        GROUP BY b.skill_id;",
+        GROUP BY s.skill_id;",
     )?;
 
     let params = params! {
         "user_id" => user_id,
     };
 
-    let map = |(skill_id, branch_key, branch_title, maxrank)| {
+    let map = |(skill_id, skill_key, skill_title, maxrank)| {
         (
             Skill {
                 id: skill_id,
-                key: branch_key,
-                title: branch_title,
+                key: skill_key,
+                title: skill_title,
             },
             maxrank,
         )
