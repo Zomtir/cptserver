@@ -46,7 +46,7 @@ pub fn course_available(user_id: i64) -> Result<Vec<Course>, Error> {
         "SELECT DISTINCT c.course_id, c.course_key, c.title, c.active, c.public
         FROM courses c
         INNER JOIN course_requirements cr ON c.course_id = cr.course_id
-        LEFT JOIN user_competences ur ON uc.skill_id = cr.skill_id AND uc.rank >= cr.rank AND uc.user_id = :user_id
+        LEFT JOIN user_competences uc ON uc.skill_id = cr.skill_id AND uc.rank >= cr.rank AND uc.user_id = :user_id
         WHERE uc.user_id IS NOT NULL;",
     )?;
 
