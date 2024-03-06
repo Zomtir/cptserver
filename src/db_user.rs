@@ -100,7 +100,7 @@ pub fn create_user(user: &mut User) -> Result<i64, Error> {
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(
-        "INSERT INTO users (user_key, pwd, pepper, salt, enabled, active, firstname, lastname, nickname
+        "INSERT INTO users (user_key, pwd, pepper, salt, enabled, active, firstname, lastname, nickname,
         address, email, phone, iban, birthday, birthlocation, nationality, gender,
         federationnumber, federationpermissionsolo, federationpermissionteam, federationresidency,
         datadeclaration, datadisclaimer, note)
