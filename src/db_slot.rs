@@ -279,7 +279,7 @@ pub fn slot_owner_pool(slot_id: i64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(
-        "SELECT users.user_id, users.user_key, users.firstname, users.lastname
+        "SELECT users.user_id, users.user_key, users.firstname, users.lastname, user.nickname
         FROM course_owner_teams AS cot
         JOIN teams ON teams.team_id = cot.team_id
         JOIN team_members tm ON teams.team_id = tm.team_id
@@ -292,7 +292,9 @@ pub fn slot_owner_pool(slot_id: i64) -> Result<Vec<User>, Error> {
     let params = params! {
         "slot_id" => slot_id,
     };
-    let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
+    let map = |(user_id, user_key, firstname, lastname, nickname)| {
+        User::from_info(user_id, user_key, firstname, lastname, nickname)
+    };
 
     let users = conn.exec_map(&stmt, &params, &map)?;
     Ok(users)
@@ -301,7 +303,7 @@ pub fn slot_owner_pool(slot_id: i64) -> Result<Vec<User>, Error> {
 pub fn slot_owner_list(slot_id: i64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT u.user_id, u.user_key, u.firstname, u.lastname
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
         FROM slot_owners
         JOIN users u ON u.user_id = slot_owners.user_id
         WHERE slot_owners.slot_id = :slot_id",
@@ -309,8 +311,8 @@ pub fn slot_owner_list(slot_id: i64) -> Result<Vec<User>, Error> {
     let params = params! {
         "slot_id" => slot_id,
     };
-    let map = |(user_id, user_key, firstname, lastname): (i64, String, String, String)| {
-        User::from_info(user_id, user_key, firstname, lastname)
+    let map = |(user_id, user_key, firstname, lastname, nickname)| {
+        User::from_info(user_id, user_key, firstname, lastname, nickname)
     };
 
     let users = conn.exec_map(&stmt, &params, &map)?;
@@ -450,7 +452,7 @@ pub fn slot_participant_pool(slot_id: i64) -> Result<Vec<User>, Error> {
     // TODO level check threshold if existent
 
     let stmt = conn.prep(
-        "SELECT users.user_id, users.user_key, users.firstname, users.lastname
+        "SELECT users.user_id, users.user_key, users.firstname, users.lastname, users.nickname
         FROM course_participant_teams AS cpt
         JOIN teams ON teams.team_id = cpt.team_id
         JOIN team_members tm ON teams.team_id = tm.team_id
@@ -463,7 +465,7 @@ pub fn slot_participant_pool(slot_id: i64) -> Result<Vec<User>, Error> {
     let params = params! {
         "slot_id" => slot_id,
     };
-    let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
+    let map = |(user_id, user_key, firstname, lastname, nickname)| User::from_info(user_id, user_key, firstname, lastname, nickname);
 
     let users = conn.exec_map(&stmt, &params, &map)?;
     Ok(users)
@@ -472,7 +474,7 @@ pub fn slot_participant_pool(slot_id: i64) -> Result<Vec<User>, Error> {
 pub fn slot_participant_list(slot_id: i64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT u.user_id, u.user_key, u.firstname, u.lastname
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
         FROM slot_participants p
         JOIN users u ON u.user_id = p.user_id
         WHERE slot_id = :slot_id;",
@@ -480,7 +482,7 @@ pub fn slot_participant_list(slot_id: i64) -> Result<Vec<User>, Error> {
     let params = params! {
         "slot_id" => slot_id,
     };
-    let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
+    let map = |(user_id, user_key, firstname, lastname, nickname)| User::from_info(user_id, user_key, firstname, lastname, nickname);
 
     let users = conn.exec_map(&stmt, &params, &map)?;
     Ok(users)

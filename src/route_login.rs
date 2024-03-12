@@ -12,7 +12,7 @@ use crate::session::{Credential, SlotSession, UserSession, SLOTSESSIONS, USERSES
 pub fn user_login(credit: Json<Credential>) -> Result<String, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT u.user_id, u.pwd, u.pepper, u.enabled, u.firstname, u.lastname,
+        "SELECT u.user_id, u.pwd, u.pepper, u.enabled, u.firstname, u.lastname, u.nickname,
             COALESCE(MAX(admin_competence),0) AS admin_competence,
             COALESCE(MAX(admin_courses),0) AS admin_courses,
             COALESCE(MAX(admin_event),0) AS admin_event,
@@ -69,6 +69,7 @@ pub fn user_login(credit: Json<Credential>) -> Result<String, Error> {
             credit.login.to_string(),
             row.take("firstname").unwrap(),
             row.take("lastname").unwrap(),
+            row.take("nickname").unwrap(),
         ),
         right: Right {
             admin_competence: row.take("admin_competence").unwrap(),

@@ -13,11 +13,11 @@ pub fn competence_list(
 ) -> Result<Vec<Competence>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT uc.skill_id,
-            u.user_id, u.user_key, u.firstname, u.lastname,
-            s.skill_id, s.skill_key, s.title,
+        "SELECT uc.competence_id,
+            u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
+            s.skill_id, s.skill_key, s.title as skill_title,
             uc.rank, uc.date,
-            j.user_id, j.user_key, j.firstname, j.lastname
+            j.user_id as judge_id, j.user_key as judge_key, j.firstname as judge_firstname, j.lastname as judge_lastname, j.nickname as judge_nickname
         FROM user_competences uc
         JOIN skills s ON (uc.skill_id = s.skill_id)
         JOIN users u ON (uc.user_id = u.user_id)
@@ -39,25 +39,27 @@ pub fn competence_list(
 
     for mut row in rows {
         let uc = Competence {
-            id: row.take("skill_id").unwrap(),
+            id: row.take("competence_id").unwrap(),
             user: User::from_info(
-                row.take(1).unwrap(),
-                row.take(2).unwrap(),
-                row.take(3).unwrap(),
-                row.take(4).unwrap(),
+                row.take("user_id").unwrap(),
+                row.take("user_key").unwrap(),
+                row.take("firstname").unwrap(),
+                row.take("lastname").unwrap(),
+                row.take("nickname").unwrap(),
             ),
             skill: Skill {
-                id: row.take(5).unwrap(),
-                key: row.take(6).unwrap(),
-                title: row.take(7).unwrap(),
+                id: row.take("skill_id").unwrap(),
+                key: row.take("skill_key").unwrap(),
+                title: row.take("skill_title").unwrap(),
             },
             rank: row.take("rank").unwrap(),
             date: row.take("date").unwrap(),
             judge: User::from_info(
-                row.take(10).unwrap(),
-                row.take(11).unwrap(),
-                row.take(12).unwrap(),
-                row.take(13).unwrap(),
+                row.take("judge_id").unwrap(),
+                row.take("judge_key").unwrap(),
+                row.take("judge_firstname").unwrap(),
+                row.take("judge_lastname").unwrap(),
+                row.take("judge_nickname").unwrap(),
             ),
         };
         competences.push(uc);
@@ -85,7 +87,7 @@ pub fn competence_create(competence: &Competence) -> Result<u32, Error> {
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn competence_edit(skill_id: i64, competence: &Competence) -> Result<(), Error> {
+pub fn competence_edit(competence_id: i64, competence: &Competence) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE user_competences
@@ -95,11 +97,11 @@ pub fn competence_edit(skill_id: i64, competence: &Competence) -> Result<(), Err
             `rank` = :rank,
             date = :date,
             judge_id = :judge_id
-        WHERE skill_id = :skill_id",
+        WHERE competence_id = :competence_id",
     );
 
     let params = params! {
-        "skill_id" => &skill_id,
+        "competence_id" => &competence_id,
         "user_id" => &competence.user.id,
         "skill_id" => &competence.skill.id,
         "rank" => &competence.rank,
@@ -113,12 +115,12 @@ pub fn competence_edit(skill_id: i64, competence: &Competence) -> Result<(), Err
     }
 }
 
-pub fn competence_delete(skill_id: i64) -> Option<()> {
+pub fn competence_delete(competence_id: i64) -> Option<()> {
     let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep("DELETE uc FROM user_competences uc WHERE uc.skill_id = :skill_id");
+    let stmt = conn.prep("DELETE uc FROM user_competences uc WHERE uc.competence_id = :competence_id");
 
     let params = params! {
-        "skill_id" => skill_id
+        "competence_id" => competence_id
     };
 
     match conn.exec_drop(&stmt.unwrap(), &params) {

@@ -9,7 +9,7 @@ pub fn list_terms(user_id: Option<i64>) -> Result<Vec<Term>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT t.term_id,
-            u.user_id, u.user_key, u.firstname, u.lastname,
+            u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
             c.club_id, c.name, c.description,
             t.term_begin, t.term_end
         FROM terms t
@@ -23,9 +23,9 @@ pub fn list_terms(user_id: Option<i64>) -> Result<Vec<Term>, Error> {
     };
 
     let map =
-        |(term_id, user_id, user_key, firstname, lastname, club_id, club_name, club_description, begin, end)| Term {
+        |(term_id, user_id, user_key, firstname, lastname, nickname, club_id, club_name, club_description, begin, end)| Term {
             id: term_id,
-            user: User::from_info(user_id, user_key, firstname, lastname),
+            user: User::from_info(user_id, user_key, firstname, lastname, nickname),
             club: Club {
                 id: club_id,
                 name: club_name,
@@ -116,7 +116,7 @@ pub fn get_user_membership_days(active: Option<bool>) -> Result<Vec<(i64, i64)>,
 pub fn get_wrong_active_users() -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT u.user_id, u.user_key, u.firstname, u.lastname
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
         FROM users u
         LEFT JOIN
         (
@@ -132,7 +132,9 @@ pub fn get_wrong_active_users() -> Result<Vec<User>, Error> {
 
     let params = params::Params::Empty;
 
-    let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
+    let map = |(user_id, user_key, firstname, lastname, nickname)| {
+        User::from_info(user_id, user_key, firstname, lastname, nickname)
+    };
 
     let users = conn.exec_map(&stmt, &params, &map)?;
     Ok(users)
@@ -141,7 +143,7 @@ pub fn get_wrong_active_users() -> Result<Vec<User>, Error> {
 pub fn get_wrong_inactive_users() -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT u.user_id, u.user_key, u.firstname, u.lastname
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
         FROM users u
         LEFT JOIN
         (
@@ -157,7 +159,7 @@ pub fn get_wrong_inactive_users() -> Result<Vec<User>, Error> {
 
     let params = params::Params::Empty;
 
-    let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
+    let map = |(user_id, user_key, firstname, lastname, nickname)| User::from_info(user_id, user_key, firstname, lastname, nickname);
 
     let users = conn.exec_map(&stmt, &params, &map)?;
     Ok(users)

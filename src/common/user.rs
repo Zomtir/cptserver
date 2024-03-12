@@ -34,7 +34,7 @@ pub struct User {
 }
 
 impl User {
-    pub fn from_info(id: i64, key: String, firstname: String, lastname: String) -> User {
+    pub fn from_info(id: i64, key: String, firstname: String, lastname: String, nickname: Option<String>) -> User {
         User {
             id,
             key: Some(key),
@@ -42,7 +42,7 @@ impl User {
             active: None,
             firstname,
             lastname,
-            nickname: None,
+            nickname,
             address: None,
             email: None,
             phone: None,

@@ -12,7 +12,7 @@ use crate::error::Error;
 pub fn list_user(active: Option<bool>) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT user_id, user_key, firstname, lastname
+        "SELECT user_id, user_key, firstname, lastname, nickname
         FROM users
         WHERE :active IS NULL OR :active = active;",
     );
@@ -21,7 +21,9 @@ pub fn list_user(active: Option<bool>) -> Result<Vec<User>, Error> {
         "active" => &active,
     };
 
-    let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
+    let map = |(user_id, user_key, firstname, lastname, nickname)| {
+        User::from_info(user_id, user_key, firstname, lastname, nickname)
+    };
 
     Ok(conn.exec_map(&stmt.unwrap(), &params, &map)?)
 }

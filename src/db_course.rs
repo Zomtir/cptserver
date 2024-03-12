@@ -127,7 +127,7 @@ pub fn course_delete(course_id: i64) -> Result<(), Error> {
 pub fn course_moderator_list(course_id: i64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT u.user_id, u.user_key, u.firstname, u.lastname
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
         FROM users u
         JOIN course_moderators m ON m.user_id = u.user_id
         WHERE m.course_id = :course_id",
@@ -136,7 +136,9 @@ pub fn course_moderator_list(course_id: i64) -> Result<Vec<User>, Error> {
     let params = params! {
         "course_id" => course_id,
     };
-    let map = |(user_id, user_key, firstname, lastname)| User::from_info(user_id, user_key, firstname, lastname);
+    let map = |(user_id, user_key, firstname, lastname, nickname)| {
+        User::from_info(user_id, user_key, firstname, lastname, nickname)
+    };
 
     let members = conn.exec_map(&stmt, &params, &map)?;
     Ok(members)

@@ -9,13 +9,9 @@ use crate::session::{Credential, UserSession};
  */
 
 #[rocket::get("/regular/user_info")]
-pub fn user_info(session: UserSession) -> Json<User> {
-    Json(User::from_info(
-        session.user.id,
-        session.user.key.unwrap(),
-        session.user.firstname,
-        session.user.lastname,
-    ))
+pub fn user_info(session: UserSession) -> Result<Json<User>, Error> {
+    let user = crate::db_user::get_user_detailed(session.user.id)?;
+    Ok(Json(user))
 }
 
 #[rocket::get("/regular/user_right")]
