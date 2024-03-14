@@ -64,7 +64,7 @@ pub fn edit_term(term_id: i64, term: &Term) -> Result<(), Error> {
             user_id  = :user_id,
             club_id = :club_id,
             term_begin = :begin,
-            term_end = :end,
+            term_end = :end
         WHERE term_id = :term_id",
     )?;
 
