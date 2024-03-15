@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8001
--- Generation Time: Mar 01, 2024 at 10:51 PM
+-- Generation Time: Mar 15, 2024 at 08:05 AM
 -- Server version: 10.11.6-MariaDB-0ubuntu0.23.10.2
 -- PHP Version: 8.2.10-2ubuntu1
 
@@ -24,16 +24,26 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Table structure for table `branches`
+-- Table structure for table `clubs`
 --
 
-CREATE TABLE `branches` (
-  `branch_id` smallint(6) NOT NULL,
-  `branch_key` char(10) NOT NULL,
-  `title` tinytext NOT NULL,
-  `min` tinyint(4) NOT NULL DEFAULT 0,
-  `max` tinyint(4) NOT NULL DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE `clubs` (
+  `club_id` tinyint(4) NOT NULL,
+  `name` varchar(30) NOT NULL,
+  `description` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `club_inventory`
+--
+
+CREATE TABLE `club_inventory` (
+  `club_id` tinyint(4) NOT NULL,
+  `item_id` int(11) NOT NULL,
+  `count` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -91,7 +101,7 @@ CREATE TABLE `course_participant_teams` (
 CREATE TABLE `course_requirements` (
   `requirement_id` int(11) NOT NULL,
   `course_id` mediumint(9) NOT NULL,
-  `branch_id` smallint(6) NOT NULL,
+  `skill_id` smallint(6) NOT NULL,
   `rank` tinyint(4) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -132,30 +142,6 @@ CREATE TABLE `item_category` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `item_owners`
---
-
-CREATE TABLE `item_owners` (
-  `item_id` int(11) NOT NULL,
-  `owner_id` mediumint(9) NOT NULL,
-  `count` tinyint(4) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `item_possessors`
---
-
-CREATE TABLE `item_possessors` (
-  `item_id` int(11) NOT NULL,
-  `possessor_id` mediumint(9) NOT NULL,
-  `count` tinyint(4) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `locations`
 --
 
@@ -163,6 +149,20 @@ CREATE TABLE `locations` (
   `location_id` smallint(6) NOT NULL,
   `location_key` char(10) NOT NULL,
   `title` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `skills`
+--
+
+CREATE TABLE `skills` (
+  `skill_id` smallint(6) NOT NULL,
+  `skill_key` char(10) NOT NULL,
+  `title` tinytext NOT NULL,
+  `min` tinyint(4) NOT NULL DEFAULT 0,
+  `max` tinyint(4) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -229,10 +229,10 @@ CREATE TABLE `teams` (
   `team_id` mediumint(9) NOT NULL,
   `name` varchar(30) NOT NULL,
   `description` varchar(100) NOT NULL,
+  `admin_competence` tinyint(1) NOT NULL DEFAULT 0,
   `admin_courses` tinyint(1) NOT NULL DEFAULT 0,
-  `admin_inventory` tinyint(1) NOT NULL DEFAULT 0,
-  `admin_rankings` tinyint(1) NOT NULL DEFAULT 0,
   `admin_event` tinyint(1) NOT NULL DEFAULT 0,
+  `admin_inventory` tinyint(1) NOT NULL DEFAULT 0,
   `admin_teams` tinyint(1) NOT NULL DEFAULT 0,
   `admin_term` tinyint(1) NOT NULL DEFAULT 0,
   `admin_users` tinyint(1) NOT NULL DEFAULT 0
@@ -258,6 +258,7 @@ CREATE TABLE `team_members` (
 CREATE TABLE `terms` (
   `term_id` int(11) NOT NULL,
   `user_id` mediumint(9) NOT NULL,
+  `club_id` tinyint(4) NOT NULL,
   `term_begin` date DEFAULT NULL,
   `term_end` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -299,28 +300,48 @@ CREATE TABLE `users` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `user_rankings`
+-- Table structure for table `user_competences`
 --
 
-CREATE TABLE `user_rankings` (
-  `ranking_id` int(11) NOT NULL,
+CREATE TABLE `user_competences` (
+  `competence_id` int(11) NOT NULL,
   `user_id` mediumint(9) NOT NULL,
-  `branch_id` smallint(6) NOT NULL,
+  `skill_id` smallint(6) NOT NULL,
   `rank` tinyint(4) NOT NULL,
   `date` date NOT NULL DEFAULT '1000-01-01',
   `judge_id` mediumint(9) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_possessions`
+--
+
+CREATE TABLE `user_possessions` (
+  `possession_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  `item_id` int(11) NOT NULL,
+  `owner_id` tinyint(4) DEFAULT NULL,
+  `transfer_date` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Indexes for dumped tables
 --
 
 --
--- Indexes for table `branches`
+-- Indexes for table `clubs`
 --
-ALTER TABLE `branches`
-  ADD PRIMARY KEY (`branch_id`),
-  ADD UNIQUE KEY `KEY` (`branch_key`);
+ALTER TABLE `clubs`
+  ADD PRIMARY KEY (`club_id`);
+
+--
+-- Indexes for table `club_inventory`
+--
+ALTER TABLE `club_inventory`
+  ADD PRIMARY KEY (`club_id`,`item_id`),
+  ADD KEY `REF_item` (`item_id`);
 
 --
 -- Indexes for table `courses`
@@ -355,7 +376,7 @@ ALTER TABLE `course_participant_teams`
 --
 ALTER TABLE `course_requirements`
   ADD PRIMARY KEY (`requirement_id`),
-  ADD KEY `REF_branch` (`branch_id`),
+  ADD KEY `REF_skill` (`skill_id`),
   ADD KEY `REF_course` (`course_id`);
 
 --
@@ -379,25 +400,18 @@ ALTER TABLE `item_category`
   ADD PRIMARY KEY (`category_id`);
 
 --
--- Indexes for table `item_owners`
---
-ALTER TABLE `item_owners`
-  ADD PRIMARY KEY (`item_id`,`owner_id`) USING BTREE,
-  ADD KEY `item_owners_ibfk_2` (`owner_id`);
-
---
--- Indexes for table `item_possessors`
---
-ALTER TABLE `item_possessors`
-  ADD PRIMARY KEY (`item_id`,`possessor_id`) USING BTREE,
-  ADD KEY `item_possessors_ibfk_2` (`possessor_id`);
-
---
 -- Indexes for table `locations`
 --
 ALTER TABLE `locations`
   ADD PRIMARY KEY (`location_id`),
   ADD UNIQUE KEY `KEY` (`location_key`);
+
+--
+-- Indexes for table `skills`
+--
+ALTER TABLE `skills`
+  ADD PRIMARY KEY (`skill_id`),
+  ADD UNIQUE KEY `KEY` (`skill_key`);
 
 --
 -- Indexes for table `slots`
@@ -448,7 +462,8 @@ ALTER TABLE `team_members`
 --
 ALTER TABLE `terms`
   ADD PRIMARY KEY (`term_id`),
-  ADD KEY `user_id` (`user_id`);
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `club_id` (`club_id`);
 
 --
 -- Indexes for table `users`
@@ -458,24 +473,29 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `KEY` (`user_key`);
 
 --
--- Indexes for table `user_rankings`
+-- Indexes for table `user_competences`
 --
-ALTER TABLE `user_rankings`
-  ADD PRIMARY KEY (`ranking_id`),
-  ADD UNIQUE KEY `KEY` (`branch_id`,`user_id`,`rank`) USING BTREE,
+ALTER TABLE `user_competences`
+  ADD PRIMARY KEY (`competence_id`),
   ADD KEY `REF_judge` (`judge_id`),
   ADD KEY `REF_user` (`user_id`) USING BTREE,
-  ADD KEY `REF_branch` (`branch_id`);
+  ADD KEY `REF_branch` (`skill_id`);
+
+--
+-- Indexes for table `user_possessions`
+--
+ALTER TABLE `user_possessions`
+  ADD PRIMARY KEY (`possession_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT for table `branches`
+-- AUTO_INCREMENT for table `clubs`
 --
-ALTER TABLE `branches`
-  MODIFY `branch_id` smallint(6) NOT NULL AUTO_INCREMENT;
+ALTER TABLE `clubs`
+  MODIFY `club_id` tinyint(4) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `courses`
@@ -508,6 +528,12 @@ ALTER TABLE `locations`
   MODIFY `location_id` smallint(6) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `skills`
+--
+ALTER TABLE `skills`
+  MODIFY `skill_id` smallint(6) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `slots`
 --
 ALTER TABLE `slots`
@@ -532,14 +558,27 @@ ALTER TABLE `users`
   MODIFY `user_id` mediumint(9) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `user_rankings`
+-- AUTO_INCREMENT for table `user_competences`
 --
-ALTER TABLE `user_rankings`
-  MODIFY `ranking_id` int(11) NOT NULL AUTO_INCREMENT;
+ALTER TABLE `user_competences`
+  MODIFY `competence_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `user_possessions`
+--
+ALTER TABLE `user_possessions`
+  MODIFY `possession_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `club_inventory`
+--
+ALTER TABLE `club_inventory`
+  ADD CONSTRAINT `club_inventory_ibfk_1` FOREIGN KEY (`club_id`) REFERENCES `clubs` (`club_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `club_inventory_ibfk_2` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `course_moderators`
@@ -567,7 +606,7 @@ ALTER TABLE `course_participant_teams`
 --
 ALTER TABLE `course_requirements`
   ADD CONSTRAINT `course_requirements_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `course_requirements_ibfk_2` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`branch_id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `course_requirements_ibfk_2` FOREIGN KEY (`skill_id`) REFERENCES `skills` (`skill_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `course_subscriptions`
@@ -581,20 +620,6 @@ ALTER TABLE `course_subscriptions`
 --
 ALTER TABLE `items`
   ADD CONSTRAINT `items_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `item_category` (`category_id`) ON UPDATE CASCADE;
-
---
--- Constraints for table `item_owners`
---
-ALTER TABLE `item_owners`
-  ADD CONSTRAINT `item_owners_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `item_owners_ibfk_2` FOREIGN KEY (`owner_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
-
---
--- Constraints for table `item_possessors`
---
-ALTER TABLE `item_possessors`
-  ADD CONSTRAINT `item_possessors_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `item_possessors_ibfk_2` FOREIGN KEY (`possessor_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `slots`
@@ -635,15 +660,16 @@ ALTER TABLE `team_members`
 -- Constraints for table `terms`
 --
 ALTER TABLE `terms`
-  ADD CONSTRAINT `terms_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`);
+  ADD CONSTRAINT `terms_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `terms_ibfk_2` FOREIGN KEY (`club_id`) REFERENCES `clubs` (`club_id`) ON UPDATE CASCADE;
 
 --
--- Constraints for table `user_rankings`
+-- Constraints for table `user_competences`
 --
-ALTER TABLE `user_rankings`
-  ADD CONSTRAINT `user_rankings_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `user_rankings_ibfk_2` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`branch_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `user_rankings_ibfk_3` FOREIGN KEY (`judge_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+ALTER TABLE `user_competences`
+  ADD CONSTRAINT `user_competences_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `user_competences_ibfk_2` FOREIGN KEY (`skill_id`) REFERENCES `skills` (`skill_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `user_competences_ibfk_3` FOREIGN KEY (`judge_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
