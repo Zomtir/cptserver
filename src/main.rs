@@ -47,6 +47,7 @@ mod route_team_regular;
 mod route_term_admin;
 
 mod route_slot_service;
+mod route_slot_regular;
 
 #[rocket::get("/")]
 fn index() -> &'static str {
@@ -227,6 +228,7 @@ fn rocket() -> _ {
                 route_slot_service::slot_owner_list,
                 route_slot_service::slot_owner_add,
                 route_slot_service::slot_owner_remove,
+                route_slot_regular::slot_list,
             ],
         )
         .attach(cors)
