@@ -279,7 +279,7 @@ pub fn slot_owner_pool(slot_id: i64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(
-        "SELECT users.user_id, users.user_key, users.firstname, users.lastname, user.nickname
+        "SELECT users.user_id, users.user_key, users.firstname, users.lastname, users.nickname
         FROM course_owner_teams AS cot
         JOIN teams ON teams.team_id = cot.team_id
         JOIN team_members tm ON teams.team_id = tm.team_id
