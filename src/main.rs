@@ -46,8 +46,8 @@ mod route_team_regular;
 
 mod route_term_admin;
 
-mod route_slot_service;
 mod route_slot_regular;
+mod route_slot_service;
 
 #[rocket::get("/")]
 fn index() -> &'static str {

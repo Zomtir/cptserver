@@ -465,7 +465,9 @@ pub fn slot_participant_pool(slot_id: i64) -> Result<Vec<User>, Error> {
     let params = params! {
         "slot_id" => slot_id,
     };
-    let map = |(user_id, user_key, firstname, lastname, nickname)| User::from_info(user_id, user_key, firstname, lastname, nickname);
+    let map = |(user_id, user_key, firstname, lastname, nickname)| {
+        User::from_info(user_id, user_key, firstname, lastname, nickname)
+    };
 
     let users = conn.exec_map(&stmt, &params, &map)?;
     Ok(users)
@@ -482,7 +484,9 @@ pub fn slot_participant_list(slot_id: i64) -> Result<Vec<User>, Error> {
     let params = params! {
         "slot_id" => slot_id,
     };
-    let map = |(user_id, user_key, firstname, lastname, nickname)| User::from_info(user_id, user_key, firstname, lastname, nickname);
+    let map = |(user_id, user_key, firstname, lastname, nickname)| {
+        User::from_info(user_id, user_key, firstname, lastname, nickname)
+    };
 
     let users = conn.exec_map(&stmt, &params, &map)?;
     Ok(users)

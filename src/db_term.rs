@@ -22,18 +22,29 @@ pub fn list_terms(user_id: Option<i64>) -> Result<Vec<Term>, Error> {
         "user_id" => user_id,
     };
 
-    let map =
-        |(term_id, user_id, user_key, firstname, lastname, nickname, club_id, club_name, club_description, begin, end)| Term {
-            id: term_id,
-            user: User::from_info(user_id, user_key, firstname, lastname, nickname),
-            club: Club {
-                id: club_id,
-                name: club_name,
-                description: club_description,
-            },
-            begin,
-            end,
-        };
+    let map = |(
+        term_id,
+        user_id,
+        user_key,
+        firstname,
+        lastname,
+        nickname,
+        club_id,
+        club_name,
+        club_description,
+        begin,
+        end,
+    )| Term {
+        id: term_id,
+        user: User::from_info(user_id, user_key, firstname, lastname, nickname),
+        club: Club {
+            id: club_id,
+            name: club_name,
+            description: club_description,
+        },
+        begin,
+        end,
+    };
 
     let terms = conn.exec_map(&stmt, &params, &map)?;
     Ok(terms)
@@ -159,7 +170,9 @@ pub fn get_wrong_inactive_users() -> Result<Vec<User>, Error> {
 
     let params = params::Params::Empty;
 
-    let map = |(user_id, user_key, firstname, lastname, nickname)| User::from_info(user_id, user_key, firstname, lastname, nickname);
+    let map = |(user_id, user_key, firstname, lastname, nickname)| {
+        User::from_info(user_id, user_key, firstname, lastname, nickname)
+    };
 
     let users = conn.exec_map(&stmt, &params, &map)?;
     Ok(users)

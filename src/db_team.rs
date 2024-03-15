@@ -164,7 +164,9 @@ pub fn list_team_members(team_id: u32) -> Result<Vec<User>, Error> {
     let params = params! {
         "team_id" => team_id,
     };
-    let map = |(user_id, user_key, firstname, lastname, nickname)| User::from_info(user_id, user_key, firstname, lastname, nickname);
+    let map = |(user_id, user_key, firstname, lastname, nickname)| {
+        User::from_info(user_id, user_key, firstname, lastname, nickname)
+    };
 
     let members = conn.exec_map(&stmt, &params, &map)?;
     Ok(members)
