@@ -1,3 +1,34 @@
 # AUTHORS
 
-* [Moritz Oberhauser](https://github.com/zomtir)
+* [Moritz Oberhauser](https://github.com/Zomtir)
+<details>
+  <summary>Signed Copyright Waiver</summary>
+<code>-----BEGIN PGP MESSAGE-----
+owGVU39QFFUcP+DMWGEyxmhGCB+eGOhxxwgDYyQzTBAcmjCIQCDI3t477sX+OPbH
+nWAQlDSinIIc0g8rcwwLEfAPISiFRKBJbUyEkglySomrJCkcHMeJ3u5BUv1TM7sz
++977fr+fX29rfb1UhEdjM0d3JGk3eJzy6jF6Z8UbMhPTdYwJzvgHasBzqWkvphuS
+kjOA+4AgMixIAPghAcVZS3hUaBGBnUQ2yAMzx4NciyhahWf0+kIkWiSjjuIYfQ7H
+iIjXU1ZRgDwu1OeF/peqMB1BGIAJmhBFihCQbAl+TYCk6UXQiBUhDwX5A4gyNYEz
+i3aSh0Dk8AYkrJKRRhQwcQyJWB0wAIYsgu7S+dGIYxXquBoYIQvNSAScWVnON5Mi
+QZN8IVTw3XNxs8gjBrJKLVMCLBDxglIgSBQFBYHjBRlOJih3YUBiESCeYpTnAQ5L
+FQFJKXN4SCO2WEKCRZmMNVkhb4WihMQS+RxrJ6xYrnwoQ5klUcJSFSsEN7PFFkis
+Ccfy0CyatGNPM7h5qcIC9yKWs9PQNC/QiElAs1Y+oDgWqzRKMmUsDo+EODDIExwe
+iFhMB2ciiRaOh7ivBDAQYCPlOgyM7wRmyHMMsPIIb9s5vkgAdguiLNgXC2mDBNaO
+zAiXyS0kLXDuGP8y3p2aO3ZcwXIidtf4EsRuYbEUTSJGILCGhxIxCU5mCKwkLyIo
+/A+9rIxuQjZkkkhaC4ySgFicoxaLLSRZVKoEpwWFcmKsnI9WFutGwys5IgspKPf0
+3/eTwDL+aahWgTcA0mxGPINJkiJe2RG+4LJS5aL+rYFQSmQnFFQ7EnAgLCUxRoxh
+0hHVnpFqlQeheso/WP3t8KbzB1auS4hRh1Yv/OJLPOW/WkV4L1/Y8ZlerjrUPdhZ
+98qraZ/A9jVHbfdvN4aX52x/oc31BphL2bqsdO6n1+5teX58NKTPXB2839ic2Zs3
+0vf5fmvnWPfP4MTc0egh4lL8ruyEgdwrnYla7urZx4dtxVnpdyf76h3tAcS2bYGP
+xapXDH7g+0hjzJ3oss6KjdbuvrUxNXMZecO+eyaa3jk7MHU/uaE7P+v2ePbHETNZ
+wa5ED687D7Yfv9jyR2vyWFzKPY+VbbD/y4O5ztzE1nKPlsudG683rYkt91n91eDN
+CN3IevXg6ZwfQjwDtXvRaMcN8+iSg9+38NO2WU3VDnpUWzH23tTLTTFRQQ8irorw
+BEr+tflA4urcuILJ7Gp161tbjjk8v6nt2Ul/CvMZtSNv6SB/mGqJpXta9NyZiF2f
+HdrZX65PLZ5sct1yGNafFKqKjxTk+PnseD9ck482dARWda2YHHdmD7zLZBK/V55S
+zVzf6ix+88NVdEWlbdm+t8vmNEMNsXsv3A1c69/Xnxqwx5HcnhU++VFk1yXHL65n
+R3afnwuKvRhaEA9qbrmmGvqY7xIKn/QuPVMWtPSwI+qLouM34sr1RyZ4v5NPhHUJ
+Q2mb2n+r7y9w/piU07u75embxzZfWVXj3OcT1RHp59NmN07oprO+vjAR7zm1blqz
++ty1a729M0Td677aWVVAiGYi5RztclT21kWfTqueffRyWEN9rfNP
+=myjd
+-----END PGP MESSAGE-----</code>
+</details>

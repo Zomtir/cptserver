@@ -1,3 +1,8 @@
+ABOUT
+=====
+
+This is the server application for providing an API for the cptclient. CPT stands for Course Participation Tracker.
+
 PREPARATIONS
 ============
 
@@ -23,19 +28,45 @@ db_database = 'cptdb'
 db_user = 'cptdb-user'
 db_password = 'cptdb-password'
 
-
-DEVELOPEMENT
-============
+Compiling and executing the application for developement is the usualy `cargo` workflow.
 
 ```BASH
-cargo build
+# Format your code if you made changes
 cargo fmt
+# Run a sanity check on your changes
 cargo clippy
+# Build the application
+cargo build
+# Run the application
 cargo run
+```
+
+RELEASES
+========
+
+When you make a new release, this is the targeted procedure.
+
+The versioning scheme is `MAJOR.MINOR.PATCH`, increment the:
+- MAJOR version when you make substantial API changes or core reworks
+- MINOR version when you make any API changes
+- PATCH version when you make backward compatible changes
+
+As long as the `MAJOR` release is `0.x`, it is considered a pre-release. The API and feature set
+might be incomplete and unstable.
+
+```
+# Tag the commit with a release tag and a 'v' prefix.
+# The `PATCH` version is omitted for the `.0` increment.
+git tag v0.7
+
+# Adapt the Cargo toml file
+> version = "0.7.0"
 ```
 
 PRODUCTION
 ==========
+
+To build a binary for production, choose a reliable version and build it with the `--release` flag.
 
 ```BASH
 cargo build --release
@@ -43,13 +74,32 @@ cargo build --release
 
 The binary can be found at `./target/release/cptserver`.
 
-TODO
-====
+There is also a systemd unit file (`cptserver.service`) with the assumption that you have your binary
+installed at `/opt/cptserver/`.
 
-- Change slots.status to "DRAFT,PENDING,ACCEPTED,REJECTED"  with another boolean slots.active
-- Move server behaviour settings to the settings file
-- Server action log file
-- The response should contain what call stack did result in the repsonse? So that you can track what client action cause the response in shared code
-    //Err(crate::Error::user_missing(origin.path()))
-    use rocket::http::uri::Origin;
-    pub fn user_login(origin: &Origin, credit: Json<Credential>)
+LICENSE
+=======
+
+The code is dedicated to the [Public Domain](LICENSE.md).
+
+CONTRIBUTING
+============
+
+Contributing to the project implies a copyright release as stated in the [Waiver](WAIVER.md) unless 
+stated otherwise.
+
+You are very welcome to explicitly state your approval with a simple statement such as
+`Dedicated to Public Domain` in your patches. You can also sign the [Waiver](WAIVER.md) with GPG
+while listing yourself as [Author](AUTHORS.md).
+
+```bash
+# Generate a GPG key
+gpg --full-generate-key
+# Sign the waiver
+gpg --no-version --armor --sign WAIVER.md
+# Copy the signature
+cat WAIVER.md.asc
+# Optionally export your public key and add it to your Github account and/or a keyserver.
+gpg --list-keys
+gpg --armor --export <KEYID>
+```
