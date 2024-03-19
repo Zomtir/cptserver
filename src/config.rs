@@ -68,12 +68,12 @@ pub fn readConfig() -> ServerConfig {
 pub static CONFIG_RESERVATION_AUTO_CHECK: bool = false;
 //pub static CONFIG_COURSE_MODERATOR_PROMOTION : bool = true; // TODO
 
-pub fn CONFIG_SLOT_DATE_MIN() -> Option<chrono::NaiveDate> {
-    chrono::NaiveDate::from_ymd_opt(1000, 1, 1)
+pub fn CONFIG_SLOT_DATE_MIN() -> chrono::NaiveDateTime {
+    chrono::NaiveDateTime::from(chrono::NaiveDate::from_ymd_opt(1000, 1, 1).unwrap())
 }
 
-pub fn CONFIG_SLOT_DATE_MAX() -> Option<chrono::NaiveDate> {
-    chrono::NaiveDate::from_ymd_opt(3000, 1, 1)
+pub fn CONFIG_SLOT_DATE_MAX() -> chrono::NaiveDateTime {
+    chrono::NaiveDateTime::from(chrono::NaiveDate::from_ymd_opt(3000, 1, 1).unwrap())
 }
 
 pub fn CONFIG_SLOT_LIST_TIME_MIN() -> chrono::Duration {

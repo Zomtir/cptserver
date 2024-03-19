@@ -1,4 +1,4 @@
-use crate::common::{Slot, SlotStatus, User, WebDate};
+use crate::common::{Slot, SlotStatus, User, WebDateTime};
 use crate::error::Error;
 use crate::session::UserSession;
 use rocket::serde::json::Json;
@@ -10,8 +10,8 @@ use rocket::serde::json::Json;
 #[rocket::get("/owner/event_list?<begin>&<end>&<status>&<location_id>")]
 pub fn event_list(
     session: UserSession,
-    begin: WebDate,
-    end: WebDate,
+    begin: WebDateTime,
+    end: WebDateTime,
     status: Option<SlotStatus>,
     location_id: Option<i64>,
 ) -> Result<Json<Vec<Slot>>, Error> {

@@ -46,8 +46,8 @@ pub fn slot_info(slot_id: i64) -> Result<Slot, Error> {
 }
 
 pub fn list_slots(
-    mut begin: Option<chrono::NaiveDate>,
-    mut end: Option<chrono::NaiveDate>,
+    mut begin: Option<chrono::NaiveDateTime>,
+    mut end: Option<chrono::NaiveDateTime>,
     status: Option<SlotStatus>,
     location_id: Option<i64>,
     course_true: Option<bool>,
@@ -69,12 +69,12 @@ pub fn list_slots(
         GROUP BY s.slot_id",
     )?;
 
-    if begin.is_none() || begin < crate::config::CONFIG_SLOT_DATE_MIN() {
-        begin = crate::config::CONFIG_SLOT_DATE_MIN();
+    if begin.is_none() || begin.unwrap() < crate::config::CONFIG_SLOT_DATE_MIN() {
+        begin = Some(crate::config::CONFIG_SLOT_DATE_MIN());
     }
 
-    if end.is_none() || end > crate::config::CONFIG_SLOT_DATE_MAX() {
-        end = crate::config::CONFIG_SLOT_DATE_MAX();
+    if end.is_none() || end.unwrap() > crate::config::CONFIG_SLOT_DATE_MAX() {
+        end = Some(crate::config::CONFIG_SLOT_DATE_MAX());
     }
 
     let params = params! {
