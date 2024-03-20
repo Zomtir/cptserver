@@ -25,6 +25,7 @@ pub enum Error {
     UserEmailInvalid,
 
     SlotMissing,
+    SlotSearchLimit,
     SlotOwnerMissing,
     SlotOwnerPermission,
     SlotCourseMissing,
@@ -77,6 +78,7 @@ impl Error {
             Error::UserEmailInvalid => "USER_EMAIL_INVALID",
 
             Error::SlotMissing => "SLOT_MISSING",
+            Error::SlotSearchLimit => "SLOT_SEARCH_LIMIT",
             Error::SlotOwnerMissing => "SLOT_OWNER_MISSING",
             Error::SlotOwnerPermission => "SLOT_OWNER_PERMISSION",
             Error::SlotCourseMissing => "SLOT_COURSE_MISSING",
@@ -130,6 +132,7 @@ impl std::fmt::Display for Error {
             Error::UserEmailInvalid => write!(f, "User email has an invalid format"),
 
             Error::SlotMissing => write!(f, "Slot is missing"),
+            Error::SlotSearchLimit => write!(f, "Slot search has invalid criterias"),
             Error::SlotOwnerMissing => write!(f, "Slow owner is missing"),
             Error::SlotOwnerPermission => write!(f, "The user has insufficient slot owner permissions"),
             Error::SlotCourseMissing => write!(f, "Slow course is missing"),

@@ -46,14 +46,27 @@ pub fn slot_info(slot_id: i64) -> Result<Slot, Error> {
 }
 
 pub fn list_slots(
-    mut begin: Option<chrono::NaiveDateTime>,
-    mut end: Option<chrono::NaiveDateTime>,
+    begin: Option<chrono::NaiveDateTime>,
+    end: Option<chrono::NaiveDateTime>,
     status: Option<SlotStatus>,
     location_id: Option<i64>,
     course_true: Option<bool>,
     course_id: Option<i64>,
     owner_id: Option<i64>,
 ) -> Result<Vec<Slot>, Error> {
+    // If there is a search window, make sure it is somewhat correct
+    if let (Some(begin), Some(end)) = (begin, end) {
+        let delta = end.signed_duration_since(begin);
+
+        if delta < crate::config::CONFIG_SLOT_LIST_TIME_MIN() || delta > crate::config::CONFIG_SLOT_LIST_TIME_MAX() {
+            return Err(Error::SlotSearchLimit);
+        }
+
+        if begin < crate::config::CONFIG_SLOT_LIST_DATE_MIN() || end > crate::config::CONFIG_SLOT_LIST_DATE_MAX() {
+            return Err(Error::SlotSearchLimit);
+        }
+    }
+
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT s.slot_id, s.slot_key, s.title, l.location_id, l.location_key, l.title AS location_title, s.begin, s.end, s.status, s.public, s.scrutable, s.note
@@ -68,14 +81,6 @@ pub fn list_slots(
         AND (:owner_id IS NULL OR :owner_id = o.user_id)
         GROUP BY s.slot_id",
     )?;
-
-    if begin.is_none() || begin.unwrap() < crate::config::CONFIG_SLOT_DATE_MIN() {
-        begin = Some(crate::config::CONFIG_SLOT_DATE_MIN());
-    }
-
-    if end.is_none() || end.unwrap() > crate::config::CONFIG_SLOT_DATE_MAX() {
-        end = Some(crate::config::CONFIG_SLOT_DATE_MAX());
-    }
 
     let params = params! {
         "frame_start" => &begin,

@@ -7,6 +7,7 @@ use crate::session::UserSession;
 /*
  * ROUTES
  */
+
 #[rocket::get("/regular/slot_list?<begin>&<end>")]
 pub fn slot_list(_session: UserSession, begin: WebDateTime, end: WebDateTime) -> Result<Json<Vec<Slot>>, Error> {
     let slots = crate::db_slot::list_slots(

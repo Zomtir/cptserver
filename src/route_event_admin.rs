@@ -4,34 +4,26 @@ use crate::common::{Slot, SlotStatus, WebDateTime};
 use crate::error::Error;
 use crate::session::UserSession;
 
-#[rocket::get("/admin/event_list?<begin>&<end>&<status>&<location_id>&<owner_id>")]
+#[rocket::get("/admin/event_list?<begin>&<end>&<status>&<location_id>&<course_true>&<owner_id>")]
 pub fn event_list(
     session: UserSession,
     begin: WebDateTime,
     end: WebDateTime,
     status: Option<SlotStatus>,
     location_id: Option<i64>,
+    course_true: Option<bool>,
     owner_id: Option<i64>,
 ) -> Result<Json<Vec<Slot>>, Error> {
     if !session.right.admin_event {
         return Err(Error::RightEventMissing);
     };
 
-    let frame_start = begin.to_naive();
-    let frame_stop = end.to_naive();
-
-    let window = frame_stop.signed_duration_since(frame_start);
-
-    if window < crate::config::CONFIG_SLOT_LIST_TIME_MIN() || window > crate::config::CONFIG_SLOT_LIST_TIME_MAX() {
-        return Err(Error::SlotWindowInvalid);
-    }
-
     let slots = crate::db_slot::list_slots(
-        Some(frame_start),
-        Some(frame_stop),
+        Some(begin.to_naive()),
+        Some(end.to_naive()),
         status,
         location_id,
-        Some(false),
+        course_true,
         None,
         owner_id,
     )?;
