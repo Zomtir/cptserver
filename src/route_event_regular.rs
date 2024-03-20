@@ -7,20 +7,21 @@ use rocket::serde::json::Json;
  * ROUTES
  */
 
-#[rocket::get("/regular/event_list?<begin>&<end>&<status>&<location_id>")]
+#[rocket::get("/regular/event_list?<begin>&<end>&<status>&<location_id>&<course_true>")]
 pub fn event_list(
     session: UserSession,
     begin: WebDateTime,
     end: WebDateTime,
-    status: Option<SlotStatus>,
     location_id: Option<i64>,
+    status: Option<SlotStatus>,
+    course_true: Option<bool>,
 ) -> Result<Json<Vec<Slot>>, Error> {
     let slots = crate::db_slot::list_slots(
         Some(begin.to_naive()),
         Some(end.to_naive()),
         status,
         location_id,
-        Some(false),
+        course_true,
         None,
         Some(session.user.id),
     )?;
