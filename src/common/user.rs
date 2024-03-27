@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 #[allow(non_snake_case)]
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct User {
-    pub id: i64,
+    pub id: u64,
     pub key: Option<String>,
     pub enabled: Option<bool>,
     pub active: Option<bool>,
@@ -24,7 +24,7 @@ pub struct User {
     pub birthlocation: Option<String>,
     pub nationality: Option<String>,
     pub gender: Option<String>,
-    pub federationnumber: Option<i64>,
+    pub federationnumber: Option<u64>,
     pub federationpermissionsolo: Option<chrono::NaiveDate>,
     pub federationpermissionteam: Option<chrono::NaiveDate>,
     pub federationresidency: Option<chrono::NaiveDate>,
@@ -34,7 +34,7 @@ pub struct User {
 }
 
 impl User {
-    pub fn from_info(id: i64, key: String, firstname: String, lastname: String, nickname: Option<String>) -> User {
+    pub fn from_info(id: u64, key: String, firstname: String, lastname: String, nickname: Option<String>) -> User {
         User {
             id,
             key: Some(key),

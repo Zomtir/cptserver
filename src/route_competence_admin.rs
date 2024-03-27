@@ -7,8 +7,8 @@ use crate::session::UserSession;
 #[rocket::get("/admin/competence_list?<user_id>&<skill_id>&<min>&<max>")]
 pub fn competence_list(
     session: UserSession,
-    user_id: Option<i64>,
-    skill_id: Option<i64>,
+    user_id: Option<u64>,
+    skill_id: Option<u64>,
     min: Option<i16>,
     max: Option<i16>,
 ) -> Result<Json<Vec<Competence>>, Error> {
@@ -35,7 +35,7 @@ pub fn competence_create(session: UserSession, competence: Json<Competence>) -> 
     format = "application/json",
     data = "<competence>"
 )]
-pub fn competence_edit(session: UserSession, competence_id: i64, competence: Json<Competence>) -> Result<(), Error> {
+pub fn competence_edit(session: UserSession, competence_id: u64, competence: Json<Competence>) -> Result<(), Error> {
     if !session.right.admin_competence {
         return Err(Error::RightCompetenceMissing);
     };
@@ -45,7 +45,7 @@ pub fn competence_edit(session: UserSession, competence_id: i64, competence: Jso
 }
 
 #[rocket::head("/admin/competence_delete?<competence_id>")]
-pub fn competence_delete(session: UserSession, competence_id: i64) -> Result<(), Error> {
+pub fn competence_delete(session: UserSession, competence_id: u64) -> Result<(), Error> {
     if !session.right.admin_competence {
         return Err(Error::RightCompetenceMissing);
     };

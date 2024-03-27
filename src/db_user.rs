@@ -28,7 +28,7 @@ pub fn list_user(active: Option<bool>) -> Result<Vec<User>, Error> {
     Ok(conn.exec_map(&stmt.unwrap(), &params, &map)?)
 }
 
-pub fn get_user_detailed(user_id: i64) -> Result<User, Error> {
+pub fn get_user_detailed(user_id: u64) -> Result<User, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
@@ -95,7 +95,7 @@ pub fn get_user_detailed(user_id: i64) -> Result<User, Error> {
     Ok(user)
 }
 
-pub fn create_user(user: &mut User) -> Result<i64, Error> {
+pub fn create_user(user: &mut User) -> Result<u64, Error> {
     user.key = crate::common::validate_user_key(&user.key)?;
     user.email = crate::common::validate_email(&user.email)?;
 
@@ -141,7 +141,7 @@ pub fn create_user(user: &mut User) -> Result<i64, Error> {
 
     conn.exec_drop(&stmt, &params)?;
 
-    Ok(conn.last_insert_id() as i64)
+    Ok(conn.last_insert_id() as u64)
 }
 
 pub fn is_user_created(user_key: &str) -> Result<bool, Error> {
@@ -153,7 +153,7 @@ pub fn is_user_created(user_key: &str) -> Result<bool, Error> {
     Ok(count.unwrap() == 1)
 }
 
-pub fn edit_user(user_id: i64, user: &mut User) -> Result<(), Error> {
+pub fn edit_user(user_id: u64, user: &mut User) -> Result<(), Error> {
     user.key = crate::common::validate_user_key(&user.key)?;
 
     if user.key.is_none() {
@@ -218,7 +218,7 @@ pub fn edit_user(user_id: i64, user: &mut User) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn edit_user_password(user_id: i64, password: &str, salt: &str) -> Result<(), Error> {
+pub fn edit_user_password(user_id: u64, password: &str, salt: &str) -> Result<(), Error> {
     let bpassword: Vec<u8> = match crate::common::decode_hash256(password) {
         Some(bpassword) => bpassword,
         None => return Err(Error::UserPasswordInvalid),
@@ -245,7 +245,7 @@ pub fn edit_user_password(user_id: i64, password: &str, salt: &str) -> Result<()
     Ok(())
 }
 
-pub fn delete_user(user_id: i64) -> Result<(), Error> {
+pub fn delete_user(user_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE u FROM users u WHERE u.user_id = :user_id")?;
     let params = params! {

@@ -32,12 +32,12 @@ pub fn slot_participant_list(session: SlotSession) -> Result<Json<Vec<User>>, Er
 }
 
 #[rocket::head("/service/slot_participant_add?<user_id>")]
-pub fn slot_participant_add(user_id: i64, session: SlotSession) -> Result<(), Error> {
+pub fn slot_participant_add(user_id: u64, session: SlotSession) -> Result<(), Error> {
     crate::db_slot::slot_participant_add(session.slot_id, user_id)
 }
 
 #[rocket::head("/service/slot_participant_remove?<user_id>")]
-pub fn slot_participant_remove(user_id: i64, session: SlotSession) -> Result<(), Error> {
+pub fn slot_participant_remove(user_id: u64, session: SlotSession) -> Result<(), Error> {
     crate::db_slot::slot_participant_remove(session.slot_id, user_id)
 }
 
@@ -54,11 +54,11 @@ pub fn slot_owner_list(session: SlotSession) -> Result<Json<Vec<User>>, Error> {
 }
 
 #[rocket::head("/service/slot_owner_add?<user_id>")]
-pub fn slot_owner_add(user_id: i64, session: SlotSession) -> Result<(), Error> {
+pub fn slot_owner_add(user_id: u64, session: SlotSession) -> Result<(), Error> {
     crate::db_slot::slot_owner_add(session.slot_id, user_id)
 }
 
 #[rocket::head("/service/slot_owner_remove?<user_id>")]
-pub fn slot_owner_remove(user_id: i64, session: SlotSession) -> Result<(), Error> {
+pub fn slot_owner_remove(user_id: u64, session: SlotSession) -> Result<(), Error> {
     crate::db_slot::slot_owner_remove(session.slot_id, user_id)
 }

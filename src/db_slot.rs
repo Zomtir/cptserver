@@ -9,7 +9,7 @@ use crate::error::Error;
  * METHODS
  */
 
-pub fn slot_info(slot_id: i64) -> Result<Slot, Error> {
+pub fn slot_info(slot_id: u64) -> Result<Slot, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title AS location_title, s.begin, s.end, s.status, s.public, s.scrutable, s.note, s.course_id
@@ -49,10 +49,10 @@ pub fn list_slots(
     begin: Option<chrono::NaiveDateTime>,
     end: Option<chrono::NaiveDateTime>,
     status: Option<SlotStatus>,
-    location_id: Option<i64>,
+    location_id: Option<u64>,
     course_true: Option<bool>,
-    course_id: Option<i64>,
-    owner_id: Option<i64>,
+    course_id: Option<u64>,
+    owner_id: Option<u64>,
 ) -> Result<Vec<Slot>, Error> {
     // If there is a search window, make sure it is somewhat correct
     if let (Some(begin), Some(end)) = (begin, end) {
@@ -120,7 +120,7 @@ pub fn list_slots(
     Ok(slots)
 }
 
-pub fn slot_create(slot: &Slot, status: &str, course_id: Option<i64>) -> Result<i64, Error> {
+pub fn slot_create(slot: &Slot, status: &str, course_id: Option<u64>) -> Result<u64, Error> {
     if slot.key.len() < 3 || slot.key.len() > 12 {
         return Err(Error::SlotKeyInvalid);
     }
@@ -147,10 +147,10 @@ pub fn slot_create(slot: &Slot, status: &str, course_id: Option<i64>) -> Result<
 
     conn.exec_drop(&stmt, &params)?;
 
-    Ok(conn.last_insert_id() as i64)
+    Ok(conn.last_insert_id() as u64)
 }
 
-pub fn edit_slot(slot_id: i64, slot: &Slot) -> Result<(), Error> {
+pub fn edit_slot(slot_id: u64, slot: &Slot) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE slots
@@ -182,7 +182,7 @@ pub fn edit_slot(slot_id: i64, slot: &Slot) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn edit_slot_status(slot_id: i64, status_required: Option<&str>, status_update: &str) -> Result<(), Error> {
+pub fn edit_slot_status(slot_id: u64, status_required: Option<&str>, status_update: &str) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE slots SET
@@ -200,7 +200,7 @@ pub fn edit_slot_status(slot_id: i64, status_required: Option<&str>, status_upda
     Ok(())
 }
 
-pub fn edit_slot_password(slot_id: i64, password: String) -> Result<(), Error> {
+pub fn edit_slot_password(slot_id: u64, password: String) -> Result<(), Error> {
     let password = crate::common::validate_clear_password(password)?;
 
     let mut conn: PooledConn = get_pool_conn();
@@ -219,7 +219,7 @@ pub fn edit_slot_password(slot_id: i64, password: String) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn slot_note_edit(slot_id: i64, note: &String) -> Result<(), Error> {
+pub fn slot_note_edit(slot_id: u64, note: &String) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE slots
@@ -236,7 +236,7 @@ pub fn slot_note_edit(slot_id: i64, note: &String) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn slot_delete(slot_id: i64) -> Result<(), Error> {
+pub fn slot_delete(slot_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "DELETE s
@@ -271,7 +271,7 @@ pub fn is_slot_free(slot: &Slot) -> Result<bool, Error> {
         "end" => &slot.end,
     };
 
-    let count = conn.exec_first::<i64, _, _>(&stmt, &params)?;
+    let count = conn.exec_first::<u64, _, _>(&stmt, &params)?;
     match count {
         None => Err(Error::DatabaseError),
         Some(count) => Ok(count == 0),
@@ -280,7 +280,7 @@ pub fn is_slot_free(slot: &Slot) -> Result<bool, Error> {
 
 /* EVENT RELATED */
 
-pub fn slot_owner_pool(slot_id: i64) -> Result<Vec<User>, Error> {
+pub fn slot_owner_pool(slot_id: u64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(
@@ -305,7 +305,7 @@ pub fn slot_owner_pool(slot_id: i64) -> Result<Vec<User>, Error> {
     Ok(users)
 }
 
-pub fn slot_owner_list(slot_id: i64) -> Result<Vec<User>, Error> {
+pub fn slot_owner_list(slot_id: u64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
@@ -324,7 +324,7 @@ pub fn slot_owner_list(slot_id: i64) -> Result<Vec<User>, Error> {
     Ok(users)
 }
 
-pub fn slot_owner_add(slot_id: i64, user_id: i64) -> Result<(), Error> {
+pub fn slot_owner_add(slot_id: u64, user_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(
@@ -340,7 +340,7 @@ pub fn slot_owner_add(slot_id: i64, user_id: i64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn slot_owner_remove(slot_id: i64, user_id: i64) -> Result<(), Error> {
+pub fn slot_owner_remove(slot_id: u64, user_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "DELETE FROM slot_owners
@@ -356,7 +356,7 @@ pub fn slot_owner_remove(slot_id: i64, user_id: i64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn slot_owner_true(slot_id: i64, user_id: i64) -> Result<bool, Error> {
+pub fn slot_owner_true(slot_id: u64, user_id: u64) -> Result<bool, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)
@@ -368,7 +368,7 @@ pub fn slot_owner_true(slot_id: i64, user_id: i64) -> Result<bool, Error> {
         "user_id" => user_id,
     };
 
-    match conn.exec_first::<i64, _, _>(&stmt, &params)? {
+    match conn.exec_first::<u64, _, _>(&stmt, &params)? {
         None => Ok(false),
         Some(count) => Ok(count == 1),
     }
@@ -376,7 +376,7 @@ pub fn slot_owner_true(slot_id: i64, user_id: i64) -> Result<bool, Error> {
 
 /* COURSE RELATED */
 
-pub fn is_slot_moderator(slot_id: i64, user_id: i64) -> Result<bool, Error> {
+pub fn slot_moderator_true(slot_id: u64, user_id: u64) -> Result<bool, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)
@@ -396,7 +396,7 @@ pub fn is_slot_moderator(slot_id: i64, user_id: i64) -> Result<bool, Error> {
     }
 }
 
-pub fn edit_slot_in_course(slot_id: i64, course_id: Option<i64>) -> Result<(), Error> {
+pub fn slot_course_edit(slot_id: u64, course_id: Option<u64>) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(
@@ -414,7 +414,7 @@ pub fn edit_slot_in_course(slot_id: i64, course_id: Option<i64>) -> Result<(), E
     Ok(())
 }
 
-pub fn is_slot_in_course(slot_id: i64, course_id: i64) -> Result<bool, Error> {
+pub fn slot_course_true(slot_id: u64, course_id: u64) -> Result<bool, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)
@@ -426,13 +426,13 @@ pub fn is_slot_in_course(slot_id: i64, course_id: i64) -> Result<bool, Error> {
         "course_id" => course_id,
     };
 
-    match conn.exec_first::<i64, _, _>(&stmt, &params)? {
+    match conn.exec_first::<u64, _, _>(&stmt, &params)? {
         None => Ok(false),
         Some(count) => Ok(count == 1),
     }
 }
 
-pub fn slot_course_any(slot_id: i64) -> Result<bool, Error> {
+pub fn slot_course_any(slot_id: u64) -> Result<bool, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)
@@ -443,7 +443,7 @@ pub fn slot_course_any(slot_id: i64) -> Result<bool, Error> {
         "slot_id" => slot_id,
     };
 
-    match conn.exec_first::<i64, _, _>(&stmt, &params)? {
+    match conn.exec_first::<u64, _, _>(&stmt, &params)? {
         None => Ok(false),
         Some(count) => Ok(count == 1),
     }
@@ -451,7 +451,7 @@ pub fn slot_course_any(slot_id: i64) -> Result<bool, Error> {
 
 /* PARTICIPANT RELATED */
 
-pub fn slot_participant_pool(slot_id: i64) -> Result<Vec<User>, Error> {
+pub fn slot_participant_pool(slot_id: u64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     // TODO UNION slot invites, team invites
     // TODO level check threshold if existent
@@ -478,7 +478,7 @@ pub fn slot_participant_pool(slot_id: i64) -> Result<Vec<User>, Error> {
     Ok(users)
 }
 
-pub fn slot_participant_list(slot_id: i64) -> Result<Vec<User>, Error> {
+pub fn slot_participant_list(slot_id: u64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
@@ -497,7 +497,7 @@ pub fn slot_participant_list(slot_id: i64) -> Result<Vec<User>, Error> {
     Ok(users)
 }
 
-pub fn slot_participant_add(slot_id: i64, user_id: i64) -> Result<(), Error> {
+pub fn slot_participant_add(slot_id: u64, user_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO slot_participants (slot_id, user_id)
@@ -512,7 +512,7 @@ pub fn slot_participant_add(slot_id: i64, user_id: i64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn slot_participant_remove(slot_id: i64, user_id: i64) -> Result<(), Error> {
+pub fn slot_participant_remove(slot_id: u64, user_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "DELETE FROM slot_participants

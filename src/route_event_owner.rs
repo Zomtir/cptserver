@@ -13,7 +13,7 @@ pub fn event_list(
     begin: WebDateTime,
     end: WebDateTime,
     status: Option<SlotStatus>,
-    location_id: Option<i64>,
+    location_id: Option<u64>,
 ) -> Result<Json<Vec<Slot>>, Error> {
     let slots = crate::db_slot::list_slots(
         Some(begin.to_naive()),
@@ -28,7 +28,7 @@ pub fn event_list(
 }
 
 #[rocket::get("/owner/event_info?<slot_id>")]
-pub fn event_info(session: UserSession, slot_id: i64) -> Result<Json<Slot>, Error> {
+pub fn event_info(session: UserSession, slot_id: u64) -> Result<Json<Slot>, Error> {
     match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
         false => return Err(Error::SlotOwnerPermission),
         true => (),
@@ -40,7 +40,7 @@ pub fn event_info(session: UserSession, slot_id: i64) -> Result<Json<Slot>, Erro
 // TODO, allow inviting member for draft
 // TODO, allow inviting groups for draft
 #[rocket::post("/owner/event_edit?<slot_id>", format = "application/json", data = "<slot>")]
-pub fn event_edit(session: UserSession, slot_id: i64, mut slot: Json<Slot>) -> Result<(), Error> {
+pub fn event_edit(session: UserSession, slot_id: u64, mut slot: Json<Slot>) -> Result<(), Error> {
     match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
         false => return Err(Error::SlotOwnerPermission),
         true => (),
@@ -60,7 +60,7 @@ pub fn event_edit(session: UserSession, slot_id: i64, mut slot: Json<Slot>) -> R
 }
 
 #[rocket::post("/owner/event_edit_password?<slot_id>", format = "text/plain", data = "<password>")]
-pub fn event_edit_password(session: UserSession, slot_id: i64, password: String) -> Result<(), Error> {
+pub fn event_edit_password(session: UserSession, slot_id: u64, password: String) -> Result<(), Error> {
     match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
         false => return Err(Error::SlotOwnerPermission),
         true => (),
@@ -71,7 +71,7 @@ pub fn event_edit_password(session: UserSession, slot_id: i64, password: String)
 }
 
 #[rocket::head("/owner/event_submit?<slot_id>")]
-pub fn event_submit(session: UserSession, slot_id: i64) -> Result<(), Error> {
+pub fn event_submit(session: UserSession, slot_id: u64) -> Result<(), Error> {
     match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
         false => return Err(Error::SlotOwnerPermission),
         true => (),
@@ -99,7 +99,7 @@ pub fn event_submit(session: UserSession, slot_id: i64) -> Result<(), Error> {
 }
 
 #[rocket::head("/owner/event_withdraw?<slot_id>")]
-pub fn event_withdraw(session: UserSession, slot_id: i64) -> Result<(), Error> {
+pub fn event_withdraw(session: UserSession, slot_id: u64) -> Result<(), Error> {
     match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
         false => return Err(Error::SlotOwnerPermission),
         true => (),
@@ -110,7 +110,7 @@ pub fn event_withdraw(session: UserSession, slot_id: i64) -> Result<(), Error> {
 }
 
 #[rocket::head("/owner/event_cancel?<slot_id>")]
-pub fn event_cancel(session: UserSession, slot_id: i64) -> Result<(), Error> {
+pub fn event_cancel(session: UserSession, slot_id: u64) -> Result<(), Error> {
     match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
         false => return Err(Error::SlotOwnerPermission),
         true => (),
@@ -121,7 +121,7 @@ pub fn event_cancel(session: UserSession, slot_id: i64) -> Result<(), Error> {
 }
 
 #[rocket::head("/owner/event_recycle?<slot_id>")]
-pub fn event_recycle(session: UserSession, slot_id: i64) -> Result<(), Error> {
+pub fn event_recycle(session: UserSession, slot_id: u64) -> Result<(), Error> {
     match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
         false => return Err(Error::SlotOwnerPermission),
         true => (),
@@ -132,7 +132,7 @@ pub fn event_recycle(session: UserSession, slot_id: i64) -> Result<(), Error> {
 }
 
 #[rocket::head("/owner/event_delete?<slot_id>")]
-pub fn event_delete(session: UserSession, slot_id: i64) -> Result<(), Error> {
+pub fn event_delete(session: UserSession, slot_id: u64) -> Result<(), Error> {
     match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
         false => return Err(Error::SlotOwnerPermission),
         true => (),
@@ -150,7 +150,7 @@ pub fn event_delete(session: UserSession, slot_id: i64) -> Result<(), Error> {
 }
 
 #[rocket::get("/owner/event_owner_list?<slot_id>")]
-pub fn event_owner_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<User>>, Error> {
+pub fn event_owner_list(session: UserSession, slot_id: u64) -> Result<Json<Vec<User>>, Error> {
     match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
         false => return Err(Error::SlotOwnerPermission),
         true => (),
@@ -161,7 +161,7 @@ pub fn event_owner_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<U
 }
 
 #[rocket::head("/owner/event_owner_add?<slot_id>&<user_id>")]
-pub fn event_owner_add(session: UserSession, slot_id: i64, user_id: i64) -> Result<(), Error> {
+pub fn event_owner_add(session: UserSession, slot_id: u64, user_id: u64) -> Result<(), Error> {
     match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
         false => return Err(Error::SlotOwnerPermission),
         true => (),
@@ -172,7 +172,7 @@ pub fn event_owner_add(session: UserSession, slot_id: i64, user_id: i64) -> Resu
 }
 
 #[rocket::head("/owner/event_owner_remove?<slot_id>&<user_id>")]
-pub fn event_owner_remove(session: UserSession, slot_id: i64, user_id: i64) -> Result<(), Error> {
+pub fn event_owner_remove(session: UserSession, slot_id: u64, user_id: u64) -> Result<(), Error> {
     match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
         false => return Err(Error::SlotOwnerPermission),
         true => (),
@@ -183,7 +183,7 @@ pub fn event_owner_remove(session: UserSession, slot_id: i64, user_id: i64) -> R
 }
 
 #[rocket::get("/owner/event_participant_list?<slot_id>")]
-pub fn event_participant_list(session: UserSession, slot_id: i64) -> Result<Json<Vec<User>>, Error> {
+pub fn event_participant_list(session: UserSession, slot_id: u64) -> Result<Json<Vec<User>>, Error> {
     match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
         false => return Err(Error::SlotOwnerPermission),
         true => (),
@@ -194,7 +194,7 @@ pub fn event_participant_list(session: UserSession, slot_id: i64) -> Result<Json
 }
 
 #[rocket::head("/owner/event_participant_add?<slot_id>&<user_id>")]
-pub fn event_participant_add(session: UserSession, slot_id: i64, user_id: i64) -> Result<(), Error> {
+pub fn event_participant_add(session: UserSession, slot_id: u64, user_id: u64) -> Result<(), Error> {
     match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
         false => return Err(Error::SlotOwnerPermission),
         true => (),
@@ -205,7 +205,7 @@ pub fn event_participant_add(session: UserSession, slot_id: i64, user_id: i64) -
 }
 
 #[rocket::head("/owner/event_participant_remove?<slot_id>&<user_id>")]
-pub fn event_participant_remove(session: UserSession, slot_id: i64, user_id: i64) -> Result<(), Error> {
+pub fn event_participant_remove(session: UserSession, slot_id: u64, user_id: u64) -> Result<(), Error> {
     match crate::db_slot::slot_owner_true(slot_id, session.user.id)? {
         false => return Err(Error::SlotOwnerPermission),
         true => (),

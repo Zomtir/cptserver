@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct Slot {
-    pub id: i64,
+    pub id: u64,
     pub key: String,
     pub pwd: Option<String>,
     pub title: String,

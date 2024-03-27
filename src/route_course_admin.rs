@@ -1,6 +1,6 @@
 use rocket::serde::json::Json;
 
-use crate::common::{Course, Team, User};
+use crate::common::{Course, Team, User, Slot};
 use crate::error::Error;
 use crate::session::UserSession;
 use chrono::NaiveDateTime;
@@ -8,7 +8,7 @@ use chrono::NaiveDateTime;
 #[rocket::get("/admin/course_list?<mod_id>&<active>&<public>")]
 pub fn course_list(
     session: UserSession,
-    mod_id: Option<i64>,
+    mod_id: Option<u64>,
     active: Option<bool>,
     public: Option<bool>,
 ) -> Result<Json<Vec<Course>>, Error> {
@@ -31,7 +31,7 @@ pub fn course_create(session: UserSession, course: Json<Course>) -> Result<Strin
 }
 
 #[rocket::post("/admin/course_edit?<course_id>", format = "application/json", data = "<course>")]
-pub fn course_edit(session: UserSession, course_id: i64, course: Json<Course>) -> Result<(), Error> {
+pub fn course_edit(session: UserSession, course_id: u64, course: Json<Course>) -> Result<(), Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
@@ -41,7 +41,7 @@ pub fn course_edit(session: UserSession, course_id: i64, course: Json<Course>) -
 }
 
 #[rocket::head("/admin/course_delete?<course_id>")]
-pub fn course_delete(session: UserSession, course_id: i64) -> Result<(), Error> {
+pub fn course_delete(session: UserSession, course_id: u64) -> Result<(), Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
@@ -50,8 +50,18 @@ pub fn course_delete(session: UserSession, course_id: i64) -> Result<(), Error> 
     Ok(())
 }
 
+#[rocket::get("/admin/course_event_list?<course_id>")]
+pub fn course_event_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Slot>>, Error> {
+    if !session.right.admin_courses {
+        return Err(Error::RightCourseMissing);
+    };
+
+    let slots = crate::db_slot::list_slots(None, None, None, None, Some(true), Some(course_id), None)?;
+    Ok(Json(slots))
+}
+
 #[rocket::get("/admin/course_moderator_list?<course_id>")]
-pub fn course_moderator_list(session: UserSession, course_id: i64) -> Result<Json<Vec<User>>, Error> {
+pub fn course_moderator_list(session: UserSession, course_id: u64) -> Result<Json<Vec<User>>, Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
@@ -61,7 +71,7 @@ pub fn course_moderator_list(session: UserSession, course_id: i64) -> Result<Jso
 }
 
 #[rocket::head("/admin/course_moderator_add?<course_id>&<user_id>")]
-pub fn course_moderator_add(session: UserSession, course_id: i64, user_id: i64) -> Result<(), Error> {
+pub fn course_moderator_add(session: UserSession, course_id: u64, user_id: u64) -> Result<(), Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
@@ -73,7 +83,7 @@ pub fn course_moderator_add(session: UserSession, course_id: i64, user_id: i64) 
 }
 
 #[rocket::head("/admin/course_moderator_remove?<course_id>&<user_id>")]
-pub fn course_moderator_remove(session: UserSession, course_id: i64, user_id: i64) -> Result<(), Error> {
+pub fn course_moderator_remove(session: UserSession, course_id: u64, user_id: u64) -> Result<(), Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
@@ -83,7 +93,7 @@ pub fn course_moderator_remove(session: UserSession, course_id: i64, user_id: i6
 }
 
 #[rocket::get("/admin/course_participant_team_list?<course_id>")]
-pub fn course_participant_team_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Team>>, Error> {
+pub fn course_participant_team_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Team>>, Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
@@ -93,7 +103,7 @@ pub fn course_participant_team_list(session: UserSession, course_id: i64) -> Res
 }
 
 #[rocket::head("/admin/course_participant_team_add?<course_id>&<team_id>")]
-pub fn course_participant_team_add(session: UserSession, course_id: i64, team_id: i64) -> Result<(), Error> {
+pub fn course_participant_team_add(session: UserSession, course_id: u64, team_id: u64) -> Result<(), Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
@@ -103,7 +113,7 @@ pub fn course_participant_team_add(session: UserSession, course_id: i64, team_id
 }
 
 #[rocket::head("/admin/course_participant_team_remove?<course_id>&<team_id>")]
-pub fn course_participant_team_remove(session: UserSession, course_id: i64, team_id: i64) -> Result<(), Error> {
+pub fn course_participant_team_remove(session: UserSession, course_id: u64, team_id: u64) -> Result<(), Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
@@ -113,7 +123,7 @@ pub fn course_participant_team_remove(session: UserSession, course_id: i64, team
 }
 
 #[rocket::get("/admin/course_owner_team_list?<course_id>")]
-pub fn course_owner_team_list(session: UserSession, course_id: i64) -> Result<Json<Vec<Team>>, Error> {
+pub fn course_owner_team_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Team>>, Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
@@ -123,7 +133,7 @@ pub fn course_owner_team_list(session: UserSession, course_id: i64) -> Result<Js
 }
 
 #[rocket::head("/admin/course_owner_team_add?<course_id>&<team_id>")]
-pub fn course_owner_team_add(session: UserSession, course_id: i64, team_id: i64) -> Result<(), Error> {
+pub fn course_owner_team_add(session: UserSession, course_id: u64, team_id: u64) -> Result<(), Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
@@ -133,7 +143,7 @@ pub fn course_owner_team_add(session: UserSession, course_id: i64, team_id: i64)
 }
 
 #[rocket::head("/admin/course_owner_team_remove?<course_id>&<team_id>")]
-pub fn course_owner_team_remove(session: UserSession, course_id: i64, team_id: i64) -> Result<(), Error> {
+pub fn course_owner_team_remove(session: UserSession, course_id: u64, team_id: u64) -> Result<(), Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
@@ -145,8 +155,8 @@ pub fn course_owner_team_remove(session: UserSession, course_id: i64, team_id: i
 #[rocket::get("/admin/course_statistic_class?<course_id>")]
 pub fn course_statistic_class(
     session: UserSession,
-    course_id: i64,
-) -> Result<Json<Vec<(i64, String, NaiveDateTime, NaiveDateTime, i64, i64)>>, Error> {
+    course_id: u64,
+) -> Result<Json<Vec<(u64, String, NaiveDateTime, NaiveDateTime, u64, u64)>>, Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
@@ -158,8 +168,8 @@ pub fn course_statistic_class(
 #[rocket::get("/admin/course_statistic_participant?<course_id>")]
 pub fn course_statistic_participant(
     session: UserSession,
-    course_id: i64,
-) -> Result<Json<Vec<(i64, String, String, i64)>>, Error> {
+    course_id: u64,
+) -> Result<Json<Vec<(u64, String, String, u64)>>, Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
@@ -171,9 +181,9 @@ pub fn course_statistic_participant(
 #[rocket::get("/admin/course_statistic_participant1?<course_id>&<participant_id>")]
 pub fn course_statistic_participant1(
     session: UserSession,
-    course_id: i64,
-    participant_id: i64,
-) -> Result<Json<Vec<(i64, String, NaiveDateTime, NaiveDateTime)>>, Error> {
+    course_id: u64,
+    participant_id: u64,
+) -> Result<Json<Vec<(u64, String, NaiveDateTime, NaiveDateTime)>>, Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
@@ -185,8 +195,8 @@ pub fn course_statistic_participant1(
 #[rocket::get("/admin/course_statistic_owner?<course_id>")]
 pub fn course_statistic_owner(
     session: UserSession,
-    course_id: i64,
-) -> Result<Json<Vec<(i64, String, String, i64)>>, Error> {
+    course_id: u64,
+) -> Result<Json<Vec<(u64, String, String, u64)>>, Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
@@ -198,9 +208,9 @@ pub fn course_statistic_owner(
 #[rocket::get("/admin/course_statistic_owner1?<course_id>&<owner_id>")]
 pub fn course_statistic_owner1(
     session: UserSession,
-    course_id: i64,
-    owner_id: i64,
-) -> Result<Json<Vec<(i64, String, NaiveDateTime, NaiveDateTime)>>, Error> {
+    course_id: u64,
+    owner_id: u64,
+) -> Result<Json<Vec<(u64, String, NaiveDateTime, NaiveDateTime)>>, Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };

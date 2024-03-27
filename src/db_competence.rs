@@ -6,8 +6,8 @@ use crate::db::get_pool_conn;
 use crate::error::Error;
 
 pub fn competence_list(
-    user_id: Option<i64>,
-    skill_id: Option<i64>,
+    user_id: Option<u64>,
+    skill_id: Option<u64>,
     rank_min: i16,
     rank_max: i16,
 ) -> Result<Vec<Competence>, Error> {
@@ -87,7 +87,7 @@ pub fn competence_create(competence: &Competence) -> Result<u32, Error> {
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn competence_edit(competence_id: i64, competence: &Competence) -> Result<(), Error> {
+pub fn competence_edit(competence_id: u64, competence: &Competence) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE user_competences
@@ -115,7 +115,7 @@ pub fn competence_edit(competence_id: i64, competence: &Competence) -> Result<()
     }
 }
 
-pub fn competence_delete(competence_id: i64) -> Option<()> {
+pub fn competence_delete(competence_id: u64) -> Option<()> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE uc FROM user_competences uc WHERE uc.competence_id = :competence_id");
 
@@ -129,7 +129,7 @@ pub fn competence_delete(competence_id: i64) -> Option<()> {
     }
 }
 
-pub fn competence_summary(user_id: i64) -> Result<Vec<(Skill, i16)>, Error> {
+pub fn competence_summary(user_id: u64) -> Result<Vec<(Skill, i16)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT s.skill_id, s.skill_key, s.title, MAX(uc.rank)
