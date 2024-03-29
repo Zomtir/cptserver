@@ -33,8 +33,8 @@ mod route_course_moderator;
 mod route_course_regular;
 
 mod route_event_admin;
-mod route_event_owner;
 mod route_event_moderator;
+mod route_event_owner;
 mod route_event_regular;
 mod route_event_service;
 
@@ -45,7 +45,6 @@ mod route_team_admin;
 mod route_team_regular;
 
 mod route_term_admin;
-
 
 #[rocket::get("/")]
 fn index() -> &'static str {

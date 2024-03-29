@@ -2,9 +2,9 @@
 mod clock;
 mod club;
 mod course;
+mod event;
 mod math;
 mod skill;
-mod event;
 mod team;
 mod user;
 
@@ -12,8 +12,8 @@ mod user;
 pub use clock::*;
 pub use club::*;
 pub use course::*;
+pub use event::*;
 pub use math::*;
 pub use skill::*;
-pub use event::*;
 pub use team::*;
 pub use user::*;

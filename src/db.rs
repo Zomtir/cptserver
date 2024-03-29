@@ -34,7 +34,7 @@ pub fn get_pool_conn() -> PooledConn {
 }
 
 /// Helper function to debug SQL queries
-/// 
+///
 /// ```
 /// let query = "INSERT INTO events (event_key, pwd, title, location_id, begin, end, status, public, scrutable, note, course_id)
 /// SELECT :event_key, :pwd, :title, :location_id, :begin, :end, :status, :public, :scrutable, :note, :course_id;";

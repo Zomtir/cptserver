@@ -1,6 +1,6 @@
 use rocket::serde::json::Json;
 
-use crate::common::{Event, EventStatus, WebDateTime, User};
+use crate::common::{Event, EventStatus, User, WebDateTime};
 use crate::error::Error;
 use crate::session::UserSession;
 

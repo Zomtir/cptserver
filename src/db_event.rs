@@ -1,7 +1,7 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Location, Event, EventStatus, User};
+use crate::common::{Event, EventStatus, Location, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
@@ -278,7 +278,6 @@ pub fn event_free_true(event: &Event) -> Result<bool, Error> {
     }
 }
 
-
 /* OWNER RELATED */
 
 pub fn event_owner_pool(event_id: u64) -> Result<Vec<User>, Error> {
@@ -374,7 +373,6 @@ pub fn event_owner_true(event_id: u64, user_id: u64) -> Result<bool, Error> {
         Some(count) => Ok(count == 1),
     }
 }
-
 
 /* PARTICIPANT RELATED */
 

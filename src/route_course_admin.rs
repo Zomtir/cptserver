@@ -1,6 +1,6 @@
 use rocket::serde::json::Json;
 
-use crate::common::{Course, Team, User, Event};
+use crate::common::{Course, Event, Team, User};
 use crate::error::Error;
 use crate::session::UserSession;
 use chrono::NaiveDateTime;
