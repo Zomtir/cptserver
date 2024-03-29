@@ -34,19 +34,9 @@ pub fn location_list() -> Result<Json<Vec<Location>>, Status> {
 }
 
 #[rocket::get("/skill_list")]
-pub fn skill_list() -> Result<Json<Vec<Skill>>, Status> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT skill_id, skill_key, title FROM skills").unwrap();
-    let map = |(skill_id, skill_key, title): (u16, String, String)| Skill {
-        id: skill_id,
-        key: skill_key,
-        title,
-    };
-
-    match conn.exec_map(&stmt, params::Params::Empty, &map) {
-        Err(..) => Err(Status::Conflict),
-        Ok(skills) => Ok(Json(skills)),
-    }
+pub fn skill_list() -> Result<Json<Vec<Skill>>, Error> {
+    let skills = crate::db_skill::skill_list()?;
+    Ok(Json(skills))
 }
 
 #[rocket::get("/anon/club_list")]

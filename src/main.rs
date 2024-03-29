@@ -12,6 +12,7 @@ mod db_club;
 mod db_competence;
 mod db_course;
 mod db_event;
+mod db_skill;
 mod db_team;
 mod db_term;
 mod db_user;
@@ -40,6 +41,8 @@ mod route_event_service;
 
 mod route_competence_admin;
 mod route_competence_regular;
+
+mod route_skill_admin;
 
 mod route_team_admin;
 mod route_team_regular;
@@ -196,6 +199,10 @@ fn rocket() -> _ {
                 route_event_owner::event_participant_list,
                 route_event_owner::event_participant_add,
                 route_event_owner::event_participant_remove,
+                route_skill_admin::skill_list,
+                route_skill_admin::skill_create,
+                route_skill_admin::skill_edit,
+                route_skill_admin::skill_delete,
                 route_team_admin::team_list,
                 route_team_admin::team_create,
                 route_team_admin::team_edit,

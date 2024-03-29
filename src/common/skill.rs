@@ -7,6 +7,8 @@ pub struct Skill {
     pub id: u16,
     pub key: String,
     pub title: String,
+    pub min: Option<u8>,
+    pub max: Option<u8>,
 }
 
 pub struct Requirement {

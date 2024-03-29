@@ -47,7 +47,7 @@ pub fn club_edit(club_id: u32, club: &Club) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE clubs SET
             name = :name,
-            description = :description,
+            description = :description
         WHERE club_id = :club_id",
     )?;
 

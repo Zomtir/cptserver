@@ -51,6 +51,8 @@ pub fn competence_list(
                 id: row.take("skill_id").unwrap(),
                 key: row.take("skill_key").unwrap(),
                 title: row.take("skill_title").unwrap(),
+                min: None,
+                max: None,
             },
             rank: row.take("rank").unwrap(),
             date: row.take("date").unwrap(),
@@ -150,6 +152,8 @@ pub fn competence_summary(user_id: u64) -> Result<Vec<(Skill, i16)>, Error> {
                 id: skill_id,
                 key: skill_key,
                 title: skill_title,
+                min: None,
+                max: None,
             },
             maxrank,
         )
