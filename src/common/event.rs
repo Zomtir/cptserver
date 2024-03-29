@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
  */
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
-pub struct Slot {
+pub struct Event {
     pub id: u64,
     pub key: String,
     pub pwd: Option<String>,
@@ -27,7 +27,7 @@ pub struct Slot {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum SlotStatus {
+pub enum EventStatus {
     Draft,
     Pending,
     Occurring,
@@ -35,41 +35,41 @@ pub enum SlotStatus {
     Canceled,
 }
 
-impl SlotStatus {
+impl EventStatus {
     fn from_str(s: &str) -> Option<Self> {
         match s {
-            "DRAFT" => Some(SlotStatus::Draft),
-            "PENDING" => Some(SlotStatus::Pending),
-            "OCCURRING" => Some(SlotStatus::Occurring),
-            "REJECTED" => Some(SlotStatus::Rejected),
-            "CANCELED" => Some(SlotStatus::Canceled),
+            "DRAFT" => Some(EventStatus::Draft),
+            "PENDING" => Some(EventStatus::Pending),
+            "OCCURRING" => Some(EventStatus::Occurring),
+            "REJECTED" => Some(EventStatus::Rejected),
+            "CANCELED" => Some(EventStatus::Canceled),
             _ => None,
         }
     }
 
     fn to_str(&self) -> &str {
         match self {
-            SlotStatus::Draft => "DRAFT",
-            SlotStatus::Pending => "PENDING",
-            SlotStatus::Occurring => "OCCURRING",
-            SlotStatus::Rejected => "REJECTED",
-            SlotStatus::Canceled => "CANCELED",
+            EventStatus::Draft => "DRAFT",
+            EventStatus::Pending => "PENDING",
+            EventStatus::Occurring => "OCCURRING",
+            EventStatus::Rejected => "REJECTED",
+            EventStatus::Canceled => "CANCELED",
         }
     }
 }
 
-impl core::convert::From<SlotStatus> for mysql_common::Value {
-    fn from(s: SlotStatus) -> Self {
+impl core::convert::From<EventStatus> for mysql_common::Value {
+    fn from(s: EventStatus) -> Self {
         mysql_common::Value::Bytes(s.to_str().to_string().into_bytes())
     }
 }
 
 #[rocket::async_trait]
-impl<'r> FromFormField<'r> for SlotStatus {
+impl<'r> FromFormField<'r> for EventStatus {
     fn from_value(field: ValueField<'r>) -> form::Result<'r, Self> {
-        match SlotStatus::from_str(field.value) {
+        match EventStatus::from_str(field.value) {
             None => Err(form::Errors::default()),
-            Some(slot_status) => Ok(slot_status),
+            Some(event_status) => Ok(event_status),
         }
     }
 
@@ -79,9 +79,9 @@ impl<'r> FromFormField<'r> for SlotStatus {
             Ok(string) => string.into_inner(),
         };
 
-        match SlotStatus::from_str(&web_string) {
+        match EventStatus::from_str(&web_string) {
             None => return Err(form::Errors::default()),
-            Some(slot_status) => return Ok(slot_status),
+            Some(event_status) => return Ok(event_status),
         }
     }
 }
@@ -99,25 +99,25 @@ pub struct Location {
 
 pub fn validate_clear_password(password: String) -> Result<String, Error> {
     if password.len() < 6 || password.len() > 50 {
-        return Err(Error::SlotPasswordInvalid);
+        return Err(Error::EventPasswordInvalid);
     };
 
     Ok(password.to_string())
 }
 
-pub fn is_slot_valid(slot: &Slot) -> bool {
-    slot.begin + crate::config::CONFIG_SLOT_WINDOW_MINIMUM() < slot.end
+pub fn is_event_valid(event: &Event) -> bool {
+    event.begin + crate::config::CONFIG_SLOT_WINDOW_MINIMUM() < event.end
 }
 
-pub fn validate_slot_dates(slot: &mut Slot) -> Result<(), Error> {
-    slot.begin = slot.begin.duration_round(crate::config::CONFIG_SLOT_WINDOW_SNAP())?;
+pub fn validate_event_dates(event: &mut Event) -> Result<(), Error> {
+    event.begin = event.begin.duration_round(crate::config::CONFIG_SLOT_WINDOW_SNAP())?;
 
-    slot.end = slot.end.duration_round(crate::config::CONFIG_SLOT_WINDOW_SNAP())?;
+    event.end = event.end.duration_round(crate::config::CONFIG_SLOT_WINDOW_SNAP())?;
 
-    let earliest_end = slot.begin + crate::config::CONFIG_SLOT_WINDOW_MINIMUM();
+    let earliest_end = event.begin + crate::config::CONFIG_SLOT_WINDOW_MINIMUM();
 
-    if earliest_end > slot.end {
-        slot.end = earliest_end;
+    if earliest_end > event.end {
+        event.end = earliest_end;
     }
 
     Ok(())

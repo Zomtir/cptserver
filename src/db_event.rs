@@ -1,7 +1,7 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Location, Slot, SlotStatus, User};
+use crate::common::{Location, Event, EventStatus, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
@@ -9,23 +9,23 @@ use crate::error::Error;
  * METHODS
  */
 
-pub fn slot_info(slot_id: u64) -> Result<Slot, Error> {
+pub fn event_info(event_id: u64) -> Result<Event, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT slot_id, slot_key, s.title, l.location_id, l.location_key, l.title AS location_title, s.begin, s.end, s.status, s.public, s.scrutable, s.note, s.course_id
-        FROM slots s
+        "SELECT event_id, event_key, s.title, l.location_id, l.location_key, l.title AS location_title, s.begin, s.end, s.status, s.public, s.scrutable, s.note, s.course_id
+        FROM events s
         JOIN locations l ON l.location_id = s.location_id
-        WHERE slot_id = :slot_id",
+        WHERE event_id = :event_id",
     )?;
     let params = params! {
-        "slot_id" => slot_id,
+        "event_id" => event_id,
     };
 
-    let mut row: mysql::Row = conn.exec_first(&stmt, &params)?.ok_or(Error::SlotMissing)?;
+    let mut row: mysql::Row = conn.exec_first(&stmt, &params)?.ok_or(Error::EventMissing)?;
 
-    let slot = Slot {
-        id: row.take("slot_id").unwrap(),
-        key: row.take("slot_key").unwrap(),
+    let event = Event {
+        id: row.take("event_id").unwrap(),
+        key: row.take("event_key").unwrap(),
         pwd: None,
         title: row.take("title").unwrap(),
         begin: row.take("begin").unwrap(),
@@ -42,44 +42,44 @@ pub fn slot_info(slot_id: u64) -> Result<Slot, Error> {
         course_id: row.take("course_id").unwrap(),
     };
 
-    Ok(slot)
+    Ok(event)
 }
 
-pub fn list_slots(
+pub fn event_list(
     begin: Option<chrono::NaiveDateTime>,
     end: Option<chrono::NaiveDateTime>,
-    status: Option<SlotStatus>,
+    status: Option<EventStatus>,
     location_id: Option<u64>,
     course_true: Option<bool>,
     course_id: Option<u64>,
     owner_id: Option<u64>,
-) -> Result<Vec<Slot>, Error> {
+) -> Result<Vec<Event>, Error> {
     // If there is a search window, make sure it is somewhat correct
     if let (Some(begin), Some(end)) = (begin, end) {
         let delta = end.signed_duration_since(begin);
 
         if delta < crate::config::CONFIG_SLOT_LIST_TIME_MIN() || delta > crate::config::CONFIG_SLOT_LIST_TIME_MAX() {
-            return Err(Error::SlotSearchLimit);
+            return Err(Error::EventSearchLimit);
         }
 
         if begin < crate::config::CONFIG_SLOT_LIST_DATE_MIN() || end > crate::config::CONFIG_SLOT_LIST_DATE_MAX() {
-            return Err(Error::SlotSearchLimit);
+            return Err(Error::EventSearchLimit);
         }
     }
 
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT s.slot_id, s.slot_key, s.title, l.location_id, l.location_key, l.title AS location_title, s.begin, s.end, s.status, s.public, s.scrutable, s.note
-        FROM slots s
+        "SELECT s.event_id, s.event_key, s.title, l.location_id, l.location_key, l.title AS location_title, s.begin, s.end, s.status, s.public, s.scrutable, s.note
+        FROM events s
         JOIN locations l ON l.location_id = s.location_id
-        LEFT JOIN slot_owners o ON s.slot_id = o.slot_id
+        LEFT JOIN event_owners o ON s.event_id = o.event_id
         WHERE (:frame_start IS NULL OR :frame_start < s.begin)
         AND (:frame_stop IS NULL OR :frame_stop > s.begin)
         AND (:status IS NULL OR :status = s.status)
         AND (:location_id IS NULL OR :location_id = l.location_id)
         AND (:course_true IS NULL OR (:course_true = TRUE AND :course_id = s.course_id) OR (:course_true = FALSE AND s.course_id IS NULL))
         AND (:owner_id IS NULL OR :owner_id = o.user_id)
-        GROUP BY s.slot_id",
+        GROUP BY s.event_id",
     )?;
 
     let params = params! {
@@ -93,12 +93,12 @@ pub fn list_slots(
     };
 
     let rows: Vec<mysql::Row> = conn.exec(&stmt, &params)?;
-    let mut slots: Vec<Slot> = Vec::new();
+    let mut events: Vec<Event> = Vec::new();
 
     for mut row in rows {
-        let item = Slot {
-            id: row.take("slot_id").unwrap(),
-            key: row.take("slot_key").unwrap(),
+        let item = Event {
+            id: row.take("event_id").unwrap(),
+            key: row.take("event_key").unwrap(),
             pwd: None,
             title: row.take("title").unwrap(),
             begin: row.take("begin").unwrap(),
@@ -114,34 +114,34 @@ pub fn list_slots(
             note: row.take("note").unwrap(),
             course_id: None,
         };
-        slots.push(item);
+        events.push(item);
     }
 
-    Ok(slots)
+    Ok(events)
 }
 
-pub fn slot_create(slot: &Slot, status: &str, course_id: Option<u64>) -> Result<u64, Error> {
-    if slot.key.len() < 3 || slot.key.len() > 12 {
-        return Err(Error::SlotKeyInvalid);
+pub fn event_create(event: &Event, status: &str, course_id: Option<u64>) -> Result<u64, Error> {
+    if event.key.len() < 3 || event.key.len() > 12 {
+        return Err(Error::EventKeyInvalid);
     }
 
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "INSERT INTO slots (slot_key, pwd, title, location_id, begin, end, status, public, scrutable, note, course_id)
-        SELECT :slot_key, :pwd, :title, :location_id, :begin, :end, :status, :public, :scrutable, :note, :course_id",
+        "INSERT INTO events (event_key, pwd, title, location_id, begin, end, status, public, scrutable, note, course_id)
+        SELECT :event_key, :pwd, :title, :location_id, :begin, :end, :status, :public, :scrutable, :note, :course_id",
     )?;
 
     let params = params! {
-        "slot_key" => &slot.key,
+        "event_key" => &event.key,
         "pwd" => crate::common::random_string(8),
-        "title" => &slot.title,
-        "location_id" => &slot.location.id,
-        "begin" => &slot.begin,
-        "end" => &slot.end,
+        "title" => &event.title,
+        "location_id" => &event.location.id,
+        "begin" => &event.begin,
+        "end" => &event.end,
         "status" => status,
-        "public" => slot.public,
-        "scrutable" => &slot.scrutable,
-        "note" => &slot.note,
+        "public" => event.public,
+        "scrutable" => &event.scrutable,
+        "note" => &event.note,
         "course_id" => &course_id,
     };
 
@@ -150,12 +150,12 @@ pub fn slot_create(slot: &Slot, status: &str, course_id: Option<u64>) -> Result<
     Ok(conn.last_insert_id() as u64)
 }
 
-pub fn edit_slot(slot_id: u64, slot: &Slot) -> Result<(), Error> {
+pub fn event_edit(event_id: u64, event: &Event) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "UPDATE slots
+        "UPDATE events
         SET
-            slot_key = :slot_key,
+            event_key = :event_key,
             title = :title,
             location_id = :location_id,
             begin = :begin,
@@ -163,35 +163,35 @@ pub fn edit_slot(slot_id: u64, slot: &Slot) -> Result<(), Error> {
             public = :public,
             scrutable = :scrutable,
             note = :note
-        WHERE slot_id = :slot_id",
+        WHERE event_id = :event_id",
     )?;
 
     let params = params! {
-        "slot_id" => &slot_id,
-        "slot_key" => &slot.key,
-        "title" => &slot.title,
-        "location_id" => &slot.location.id,
-        "begin" => &slot.begin,
-        "end" => &slot.end,
-        "public" => &slot.public,
-        "scrutable" => &slot.scrutable,
-        "note" => &slot.note,
+        "event_id" => &event_id,
+        "event_key" => &event.key,
+        "title" => &event.title,
+        "location_id" => &event.location.id,
+        "begin" => &event.begin,
+        "end" => &event.end,
+        "public" => &event.public,
+        "scrutable" => &event.scrutable,
+        "note" => &event.note,
     };
 
     conn.exec_drop(&stmt, &params)?;
     Ok(())
 }
 
-pub fn edit_slot_status(slot_id: u64, status_required: Option<&str>, status_update: &str) -> Result<(), Error> {
+pub fn event_status_edit(event_id: u64, status_required: Option<&str>, status_update: &str) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "UPDATE slots SET
+        "UPDATE events SET
         status = :status_update
-        WHERE slot_id = :slot_id
+        WHERE event_id = :event_id
         AND (:status_required IS NULL OR status = :status_required)",
     )?;
     let params = params! {
-        "slot_id" => slot_id,
+        "event_id" => event_id,
         "status_required" => status_required,
         "status_update" => status_update,
     };
@@ -200,18 +200,18 @@ pub fn edit_slot_status(slot_id: u64, status_required: Option<&str>, status_upda
     Ok(())
 }
 
-pub fn edit_slot_password(slot_id: u64, password: String) -> Result<(), Error> {
+pub fn event_password_edit(event_id: u64, password: String) -> Result<(), Error> {
     let password = crate::common::validate_clear_password(password)?;
 
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(
-        "UPDATE slots SET pwd = :pwd
-        WHERE slot_id = :slot_id",
+        "UPDATE events SET pwd = :pwd
+        WHERE event_id = :event_id",
     )?;
 
     let params = params! {
-        "slot_id" => &slot_id,
+        "event_id" => &event_id,
         "pwd" => &password,
     };
 
@@ -219,16 +219,16 @@ pub fn edit_slot_password(slot_id: u64, password: String) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn slot_note_edit(slot_id: u64, note: &String) -> Result<(), Error> {
+pub fn event_note_edit(event_id: u64, note: &String) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "UPDATE slots
+        "UPDATE events
         SET note = :note
-        WHERE slot_id = :slot_id",
+        WHERE event_id = :event_id",
     )?;
 
     let params = params! {
-        "slot_id" => &slot_id,
+        "event_id" => &event_id,
         "note" => &note,
     };
 
@@ -236,39 +236,39 @@ pub fn slot_note_edit(slot_id: u64, note: &String) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn slot_delete(slot_id: u64) -> Result<(), Error> {
+pub fn event_delete(event_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "DELETE s
-        FROM slots s
-        WHERE slot_id = :slot_id",
+        FROM events s
+        WHERE event_id = :event_id",
     )?;
 
     let params = params! {
-        "slot_id" => &slot_id,
+        "event_id" => &event_id,
     };
 
     conn.exec_drop(&stmt, &params)?;
     Ok(())
 }
 
-pub fn is_slot_free(slot: &Slot) -> Result<bool, Error> {
-    if !crate::common::is_slot_valid(slot) {
+pub fn event_free_true(event: &Event) -> Result<bool, Error> {
+    if !crate::common::is_event_valid(event) {
         return Ok(false);
     };
 
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)
-        FROM slots
+        FROM events
         WHERE location_id = :location_id
         AND NOT (end <= :begin OR begin >= :end)
         AND status = 'OCCURRING'",
     )?;
     let params = params! {
-        "location_id" => &slot.location.id,
-        "begin" => &slot.begin,
-        "end" => &slot.end,
+        "location_id" => &event.location.id,
+        "begin" => &event.begin,
+        "end" => &event.end,
     };
 
     let count = conn.exec_first::<u64, _, _>(&stmt, &params)?;
@@ -278,9 +278,10 @@ pub fn is_slot_free(slot: &Slot) -> Result<bool, Error> {
     }
 }
 
-/* EVENT RELATED */
 
-pub fn slot_owner_pool(slot_id: u64) -> Result<Vec<User>, Error> {
+/* OWNER RELATED */
+
+pub fn event_owner_pool(event_id: u64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(
@@ -289,13 +290,13 @@ pub fn slot_owner_pool(slot_id: u64) -> Result<Vec<User>, Error> {
         JOIN teams ON teams.team_id = cot.team_id
         JOIN team_members tm ON teams.team_id = tm.team_id
         JOIN users ON tm.user_id = users.user_id
-        JOIN slots ON slots.course_id = cot.course_id
-        WHERE slots.slot_id = :slot_id AND users.active = TRUE
+        JOIN events ON events.course_id = cot.course_id
+        WHERE events.event_id = :event_id AND users.active = TRUE
         GROUP BY users.user_id",
     )?;
 
     let params = params! {
-        "slot_id" => slot_id,
+        "event_id" => event_id,
     };
     let map = |(user_id, user_key, firstname, lastname, nickname)| {
         User::from_info(user_id, user_key, firstname, lastname, nickname)
@@ -305,16 +306,16 @@ pub fn slot_owner_pool(slot_id: u64) -> Result<Vec<User>, Error> {
     Ok(users)
 }
 
-pub fn slot_owner_list(slot_id: u64) -> Result<Vec<User>, Error> {
+pub fn event_owner_list(event_id: u64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
-        FROM slot_owners
-        JOIN users u ON u.user_id = slot_owners.user_id
-        WHERE slot_owners.slot_id = :slot_id",
+        FROM event_owners
+        JOIN users u ON u.user_id = event_owners.user_id
+        WHERE event_owners.event_id = :event_id",
     )?;
     let params = params! {
-        "slot_id" => slot_id,
+        "event_id" => event_id,
     };
     let map = |(user_id, user_key, firstname, lastname, nickname)| {
         User::from_info(user_id, user_key, firstname, lastname, nickname)
@@ -324,15 +325,15 @@ pub fn slot_owner_list(slot_id: u64) -> Result<Vec<User>, Error> {
     Ok(users)
 }
 
-pub fn slot_owner_add(slot_id: u64, user_id: u64) -> Result<(), Error> {
+pub fn event_owner_add(event_id: u64, user_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(
-        "INSERT INTO slot_owners (slot_id, user_id)
-        VALUES (:slot_id, :user_id)",
+        "INSERT INTO event_owners (event_id, user_id)
+        VALUES (:event_id, :user_id)",
     )?;
     let params = params! {
-        "slot_id" => &slot_id,
+        "event_id" => &event_id,
         "user_id" => &user_id,
     };
 
@@ -340,15 +341,15 @@ pub fn slot_owner_add(slot_id: u64, user_id: u64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn slot_owner_remove(slot_id: u64, user_id: u64) -> Result<(), Error> {
+pub fn event_owner_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "DELETE FROM slot_owners
-        WHERE slot_id = :slot_id AND user_id = :user_id",
+        "DELETE FROM event_owners
+        WHERE event_id = :event_id AND user_id = :user_id",
     )?;
 
     let params = params! {
-        "slot_id" => &slot_id,
+        "event_id" => &event_id,
         "user_id" => &user_id,
     };
 
@@ -356,15 +357,15 @@ pub fn slot_owner_remove(slot_id: u64, user_id: u64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn slot_owner_true(slot_id: u64, user_id: u64) -> Result<bool, Error> {
+pub fn event_owner_true(event_id: u64, user_id: u64) -> Result<bool, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)
-        FROM slot_owners
-        WHERE slot_id = :slot_id AND user_id = :user_id",
+        FROM event_owners
+        WHERE event_id = :event_id AND user_id = :user_id",
     )?;
     let params = params! {
-        "slot_id" => slot_id,
+        "event_id" => event_id,
         "user_id" => user_id,
     };
 
@@ -374,39 +375,99 @@ pub fn slot_owner_true(slot_id: u64, user_id: u64) -> Result<bool, Error> {
     }
 }
 
-/* COURSE RELATED */
 
-pub fn slot_moderator_true(slot_id: u64, user_id: u64) -> Result<bool, Error> {
+/* PARTICIPANT RELATED */
+
+pub fn event_participant_pool(event_id: u64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
+    // TODO UNION event invites, team invites
+    // TODO level check threshold if existent
+
     let stmt = conn.prep(
-        "SELECT COUNT(1)
-        FROM slots s
-        LEFT JOIN course_moderators m ON m.course_id = s.course_id
-        WHERE s.slot_id = :slot_id AND m.user_id = :user_id;",
+        "SELECT users.user_id, users.user_key, users.firstname, users.lastname, users.nickname
+        FROM course_participant_teams AS cpt
+        JOIN teams ON teams.team_id = cpt.team_id
+        JOIN team_members tm ON teams.team_id = tm.team_id
+        JOIN users ON tm.user_id = users.user_id
+        JOIN events ON events.course_id = cpt.course_id
+        WHERE events.event_id = :event_id AND users.active = TRUE
+        GROUP BY users.user_id",
     )?;
 
     let params = params! {
-        "slot_id" => slot_id,
-        "user_id" => user_id,
+        "event_id" => event_id,
+    };
+    let map = |(user_id, user_key, firstname, lastname, nickname)| {
+        User::from_info(user_id, user_key, firstname, lastname, nickname)
     };
 
-    match conn.exec_first::<u32, _, _>(&stmt, &params)? {
-        None => Ok(false),
-        Some(count) => Ok(count == 1),
-    }
+    let users = conn.exec_map(&stmt, &params, &map)?;
+    Ok(users)
 }
 
-pub fn slot_course_edit(slot_id: u64, course_id: Option<u64>) -> Result<(), Error> {
+pub fn event_participant_list(event_id: u64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
-
     let stmt = conn.prep(
-        "UPDATE slots
-        SET course_id = :course_id
-        WHERE slot_id = :slot_id",
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
+        FROM event_participants p
+        JOIN users u ON u.user_id = p.user_id
+        WHERE event_id = :event_id;",
+    )?;
+    let params = params! {
+        "event_id" => event_id,
+    };
+    let map = |(user_id, user_key, firstname, lastname, nickname)| {
+        User::from_info(user_id, user_key, firstname, lastname, nickname)
+    };
+
+    let users = conn.exec_map(&stmt, &params, &map)?;
+    Ok(users)
+}
+
+pub fn event_participant_add(event_id: u64, user_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "INSERT INTO event_participants (event_id, user_id)
+        VALUES (:event_id, :user_id);",
+    )?;
+    let params = params! {
+        "event_id" => &event_id,
+        "user_id" => &user_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+pub fn event_participant_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "DELETE FROM event_participants
+        WHERE event_id = :event_id AND user_id = :user_id;",
     )?;
 
     let params = params! {
-        "slot_id" => &slot_id,
+        "event_id" => &event_id,
+        "user_id" => &user_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+/* COURSE RELATED */
+
+pub fn event_course_edit(event_id: u64, course_id: Option<u64>) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+
+    let stmt = conn.prep(
+        "UPDATE events
+        SET course_id = :course_id
+        WHERE event_id = :event_id",
+    )?;
+
+    let params = params! {
+        "event_id" => &event_id,
         "course_id" => &course_id,
     };
 
@@ -414,15 +475,15 @@ pub fn slot_course_edit(slot_id: u64, course_id: Option<u64>) -> Result<(), Erro
     Ok(())
 }
 
-pub fn slot_course_true(slot_id: u64, course_id: u64) -> Result<bool, Error> {
+pub fn event_course_true(event_id: u64, course_id: u64) -> Result<bool, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)
-        FROM slots
-        WHERE slot_id = :slot_id AND course_id = :course_id",
+        FROM events
+        WHERE event_id = :event_id AND course_id = :course_id",
     )?;
     let params = params! {
-        "slot_id" => slot_id,
+        "event_id" => event_id,
         "course_id" => course_id,
     };
 
@@ -432,15 +493,15 @@ pub fn slot_course_true(slot_id: u64, course_id: u64) -> Result<bool, Error> {
     }
 }
 
-pub fn slot_course_any(slot_id: u64) -> Result<bool, Error> {
+pub fn event_course_any(event_id: u64) -> Result<bool, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)
-        FROM slots
-        WHERE slot_id = :slot_id AND course_id IS NOT NULL;",
+        FROM events
+        WHERE event_id = :event_id AND course_id IS NOT NULL;",
     )?;
     let params = params! {
-        "slot_id" => slot_id,
+        "event_id" => event_id,
     };
 
     match conn.exec_first::<u64, _, _>(&stmt, &params)? {
@@ -449,81 +510,24 @@ pub fn slot_course_any(slot_id: u64) -> Result<bool, Error> {
     }
 }
 
-/* PARTICIPANT RELATED */
+/* MODERATOR RELATED */
 
-pub fn slot_participant_pool(slot_id: u64) -> Result<Vec<User>, Error> {
+pub fn event_moderator_true(event_id: u64, user_id: u64) -> Result<bool, Error> {
     let mut conn: PooledConn = get_pool_conn();
-    // TODO UNION slot invites, team invites
-    // TODO level check threshold if existent
-
     let stmt = conn.prep(
-        "SELECT users.user_id, users.user_key, users.firstname, users.lastname, users.nickname
-        FROM course_participant_teams AS cpt
-        JOIN teams ON teams.team_id = cpt.team_id
-        JOIN team_members tm ON teams.team_id = tm.team_id
-        JOIN users ON tm.user_id = users.user_id
-        JOIN slots ON slots.course_id = cpt.course_id
-        WHERE slots.slot_id = :slot_id AND users.active = TRUE
-        GROUP BY users.user_id",
+        "SELECT COUNT(1)
+        FROM events s
+        LEFT JOIN course_moderators m ON m.course_id = s.course_id
+        WHERE s.event_id = :event_id AND m.user_id = :user_id;",
     )?;
 
     let params = params! {
-        "slot_id" => slot_id,
-    };
-    let map = |(user_id, user_key, firstname, lastname, nickname)| {
-        User::from_info(user_id, user_key, firstname, lastname, nickname)
+        "event_id" => event_id,
+        "user_id" => user_id,
     };
 
-    let users = conn.exec_map(&stmt, &params, &map)?;
-    Ok(users)
-}
-
-pub fn slot_participant_list(slot_id: u64) -> Result<Vec<User>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep(
-        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
-        FROM slot_participants p
-        JOIN users u ON u.user_id = p.user_id
-        WHERE slot_id = :slot_id;",
-    )?;
-    let params = params! {
-        "slot_id" => slot_id,
-    };
-    let map = |(user_id, user_key, firstname, lastname, nickname)| {
-        User::from_info(user_id, user_key, firstname, lastname, nickname)
-    };
-
-    let users = conn.exec_map(&stmt, &params, &map)?;
-    Ok(users)
-}
-
-pub fn slot_participant_add(slot_id: u64, user_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep(
-        "INSERT INTO slot_participants (slot_id, user_id)
-        VALUES (:slot_id, :user_id);",
-    )?;
-    let params = params! {
-        "slot_id" => &slot_id,
-        "user_id" => &user_id,
-    };
-
-    conn.exec_drop(&stmt, &params)?;
-    Ok(())
-}
-
-pub fn slot_participant_remove(slot_id: u64, user_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep(
-        "DELETE FROM slot_participants
-        WHERE slot_id = :slot_id AND user_id = :user_id;",
-    )?;
-
-    let params = params! {
-        "slot_id" => &slot_id,
-        "user_id" => &user_id,
-    };
-
-    conn.exec_drop(&stmt, &params)?;
-    Ok(())
+    match conn.exec_first::<u32, _, _>(&stmt, &params)? {
+        None => Ok(false),
+        Some(count) => Ok(count == 1),
+    }
 }

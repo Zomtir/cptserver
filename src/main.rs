@@ -11,7 +11,7 @@ mod db;
 mod db_club;
 mod db_competence;
 mod db_course;
-mod db_slot;
+mod db_event;
 mod db_team;
 mod db_term;
 mod db_user;
@@ -30,11 +30,11 @@ mod route_course_admin;
 mod route_course_moderator;
 mod route_course_regular;
 
-
 mod route_event_admin;
 mod route_event_owner;
 mod route_event_moderator;
 mod route_event_regular;
+mod route_event_service;
 
 mod route_competence_admin;
 mod route_competence_regular;
@@ -44,7 +44,6 @@ mod route_team_regular;
 
 mod route_term_admin;
 
-mod route_slot_service;
 
 #[rocket::get("/")]
 fn index() -> &'static str {
@@ -112,7 +111,7 @@ fn rocket() -> _ {
                 route_anon::course_list,
                 route_anon::user_salt,
                 route_login::user_login,
-                route_login::slot_login,
+                route_login::event_login,
                 route_login::course_login,
                 route_login::location_login,
                 route_user_admin::user_list,
@@ -153,7 +152,7 @@ fn rocket() -> _ {
                 route_event_admin::event_info,
                 route_event_admin::event_create,
                 route_event_admin::event_edit,
-                route_event_admin::event_edit_password,
+                route_event_admin::event_password_edit,
                 route_event_admin::event_delete,
                 route_event_admin::event_accept,
                 route_event_admin::event_deny,
@@ -180,7 +179,7 @@ fn rocket() -> _ {
                 route_event_owner::event_list,
                 route_event_owner::event_info,
                 route_event_owner::event_edit,
-                route_event_owner::event_edit_password,
+                route_event_owner::event_password_edit,
                 route_event_owner::event_delete,
                 route_event_owner::event_submit,
                 route_event_owner::event_withdraw,
@@ -210,16 +209,16 @@ fn rocket() -> _ {
                 route_competence_admin::competence_delete,
                 route_competence_regular::competence_list,
                 route_competence_regular::competence_summary,
-                route_slot_service::slot_info,
-                route_slot_service::slot_note_edit,
-                route_slot_service::slot_participant_pool,
-                route_slot_service::slot_participant_list,
-                route_slot_service::slot_participant_add,
-                route_slot_service::slot_participant_remove,
-                route_slot_service::slot_owner_pool,
-                route_slot_service::slot_owner_list,
-                route_slot_service::slot_owner_add,
-                route_slot_service::slot_owner_remove,
+                route_event_service::event_info,
+                route_event_service::event_note_edit,
+                route_event_service::event_participant_pool,
+                route_event_service::event_participant_list,
+                route_event_service::event_participant_add,
+                route_event_service::event_participant_remove,
+                route_event_service::event_owner_pool,
+                route_event_service::event_owner_list,
+                route_event_service::event_owner_add,
+                route_event_service::event_owner_remove,
             ],
         )
         .attach(cors)

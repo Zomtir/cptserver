@@ -33,11 +33,13 @@ pub fn get_pool_conn() -> PooledConn {
     }
 }
 
-/*
-let query = "INSERT INTO slots (slot_key, pwd, title, location_id, begin, end, status, public, scrutable, note, course_id)
-SELECT :slot_key, :pwd, :title, :location_id, :begin, :end, :status, :public, :scrutable, :note, :course_id;";
-println!("SQL: {}", crate::db::as_sql(&query, &params).unwrap());
- */
+/// Helper function to debug SQL queries
+/// 
+/// ```
+/// let query = "INSERT INTO events (event_key, pwd, title, location_id, begin, end, status, public, scrutable, note, course_id)
+/// SELECT :event_key, :pwd, :title, :location_id, :begin, :end, :status, :public, :scrutable, :note, :course_id;";
+/// println!("SQL: {}", crate::db::as_sql(&query, &params).unwrap());
+/// ```
 #[allow(dead_code)]
 pub fn print_sql(query: &str, params: &mysql::Params) {
     let (p, q) = mysql_common::named_params::parse_named_params(query.as_bytes()).unwrap();

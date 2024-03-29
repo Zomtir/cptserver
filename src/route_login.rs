@@ -6,7 +6,7 @@ use mysql::{params, PooledConn};
 use crate::common::{Right, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
-use crate::session::{Credential, SlotSession, UserSession, SLOTSESSIONS, USERSESSIONS};
+use crate::session::{Credential, EventSession, UserSession, EVENTSESSIONS, USERSESSIONS};
 
 #[rocket::post("/user_login", format = "application/json", data = "<credit>")]
 pub fn user_login(credit: Json<Credential>) -> Result<String, Error> {
@@ -87,50 +87,50 @@ pub fn user_login(credit: Json<Credential>) -> Result<String, Error> {
     Ok(user_token)
 }
 
-#[rocket::post("/slot_login", format = "application/json", data = "<credit>")]
-pub fn slot_login(credit: Json<Credential>) -> Result<String, Error> {
+#[rocket::post("/event_login", format = "application/json", data = "<credit>")]
+pub fn event_login(credit: Json<Credential>) -> Result<String, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn
-        .prep("SELECT slot_id, pwd FROM slots WHERE slot_key = :slot_key")
+        .prep("SELECT event_id, pwd FROM events WHERE event_key = :event_key")
         .unwrap();
     let params = params! {
-        "slot_key" => credit.login.to_string(),
+        "event_key" => credit.login.to_string(),
     };
 
-    println!("Slot {} login attempt with password {}", credit.login, credit.password);
+    println!("Event {} login attempt with password {}", credit.login, credit.password);
     let mut row: mysql::Row = match conn.exec_first(&stmt, &params) {
-        Err(..) | Ok(None) => return Err(Error::SlotMissing),
+        Err(..) | Ok(None) => return Err(Error::EventMissing),
         Ok(Some(row)) => row,
     };
 
-    let slot_pwd: String = row.take("pwd").unwrap();
-    if slot_pwd != credit.password {
-        return Err(Error::SlotLoginFail);
+    let event_pwd: String = row.take("pwd").unwrap();
+    if event_pwd != credit.password {
+        return Err(Error::EventLoginFail);
     };
 
-    let slot_token: String = crate::common::random_string(30);
-    let slot_expiry = chrono::Utc::now() + chrono::Duration::hours(3);
+    let event_token: String = crate::common::random_string(30);
+    let event_expiry = chrono::Utc::now() + chrono::Duration::hours(3);
 
-    let slot_id: u64 = row.take("slot_id").unwrap();
+    let event_id: u64 = row.take("event_id").unwrap();
 
-    let session: SlotSession = SlotSession {
-        token: slot_token.to_string(),
-        expiry: slot_expiry,
-        slot_id,
-        slot_key: credit.login.to_string(),
+    let session: EventSession = EventSession {
+        token: event_token.to_string(),
+        expiry: event_expiry,
+        event_id,
+        event_key: credit.login.to_string(),
     };
 
-    SLOTSESSIONS.lock().unwrap().insert(slot_token.to_string(), session);
+    EVENTSESSIONS.lock().unwrap().insert(event_token.to_string(), session);
 
-    Ok(slot_token)
+    Ok(event_token)
 }
 
 #[rocket::get("/course_login?<course_key>")]
 pub fn course_login(course_key: String) -> Result<String, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT s.slot_key, s.pwd
-        FROM slots s
+        "SELECT s.event_key, s.pwd
+        FROM events s
         JOIN courses c ON c.course_id = s.course_id
         WHERE c.course_key = :course_key
         AND s.begin >= :date_min AND s.end <= :date_max
@@ -141,44 +141,44 @@ pub fn course_login(course_key: String) -> Result<String, Error> {
         "date_min" => (chrono::Utc::now() - crate::config::CONFIG_SLOT_PUBLIC_LOGIN_TIME()).naive_utc(),
         "date_max" => (chrono::Utc::now() + crate::config::CONFIG_SLOT_PUBLIC_LOGIN_TIME()).naive_utc(),
     };
-    let map = |(slot_key, slot_pwd): (String, String)| Credential {
-        login: slot_key.to_string(),
-        password: slot_pwd,
+    let map = |(event_key, event_pwd): (String, String)| Credential {
+        login: event_key.to_string(),
+        password: event_pwd,
         salt: "".into(),
     };
 
     let credentials = conn.exec_map(&stmt, &params, &map)?;
 
     if credentials.is_empty() {
-        return Err(Error::SlotPasswordInvalid);
+        return Err(Error::EventPasswordInvalid);
     };
 
-    slot_login(Json(credentials[0].clone()))
+    event_login(Json(credentials[0].clone()))
 }
 
 #[rocket::get("/location_login?<location_key>")]
 pub fn location_login(location_key: String) -> Result<String, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT s.slot_key, s.pwd
-        FROM slots s
+        "SELECT s.event_key, s.pwd
+        FROM events s
         JOIN locations l ON l.location_id = s.location_id
         WHERE l.location_key = :location_key
         AND s.begin <= UTC_TIMESTAMP() AND s.end >= UTC_TIMESTAMP()
         AND public = 1",
     )?;
     let params = params! { "location_key" => location_key, };
-    let map = |(slot_key, slot_pwd): (String, String)| Credential {
-        login: slot_key.to_string(),
-        password: slot_pwd,
+    let map = |(event_key, event_pwd): (String, String)| Credential {
+        login: event_key.to_string(),
+        password: event_pwd,
         salt: "".into(),
     };
 
     let credentials = conn.exec_map(&stmt, &params, &map)?;
 
     if credentials.is_empty() {
-        return Err(Error::SlotPasswordInvalid);
+        return Err(Error::EventPasswordInvalid);
     };
 
-    slot_login(Json(credentials[0].clone()))
+    event_login(Json(credentials[0].clone()))
 }

@@ -4,7 +4,7 @@ mod club;
 mod course;
 mod math;
 mod skill;
-mod slot;
+mod event;
 mod team;
 mod user;
 
@@ -14,6 +14,6 @@ pub use club::*;
 pub use course::*;
 pub use math::*;
 pub use skill::*;
-pub use slot::*;
+pub use event::*;
 pub use team::*;
 pub use user::*;

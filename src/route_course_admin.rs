@@ -1,6 +1,6 @@
 use rocket::serde::json::Json;
 
-use crate::common::{Course, Team, User, Slot};
+use crate::common::{Course, Team, User, Event};
 use crate::error::Error;
 use crate::session::UserSession;
 use chrono::NaiveDateTime;
@@ -51,13 +51,13 @@ pub fn course_delete(session: UserSession, course_id: u64) -> Result<(), Error> 
 }
 
 #[rocket::get("/admin/course_event_list?<course_id>")]
-pub fn course_event_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Slot>>, Error> {
+pub fn course_event_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Event>>, Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
 
-    let slots = crate::db_slot::list_slots(None, None, None, None, Some(true), Some(course_id), None)?;
-    Ok(Json(slots))
+    let events = crate::db_event::event_list(None, None, None, None, Some(true), Some(course_id), None)?;
+    Ok(Json(events))
 }
 
 #[rocket::get("/admin/course_moderator_list?<course_id>")]

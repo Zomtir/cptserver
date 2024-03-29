@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8001
--- Generation Time: Mar 15, 2024 at 08:05 AM
+-- Generation Time: Mar 29, 2024 at 03:08 PM
 -- Server version: 10.11.6-MariaDB-0ubuntu0.23.10.2
 -- PHP Version: 8.2.10-2ubuntu1
 
@@ -119,6 +119,60 @@ CREATE TABLE `course_subscriptions` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `events`
+--
+
+CREATE TABLE `events` (
+  `event_id` int(11) NOT NULL,
+  `event_key` char(12) NOT NULL,
+  `pwd` tinytext NOT NULL,
+  `title` varchar(100) NOT NULL,
+  `location_id` smallint(6) NOT NULL,
+  `begin` datetime NOT NULL,
+  `end` datetime NOT NULL,
+  `status` enum('DRAFT','PENDING','OCCURRING','CANCELED','REJECTED') NOT NULL DEFAULT 'PENDING',
+  `public` tinyint(1) NOT NULL DEFAULT 0,
+  `scrutable` tinyint(1) NOT NULL DEFAULT 1,
+  `note` text NOT NULL DEFAULT '',
+  `course_id` mediumint(9) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `event_invites`
+--
+
+CREATE TABLE `event_invites` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `event_owners`
+--
+
+CREATE TABLE `event_owners` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `event_participants`
+--
+
+CREATE TABLE `event_participants` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `items`
 --
 
@@ -163,60 +217,6 @@ CREATE TABLE `skills` (
   `title` tinytext NOT NULL,
   `min` tinyint(4) NOT NULL DEFAULT 0,
   `max` tinyint(4) NOT NULL DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `slots`
---
-
-CREATE TABLE `slots` (
-  `slot_id` int(11) NOT NULL,
-  `slot_key` char(12) NOT NULL,
-  `pwd` tinytext NOT NULL,
-  `title` varchar(100) NOT NULL,
-  `location_id` smallint(6) NOT NULL,
-  `begin` datetime NOT NULL,
-  `end` datetime NOT NULL,
-  `status` enum('DRAFT','PENDING','OCCURRING','CANCELED','REJECTED') NOT NULL DEFAULT 'PENDING',
-  `public` tinyint(1) NOT NULL DEFAULT 0,
-  `scrutable` tinyint(1) NOT NULL DEFAULT 1,
-  `note` text NOT NULL DEFAULT '',
-  `course_id` mediumint(9) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `slot_invites`
---
-
-CREATE TABLE `slot_invites` (
-  `slot_id` int(11) NOT NULL,
-  `user_id` mediumint(9) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `slot_owners`
---
-
-CREATE TABLE `slot_owners` (
-  `slot_id` int(11) NOT NULL,
-  `user_id` mediumint(9) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `slot_participants`
---
-
-CREATE TABLE `slot_participants` (
-  `slot_id` int(11) NOT NULL,
-  `user_id` mediumint(9) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -387,6 +387,36 @@ ALTER TABLE `course_subscriptions`
   ADD KEY `user_id` (`user_id`);
 
 --
+-- Indexes for table `events`
+--
+ALTER TABLE `events`
+  ADD PRIMARY KEY (`event_id`),
+  ADD UNIQUE KEY `KEY` (`event_key`),
+  ADD KEY `REF_course` (`course_id`),
+  ADD KEY `REF_location` (`location_id`);
+
+--
+-- Indexes for table `event_invites`
+--
+ALTER TABLE `event_invites`
+  ADD PRIMARY KEY (`event_id`,`user_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `event_owners`
+--
+ALTER TABLE `event_owners`
+  ADD PRIMARY KEY (`event_id`,`user_id`),
+  ADD KEY `REF_user` (`user_id`);
+
+--
+-- Indexes for table `event_participants`
+--
+ALTER TABLE `event_participants`
+  ADD PRIMARY KEY (`event_id`,`user_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
 -- Indexes for table `items`
 --
 ALTER TABLE `items`
@@ -412,37 +442,6 @@ ALTER TABLE `locations`
 ALTER TABLE `skills`
   ADD PRIMARY KEY (`skill_id`),
   ADD UNIQUE KEY `KEY` (`skill_key`);
-
---
--- Indexes for table `slots`
---
-ALTER TABLE `slots`
-  ADD PRIMARY KEY (`slot_id`),
-  ADD UNIQUE KEY `KEY` (`slot_key`),
-  ADD KEY `REF_course` (`course_id`),
-  ADD KEY `REF_location` (`location_id`);
-
---
--- Indexes for table `slot_invites`
---
-ALTER TABLE `slot_invites`
-  ADD PRIMARY KEY (`slot_id`,`user_id`),
-  ADD KEY `user_id` (`user_id`);
-
---
--- Indexes for table `slot_owners`
---
-ALTER TABLE `slot_owners`
-  ADD PRIMARY KEY (`slot_id`,`user_id`),
-  ADD KEY `REF_user` (`user_id`),
-  ADD KEY `REF_slot` (`slot_id`) USING BTREE;
-
---
--- Indexes for table `slot_participants`
---
-ALTER TABLE `slot_participants`
-  ADD PRIMARY KEY (`slot_id`,`user_id`),
-  ADD KEY `user_id` (`user_id`);
 
 --
 -- Indexes for table `teams`
@@ -510,6 +509,12 @@ ALTER TABLE `course_requirements`
   MODIFY `requirement_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `events`
+--
+ALTER TABLE `events`
+  MODIFY `event_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `items`
 --
 ALTER TABLE `items`
@@ -532,12 +537,6 @@ ALTER TABLE `locations`
 --
 ALTER TABLE `skills`
   MODIFY `skill_id` smallint(6) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `slots`
---
-ALTER TABLE `slots`
-  MODIFY `slot_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `teams`
@@ -616,38 +615,38 @@ ALTER TABLE `course_subscriptions`
   ADD CONSTRAINT `course_subscriptions_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
+-- Constraints for table `events`
+--
+ALTER TABLE `events`
+  ADD CONSTRAINT `events_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `events_ibfk_2` FOREIGN KEY (`location_id`) REFERENCES `locations` (`location_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `event_invites`
+--
+ALTER TABLE `event_invites`
+  ADD CONSTRAINT `event_invites_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `event_invites_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `event_owners`
+--
+ALTER TABLE `event_owners`
+  ADD CONSTRAINT `event_owners_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `event_owners_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `event_participants`
+--
+ALTER TABLE `event_participants`
+  ADD CONSTRAINT `event_participants_ibfk_2` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `event_participants_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+
+--
 -- Constraints for table `items`
 --
 ALTER TABLE `items`
   ADD CONSTRAINT `items_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `item_category` (`category_id`) ON UPDATE CASCADE;
-
---
--- Constraints for table `slots`
---
-ALTER TABLE `slots`
-  ADD CONSTRAINT `slots_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `slots_ibfk_2` FOREIGN KEY (`location_id`) REFERENCES `locations` (`location_id`) ON UPDATE CASCADE;
-
---
--- Constraints for table `slot_invites`
---
-ALTER TABLE `slot_invites`
-  ADD CONSTRAINT `slot_invites_ibfk_1` FOREIGN KEY (`slot_id`) REFERENCES `slots` (`slot_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `slot_invites_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
-
---
--- Constraints for table `slot_owners`
---
-ALTER TABLE `slot_owners`
-  ADD CONSTRAINT `slot_owners_ibfk_1` FOREIGN KEY (`slot_id`) REFERENCES `slots` (`slot_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `slot_owners_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
-
---
--- Constraints for table `slot_participants`
---
-ALTER TABLE `slot_participants`
-  ADD CONSTRAINT `slot_participants_ibfk_2` FOREIGN KEY (`slot_id`) REFERENCES `slots` (`slot_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `slot_participants_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `team_members`

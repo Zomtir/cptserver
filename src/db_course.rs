@@ -311,22 +311,22 @@ pub fn course_statistic_class(
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT 
-            slots.slot_id,
-            slots.title,
-            slots.begin,
-            slots.end,
-            COUNT(DISTINCT slot_participants.user_id) AS participant_count,
-            COUNT(DISTINCT slot_owners.user_id) AS owner_count
+            events.event_id,
+            events.title,
+            events.begin,
+            events.end,
+            COUNT(DISTINCT event_participants.user_id) AS participant_count,
+            COUNT(DISTINCT event_owners.user_id) AS owner_count
         FROM
-            slots
+            events
         LEFT JOIN
-            slot_participants ON slots.slot_id = slot_participants.slot_id
+            event_participants ON events.event_id = event_participants.event_id
         LEFT JOIN
-            slot_owners ON slots.slot_id = slot_owners.slot_id
+            event_owners ON events.event_id = event_owners.event_id
         WHERE
-            slots.course_id = :course_id
+            events.course_id = :course_id
         GROUP BY
-            slots.slot_id;",
+            events.event_id;",
     )?;
 
     let params = params! {
@@ -348,15 +348,15 @@ pub fn course_statistic_participant(course_id: u64) -> Result<Vec<(u64, String, 
             u.user_id,
             u.firstname,
             u.lastname,
-            COUNT(p.slot_id)
+            COUNT(p.event_id)
         FROM
             users u
         JOIN
-            slot_participants p ON u.user_id = p.user_id
+            event_participants p ON u.user_id = p.user_id
         JOIN
-            slots ON p.slot_id = slots.slot_id
+            events ON p.event_id = events.event_id
         WHERE
-            slots.course_id = :course_id
+            events.course_id = :course_id
         GROUP BY
             u.user_id;",
     )?;
@@ -378,16 +378,16 @@ pub fn course_statistic_participant1(
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
-            slots.slot_id,
-            slots.title,
-            slots.begin,
-            slots.end
+            events.event_id,
+            events.title,
+            events.begin,
+            events.end
         FROM
-            slots
+            events
         JOIN
-            slot_participants p ON slots.slot_id = p.slot_id
+            event_participants p ON events.event_id = p.event_id
         WHERE
-            slots.course_id = :course_id AND p.user_id = :participant_id;",
+            events.course_id = :course_id AND p.user_id = :participant_id;",
     )?;
 
     let params = params! {
@@ -395,7 +395,7 @@ pub fn course_statistic_participant1(
         "participant_id" => &participant_id,
     };
 
-    let map = |(slot_id, title, begin, end)| (slot_id, title, begin, end);
+    let map = |(event_id, title, begin, end)| (event_id, title, begin, end);
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
@@ -408,15 +408,15 @@ pub fn course_statistic_owner(course_id: u64) -> Result<Vec<(u64, String, String
             u.user_id,
             u.firstname,
             u.lastname,
-            COUNT(p.slot_id)
+            COUNT(p.event_id)
         FROM
             users u
         JOIN
-            slot_owners p ON u.user_id = p.user_id
+            event_owners p ON u.user_id = p.user_id
         JOIN
-            slots ON p.slot_id = slots.slot_id
+            events ON p.event_id = events.event_id
         WHERE
-            slots.course_id = :course_id
+            events.course_id = :course_id
         GROUP BY
             u.user_id;",
     )?;
@@ -438,16 +438,16 @@ pub fn course_statistic_owner1(
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
-            slots.slot_id,
-            slots.title,
-            slots.begin,
-            slots.end
+            events.event_id,
+            events.title,
+            events.begin,
+            events.end
         FROM
-            slots
+            events
         JOIN
-            slot_owners p ON slots.slot_id = p.slot_id
+            event_owners p ON events.event_id = p.event_id
         WHERE
-            slots.course_id = :course_id AND p.user_id = :owner_id;",
+            events.course_id = :course_id AND p.user_id = :owner_id;",
     )?;
 
     let params = params! {
@@ -455,7 +455,7 @@ pub fn course_statistic_owner1(
         "owner_id" => &owner_id,
     };
 
-    let map = |(slot_id, title, begin, end)| (slot_id, title, begin, end);
+    let map = |(event_id, title, begin, end)| (event_id, title, begin, end);
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
