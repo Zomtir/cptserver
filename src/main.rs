@@ -26,6 +26,8 @@ mod route_anon;
 mod route_user_admin;
 mod route_user_regular;
 
+mod route_club_admin;
+
 mod route_course_admin;
 mod route_course_moderator;
 mod route_course_regular;
@@ -124,6 +126,10 @@ fn rocket() -> _ {
                 route_user_regular::user_right,
                 route_user_regular::user_password,
                 route_user_regular::user_list,
+                route_club_admin::club_list,
+                route_club_admin::club_create,
+                route_club_admin::club_edit,
+                route_club_admin::club_delete,
                 route_course_admin::course_list,
                 route_course_admin::course_create,
                 route_course_admin::course_edit,

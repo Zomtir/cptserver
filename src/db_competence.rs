@@ -115,7 +115,7 @@ pub fn competence_edit(competence_id: u64, competence: &Competence) -> Result<()
     }
 }
 
-pub fn competence_delete(competence_id: u64) -> Option<()> {
+pub fn competence_delete(competence_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE uc FROM user_competences uc WHERE uc.competence_id = :competence_id");
 
@@ -124,8 +124,8 @@ pub fn competence_delete(competence_id: u64) -> Option<()> {
     };
 
     match conn.exec_drop(&stmt.unwrap(), &params) {
-        Err(..) => None,
-        Ok(..) => Some(()),
+        Err(..) => Err(Error::DatabaseError),
+        Ok(..) => Ok(()),
     }
 }
 

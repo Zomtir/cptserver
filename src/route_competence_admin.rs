@@ -50,8 +50,6 @@ pub fn competence_delete(session: UserSession, competence_id: u64) -> Result<(),
         return Err(Error::RightCompetenceMissing);
     };
 
-    match crate::db_competence::competence_delete(competence_id) {
-        None => Err(Error::DatabaseError),
-        Some(..) => Ok(()),
-    }
+    crate::db_competence::competence_delete(competence_id)?;
+    Ok(())
 }
