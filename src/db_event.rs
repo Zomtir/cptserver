@@ -12,9 +12,11 @@ use crate::error::Error;
 pub fn event_info(event_id: u64) -> Result<Event, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT event_id, event_key, s.title, l.location_id, l.location_key, l.title AS location_title, s.begin, s.end, s.status, s.public, s.scrutable, s.note, s.course_id
-        FROM events s
-        JOIN locations l ON l.location_id = s.location_id
+        "SELECT event_id, event_key, e.title,
+            l.location_id, l.location_key, l.name AS location_name, l.description AS location_description,
+            e.begin, e.end, e.status, e.public, e.scrutable, e.note, e.course_id
+        FROM events e
+        JOIN locations l ON l.location_id = e.location_id
         WHERE event_id = :event_id",
     )?;
     let params = params! {
@@ -33,7 +35,8 @@ pub fn event_info(event_id: u64) -> Result<Event, Error> {
         location: Location {
             id: row.take("location_id").unwrap(),
             key: row.take("location_key").unwrap(),
-            title: row.take("location_title").unwrap(),
+            name: row.take("location_name").unwrap(),
+            description: row.take("location_description").unwrap(),
         },
         status: row.take("status").unwrap(),
         public: row.take("public").unwrap(),
@@ -69,17 +72,19 @@ pub fn event_list(
 
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT s.event_id, s.event_key, s.title, l.location_id, l.location_key, l.title AS location_title, s.begin, s.end, s.status, s.public, s.scrutable, s.note
-        FROM events s
-        JOIN locations l ON l.location_id = s.location_id
-        LEFT JOIN event_owners o ON s.event_id = o.event_id
-        WHERE (:frame_start IS NULL OR :frame_start < s.begin)
-        AND (:frame_stop IS NULL OR :frame_stop > s.begin)
-        AND (:status IS NULL OR :status = s.status)
+        "SELECT e.event_id, e.event_key, e.title,
+            l.location_id, l.location_key, l.name AS location_name,  l.description AS location_description,
+            e.begin, e.end, e.status, e.public, e.scrutable, e.note
+        FROM events e
+        JOIN locations l ON l.location_id = e.location_id
+        LEFT JOIN event_owners o ON e.event_id = o.event_id
+        WHERE (:frame_start IS NULL OR :frame_start < e.begin)
+        AND (:frame_stop IS NULL OR :frame_stop > e.begin)
+        AND (:status IS NULL OR :status = e.status)
         AND (:location_id IS NULL OR :location_id = l.location_id)
-        AND (:course_true IS NULL OR (:course_true = TRUE AND :course_id = s.course_id) OR (:course_true = FALSE AND s.course_id IS NULL))
+        AND (:course_true IS NULL OR (:course_true = TRUE AND :course_id = e.course_id) OR (:course_true = FALSE AND e.course_id IS NULL))
         AND (:owner_id IS NULL OR :owner_id = o.user_id)
-        GROUP BY s.event_id",
+        GROUP BY e.event_id",
     )?;
 
     let params = params! {
@@ -106,7 +111,8 @@ pub fn event_list(
             location: Location {
                 id: row.take("location_id").unwrap(),
                 key: row.take("location_key").unwrap(),
-                title: row.take("location_title").unwrap(),
+                name: row.take("location_name").unwrap(),
+                description: row.take("location_description").unwrap(),
             },
             status: row.take("status").unwrap(),
             public: row.take("public").unwrap(),
@@ -514,9 +520,9 @@ pub fn event_moderator_true(event_id: u64, user_id: u64) -> Result<bool, Error> 
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)
-        FROM events s
-        LEFT JOIN course_moderators m ON m.course_id = s.course_id
-        WHERE s.event_id = :event_id AND m.user_id = :user_id;",
+        FROM events e
+        LEFT JOIN course_moderators m ON m.course_id = e.course_id
+        WHERE e.event_id = :event_id AND m.user_id = :user_id;",
     )?;
 
     let params = params! {

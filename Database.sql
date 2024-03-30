@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8001
--- Generation Time: Mar 29, 2024 at 03:08 PM
+-- Generation Time: Mar 30, 2024 at 06:33 AM
 -- Server version: 10.11.6-MariaDB-0ubuntu0.23.10.2
 -- PHP Version: 8.2.10-2ubuntu1
 
@@ -29,6 +29,7 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `clubs` (
   `club_id` tinyint(4) NOT NULL,
+  `club_key` varchar(10) NOT NULL,
   `name` varchar(30) NOT NULL,
   `description` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -202,7 +203,8 @@ CREATE TABLE `item_category` (
 CREATE TABLE `locations` (
   `location_id` smallint(6) NOT NULL,
   `location_key` char(10) NOT NULL,
-  `title` varchar(100) NOT NULL
+  `name` varchar(100) NOT NULL,
+  `description` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -334,7 +336,8 @@ CREATE TABLE `user_possessions` (
 -- Indexes for table `clubs`
 --
 ALTER TABLE `clubs`
-  ADD PRIMARY KEY (`club_id`);
+  ADD PRIMARY KEY (`club_id`),
+  ADD UNIQUE KEY `KEY` (`club_key`);
 
 --
 -- Indexes for table `club_inventory`

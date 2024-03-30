@@ -19,12 +19,13 @@ pub fn status() -> Status {
 pub fn location_list() -> Result<Json<Vec<Location>>, Status> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn
-        .prep("SELECT location_id, location_key, title FROM locations")
+        .prep("SELECT location_id, location_key, name, description FROM locations")
         .unwrap();
-    let map = |(location_id, location_key, title): (u32, _, _)| Location {
+    let map = |(location_id, location_key, name, description)| Location {
         id: location_id,
         key: location_key,
-        title,
+        name,
+        description,
     };
 
     match conn.exec_map(&stmt, params::Params::Empty, &map) {

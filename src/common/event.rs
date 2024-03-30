@@ -1,3 +1,4 @@
+use crate::common::Location;
 use crate::error::Error;
 use chrono::DurationRound;
 use rocket::{
@@ -84,13 +85,6 @@ impl<'r> FromFormField<'r> for EventStatus {
             Some(event_status) => return Ok(event_status),
         }
     }
-}
-
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
-pub struct Location {
-    pub id: u32,
-    pub key: String,
-    pub title: String,
 }
 
 /*

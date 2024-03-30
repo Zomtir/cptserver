@@ -10,7 +10,7 @@ pub fn list_terms(user_id: Option<i64>) -> Result<Vec<Term>, Error> {
     let stmt = conn.prep(
         "SELECT t.term_id,
             u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
-            c.club_id, c.name, c.description,
+            c.club_id, c.key, c.name, c.description,
             t.term_begin, t.term_end
         FROM terms t
         JOIN users u ON (u.user_id = t.user_id)
@@ -30,6 +30,7 @@ pub fn list_terms(user_id: Option<i64>) -> Result<Vec<Term>, Error> {
         lastname,
         nickname,
         club_id,
+        club_key,
         club_name,
         club_description,
         begin,
@@ -39,6 +40,7 @@ pub fn list_terms(user_id: Option<i64>) -> Result<Vec<Term>, Error> {
         user: User::from_info(user_id, user_key, firstname, lastname, nickname),
         club: Club {
             id: club_id,
+            key: club_key,
             name: club_name,
             description: club_description,
         },

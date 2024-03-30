@@ -8,14 +8,15 @@ use crate::error::Error;
 pub fn club_list() -> Result<Vec<Club>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT c.club_id, c.name, c.description
-        FROM clubs c;",
+        "SELECT club_id, club_key, name, description
+        FROM clubs;",
     )?;
 
     let params = params::Params::Empty;
 
-    let map = |(club_id, club_name, club_description)| Club {
+    let map = |(club_id, club_key, club_name, club_description)| Club {
         id: club_id,
+        key: club_key,
         name: club_name,
         description: club_description,
     };
@@ -27,12 +28,12 @@ pub fn club_list() -> Result<Vec<Club>, Error> {
 pub fn club_create(club: &Club) -> Result<u32, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "INSERT INTO clubs (club_id, name, description)
-        VALUES (:club_id, :name, :description)",
+        "INSERT INTO clubs (club_key, name, description)
+        VALUES (:club_key, :name, :description)",
     )?;
 
     let params = params! {
-        "user_id" => &club.id,
+        "club_key" => &club.key,
         "name" => &club.name,
         "description" => &club.description,
     };
@@ -46,6 +47,7 @@ pub fn club_edit(club_id: u32, club: &Club) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE clubs SET
+            club_key = :club_key,
             name = :name,
             description = :description
         WHERE club_id = :club_id",
@@ -53,6 +55,7 @@ pub fn club_edit(club_id: u32, club: &Club) -> Result<(), Error> {
 
     let params = params! {
         "club_id" => &club_id,
+        "club_key" => &club.key,
         "name" => &club.name,
         "description" => &club.description,
     };
