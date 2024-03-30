@@ -1,6 +1,6 @@
 use rocket::serde::json::Json;
 
-use crate::common::{Event, EventStatus, User, WebDateTime};
+use crate::common::{Event, EventStatus, User, WebBool, WebDateTime};
 use crate::error::Error;
 use crate::session::UserSession;
 
@@ -11,7 +11,7 @@ pub fn event_list(
     end: Option<WebDateTime>,
     status: Option<EventStatus>,
     location_id: Option<u64>,
-    course_true: Option<bool>,
+    course_true: Option<WebBool>,
     course_id: Option<u64>,
     owner_id: Option<u64>,
 ) -> Result<Json<Vec<Event>>, Error> {
@@ -24,7 +24,7 @@ pub fn event_list(
         end.map(|dt| dt.to_naive()),
         status,
         location_id,
-        course_true,
+        course_true.map(|b| b.to_bool()),
         course_id,
         owner_id,
     )?;

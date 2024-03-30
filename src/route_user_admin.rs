@@ -1,18 +1,18 @@
 use rocket::serde::json::Json;
 
-use crate::common::User;
+use crate::common::{User, WebBool};
 use crate::error::Error;
 use crate::session::{Credential, UserSession};
 
 /* ROUTES */
 
 #[rocket::get("/admin/user_list?<active>")]
-pub fn user_list(session: UserSession, active: Option<bool>) -> Result<Json<Vec<User>>, Error> {
+pub fn user_list(session: UserSession, active: Option<WebBool>) -> Result<Json<Vec<User>>, Error> {
     if !session.right.admin_users {
         return Err(Error::RightUserMissing);
     };
 
-    let users = crate::db_user::list_user(active)?;
+    let users = crate::db_user::list_user(active.map(|b| b.to_bool()))?;
     Ok(Json(users))
 }
 

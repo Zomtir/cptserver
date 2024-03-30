@@ -73,7 +73,7 @@ pub fn event_list(
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT e.event_id, e.event_key, e.title,
-            l.location_id, l.location_key, l.name AS location_name,  l.description AS location_description,
+            l.location_id, l.location_key, l.name AS location_name, l.description AS location_description,
             e.begin, e.end, e.status, e.public, e.scrutable, e.note
         FROM events e
         JOIN locations l ON l.location_id = e.location_id
@@ -84,8 +84,7 @@ pub fn event_list(
         AND (:location_id IS NULL OR :location_id = l.location_id)
         AND (:course_true IS NULL OR (:course_true = TRUE AND :course_id = e.course_id) OR (:course_true = FALSE AND e.course_id IS NULL))
         AND (:owner_id IS NULL OR :owner_id = o.user_id)
-        GROUP BY e.event_id",
-    )?;
+        GROUP BY e.event_id;")?;
 
     let params = params! {
         "frame_start" => &begin,

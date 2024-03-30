@@ -1,16 +1,20 @@
 use rocket::serde::json::Json;
 
-use crate::common::{Course, User};
+use crate::common::{Course, User, WebBool};
 use crate::error::Error;
 use crate::session::UserSession;
 
 #[rocket::get("/mod/course_responsibility?<active>&<public>")]
 pub fn course_responsibility(
     session: UserSession,
-    active: Option<bool>,
-    public: Option<bool>,
+    active: Option<WebBool>,
+    public: Option<WebBool>,
 ) -> Result<Json<Vec<Course>>, Error> {
-    let courses = crate::db_course::course_list(Some(session.user.id), active, public)?;
+    let courses = crate::db_course::course_list(
+        Some(session.user.id),
+        active.map(|b| b.to_bool()),
+        public.map(|b| b.to_bool()),
+    )?;
     Ok(Json(courses))
 }
 

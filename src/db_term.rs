@@ -10,7 +10,7 @@ pub fn list_terms(user_id: Option<i64>) -> Result<Vec<Term>, Error> {
     let stmt = conn.prep(
         "SELECT t.term_id,
             u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
-            c.club_id, c.key, c.name, c.description,
+            c.club_id, c.club_key, c.name, c.description,
             t.term_begin, t.term_end
         FROM terms t
         JOIN users u ON (u.user_id = t.user_id)

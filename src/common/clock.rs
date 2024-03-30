@@ -1,18 +1,8 @@
-use rocket::{
-    data::ToByteUnit,
-    form::{self, DataField, FromFormField, ValueField},
-};
+use rocket::form::{self, DataField, FromFormField, ValueField};
 
 /*
  * Time and chronology related stuff
  */
-
-async fn parse_field<'r>(field: DataField<'r, '_>) -> form::Result<'r, String> {
-    match field.data.open(200.bytes()).into_string().await {
-        Err(..) => Err(form::Errors::default()),
-        Ok(string) => Ok(string.into_inner()),
-    }
-}
 
 /// WebDate
 pub struct WebDate(pub chrono::NaiveDate);
@@ -38,7 +28,7 @@ impl<'r> FromFormField<'r> for WebDate {
     }
 
     async fn from_data(field: DataField<'r, '_>) -> form::Result<'r, Self> {
-        let web_string: String = parse_field(field).await?;
+        let web_string: String = crate::common::parse_field(field).await?;
         WebDate::from_str(&web_string)
     }
 }
@@ -49,7 +39,7 @@ pub struct WebDateTime(pub chrono::NaiveDateTime);
 #[allow(dead_code)]
 impl<'r> WebDateTime {
     fn from_str(s: &str) -> form::Result<'r, Self> {
-        match chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d+%H-%M") {
+        match chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d-%H-%M") {
             Err(..) => Err(form::Errors::default()),
             Ok(datetime) => Ok(WebDateTime(datetime)),
         }
@@ -67,7 +57,7 @@ impl<'r> FromFormField<'r> for WebDateTime {
     }
 
     async fn from_data(field: DataField<'r, '_>) -> form::Result<'r, Self> {
-        let web_string: String = parse_field(field).await?;
+        let web_string: String = crate::common::parse_field(field).await?;
         WebDateTime::from_str(&web_string)
     }
 }

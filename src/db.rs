@@ -38,7 +38,7 @@ pub fn get_pool_conn() -> PooledConn {
 /// ```
 /// let query = "INSERT INTO events (event_key, pwd, title, location_id, begin, end, status, public, scrutable, note, course_id)
 /// SELECT :event_key, :pwd, :title, :location_id, :begin, :end, :status, :public, :scrutable, :note, :course_id;";
-/// println!("SQL: {}", crate::db::as_sql(&query, &params).unwrap());
+/// crate::db::print_sql(&query, &params);
 /// ```
 #[allow(dead_code)]
 pub fn print_sql(query: &str, params: &mysql::Params) {

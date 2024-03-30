@@ -1,6 +1,6 @@
 use rocket::serde::json::Json;
 
-use crate::common::{Course, Event, Team, User};
+use crate::common::{Course, Event, Team, User, WebBool};
 use crate::error::Error;
 use crate::session::UserSession;
 use chrono::NaiveDateTime;
@@ -9,14 +9,14 @@ use chrono::NaiveDateTime;
 pub fn course_list(
     session: UserSession,
     mod_id: Option<u64>,
-    active: Option<bool>,
-    public: Option<bool>,
+    active: Option<WebBool>,
+    public: Option<WebBool>,
 ) -> Result<Json<Vec<Course>>, Error> {
     if !session.right.admin_courses {
         return Err(Error::RightCourseMissing);
     };
 
-    let courses = crate::db_course::course_list(mod_id, active, public)?;
+    let courses = crate::db_course::course_list(mod_id, active.map(|b| b.to_bool()), public.map(|b| b.to_bool()))?;
     Ok(Json(courses))
 }
 
