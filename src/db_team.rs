@@ -100,6 +100,7 @@ pub fn team_edit(team_id: &u32, team: &Team) -> Result<(), Error> {
     )?;
 
     let params = params! {
+        "team_id" => team_id,
         "team_key" => &team.key,
         "name" => &team.name,
         "description" => &team.description,
@@ -133,6 +134,7 @@ pub fn team_right_edit(team_id: &u32, right: &Right) -> Result<(), Error> {
     )?;
 
     let params = params! {
+        "team_id" => team_id,
         "right_club_write" => &right.right_club_write,
         "right_club_read" => &right.right_club_read,
         "right_competence_write" => &right.right_competence_write,
