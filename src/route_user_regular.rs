@@ -17,13 +17,22 @@ pub fn user_info(session: UserSession) -> Result<Json<User>, Error> {
 #[rocket::get("/regular/user_right")]
 pub fn user_right(session: UserSession) -> Json<Right> {
     Json(Right {
-        admin_competence: session.right.admin_competence,
-        admin_courses: session.right.admin_courses,
-        admin_inventory: session.right.admin_inventory,
-        admin_event: session.right.admin_event,
-        admin_teams: session.right.admin_teams,
-        admin_term: session.right.admin_term,
-        admin_users: session.right.admin_users,
+        right_club_write: session.right.right_club_write,
+        right_club_read: session.right.right_club_read,
+        right_competence_write: session.right.right_competence_write,
+        right_competence_read: session.right.right_competence_read,
+        right_course_write: session.right.right_course_write,
+        right_course_read: session.right.right_course_read,
+        right_event_write: session.right.right_event_write,
+        right_event_read: session.right.right_event_read,
+        right_inventory_write: session.right.right_inventory_write,
+        right_inventory_read: session.right.right_inventory_read,
+        right_location_write: session.right.right_location_write,
+        right_location_read: session.right.right_location_read,
+        right_team_write: session.right.right_team_write,
+        right_team_read: session.right.right_team_read,
+        right_user_write: session.right.right_user_write,
+        right_user_read: session.right.right_user_read,
     })
 }
 

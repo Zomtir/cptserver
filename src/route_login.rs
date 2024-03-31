@@ -13,13 +13,22 @@ pub fn user_login(credit: Json<Credential>) -> Result<String, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.pwd, u.pepper, u.enabled, u.firstname, u.lastname, u.nickname,
-            COALESCE(MAX(admin_competence),0) AS admin_competence,
-            COALESCE(MAX(admin_courses),0) AS admin_courses,
-            COALESCE(MAX(admin_event),0) AS admin_event,
-            COALESCE(MAX(admin_inventory),0) AS admin_inventory,
-            COALESCE(MAX(admin_teams),0) AS admin_teams,
-            COALESCE(MAX(admin_term),0) AS admin_term,
-            COALESCE(MAX(admin_users),0) AS admin_users
+            COALESCE(MAX(right_club_write),0) AS right_club_write,
+            COALESCE(MAX(right_club_read),0) AS right_club_read,
+            COALESCE(MAX(right_competence_write),0) AS right_competence_write,
+            COALESCE(MAX(right_competence_read),0) AS right_competence_read,
+            COALESCE(MAX(right_course_write),0) AS right_course_write,
+            COALESCE(MAX(right_course_read),0) AS right_course_read,
+            COALESCE(MAX(right_event_write),0) AS right_event_write,
+            COALESCE(MAX(right_event_read),0) AS right_event_read,
+            COALESCE(MAX(right_inventory_write),0) AS right_inventory_write,
+            COALESCE(MAX(right_inventory_read),0) AS right_inventory_read,
+            COALESCE(MAX(right_location_write),0) AS right_location_write,
+            COALESCE(MAX(right_location_read),0) AS right_location_read,
+            COALESCE(MAX(right_team_write),0) AS right_team_write,
+            COALESCE(MAX(right_team_read),0) AS right_team_read,
+            COALESCE(MAX(right_user_write),0) AS right_user_write,
+            COALESCE(MAX(right_user_read),0) AS right_user_read
         FROM users u
         LEFT JOIN team_members ON (u.user_id = team_members.user_id)
         LEFT JOIN teams ON (team_members.team_id = teams.team_id)
@@ -72,13 +81,22 @@ pub fn user_login(credit: Json<Credential>) -> Result<String, Error> {
             row.take("nickname").unwrap(),
         ),
         right: Right {
-            admin_competence: row.take("admin_competence").unwrap(),
-            admin_courses: row.take("admin_courses").unwrap(),
-            admin_event: row.take("admin_event").unwrap(),
-            admin_inventory: row.take("admin_inventory").unwrap(),
-            admin_teams: row.take("admin_teams").unwrap(),
-            admin_term: row.take("admin_term").unwrap(),
-            admin_users: row.take("admin_users").unwrap(),
+            right_club_write: row.take("right_club_write").unwrap(),
+            right_club_read: row.take("right_club_read").unwrap(),
+            right_competence_write: row.take("right_competence_write").unwrap(),
+            right_competence_read: row.take("right_competence_read").unwrap(),
+            right_course_write: row.take("right_course_write").unwrap(),
+            right_course_read: row.take("right_course_read").unwrap(),
+            right_event_write: row.take("right_event_write").unwrap(),
+            right_event_read: row.take("right_event_read").unwrap(),
+            right_inventory_write: row.take("right_inventory_write").unwrap(),
+            right_inventory_read: row.take("right_inventory_read").unwrap(),
+            right_location_write: row.take("right_location_write").unwrap(),
+            right_location_read: row.take("right_location_read").unwrap(),
+            right_team_write: row.take("right_team_write").unwrap(),
+            right_team_read: row.take("right_team_read").unwrap(),
+            right_user_write: row.take("right_user_write").unwrap(),
+            right_user_read: row.take("right_user_read").unwrap(),
         },
     };
 

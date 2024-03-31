@@ -202,7 +202,7 @@ pub fn course_moderator_remove(course_id: u64, user_id: u64) -> Result<(), Error
 pub fn course_participant_team_list(course_id: u64) -> Result<Vec<Team>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT t.team_id, t.name, t.description
+        "SELECT t.team_id, t.key, t.name, t.description
         FROM course_participant_teams c
         LEFT JOIN teams t ON c.team_id = t.team_id
         WHERE course_id = :course_id;",
@@ -210,8 +210,9 @@ pub fn course_participant_team_list(course_id: u64) -> Result<Vec<Team>, Error> 
     let params = params! {
         "course_id" => course_id,
     };
-    let map = |(team_id, name, description)| Team {
+    let map = |(team_id, team_key, name, description)| Team {
         id: team_id,
+        key: team_key,
         name,
         description,
         right: None,
@@ -255,7 +256,7 @@ pub fn course_participant_team_remove(course_id: u64, team_id: u64) -> Result<()
 pub fn course_owner_team_list(course_id: u64) -> Result<Vec<Team>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT t.team_id, t.name, t.description
+        "SELECT t.team_id, t.key, t.name, t.description
         FROM course_owner_teams c
         LEFT JOIN teams t ON c.team_id = t.team_id
         WHERE course_id = :course_id;",
@@ -263,8 +264,9 @@ pub fn course_owner_team_list(course_id: u64) -> Result<Vec<Team>, Error> {
     let params = params! {
         "course_id" => course_id,
     };
-    let map = |(team_id, name, description)| Team {
+    let map = |(team_id, team_key, name, description)| Team {
         id: team_id,
+        key: team_key,
         name,
         description,
         right: None,

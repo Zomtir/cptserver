@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8001
--- Generation Time: Mar 30, 2024 at 06:33 AM
+-- Generation Time: Mar 31, 2024 at 10:28 AM
 -- Server version: 10.11.6-MariaDB-0ubuntu0.23.10.2
 -- PHP Version: 8.2.10-2ubuntu1
 
@@ -229,15 +229,25 @@ CREATE TABLE `skills` (
 
 CREATE TABLE `teams` (
   `team_id` mediumint(9) NOT NULL,
+  `team_key` varchar(10) NOT NULL,
   `name` varchar(30) NOT NULL,
   `description` varchar(100) NOT NULL,
-  `admin_competence` tinyint(1) NOT NULL DEFAULT 0,
-  `admin_courses` tinyint(1) NOT NULL DEFAULT 0,
-  `admin_event` tinyint(1) NOT NULL DEFAULT 0,
-  `admin_inventory` tinyint(1) NOT NULL DEFAULT 0,
-  `admin_teams` tinyint(1) NOT NULL DEFAULT 0,
-  `admin_term` tinyint(1) NOT NULL DEFAULT 0,
-  `admin_users` tinyint(1) NOT NULL DEFAULT 0
+  `right_club_write` tinyint(1) NOT NULL DEFAULT 0,
+  `right_club_read` tinyint(1) NOT NULL DEFAULT 0,
+  `right_competence_write` tinyint(1) NOT NULL DEFAULT 0,
+  `right_competence_read` tinyint(1) NOT NULL DEFAULT 0,
+  `right_course_write` tinyint(1) NOT NULL DEFAULT 0,
+  `right_course_read` tinyint(1) NOT NULL DEFAULT 0,
+  `right_event_write` tinyint(1) NOT NULL DEFAULT 0,
+  `right_event_read` tinyint(1) NOT NULL DEFAULT 0,
+  `right_inventory_write` tinyint(1) NOT NULL DEFAULT 0,
+  `right_inventory_read` tinyint(1) NOT NULL DEFAULT 0,
+  `right_location_write` tinyint(1) NOT NULL DEFAULT 0,
+  `right_location_read` tinyint(1) NOT NULL DEFAULT 0,
+  `right_team_write` tinyint(1) NOT NULL DEFAULT 0,
+  `right_team_read` tinyint(1) NOT NULL DEFAULT 0,
+  `right_user_write` tinyint(1) NOT NULL DEFAULT 0,
+  `right_user_read` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -450,7 +460,8 @@ ALTER TABLE `skills`
 -- Indexes for table `teams`
 --
 ALTER TABLE `teams`
-  ADD PRIMARY KEY (`team_id`);
+  ADD PRIMARY KEY (`team_id`),
+  ADD UNIQUE KEY `KEY` (`team_key`);
 
 --
 -- Indexes for table `team_members`

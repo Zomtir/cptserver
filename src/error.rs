@@ -44,12 +44,13 @@ pub enum Error {
     CourseKeyInvalid,
 
     RightConflict,
+    RightClubMissing,
     RightCompetenceMissing,
     RightCourseMissing,
     RightEventMissing,
     RightInventoryMissing,
+    RightLocationMissing,
     RightTeamMissing,
-    RightTermMissing,
     RightUserMissing,
 }
 
@@ -97,12 +98,13 @@ impl Error {
             Error::CourseKeyInvalid => "COURSE_KEY_INVALID",
 
             Error::RightConflict => "RIGHT_CONFLICT",
+            Error::RightClubMissing => "RIGHT_TERM_MISSING",
             Error::RightCompetenceMissing => "RIGHT_COMPETENCE_MISSING",
             Error::RightCourseMissing => "RIGHT_COURSE_MISSING",
             Error::RightEventMissing => "RIGHT_EVENT_MISSING",
             Error::RightInventoryMissing => "RIGHT_INVENTORY_MISSING",
+            Error::RightLocationMissing => "RIGHT_LOCATION_MISSING",
             Error::RightTeamMissing => "RIGHT_TEAM_MISSING",
-            Error::RightTermMissing => "RIGHT_TERM_MISSING",
             Error::RightUserMissing => "RIGHT_USER_MISSING",
         };
         kind.into()
@@ -151,12 +153,13 @@ impl std::fmt::Display for Error {
             Error::CourseKeyInvalid => write!(f, "Course key has an invalid format"),
 
             Error::RightConflict => write!(f, "Conflicting right permissions"),
+            Error::RightClubMissing => write!(f, "Club permissions are missing"),
             Error::RightCompetenceMissing => write!(f, "Competence permissions are missing"),
             Error::RightCourseMissing => write!(f, "Course permissions are missing"),
             Error::RightEventMissing => write!(f, "Event permissions are missing"),
             Error::RightInventoryMissing => write!(f, "Inventory permissions are missing"),
+            Error::RightLocationMissing => write!(f, "Location permissions are missing"),
             Error::RightTeamMissing => write!(f, "Team permissions are missing"),
-            Error::RightTermMissing => write!(f, "Term permissions are missing"),
             Error::RightUserMissing => write!(f, "User permissions are missing"),
         }
     }

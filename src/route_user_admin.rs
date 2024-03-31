@@ -8,7 +8,7 @@ use crate::session::{Credential, UserSession};
 
 #[rocket::get("/admin/user_list?<active>")]
 pub fn user_list(session: UserSession, active: Option<WebBool>) -> Result<Json<Vec<User>>, Error> {
-    if !session.right.admin_users {
+    if !session.right.right_user_write {
         return Err(Error::RightUserMissing);
     };
 
@@ -18,7 +18,7 @@ pub fn user_list(session: UserSession, active: Option<WebBool>) -> Result<Json<V
 
 #[rocket::get("/admin/user_detailed?<user_id>")]
 pub fn user_detailed(session: UserSession, user_id: u64) -> Result<Json<User>, Error> {
-    if !session.right.admin_users {
+    if !session.right.right_user_write {
         return Err(Error::RightUserMissing);
     };
 
@@ -28,7 +28,7 @@ pub fn user_detailed(session: UserSession, user_id: u64) -> Result<Json<User>, E
 
 #[rocket::post("/admin/user_create", format = "application/json", data = "<user>")]
 pub fn user_create(session: UserSession, mut user: Json<User>) -> Result<String, Error> {
-    if !session.right.admin_users {
+    if !session.right.right_user_write {
         return Err(Error::RightUserMissing);
     };
 
@@ -39,7 +39,7 @@ pub fn user_create(session: UserSession, mut user: Json<User>) -> Result<String,
 
 #[rocket::post("/admin/user_edit?<user_id>", format = "application/json", data = "<user>")]
 pub fn user_edit(session: UserSession, user_id: u64, mut user: Json<User>) -> Result<(), Error> {
-    if !session.right.admin_users {
+    if !session.right.right_user_write {
         return Err(Error::RightUserMissing);
     };
 
@@ -53,7 +53,7 @@ pub fn user_edit(session: UserSession, user_id: u64, mut user: Json<User>) -> Re
     data = "<credit>"
 )]
 pub fn user_edit_password(session: UserSession, user_id: u64, credit: Json<Credential>) -> Result<(), Error> {
-    if !session.right.admin_users {
+    if !session.right.right_user_write {
         return Err(Error::RightUserMissing);
     };
 
@@ -63,7 +63,7 @@ pub fn user_edit_password(session: UserSession, user_id: u64, credit: Json<Crede
 
 #[rocket::head("/admin/user_delete?<user_id>")]
 pub fn user_delete(session: UserSession, user_id: u64) -> Result<(), Error> {
-    if !session.right.admin_users {
+    if !session.right.right_user_write {
         return Err(Error::RightUserMissing);
     };
 

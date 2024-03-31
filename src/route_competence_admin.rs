@@ -12,7 +12,7 @@ pub fn competence_list(
     min: Option<i16>,
     max: Option<i16>,
 ) -> Result<Json<Vec<Competence>>, Error> {
-    if !session.right.admin_competence {
+    if !session.right.right_competence_write {
         return Err(Error::RightCompetenceMissing);
     };
 
@@ -22,7 +22,7 @@ pub fn competence_list(
 
 #[rocket::post("/admin/competence_create", format = "application/json", data = "<competence>")]
 pub fn competence_create(session: UserSession, competence: Json<Competence>) -> Result<String, Error> {
-    if !session.right.admin_competence {
+    if !session.right.right_competence_write {
         return Err(Error::RightCompetenceMissing);
     };
 
@@ -36,7 +36,7 @@ pub fn competence_create(session: UserSession, competence: Json<Competence>) -> 
     data = "<competence>"
 )]
 pub fn competence_edit(session: UserSession, competence_id: u64, competence: Json<Competence>) -> Result<(), Error> {
-    if !session.right.admin_competence {
+    if !session.right.right_competence_write {
         return Err(Error::RightCompetenceMissing);
     };
 
@@ -46,7 +46,7 @@ pub fn competence_edit(session: UserSession, competence_id: u64, competence: Jso
 
 #[rocket::head("/admin/competence_delete?<competence_id>")]
 pub fn competence_delete(session: UserSession, competence_id: u64) -> Result<(), Error> {
-    if !session.right.admin_competence {
+    if !session.right.right_competence_write {
         return Err(Error::RightCompetenceMissing);
     };
 

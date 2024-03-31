@@ -9,11 +9,12 @@ use crate::error::Error;
  * METHODS
  */
 
-pub fn list_teams() -> Result<Vec<Team>, Error> {
+pub fn team_list() -> Result<Vec<Team>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
             team_id,
+            team_key,
             name,
             description,
             admin_competence,
@@ -25,79 +26,62 @@ pub fn list_teams() -> Result<Vec<Team>, Error> {
             admin_users
         FROM teams",
     )?;
-    let map = |(
-        team_id,
-        name,
-        description,
-        admin_competence,
-        admin_courses,
-        admin_event,
-        admin_inventory,
-        admin_teams,
-        admin_term,
-        admin_users,
-    )| Team {
-        id: team_id,
-        name,
-        description,
-        right: Some(Right {
-            admin_competence,
-            admin_courses,
-            admin_event,
-            admin_inventory,
-            admin_teams,
-            admin_term,
-            admin_users,
-        }),
-    };
 
     let params = params::Params::Empty;
 
-    let teams = conn.exec_map(&stmt, &params, &map)?;
+    let rows: Vec<mysql::Row> = conn.exec(&stmt, &params)?;
+
+    let mut teams: Vec<Team> = Vec::new();
+
+    for mut row in rows {
+        let team = Team {
+            id: row.take("team_id").unwrap(),
+            key: row.take("team_key").unwrap(),
+            name: row.take("name").unwrap(),
+            description: row.take("description").unwrap(),
+            right: Some(Right {
+                right_club_write: row.take("right_club_write").unwrap(),
+                right_club_read: row.take("right_club_read").unwrap(),
+                right_competence_write: row.take("right_competence_write").unwrap(),
+                right_competence_read: row.take("right_competence_read").unwrap(),
+                right_course_write: row.take("right_course_write").unwrap(),
+                right_course_read: row.take("right_course_read").unwrap(),
+                right_event_write: row.take("right_event_write").unwrap(),
+                right_event_read: row.take("right_event_read").unwrap(),
+                right_inventory_write: row.take("right_inventory_write").unwrap(),
+                right_inventory_read: row.take("right_inventory_read").unwrap(),
+                right_location_write: row.take("right_location_write").unwrap(),
+                right_location_read: row.take("right_location_read").unwrap(),
+                right_team_write: row.take("right_team_write").unwrap(),
+                right_team_read: row.take("right_team_read").unwrap(),
+                right_user_write: row.take("right_user_write").unwrap(),
+                right_user_read: row.take("right_user_read").unwrap(),
+            }),
+        };
+        teams.push(team);
+    }
+
     Ok(teams)
 }
 
-pub fn create_team(team: &Team) -> Result<u32, Error> {
+pub fn team_create(team: &Team) -> Result<u32, Error> {
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(
         "INSERT INTO teams (
+            team_key,
             name,
-            description,
-            admin_competence,
-            admin_courses,
-            admin_event,
-            admin_inventory,
-            admin_teams,
-            admin_term,
-            admin_users)
+            description)
         VALUES (
+            :team_key
             :name,
-            :description,
-            :admin_courses,
-            :admin_event,
-            :admin_inventory,
-            :admin_competence,
-            :admin_teams,
-            :admin_term,
-            :admin_users)",
+            :description);",
     )?;
 
-    let rights = match &team.right {
-        None => return Err(Error::Default),
-        Some(r) => r.clone(),
-    };
-
     let params = params! {
+        "team_key" => &team.key,
         "name" => &team.name,
         "description" => &team.description,
-        "admin_courses" => &rights.admin_courses,
-        "admin_event" => &rights.admin_event,
-        "admin_inventory" => &rights.admin_inventory,
-        "admin_competence," => &rights.admin_competence,
-        "admin_teams" => &rights.admin_teams,
-        "admin_term" => &rights.admin_term,
-        "admin_users" => &rights.admin_users,
     };
 
     conn.exec_drop(&stmt, &params)?;
@@ -105,45 +89,73 @@ pub fn create_team(team: &Team) -> Result<u32, Error> {
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn edit_team(team_id: &u32, team: &Team) -> Result<(), Error> {
+pub fn team_edit(team_id: &u32, team: &Team) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE teams SET
+            team_key = :team_key,
             name = :name,
             description = :description,
-            admin_competence = :admin_competence,
-            admin_courses = :admin_courses,
-            admin_event = :admin_event,
-            admin_inventory = :admin_inventory,
-            admin_teams = :admin_teams,
-            admin_term = :admin_term,
-            admin_users = :admin_users
         WHERE team_id = :team_id",
     )?;
 
-    let rights = match &team.right {
-        None => return Err(Error::Default),
-        Some(r) => r.clone(),
-    };
-
     let params = params! {
-        "team_id" => &team_id,
+        "team_key" => &team.key,
         "name" => &team.name,
         "description" => &team.description,
-        "admin_competence" => &rights.admin_competence,
-        "admin_courses" => &rights.admin_courses,
-        "admin_event" => &rights.admin_event,
-        "admin_inventory" => &rights.admin_inventory,
-        "admin_teams" => &rights.admin_teams,
-        "admin_term" => &rights.admin_term,
-        "admin_users" => &rights.admin_users,
     };
 
     conn.exec_drop(&stmt, &params)?;
     Ok(())
 }
 
-pub fn delete_team(team_id: &u32) -> Result<(), Error> {
+pub fn team_right_edit(team_id: &u32, right: &Right) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "UPDATE teams SET
+            right_club_write = :right_club_write,
+            right_club_read = :right_club_read,
+            right_competence_write = :right_competence_write,
+            right_competence_read = :right_competence_read,
+            right_course_write = :right_course_write,
+            right_course_read = :right_course_read,
+            right_event_write = :right_event_write,
+            right_event_read = :right_event_read,
+            right_inventory_write = :right_inventory_write,
+            right_inventory_read = :right_inventory_read,
+            right_location_write = :right_location_write,
+            right_location_read = :right_location_read,
+            right_team_write = :right_team_write,
+            right_team_read = :right_team_read,
+            right_user_write = :right_user_write,
+            right_user_read = :right_user_read
+        WHERE team_id = :team_id",
+    )?;
+
+    let params = params! {
+        "right_club_write" => &right.right_club_write,
+        "right_club_read" => &right.right_club_read,
+        "right_competence_write" => &right.right_competence_write,
+        "right_competence_read" => &right.right_competence_read,
+        "right_course_write" => &right.right_course_write,
+        "right_course_read" => &right.right_course_read,
+        "right_event_write" => &right.right_event_write,
+        "right_event_read" => &right.right_event_read,
+        "right_inventory_write" => &right.right_inventory_write,
+        "right_inventory_read" => &right.right_inventory_read,
+        "right_location_write" => &right.right_location_write,
+        "right_location_read" => &right.right_location_read,
+        "right_team_write" => &right.right_team_write,
+        "right_team_read" => &right.right_team_read,
+        "right_user_write" => &right.right_user_write,
+        "right_user_read" => &right.right_user_read,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+pub fn team_delete(team_id: &u32) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE t FROM teams t WHERE t.team_id = :team_id")?;
     let params = params! {"team_id" => team_id};
@@ -152,7 +164,7 @@ pub fn delete_team(team_id: &u32) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn list_team_members(team_id: u32) -> Result<Vec<User>, Error> {
+pub fn team_member_list(team_id: u32) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
@@ -172,7 +184,7 @@ pub fn list_team_members(team_id: u32) -> Result<Vec<User>, Error> {
     Ok(members)
 }
 
-pub fn add_team_member(team_id: &u32, user_id: &u32) -> Result<(), Error> {
+pub fn team_member_add(team_id: &u32, user_id: &u32) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep("INSERT INTO team_members (team_id, user_id) SELECT :team_id, :user_id")?;
     let params = params! {
@@ -184,7 +196,7 @@ pub fn add_team_member(team_id: &u32, user_id: &u32) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn remove_team_member(team_id: &u32, user_id: &u32) -> Result<(), Error> {
+pub fn team_member_remove(team_id: &u32, user_id: &u32) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE FROM team_members WHERE team_id = :team_id AND user_id = :user_id")?;
     let params = params! {

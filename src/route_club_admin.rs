@@ -6,8 +6,8 @@ use crate::session::UserSession;
 
 #[rocket::get("/admin/club_list")]
 pub fn club_list(session: UserSession) -> Result<Json<Vec<Club>>, Error> {
-    if !session.right.admin_term {
-        return Err(Error::RightTermMissing);
+    if !session.right.right_club_write {
+        return Err(Error::RightClubMissing);
     };
 
     let clubs = crate::db_club::club_list()?;
@@ -16,8 +16,8 @@ pub fn club_list(session: UserSession) -> Result<Json<Vec<Club>>, Error> {
 
 #[rocket::post("/admin/club_create", format = "application/json", data = "<club>")]
 pub fn club_create(session: UserSession, club: Json<Club>) -> Result<String, Error> {
-    if !session.right.admin_term {
-        return Err(Error::RightTermMissing);
+    if !session.right.right_club_write {
+        return Err(Error::RightClubMissing);
     };
 
     let id = crate::db_club::club_create(&club)?;
@@ -26,8 +26,8 @@ pub fn club_create(session: UserSession, club: Json<Club>) -> Result<String, Err
 
 #[rocket::post("/admin/club_edit?<club_id>", format = "application/json", data = "<club>")]
 pub fn club_edit(session: UserSession, club_id: u32, club: Json<Club>) -> Result<(), Error> {
-    if !session.right.admin_term {
-        return Err(Error::RightTermMissing);
+    if !session.right.right_club_write {
+        return Err(Error::RightClubMissing);
     };
 
     crate::db_club::club_edit(club_id, &club)?;
@@ -36,8 +36,8 @@ pub fn club_edit(session: UserSession, club_id: u32, club: Json<Club>) -> Result
 
 #[rocket::head("/admin/club_delete?<club_id>")]
 pub fn club_delete(session: UserSession, club_id: u32) -> Result<(), Error> {
-    if !session.right.admin_term {
-        return Err(Error::RightTermMissing);
+    if !session.right.right_club_write {
+        return Err(Error::RightClubMissing);
     };
 
     crate::db_club::club_delete(club_id)?;

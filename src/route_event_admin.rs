@@ -15,7 +15,7 @@ pub fn event_list(
     course_id: Option<u64>,
     owner_id: Option<u64>,
 ) -> Result<Json<Vec<Event>>, Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
@@ -33,7 +33,7 @@ pub fn event_list(
 
 #[rocket::get("/admin/event_info?<event_id>")]
 pub fn event_info(session: UserSession, event_id: u64) -> Result<Json<Event>, Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
@@ -42,11 +42,11 @@ pub fn event_info(session: UserSession, event_id: u64) -> Result<Json<Event>, Er
 
 #[rocket::post("/admin/event_create?<course_id>", format = "application/json", data = "<event>")]
 pub fn event_create(session: UserSession, course_id: Option<u64>, mut event: Json<Event>) -> Result<String, Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
-    if course_id == None || !session.right.admin_courses {
+    if course_id == None || !session.right.right_course_write {
         return Err(Error::RightCourseMissing);
     };
 
@@ -58,7 +58,7 @@ pub fn event_create(session: UserSession, course_id: Option<u64>, mut event: Jso
 
 #[rocket::post("/admin/event_edit?<event_id>", format = "application/json", data = "<event>")]
 pub fn event_edit(session: UserSession, event_id: u64, mut event: Json<Event>) -> Result<(), Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
@@ -70,7 +70,7 @@ pub fn event_edit(session: UserSession, event_id: u64, mut event: Json<Event>) -
 
 #[rocket::post("/admin/event_password_edit?<event_id>", format = "text/plain", data = "<password>")]
 pub fn event_password_edit(session: UserSession, event_id: u64, password: String) -> Result<(), Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
@@ -80,7 +80,7 @@ pub fn event_password_edit(session: UserSession, event_id: u64, password: String
 
 #[rocket::head("/admin/event_delete?<event_id>")]
 pub fn event_delete(session: UserSession, event_id: u64) -> Result<(), Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
@@ -90,7 +90,7 @@ pub fn event_delete(session: UserSession, event_id: u64) -> Result<(), Error> {
 
 #[rocket::head("/admin/event_accept?<event_id>")]
 pub fn event_accept(session: UserSession, event_id: u64) -> Result<(), Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
@@ -113,7 +113,7 @@ pub fn event_accept(session: UserSession, event_id: u64) -> Result<(), Error> {
 
 #[rocket::head("/admin/event_deny?<event_id>")]
 pub fn event_deny(session: UserSession, event_id: u64) -> Result<(), Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
@@ -123,7 +123,7 @@ pub fn event_deny(session: UserSession, event_id: u64) -> Result<(), Error> {
 
 #[rocket::head("/admin/event_cancel?<event_id>")]
 pub fn event_cancel(session: UserSession, event_id: u64) -> Result<(), Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
@@ -133,7 +133,7 @@ pub fn event_cancel(session: UserSession, event_id: u64) -> Result<(), Error> {
 
 #[rocket::head("/admin/event_suspend?<event_id>")]
 pub fn event_suspend(session: UserSession, event_id: u64) -> Result<(), Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
@@ -149,7 +149,7 @@ pub fn event_suspend(session: UserSession, event_id: u64) -> Result<(), Error> {
 
 #[rocket::get("/admin/event_owner_pool?<event_id>")]
 pub fn event_owner_pool(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>, Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
@@ -159,7 +159,7 @@ pub fn event_owner_pool(session: UserSession, event_id: u64) -> Result<Json<Vec<
 
 #[rocket::get("/admin/event_owner_list?<event_id>")]
 pub fn event_owner_list(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>, Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
@@ -169,7 +169,7 @@ pub fn event_owner_list(session: UserSession, event_id: u64) -> Result<Json<Vec<
 
 #[rocket::head("/admin/event_owner_add?<event_id>&<user_id>")]
 pub fn event_owner_add(session: UserSession, event_id: u64, user_id: u64) -> Result<(), Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
@@ -179,7 +179,7 @@ pub fn event_owner_add(session: UserSession, event_id: u64, user_id: u64) -> Res
 
 #[rocket::head("/admin/event_owner_remove?<event_id>&<user_id>")]
 pub fn event_owner_remove(session: UserSession, event_id: u64, user_id: u64) -> Result<(), Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
@@ -189,7 +189,7 @@ pub fn event_owner_remove(session: UserSession, event_id: u64, user_id: u64) -> 
 
 #[rocket::get("/admin/event_participant_pool?<event_id>")]
 pub fn event_participant_pool(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>, Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
@@ -199,7 +199,7 @@ pub fn event_participant_pool(session: UserSession, event_id: u64) -> Result<Jso
 
 #[rocket::get("/admin/event_participant_list?<event_id>")]
 pub fn event_participant_list(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>, Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
@@ -209,7 +209,7 @@ pub fn event_participant_list(session: UserSession, event_id: u64) -> Result<Jso
 
 #[rocket::head("/admin/event_participant_add?<event_id>&<user_id>")]
 pub fn event_participant_add(session: UserSession, event_id: u64, user_id: u64) -> Result<(), Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
@@ -219,7 +219,7 @@ pub fn event_participant_add(session: UserSession, event_id: u64, user_id: u64) 
 
 #[rocket::head("/admin/event_participant_remove?<event_id>&<user_id>")]
 pub fn event_participant_remove(session: UserSession, event_id: u64, user_id: u64) -> Result<(), Error> {
-    if !session.right.admin_event {
+    if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
 
