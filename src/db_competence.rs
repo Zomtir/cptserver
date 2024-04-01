@@ -134,7 +134,7 @@ pub fn competence_delete(competence_id: u64) -> Result<(), Error> {
 pub fn competence_summary(user_id: u64) -> Result<Vec<(Skill, i16)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT s.skill_id, s.skill_key, s.title, MAX(uc.rank)
+        "SELECT s.skill_id, s.skill_key, s.title, s.min, s.max, MAX(uc.rank)
         FROM user_competences uc
         JOIN skills s ON (uc.skill_id = s.skill_id)
         JOIN users j ON (uc.judge_id = j.user_id)
@@ -146,16 +146,16 @@ pub fn competence_summary(user_id: u64) -> Result<Vec<(Skill, i16)>, Error> {
         "user_id" => user_id,
     };
 
-    let map = |(skill_id, skill_key, skill_title, maxrank)| {
+    let map = |(skill_id, skill_key, skill_title, skill_min, skill_max, rank)| {
         (
             Skill {
                 id: skill_id,
                 key: skill_key,
                 title: skill_title,
-                min: None,
-                max: None,
+                min: skill_min,
+                max: skill_max,
             },
-            maxrank,
+            rank,
         )
     };
 
