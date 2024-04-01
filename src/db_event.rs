@@ -78,8 +78,8 @@ pub fn event_list(
         FROM events e
         JOIN locations l ON l.location_id = e.location_id
         LEFT JOIN event_owners o ON e.event_id = o.event_id
-        WHERE (:frame_start IS NULL OR :frame_start < e.begin)
-        AND (:frame_stop IS NULL OR :frame_stop > e.begin)
+        WHERE (:begin IS NULL OR end > :begin)
+        AND (:end IS NULL OR begin < :end)
         AND (:status IS NULL OR :status = e.status)
         AND (:location_id IS NULL OR :location_id = l.location_id)
         AND (:course_true IS NULL OR (:course_true = TRUE AND :course_id = e.course_id) OR (:course_true = FALSE AND e.course_id IS NULL))
@@ -87,8 +87,8 @@ pub fn event_list(
         GROUP BY e.event_id;")?;
 
     let params = params! {
-        "frame_start" => &begin,
-        "frame_stop" => &end,
+        "begin" => &begin,
+        "end" => &end,
         "status" => &status,
         "location_id" => &location_id,
         "course_true" => &course_true,
