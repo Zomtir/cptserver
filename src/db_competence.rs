@@ -15,7 +15,7 @@ pub fn competence_list(
     let stmt = conn.prep(
         "SELECT uc.competence_id,
             u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
-            s.skill_id, s.skill_key, s.title as skill_title,
+            s.skill_id, s.skill_key, s.title as skill_title, s.min as skill_min, s.max as skill_max,
             uc.rank, uc.date,
             j.user_id as judge_id, j.user_key as judge_key, j.firstname as judge_firstname, j.lastname as judge_lastname, j.nickname as judge_nickname
         FROM user_competences uc
@@ -51,8 +51,8 @@ pub fn competence_list(
                 id: row.take("skill_id").unwrap(),
                 key: row.take("skill_key").unwrap(),
                 title: row.take("skill_title").unwrap(),
-                min: None,
-                max: None,
+                min: row.take("skill_min").unwrap(),
+                max: row.take("skill_max").unwrap(),
             },
             rank: row.take("rank").unwrap(),
             date: row.take("date").unwrap(),
