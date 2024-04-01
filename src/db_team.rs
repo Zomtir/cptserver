@@ -104,7 +104,7 @@ pub fn team_edit(team_id: &u32, team: &Team) -> Result<(), Error> {
         "UPDATE teams SET
             team_key = :team_key,
             name = :name,
-            description = :description,
+            description = :description
         WHERE team_id = :team_id",
     )?;
 
