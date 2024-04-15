@@ -42,22 +42,22 @@ pub fn get_pool_conn() -> PooledConn {
 /// ```
 #[allow(dead_code)]
 pub fn print_sql(query: &str, params: &mysql::Params) {
-    let (p, q) = mysql_common::named_params::parse_named_params(query.as_bytes()).unwrap();
-    let (placeholder, real_query) = (p.unwrap(), q.into_owned());
+    let pnp = mysql_common::named_params::ParsedNamedParams::parse(query.as_bytes()).unwrap();
+    let (real_query, real_params) = (pnp.query(), pnp.params());
 
     let replacement_map = match params {
         mysql::Params::Named(map) => map,
         _ => return,
     };
 
-    let input_string = String::from_utf8(real_query.clone()).unwrap();
+    let input_string = String::from_utf8(real_query.to_vec()).unwrap();
     let mut param_index = 0;
     let mut output_string = String::new();
 
     for char in input_string.chars() {
         match char {
             '?' => {
-                let s = replacement_map.get(&placeholder[param_index]).unwrap().as_sql(true);
+                let s = replacement_map.get(&*real_params[param_index]).unwrap().as_sql(true);
                 param_index += 1;
                 output_string.push_str(&s);
             }
