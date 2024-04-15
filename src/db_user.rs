@@ -9,7 +9,7 @@ use crate::error::Error;
  * METHODS
  */
 
-pub fn list_user(active: Option<bool>) -> Result<Vec<User>, Error> {
+pub fn user_list(active: Option<bool>) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT user_id, user_key, firstname, lastname, nickname
@@ -28,7 +28,7 @@ pub fn list_user(active: Option<bool>) -> Result<Vec<User>, Error> {
     Ok(conn.exec_map(&stmt.unwrap(), &params, &map)?)
 }
 
-pub fn get_user_detailed(user_id: u64) -> Result<User, Error> {
+pub fn user_info(user_id: u64) -> Result<User, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
@@ -95,7 +95,7 @@ pub fn get_user_detailed(user_id: u64) -> Result<User, Error> {
     Ok(user)
 }
 
-pub fn create_user(user: &mut User) -> Result<u64, Error> {
+pub fn user_create(user: &mut User) -> Result<u64, Error> {
     user.key = crate::common::validate_user_key(&user.key)?;
     user.email = crate::common::validate_email(&user.email)?;
 
@@ -144,16 +144,7 @@ pub fn create_user(user: &mut User) -> Result<u64, Error> {
     Ok(conn.last_insert_id() as u64)
 }
 
-pub fn is_user_created(user_key: &str) -> Result<bool, Error> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT COUNT(1) FROM users WHERE user_key = :user_key")?;
-    let params = params! { "user_key" => user_key };
-    let count: Option<i32> = conn.exec_first(&stmt, &params)?;
-
-    Ok(count.unwrap() == 1)
-}
-
-pub fn edit_user(user_id: u64, user: &mut User) -> Result<(), Error> {
+pub fn user_edit(user_id: u64, user: &mut User) -> Result<(), Error> {
     user.key = crate::common::validate_user_key(&user.key)?;
 
     if user.key.is_none() {
@@ -218,7 +209,7 @@ pub fn edit_user(user_id: u64, user: &mut User) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn edit_user_password(user_id: u64, password: &str, salt: &str) -> Result<(), Error> {
+pub fn user_password_edit(user_id: u64, password: &str, salt: &str) -> Result<(), Error> {
     let bpassword: Vec<u8> = match crate::common::decode_hash256(password) {
         Some(bpassword) => bpassword,
         None => return Err(Error::UserPasswordInvalid),
@@ -245,7 +236,7 @@ pub fn edit_user_password(user_id: u64, password: &str, salt: &str) -> Result<()
     Ok(())
 }
 
-pub fn delete_user(user_id: u64) -> Result<(), Error> {
+pub fn user_delete(user_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE u FROM users u WHERE u.user_id = :user_id")?;
     let params = params! {
@@ -254,4 +245,27 @@ pub fn delete_user(user_id: u64) -> Result<(), Error> {
 
     conn.exec_drop(&stmt, &params)?;
     Ok(())
+}
+
+pub fn user_created_true(user_key: &str) -> Result<bool, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep("SELECT COUNT(1) FROM users WHERE user_key = :user_key")?;
+    let params = params! { "user_key" => user_key };
+    let count: Option<i32> = conn.exec_first(&stmt, &params)?;
+
+    Ok(count.unwrap() == 1)
+}
+
+pub fn user_salt_value(user_key: &str) -> Result<Vec<u8>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep("SELECT salt FROM users WHERE user_key = :user_key")?;
+    let params = params! {
+        "user_key" => &user_key
+    };
+
+    // If the user does not exist, just return a random salt to prevent data scraping
+    match conn.exec_first::<Vec<u8>, _, _>(&stmt, &params)? {
+        None => Err(Error::UserMissing),
+        Some(salt) => Ok(salt),
+    }
 }

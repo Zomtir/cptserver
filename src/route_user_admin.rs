@@ -12,7 +12,7 @@ pub fn user_list(session: UserSession, active: Option<WebBool>) -> Result<Json<V
         return Err(Error::RightUserMissing);
     };
 
-    let users = crate::db_user::list_user(active.map(|b| b.to_bool()))?;
+    let users = crate::db_user::user_list(active.map(|b| b.to_bool()))?;
     Ok(Json(users))
 }
 
@@ -22,7 +22,7 @@ pub fn user_detailed(session: UserSession, user_id: u64) -> Result<Json<User>, E
         return Err(Error::RightUserMissing);
     };
 
-    let user = crate::db_user::get_user_detailed(user_id)?;
+    let user = crate::db_user::user_info(user_id)?;
     Ok(Json(user))
 }
 
@@ -32,7 +32,7 @@ pub fn user_create(session: UserSession, mut user: Json<User>) -> Result<String,
         return Err(Error::RightUserMissing);
     };
 
-    let user_id = crate::db_user::create_user(&mut user)?;
+    let user_id = crate::db_user::user_create(&mut user)?;
 
     Ok(user_id.to_string())
 }
@@ -43,7 +43,7 @@ pub fn user_edit(session: UserSession, user_id: u64, mut user: Json<User>) -> Re
         return Err(Error::RightUserMissing);
     };
 
-    crate::db_user::edit_user(user_id, &mut user)?;
+    crate::db_user::user_edit(user_id, &mut user)?;
     Ok(())
 }
 
@@ -57,7 +57,7 @@ pub fn user_edit_password(session: UserSession, user_id: u64, credit: Json<Crede
         return Err(Error::RightUserMissing);
     };
 
-    crate::db_user::edit_user_password(user_id, &credit.password, &credit.salt)?;
+    crate::db_user::user_password_edit(user_id, &credit.password, &credit.salt)?;
     Ok(())
 }
 
@@ -67,6 +67,6 @@ pub fn user_delete(session: UserSession, user_id: u64) -> Result<(), Error> {
         return Err(Error::RightUserMissing);
     };
 
-    crate::db_user::delete_user(user_id)?;
+    crate::db_user::user_delete(user_id)?;
     Ok(())
 }

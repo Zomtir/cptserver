@@ -3,11 +3,8 @@ extern crate lazy_static;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 
-use mysql::prelude::Queryable;
-use mysql::{params, PooledConn};
-
 use crate::common::{Club, Course, Location, Skill};
-use crate::db::get_pool_conn;
+
 use crate::error::Error;
 
 #[rocket::head("/status")]
@@ -15,26 +12,13 @@ pub fn status() -> Status {
     Status::Ok
 }
 
-#[rocket::get("/location_list")]
-pub fn location_list() -> Result<Json<Vec<Location>>, Status> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn
-        .prep("SELECT location_id, location_key, name, description FROM locations")
-        .unwrap();
-    let map = |(location_id, location_key, name, description)| Location {
-        id: location_id,
-        key: location_key,
-        name,
-        description,
-    };
-
-    match conn.exec_map(&stmt, params::Params::Empty, &map) {
-        Err(..) => Err(Status::Conflict),
-        Ok(locations) => Ok(Json(locations)),
-    }
+#[rocket::get("/anon/location_list")]
+pub fn location_list() -> Result<Json<Vec<Location>>, Error> {
+    let locations = crate::db_location::location_list()?;
+    Ok(Json(locations))
 }
 
-#[rocket::get("/skill_list")]
+#[rocket::get("/anon/skill_list")]
 pub fn skill_list() -> Result<Json<Vec<Skill>>, Error> {
     let skills = crate::db_skill::skill_list()?;
     Ok(Json(skills))
@@ -54,15 +38,11 @@ pub fn course_list() -> Result<Json<Vec<Course>>, Error> {
 
 #[rocket::get("/user_salt?<user_key>")]
 pub fn user_salt(user_key: String) -> Result<String, Error> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep("SELECT salt FROM users WHERE user_key = :user_key")?;
-    let params = params! {
-        "user_key" => &user_key
-    };
+    let salt = crate::db_user::user_salt_value(&user_key);
 
     // If the user does not exist, just return a random salt to prevent data scraping
-    match conn.exec_first::<Vec<u8>, _, _>(&stmt, &params)? {
-        None => Ok(hex::encode(crate::common::hash128_string(&user_key))),
-        Some(salt) => Ok(hex::encode(salt)),
+    match salt {
+        Err(_) => Ok(hex::encode(crate::common::hash128_string(&user_key))),
+        Ok(salt) => Ok(hex::encode(salt)),
     }
 }
