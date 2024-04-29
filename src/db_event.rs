@@ -290,13 +290,32 @@ pub fn event_owner_pool(event_id: u64) -> Result<Vec<User>, Error> {
 
     let stmt = conn.prep(
         "SELECT users.user_id, users.user_key, users.firstname, users.lastname, users.nickname
-        FROM course_owner_teams AS cot
-        JOIN teams ON teams.team_id = cot.team_id
-        JOIN team_members tm ON teams.team_id = tm.team_id
-        JOIN users ON tm.user_id = users.user_id
-        JOIN events ON events.course_id = cot.course_id
-        WHERE events.event_id = :event_id AND users.active = TRUE
-        GROUP BY users.user_id",
+        FROM users
+        INNER JOIN (
+            SELECT tm.user_id
+            FROM course_owner_summons as summons
+            JOIN teams ON teams.team_id = summons.team_id
+            JOIN team_members tm ON teams.team_id = tm.team_id
+            JOIN events ON events.course_id = summons.course_id
+            WHERE events.event_id = :event_id
+            UNION DISTINCT
+            SELECT invites.user_id
+            FROM event_owner_invites as invites
+            WHERE invites.event_id = :event_id
+        ) AS combined ON combined.user_id = users.user_id
+        LEFT JOIN (
+            SELECT tm.user_id
+            FROM course_owner_unsummons as unsummons
+            JOIN teams ON teams.team_id = unsummons.team_id
+            JOIN team_members tm ON teams.team_id = tm.team_id
+            JOIN events ON events.course_id = unsummons.course_id
+            WHERE events.event_id = :event_id
+            UNION DISTINCT
+            SELECT uninvites.user_id
+            FROM event_owner_uninvites as uninvites
+            WHERE uninvites.event_id = :event_id
+        ) AS uncombined ON combined.user_id = uncombined.user_id
+        WHERE uncombined.user_id IS NULL;",
     )?;
 
     let params = params! {
@@ -487,18 +506,36 @@ pub fn event_owner_uninvite_remove(event_id: u64, user_id: u64) -> Result<(), Er
 
 pub fn event_participant_pool(event_id: u64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
-    // TODO UNION event invites, team invites
     // TODO level check threshold if existent
 
     let stmt = conn.prep(
         "SELECT users.user_id, users.user_key, users.firstname, users.lastname, users.nickname
-        FROM course_participant_teams AS cpt
-        JOIN teams ON teams.team_id = cpt.team_id
-        JOIN team_members tm ON teams.team_id = tm.team_id
-        JOIN users ON tm.user_id = users.user_id
-        JOIN events ON events.course_id = cpt.course_id
-        WHERE events.event_id = :event_id AND users.active = TRUE
-        GROUP BY users.user_id",
+        FROM users
+        INNER JOIN (
+            SELECT tm.user_id
+            FROM course_participant_summons as summons
+            JOIN teams ON teams.team_id = summons.team_id
+            JOIN team_members tm ON teams.team_id = tm.team_id
+            JOIN events ON events.course_id = summons.course_id
+            WHERE events.event_id = :event_id
+            UNION DISTINCT
+            SELECT invites.user_id
+            FROM event_participant_invites as invites
+            WHERE invites.event_id = :event_id
+        ) AS combined ON combined.user_id = users.user_id
+        LEFT JOIN (
+            SELECT tm.user_id
+            FROM course_participant_unsummons as unsummons
+            JOIN teams ON teams.team_id = unsummons.team_id
+            JOIN team_members tm ON teams.team_id = tm.team_id
+            JOIN events ON events.course_id = unsummons.course_id
+            WHERE events.event_id = :event_id
+            UNION DISTINCT
+            SELECT uninvites.user_id
+            FROM event_participant_uninvites as uninvites
+            WHERE uninvites.event_id = :event_id
+        ) AS uncombined ON combined.user_id = uncombined.user_id
+        WHERE uncombined.user_id IS NULL;",
     )?;
 
     let params = params! {
