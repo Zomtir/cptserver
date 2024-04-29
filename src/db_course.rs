@@ -199,11 +199,13 @@ pub fn course_moderator_remove(course_id: u64, user_id: u64) -> Result<(), Error
     }
 }
 
-pub fn course_participant_team_list(course_id: u64) -> Result<Vec<Team>, Error> {
+/* OWNER SUMMONS */
+
+pub fn course_owner_summon_list(course_id: u64) -> Result<Vec<Team>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT t.team_id, t.key, t.name, t.description
-        FROM course_participant_teams c
+        FROM course_owner_summons c
         LEFT JOIN teams t ON c.team_id = t.team_id
         WHERE course_id = :course_id;",
     )?;
@@ -222,10 +224,10 @@ pub fn course_participant_team_list(course_id: u64) -> Result<Vec<Team>, Error> 
     Ok(teams)
 }
 
-pub fn course_participant_team_add(course_id: u64, team_id: u64) -> Result<(), Error> {
+pub fn course_owner_summon_add(course_id: u64, team_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "INSERT INTO course_participant_teams (course_id, team_id)
+        "INSERT INTO course_owner_summons (course_id, team_id)
         VALUES (:course_id, :team_id);",
     )?;
     let params = params! {
@@ -237,10 +239,10 @@ pub fn course_participant_team_add(course_id: u64, team_id: u64) -> Result<(), E
     Ok(())
 }
 
-pub fn course_participant_team_remove(course_id: u64, team_id: u64) -> Result<(), Error> {
+pub fn course_owner_summon_remove(course_id: u64, team_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "DELETE FROM course_participant_teams
+        "DELETE FROM course_owner_summons
         WHERE course_id = :course_id AND team_id = :team_id;",
     )?;
 
@@ -253,11 +255,13 @@ pub fn course_participant_team_remove(course_id: u64, team_id: u64) -> Result<()
     Ok(())
 }
 
-pub fn course_owner_team_list(course_id: u64) -> Result<Vec<Team>, Error> {
+/* OWNER UNSUMMONS */
+
+pub fn course_owner_unsummon_list(course_id: u64) -> Result<Vec<Team>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT t.team_id, t.key, t.name, t.description
-        FROM course_owner_teams c
+        FROM course_owner_unsummons c
         LEFT JOIN teams t ON c.team_id = t.team_id
         WHERE course_id = :course_id;",
     )?;
@@ -276,10 +280,10 @@ pub fn course_owner_team_list(course_id: u64) -> Result<Vec<Team>, Error> {
     Ok(teams)
 }
 
-pub fn course_owner_team_add(course_id: u64, team_id: u64) -> Result<(), Error> {
+pub fn course_owner_unsummon_add(course_id: u64, team_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "INSERT INTO course_owner_teams (course_id, team_id)
+        "INSERT INTO course_owner_unsummons (course_id, team_id)
         VALUES (:course_id, :team_id);",
     )?;
     let params = params! {
@@ -291,10 +295,10 @@ pub fn course_owner_team_add(course_id: u64, team_id: u64) -> Result<(), Error> 
     Ok(())
 }
 
-pub fn course_owner_team_remove(course_id: u64, team_id: u64) -> Result<(), Error> {
+pub fn course_owner_unsummon_remove(course_id: u64, team_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "DELETE FROM course_owner_teams
+        "DELETE FROM course_owner_unsummons
         WHERE course_id = :course_id AND team_id = :team_id;",
     )?;
 
@@ -306,6 +310,120 @@ pub fn course_owner_team_remove(course_id: u64, team_id: u64) -> Result<(), Erro
     conn.exec_drop(&stmt, &params)?;
     Ok(())
 }
+
+/* PARTICIPANT SUMMONS */
+
+pub fn course_participant_summon_list(course_id: u64) -> Result<Vec<Team>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT t.team_id, t.key, t.name, t.description
+        FROM course_participant_summons c
+        LEFT JOIN teams t ON c.team_id = t.team_id
+        WHERE course_id = :course_id;",
+    )?;
+    let params = params! {
+        "course_id" => course_id,
+    };
+    let map = |(team_id, team_key, name, description)| Team {
+        id: team_id,
+        key: team_key,
+        name,
+        description,
+        right: None,
+    };
+
+    let teams = conn.exec_map(&stmt, &params, &map)?;
+    Ok(teams)
+}
+
+pub fn course_participant_summon_add(course_id: u64, team_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "INSERT INTO course_participant_summons (course_id, team_id)
+        VALUES (:course_id, :team_id);",
+    )?;
+    let params = params! {
+        "course_id" => &course_id,
+        "team_id" => &team_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+pub fn course_participant_summon_remove(course_id: u64, team_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "DELETE FROM course_participant_summons
+        WHERE course_id = :course_id AND team_id = :team_id;",
+    )?;
+
+    let params = params! {
+        "course_id" => &course_id,
+        "team_id" => &team_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+/* PARTICIPANT UNSUMMONS */
+
+pub fn course_participant_unsummon_list(course_id: u64) -> Result<Vec<Team>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT t.team_id, t.key, t.name, t.description
+        FROM course_participant_unsummons c
+        LEFT JOIN teams t ON c.team_id = t.team_id
+        WHERE course_id = :course_id;",
+    )?;
+    let params = params! {
+        "course_id" => course_id,
+    };
+    let map = |(team_id, team_key, name, description)| Team {
+        id: team_id,
+        key: team_key,
+        name,
+        description,
+        right: None,
+    };
+
+    let teams = conn.exec_map(&stmt, &params, &map)?;
+    Ok(teams)
+}
+
+pub fn course_participant_unsummon_add(course_id: u64, team_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "INSERT INTO course_participant_unsummons (course_id, team_id)
+        VALUES (:course_id, :team_id);",
+    )?;
+    let params = params! {
+        "course_id" => &course_id,
+        "team_id" => &team_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+pub fn course_participant_unsummon_remove(course_id: u64, team_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "DELETE FROM course_participant_unsummons
+        WHERE course_id = :course_id AND team_id = :team_id;",
+    )?;
+
+    let params = params! {
+        "course_id" => &course_id,
+        "team_id" => &team_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+/* STATISTICS */
 
 pub fn course_statistic_class(
     course_id: u64,

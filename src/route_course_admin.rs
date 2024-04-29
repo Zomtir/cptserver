@@ -92,63 +92,123 @@ pub fn course_moderator_remove(session: UserSession, course_id: u64, user_id: u6
     Ok(())
 }
 
-#[rocket::get("/admin/course_participant_team_list?<course_id>")]
-pub fn course_participant_team_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Team>>, Error> {
+#[rocket::get("/admin/course_owner_summon_list?<course_id>")]
+pub fn course_owner_summon_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Team>>, Error> {
     if !session.right.right_course_write {
         return Err(Error::RightCourseMissing);
     };
 
-    let teams = crate::db_course::course_participant_team_list(course_id)?;
+    let teams = crate::db_course::course_owner_summon_list(course_id)?;
     Ok(Json(teams))
 }
 
-#[rocket::head("/admin/course_participant_team_add?<course_id>&<team_id>")]
-pub fn course_participant_team_add(session: UserSession, course_id: u64, team_id: u64) -> Result<(), Error> {
+#[rocket::head("/admin/course_owner_summon_add?<course_id>&<team_id>")]
+pub fn course_owner_summon_add(session: UserSession, course_id: u64, team_id: u64) -> Result<(), Error> {
     if !session.right.right_course_write {
         return Err(Error::RightCourseMissing);
     };
 
-    crate::db_course::course_participant_team_add(course_id, team_id)?;
+    crate::db_course::course_owner_summon_add(course_id, team_id)?;
     Ok(())
 }
 
-#[rocket::head("/admin/course_participant_team_remove?<course_id>&<team_id>")]
-pub fn course_participant_team_remove(session: UserSession, course_id: u64, team_id: u64) -> Result<(), Error> {
+#[rocket::head("/admin/course_owner_summon_remove?<course_id>&<team_id>")]
+pub fn course_owner_summon_remove(session: UserSession, course_id: u64, team_id: u64) -> Result<(), Error> {
     if !session.right.right_course_write {
         return Err(Error::RightCourseMissing);
     };
 
-    crate::db_course::course_participant_team_remove(course_id, team_id)?;
+    crate::db_course::course_owner_summon_remove(course_id, team_id)?;
     Ok(())
 }
 
-#[rocket::get("/admin/course_owner_team_list?<course_id>")]
-pub fn course_owner_team_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Team>>, Error> {
+#[rocket::get("/admin/course_owner_unsummon_list?<course_id>")]
+pub fn course_owner_unsummon_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Team>>, Error> {
     if !session.right.right_course_write {
         return Err(Error::RightCourseMissing);
     };
 
-    let teams = crate::db_course::course_owner_team_list(course_id)?;
+    let teams = crate::db_course::course_owner_unsummon_list(course_id)?;
     Ok(Json(teams))
 }
 
-#[rocket::head("/admin/course_owner_team_add?<course_id>&<team_id>")]
-pub fn course_owner_team_add(session: UserSession, course_id: u64, team_id: u64) -> Result<(), Error> {
+#[rocket::head("/admin/course_owner_unsummon_add?<course_id>&<team_id>")]
+pub fn course_owner_unsummon_add(session: UserSession, course_id: u64, team_id: u64) -> Result<(), Error> {
     if !session.right.right_course_write {
         return Err(Error::RightCourseMissing);
     };
 
-    crate::db_course::course_owner_team_add(course_id, team_id)?;
+    crate::db_course::course_owner_unsummon_add(course_id, team_id)?;
     Ok(())
 }
 
-#[rocket::head("/admin/course_owner_team_remove?<course_id>&<team_id>")]
-pub fn course_owner_team_remove(session: UserSession, course_id: u64, team_id: u64) -> Result<(), Error> {
+#[rocket::head("/admin/course_owner_unsummon_remove?<course_id>&<team_id>")]
+pub fn course_owner_unsummon_remove(session: UserSession, course_id: u64, team_id: u64) -> Result<(), Error> {
     if !session.right.right_course_write {
         return Err(Error::RightCourseMissing);
     };
 
-    crate::db_course::course_owner_team_remove(course_id, team_id)?;
+    crate::db_course::course_owner_unsummon_remove(course_id, team_id)?;
+    Ok(())
+}
+
+#[rocket::get("/admin/course_participant_summon_list?<course_id>")]
+pub fn course_participant_summon_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Team>>, Error> {
+    if !session.right.right_course_write {
+        return Err(Error::RightCourseMissing);
+    };
+
+    let teams = crate::db_course::course_participant_summon_list(course_id)?;
+    Ok(Json(teams))
+}
+
+#[rocket::head("/admin/course_participant_summon_add?<course_id>&<team_id>")]
+pub fn course_participant_summon_add(session: UserSession, course_id: u64, team_id: u64) -> Result<(), Error> {
+    if !session.right.right_course_write {
+        return Err(Error::RightCourseMissing);
+    };
+
+    crate::db_course::course_participant_summon_add(course_id, team_id)?;
+    Ok(())
+}
+
+#[rocket::head("/admin/course_participant_summon_remove?<course_id>&<team_id>")]
+pub fn course_participant_summon_remove(session: UserSession, course_id: u64, team_id: u64) -> Result<(), Error> {
+    if !session.right.right_course_write {
+        return Err(Error::RightCourseMissing);
+    };
+
+    crate::db_course::course_participant_summon_remove(course_id, team_id)?;
+    Ok(())
+}
+
+#[rocket::get("/admin/course_participant_unsummon_list?<course_id>")]
+pub fn course_participant_unsummon_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Team>>, Error> {
+    if !session.right.right_course_write {
+        return Err(Error::RightCourseMissing);
+    };
+
+    let teams = crate::db_course::course_participant_unsummon_list(course_id)?;
+    Ok(Json(teams))
+}
+
+#[rocket::head("/admin/course_participant_unsummon_add?<course_id>&<team_id>")]
+pub fn course_participant_unsummon_add(session: UserSession, course_id: u64, team_id: u64) -> Result<(), Error> {
+    if !session.right.right_course_write {
+        return Err(Error::RightCourseMissing);
+    };
+
+    crate::db_course::course_participant_unsummon_add(course_id, team_id)?;
+    Ok(())
+}
+
+#[rocket::head("/admin/course_participant_unsummon_remove?<course_id>&<team_id>")]
+pub fn course_participant_unsummon_remove(session: UserSession, course_id: u64, team_id: u64) -> Result<(), Error> {
+    if !session.right.right_course_write {
+        return Err(Error::RightCourseMissing);
+    };
+
+    crate::db_course::course_participant_unsummon_remove(course_id, team_id)?;
     Ok(())
 }
 
