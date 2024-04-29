@@ -24,7 +24,11 @@ pub fn location_create(session: UserSession, location: Json<Location>) -> Result
     Ok(id.to_string())
 }
 
-#[rocket::post("/admin/location_edit?<location_id>", format = "application/json", data = "<location>")]
+#[rocket::post(
+    "/admin/location_edit?<location_id>",
+    format = "application/json",
+    data = "<location>"
+)]
 pub fn location_edit(session: UserSession, location_id: u32, location: Json<Location>) -> Result<(), Error> {
     if !session.right.right_location_write {
         return Err(Error::RightLocationMissing);
