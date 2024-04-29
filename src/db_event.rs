@@ -568,6 +568,26 @@ pub fn event_participant_list(event_id: u64) -> Result<Vec<User>, Error> {
     Ok(users)
 }
 
+pub fn event_participant_true(event_id: u64, user_id: u64) -> Result<bool, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT COUNT(1)
+        FROM event_participants ep
+        WHERE ep.event_id = :event_id AND ep.user_id = :user_id;",
+    )?;
+
+    let params = params! {
+        "event_id" => event_id,
+        "user_id" => user_id,
+    };
+
+    match conn.exec_first::<u32, _, _>(&stmt, &params)? {
+        Some(0) => Ok(false),
+        Some(1) => Ok(true),
+        _ => Err(Error::DatabaseError),
+    }
+}
+
 pub fn event_participant_add(event_id: u64, user_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
@@ -775,7 +795,61 @@ pub fn event_moderator_true(event_id: u64, user_id: u64) -> Result<bool, Error> 
     };
 
     match conn.exec_first::<u32, _, _>(&stmt, &params)? {
-        None => Ok(false),
-        Some(count) => Ok(count == 1),
+        Some(0) => Ok(false),
+        Some(1) => Ok(true),
+        _ => Err(Error::DatabaseError),
     }
+}
+
+/* BOOKMARKS */
+
+pub fn event_bookmark_true(event_id: u64, user_id: u64) -> Result<bool, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT COUNT(1)
+        FROM event_bookmarks b
+        WHERE b.event_id = :event_id AND b.user_id = :user_id;",
+    )?;
+
+    let params = params! {
+        "event_id" => event_id,
+        "user_id" => user_id,
+    };
+
+    match conn.exec_first::<u32, _, _>(&stmt, &params)? {
+        Some(0) => Ok(false),
+        Some(1) => Ok(true),
+        _ => Err(Error::DatabaseError),
+    }
+}
+
+pub fn event_bookmark_add(event_id: u64, user_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "INSERT INTO event_bookmarks (event_id, user_id)
+        VALUES (:event_id, :user_id);",
+    )?;
+    let params = params! {
+        "event_id" => &event_id,
+        "user_id" => &user_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+pub fn event_bookmark_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "DELETE FROM event_bookmarks
+        WHERE event_id = :event_id AND user_id = :user_id;",
+    )?;
+
+    let params = params! {
+        "event_id" => &event_id,
+        "user_id" => &user_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
 }

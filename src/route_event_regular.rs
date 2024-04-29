@@ -44,6 +44,12 @@ pub fn event_owner_true(session: UserSession, event_id: u64) -> Result<Json<bool
     Ok(Json(condition))
 }
 
+#[rocket::get("/regular/event_participant_true?<event_id>")]
+pub fn event_participant_true(session: UserSession, event_id: u64) -> Result<Json<bool>, Error> {
+    let condition = crate::db_event::event_participant_true(event_id, session.user.id)?;
+    Ok(Json(condition))
+}
+
 #[rocket::head("/regular/event_participant_add?<event_id>")]
 pub fn event_participant_add(session: UserSession, event_id: u64) -> Result<(), Error> {
     // TODO check if you can participate
@@ -57,5 +63,24 @@ pub fn event_participant_remove(session: UserSession, event_id: u64) -> Result<(
     // TODO check if you can participate
 
     crate::db_event::event_participant_remove(event_id, session.user.id)?;
+    Ok(())
+}
+
+#[rocket::get("/regular/event_bookmark_true?<event_id>")]
+pub fn event_bookmark_true(session: UserSession, event_id: u64) -> Result<Json<bool>, Error> {
+    // TODO check if you can participate
+
+    let bookmark = crate::db_event::event_bookmark_true(event_id, session.user.id)?;
+    Ok(Json(bookmark))
+}
+
+#[rocket::head("/regular/event_bookmark_edit?<event_id>&<bookmark>")]
+pub fn event_bookmark_edit(session: UserSession, event_id: u64, bookmark: bool) -> Result<(), Error> {
+    // TODO check if you can participate
+
+    match bookmark {
+        true => crate::db_event::event_bookmark_add(event_id, session.user.id)?,
+        false => crate::db_event::event_bookmark_remove(event_id, session.user.id)?,
+    }
     Ok(())
 }
