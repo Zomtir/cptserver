@@ -379,6 +379,110 @@ pub fn event_owner_true(event_id: u64, user_id: u64) -> Result<bool, Error> {
     }
 }
 
+/* OWNER INVITES */
+
+pub fn event_owner_invite_list(event_id: u64) -> Result<Vec<User>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
+        FROM event_owner_invites
+        JOIN users u ON u.user_id = event_owner_invites.user_id
+        WHERE event_id = :event_id;",
+    )?;
+    let params = params! {
+        "event_id" => event_id,
+    };
+    let map = |(user_id, user_key, firstname, lastname, nickname)| {
+        User::from_info(user_id, user_key, firstname, lastname, nickname)
+    };
+
+    let users = conn.exec_map(&stmt, &params, &map)?;
+    Ok(users)
+}
+
+pub fn event_owner_invite_add(event_id: u64, user_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "INSERT INTO event_owner_invites (event_id, user_id)
+        VALUES (:event_id, :user_id);",
+    )?;
+    let params = params! {
+        "event_id" => &event_id,
+        "user_id" => &user_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+pub fn event_owner_invite_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "DELETE FROM event_owner_invites
+        WHERE event_id = :event_id AND user_id = :user_id;",
+    )?;
+
+    let params = params! {
+        "event_id" => &event_id,
+        "user_id" => &user_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+/* OWNER UNINVITES */
+
+pub fn event_owner_uninvite_list(event_id: u64) -> Result<Vec<User>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
+        FROM event_owner_uninvites
+        JOIN users u ON u.user_id = event_owner_uninvites.user_id
+        WHERE event_id = :event_id;",
+    )?;
+    let params = params! {
+        "event_id" => event_id,
+    };
+    let map = |(user_id, user_key, firstname, lastname, nickname)| {
+        User::from_info(user_id, user_key, firstname, lastname, nickname)
+    };
+
+    let users = conn.exec_map(&stmt, &params, &map)?;
+    Ok(users)
+}
+
+pub fn event_owner_uninvite_add(event_id: u64, user_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "INSERT INTO event_owner_uninvites (event_id, user_id)
+        VALUES (:event_id, :user_id);",
+    )?;
+    let params = params! {
+        "event_id" => &event_id,
+        "user_id" => &user_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+pub fn event_owner_uninvite_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "DELETE FROM event_owner_uninvites
+        WHERE event_id = :event_id AND user_id = :user_id;",
+    )?;
+
+    let params = params! {
+        "event_id" => &event_id,
+        "user_id" => &user_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
 /* PARTICIPANT RELATED */
 
 pub fn event_participant_pool(event_id: u64) -> Result<Vec<User>, Error> {
@@ -446,6 +550,110 @@ pub fn event_participant_remove(event_id: u64, user_id: u64) -> Result<(), Error
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "DELETE FROM event_participants
+        WHERE event_id = :event_id AND user_id = :user_id;",
+    )?;
+
+    let params = params! {
+        "event_id" => &event_id,
+        "user_id" => &user_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+/* PARTICIPANT INVITE */
+
+pub fn event_participant_invite_list(event_id: u64) -> Result<Vec<User>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
+        FROM event_participant_invites
+        JOIN users u ON u.user_id = event_participant_invites.user_id
+        WHERE event_id = :event_id;",
+    )?;
+    let params = params! {
+        "event_id" => event_id,
+    };
+    let map = |(user_id, user_key, firstname, lastname, nickname)| {
+        User::from_info(user_id, user_key, firstname, lastname, nickname)
+    };
+
+    let users = conn.exec_map(&stmt, &params, &map)?;
+    Ok(users)
+}
+
+pub fn event_participant_invite_add(event_id: u64, user_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "INSERT INTO event_participant_invites (event_id, user_id)
+        VALUES (:event_id, :user_id);",
+    )?;
+    let params = params! {
+        "event_id" => &event_id,
+        "user_id" => &user_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+pub fn event_participant_invite_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "DELETE FROM event_participant_invites
+        WHERE event_id = :event_id AND user_id = :user_id;",
+    )?;
+
+    let params = params! {
+        "event_id" => &event_id,
+        "user_id" => &user_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+/* PARTICIPANT UNINVITE */
+
+pub fn event_participant_uninvite_list(event_id: u64) -> Result<Vec<User>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
+        FROM event_participant_uninvites
+        JOIN users u ON u.user_id = event_participant_uninvites.user_id
+        WHERE event_id = :event_id;",
+    )?;
+    let params = params! {
+        "event_id" => event_id,
+    };
+    let map = |(user_id, user_key, firstname, lastname, nickname)| {
+        User::from_info(user_id, user_key, firstname, lastname, nickname)
+    };
+
+    let users = conn.exec_map(&stmt, &params, &map)?;
+    Ok(users)
+}
+
+pub fn event_participant_uninvite_add(event_id: u64, user_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "INSERT INTO event_participant_uninvites (event_id, user_id)
+        VALUES (:event_id, :user_id);",
+    )?;
+    let params = params! {
+        "event_id" => &event_id,
+        "user_id" => &user_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+pub fn event_participant_uninvite_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "DELETE FROM event_participant_uninvites
         WHERE event_id = :event_id AND user_id = :user_id;",
     )?;
 

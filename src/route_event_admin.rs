@@ -187,6 +187,66 @@ pub fn event_owner_remove(session: UserSession, event_id: u64, user_id: u64) -> 
     Ok(())
 }
 
+#[rocket::get("/admin/event_owner_invite_list?<event_id>")]
+pub fn event_owner_invite_list(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>, Error> {
+    if !session.right.right_event_write {
+        return Err(Error::RightEventMissing);
+    };
+
+    let users = crate::db_event::event_owner_invite_list(event_id)?;
+    Ok(Json(users))
+}
+
+#[rocket::head("/admin/event_owner_invite_add?<event_id>&<user_id>")]
+pub fn event_owner_invite_add(session: UserSession, event_id: u64, user_id: u64) -> Result<(), Error> {
+    if !session.right.right_event_write {
+        return Err(Error::RightEventMissing);
+    };
+
+    crate::db_event::event_owner_invite_add(event_id, user_id)?;
+    Ok(())
+}
+
+#[rocket::head("/admin/event_owner_invite_remove?<event_id>&<user_id>")]
+pub fn event_owner_invite_remove(session: UserSession, event_id: u64, user_id: u64) -> Result<(), Error> {
+    if !session.right.right_event_write {
+        return Err(Error::RightEventMissing);
+    };
+
+    crate::db_event::event_owner_invite_remove(event_id, user_id)?;
+    Ok(())
+}
+
+#[rocket::get("/admin/event_owner_uninvite_list?<event_id>")]
+pub fn event_owner_uninvite_list(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>, Error> {
+    if !session.right.right_event_write {
+        return Err(Error::RightEventMissing);
+    };
+
+    let users = crate::db_event::event_owner_uninvite_list(event_id)?;
+    Ok(Json(users))
+}
+
+#[rocket::head("/admin/event_owner_uninvite_add?<event_id>&<user_id>")]
+pub fn event_owner_uninvite_add(session: UserSession, event_id: u64, user_id: u64) -> Result<(), Error> {
+    if !session.right.right_event_write {
+        return Err(Error::RightEventMissing);
+    };
+
+    crate::db_event::event_owner_uninvite_add(event_id, user_id)?;
+    Ok(())
+}
+
+#[rocket::head("/admin/event_owner_uninvite_remove?<event_id>&<user_id>")]
+pub fn event_owner_uninvite_remove(session: UserSession, event_id: u64, user_id: u64) -> Result<(), Error> {
+    if !session.right.right_event_write {
+        return Err(Error::RightEventMissing);
+    };
+
+    crate::db_event::event_owner_uninvite_remove(event_id, user_id)?;
+    Ok(())
+}
+
 #[rocket::get("/admin/event_participant_pool?<event_id>")]
 pub fn event_participant_pool(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>, Error> {
     if !session.right.right_event_write {
@@ -224,5 +284,65 @@ pub fn event_participant_remove(session: UserSession, event_id: u64, user_id: u6
     };
 
     crate::db_event::event_participant_remove(event_id, user_id)?;
+    Ok(())
+}
+
+#[rocket::get("/admin/event_participant_invite_list?<event_id>")]
+pub fn event_participant_invite_list(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>, Error> {
+    if !session.right.right_event_write {
+        return Err(Error::RightEventMissing);
+    };
+
+    let users = crate::db_event::event_participant_invite_list(event_id)?;
+    Ok(Json(users))
+}
+
+#[rocket::head("/admin/event_participant_invite_add?<event_id>&<user_id>")]
+pub fn event_participant_invite_add(session: UserSession, event_id: u64, user_id: u64) -> Result<(), Error> {
+    if !session.right.right_event_write {
+        return Err(Error::RightEventMissing);
+    };
+
+    crate::db_event::event_participant_invite_add(event_id, user_id)?;
+    Ok(())
+}
+
+#[rocket::head("/admin/event_participant_invite_remove?<event_id>&<user_id>")]
+pub fn event_participant_invite_remove(session: UserSession, event_id: u64, user_id: u64) -> Result<(), Error> {
+    if !session.right.right_event_write {
+        return Err(Error::RightEventMissing);
+    };
+
+    crate::db_event::event_participant_invite_remove(event_id, user_id)?;
+    Ok(())
+}
+
+#[rocket::get("/admin/event_participant_uninvite_list?<event_id>")]
+pub fn event_participant_uninvite_list(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>, Error> {
+    if !session.right.right_event_write {
+        return Err(Error::RightEventMissing);
+    };
+
+    let users = crate::db_event::event_participant_uninvite_list(event_id)?;
+    Ok(Json(users))
+}
+
+#[rocket::head("/admin/event_participant_uninvite_add?<event_id>&<user_id>")]
+pub fn event_participant_uninvite_add(session: UserSession, event_id: u64, user_id: u64) -> Result<(), Error> {
+    if !session.right.right_event_write {
+        return Err(Error::RightEventMissing);
+    };
+
+    crate::db_event::event_participant_uninvite_add(event_id, user_id)?;
+    Ok(())
+}
+
+#[rocket::head("/admin/event_participant_uninvite_remove?<event_id>&<user_id>")]
+pub fn event_participant_uninvite_remove(session: UserSession, event_id: u64, user_id: u64) -> Result<(), Error> {
+    if !session.right.right_event_write {
+        return Err(Error::RightEventMissing);
+    };
+
+    crate::db_event::event_participant_uninvite_remove(event_id, user_id)?;
     Ok(())
 }
