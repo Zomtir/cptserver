@@ -1,3 +1,31 @@
+## Release v0.8 (29th Apr 2024)
+
+- Renamed slot to event
+- Refactored class into event
+- Remove slot API for regular user
+- No longer exclude events from having a course
+- Updated DB layout for courses and events
+- Added course owner/participant summons/unsummons
+- Added event owner/participant invites/uninvites
+- Use Union of summons/invites/unsummons/uninvites for owner/participation pools
+- Added API for regular user participation
+- Added event bookmarks
+- Improved Club and Location attributes
+- Added Location routes
+- Improved anon call consistency
+- Added skill admin routes
+- Added club admin routes
+- Reworked team rights
+- Added min/max to competence_summary
+- Extended API to deliver min and max skill ranks
+- Improved event_list date scope of SQL call
+- Fixed team_edit SQl call
+- Fixed team_list SQL call
+- Added WebBool for custom behaviour of parameter presence
+- Use WebDateTime for slot windows
+- Fixed new mysql_common named param debug
+- Cargo package update (mysql)
+
 ## Release v0.7 (15th Mar 2024)
 
 - Added a WAIVER file
