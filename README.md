@@ -22,11 +22,19 @@ mariadb -u cptdb-user -p cptdb < Database.sql
 
 Finally, set up a config file called `cptserver.toml` for the server containing the database details. You can use `cptserver.template.toml` as template. `3306` is usually the default port.
 
+```
 db_server = 'localhost'
 db_port = 3306
 db_database = 'cptdb'
 db_user = 'cptdb-user'
 db_password = 'cptdb-password'
+```
+
+To create an initial admin user account, also include an `cpt_admin` in `cptserver.toml`. He has all right and requires no password. **Do remove this line as soon as you are done with the initial user/group setup.**
+
+```
+cpt_admin = 'admin'
+```
 
 Compiling and executing the application for developement is the usualy `cargo` workflow.
 

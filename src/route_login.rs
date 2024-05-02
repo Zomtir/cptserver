@@ -6,13 +6,13 @@ use mysql::{params, PooledConn};
 use crate::common::{Right, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
-use crate::session::{Credential, EventSession, UserSession, EVENTSESSIONS, USERSESSIONS};
+use crate::session::{Credential, EventSession, UserSession, ADMINSESSION, EVENTSESSIONS, USERSESSIONS};
 
 #[rocket::post("/user_login", format = "application/json", data = "<credit>")]
 pub fn user_login(credit: Json<Credential>) -> Result<String, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT u.user_id, u.pwd, u.pepper, u.enabled, u.firstname, u.lastname, u.nickname,
+        "SELECT u.user_id, u.user_key, u.pwd, u.pepper, u.enabled, u.firstname, u.lastname, u.nickname,
             COALESCE(MAX(right_club_write),0) AS right_club_write,
             COALESCE(MAX(right_club_read),0) AS right_club_read,
             COALESCE(MAX(right_competence_write),0) AS right_competence_write,
@@ -42,7 +42,23 @@ pub fn user_login(credit: Json<Credential>) -> Result<String, Error> {
         Ok(Some(row)) => row,
     };
 
-    // TODO should the client know the difference whether an account is exisiting or disabled?
+    let user: User = User::from_info(
+        row.take("user_id").unwrap(),
+        row.take("user_key").unwrap(),
+        row.take("firstname").unwrap(),
+        row.take("lastname").unwrap(),
+        row.take("nickname").unwrap(),
+    );
+
+    if user.key == *ADMINSESSION.lock().unwrap() {
+        let adminsession = UserSession::admin(&user);
+        let token = crate::common::random_string(30);
+        USERSESSIONS.lock().unwrap().insert(token.clone(), adminsession);
+        return Ok(token);
+    }
+
+    // For now let the client know if the user is disabled.
+    // Otherwise return `Error::UserMissing` in the future.
     let user_enabled: bool = row.take("enabled").unwrap();
     if !user_enabled {
         return Err(Error::UserDisabled);
@@ -67,19 +83,10 @@ pub fn user_login(credit: Json<Credential>) -> Result<String, Error> {
         return Err(Error::UserLoginFail);
     };
 
-    let user_token: String = crate::common::random_string(30);
-    let user_expiry = chrono::Utc::now() + chrono::Duration::hours(3);
-
+    let token = crate::common::random_string(30);
     let session: UserSession = UserSession {
-        token: user_token.to_string(),
-        expiry: user_expiry,
-        user: User::from_info(
-            row.take("user_id").unwrap(),
-            credit.login.to_string(),
-            row.take("firstname").unwrap(),
-            row.take("lastname").unwrap(),
-            row.take("nickname").unwrap(),
-        ),
+        expiry: chrono::Utc::now() + chrono::Duration::hours(3),
+        user: user,
         right: Right {
             right_club_write: row.take("right_club_write").unwrap(),
             right_club_read: row.take("right_club_read").unwrap(),
@@ -100,9 +107,9 @@ pub fn user_login(credit: Json<Credential>) -> Result<String, Error> {
         },
     };
 
-    USERSESSIONS.lock().unwrap().insert(user_token.to_string(), session);
+    USERSESSIONS.lock().unwrap().insert(token.clone(), session);
 
-    Ok(user_token)
+    Ok(token)
 }
 
 #[rocket::post("/event_login", format = "application/json", data = "<credit>")]

@@ -65,6 +65,33 @@ fn rocket() -> _ {
         panic!("Database connection failed")
     };
 
+    // Promote an admin user, if demanded by the config, and make him session admin
+    if let Some(admin) = server_config.cpt_admin {
+        // Create the user, if not existing
+        let elevate: bool = match crate::db_user::user_created_true(&admin) {
+            // Database query failed, do not elevate
+            Err(_) => false,
+            // User is missing, create him
+            Ok(false) => {
+                let mut user = crate::common::User::from_info(
+                    0,
+                    admin.clone(),
+                    "Placeholder".to_string(),
+                    "Placeholder".to_string(),
+                    None,
+                );
+                // Elevate unless database query failed
+                crate::db_user::user_create(&mut user).is_ok()
+            }
+            // User is existing, elevate him
+            Ok(true) => true,
+        };
+
+        if elevate {
+            *crate::session::ADMINSESSION.lock().unwrap() = Some(admin)
+        };
+    }
+
     let rocket_config = rocket::Config {
         address: server_config
             .rocket_address

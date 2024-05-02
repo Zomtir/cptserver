@@ -8,3 +8,4 @@ db_database = 'cptdb'
 db_user = 'cptdb-user'
 db_password = 'cptdb-password'
 
+cpt_admin = 'admin'

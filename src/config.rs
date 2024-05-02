@@ -13,6 +13,8 @@ pub struct ServerConfig {
     pub db_database: Option<String>,
     pub db_user: Option<String>,
     pub db_password: Option<String>,
+
+    pub cpt_admin: Option<String>,
 }
 
 impl ::std::default::Default for ServerConfig {
@@ -27,6 +29,8 @@ impl ::std::default::Default for ServerConfig {
             db_database: Some("cptdb".into()),
             db_user: Some("cptdb-user".into()),
             db_password: Some("cptdb-password".into()),
+
+            cpt_admin: None,
         }
     }
 }
@@ -43,7 +47,9 @@ pub fn readConfig() -> ServerConfig {
 
     let confpath = format!("{}/{}", confdir, "cptserver.toml");
 
-    let server_conf: ServerConfig = confy::load_path(confpath).unwrap();
+    let mut server_conf: ServerConfig = confy::load_path(confpath).unwrap();
+
+    server_conf.cpt_admin = crate::common::check_user_key(&server_conf.cpt_admin).ok();
 
     println!("Rocket settings");
     println!("    => address: {:?}", server_conf.rocket_address);
@@ -55,6 +61,9 @@ pub fn readConfig() -> ServerConfig {
     println!("    => port: {:?}", server_conf.db_port);
     println!("    => database: {:?}", server_conf.db_database);
     println!("    => user: {:?}", server_conf.db_user);
+
+    println!("Server settings");
+    println!("    => admin: {:?}", server_conf.cpt_admin);
 
     server_conf
 }

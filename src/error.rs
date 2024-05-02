@@ -20,8 +20,10 @@ pub enum Error {
     UserMissing,
     UserDisabled,
     UserLoginFail,
+    UserKeyMissing,
     UserKeyInvalid,
     UserPasswordInvalid,
+    UserEmailMissing,
     UserEmailInvalid,
 
     EventMissing,
@@ -74,8 +76,10 @@ impl Error {
             Error::UserMissing => "USER_MISSING",
             Error::UserDisabled => "USER_DISABLED",
             Error::UserLoginFail => "USER_LOGIN_FAIL",
+            Error::UserKeyMissing => "USER_KEY_MISSING",
             Error::UserKeyInvalid => "USER_KEY_INVALID",
             Error::UserPasswordInvalid => "USER_PASSWORD_INVALID",
+            Error::UserEmailMissing => "USER_EMAIL_MISSING",
             Error::UserEmailInvalid => "USER_EMAIL_INVALID",
 
             Error::EventMissing => "SLOT_MISSING",
@@ -129,8 +133,10 @@ impl std::fmt::Display for Error {
             Error::UserMissing => write!(f, "User is missing"),
             Error::UserDisabled => write!(f, "User is disabled"),
             Error::UserLoginFail => write!(f, "User login failed"),
+            Error::UserKeyMissing => write!(f, "User key is missing"),
             Error::UserKeyInvalid => write!(f, "User key has an invalid format"),
             Error::UserPasswordInvalid => write!(f, "User password has an invalid format"),
+            Error::UserEmailMissing => write!(f, "User email is missing"),
             Error::UserEmailInvalid => write!(f, "User email has an invalid format"),
 
             Error::EventMissing => write!(f, "Event is missing"),

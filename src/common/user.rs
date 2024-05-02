@@ -66,38 +66,44 @@ impl User {
  * METHODS
  */
 
-pub fn validate_user_key(key: &Option<String>) -> Result<Option<String>, Error> {
+pub fn check_user_key(key: &Option<String>) -> Result<String, Error> {
     let text = match key {
-        None => return Ok(None),
+        None => return Err(Error::UserKeyMissing),
         Some(text) => text,
     };
 
-    if text.is_empty() {
-        return Ok(None);
-    };
+    validate_user_key(text)?;
+    Ok(text.into())
+}
 
+pub fn validate_user_key(text: &String) -> Result<(), Error> {
     if text.len() < 2 || text.len() > 20 {
         return Err(Error::UserKeyInvalid);
     };
 
-    Ok(key.clone())
+    if !text.chars().all(|c| c.is_alphanumeric()) {
+        return Err(Error::UserKeyInvalid);
+    }
+
+    Ok(())
 }
 
-pub fn validate_email(email: &Option<String>) -> Result<Option<String>, Error> {
+pub fn check_user_email(email: &Option<String>) -> Result<String, Error> {
     let text = match email {
-        None => return Ok(None),
+        None => return Err(Error::UserEmailMissing),
         Some(text) => text,
     };
 
-    if text.is_empty() {
-        return Ok(None);
-    };
+    validate_user_email(text)?;
+    Ok(text.into())
+}
 
+pub fn validate_user_email(text: &String) -> Result<(), Error> {
     match Regex::new(r"^([a-z0-9._\-]([a-z0-9._\-+]*)?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})") {
         Err(..) => Err(Error::RegexError),
         Ok(regex) => match regex.is_match(text) {
             false => Err(Error::UserEmailInvalid),
-            true => Ok(email.clone()),
+            true => Ok(()),
         },
     }
 }

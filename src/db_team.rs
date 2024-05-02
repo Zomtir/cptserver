@@ -82,7 +82,7 @@ pub fn team_create(team: &Team) -> Result<u32, Error> {
             name,
             description)
         VALUES (
-            :team_key
+            :team_key,
             :name,
             :description);",
     )?;

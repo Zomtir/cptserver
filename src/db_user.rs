@@ -96,8 +96,12 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
 }
 
 pub fn user_create(user: &mut User) -> Result<u64, Error> {
-    user.key = crate::common::validate_user_key(&user.key)?;
-    user.email = crate::common::validate_email(&user.email)?;
+    user.key = match crate::common::check_user_key(&user.key) {
+        Err(e) => Some(crate::common::random_string(6)),
+        Ok(key) => Some(key),
+    };
+
+    user.email = crate::common::check_user_email(&user.email).ok();
 
     let mut conn: PooledConn = get_pool_conn();
 
@@ -113,7 +117,7 @@ pub fn user_create(user: &mut User) -> Result<u64, Error> {
     )?;
 
     let params = params! {
-        "user_key" => crate::common::random_string(6),
+        "user_key" => &user.key,
         "pwd" => crate::common::random_string(10),
         "pepper" => crate::common::random_bytes(16),
         "salt" => crate::common::random_bytes(16),
@@ -145,13 +149,8 @@ pub fn user_create(user: &mut User) -> Result<u64, Error> {
 }
 
 pub fn user_edit(user_id: u64, user: &mut User) -> Result<(), Error> {
-    user.key = crate::common::validate_user_key(&user.key)?;
-
-    if user.key.is_none() {
-        return Err(Error::UserMissing);
-    };
-
-    user.email = crate::common::validate_email(&user.email)?;
+    crate::common::check_user_key(&user.key)?;
+    user.email = crate::common::check_user_email(&user.email).ok();
 
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
