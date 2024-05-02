@@ -41,7 +41,7 @@ pub fn readConfig() -> ServerConfig {
         confdir = ".".to_string()
     }
 
-    let confpath = format!("{}/{}", confdir, "CptServer.toml");
+    let confpath = format!("{}/{}", confdir, "cptserver.toml");
 
     let server_conf: ServerConfig = confy::load_path(confpath).unwrap();
 

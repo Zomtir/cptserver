@@ -20,7 +20,7 @@ Then import the `Database.sql` file via `phymyadmin` or use the CML. You will be
 mariadb -u cptdb-user -p cptdb < Database.sql
 ```
 
-Finally, set up a config file called `CptServer.toml` for the server containing the database details. You can use `CptServer.template.toml` as template. `3306` is usually the default port.
+Finally, set up a config file called `cptserver.toml` for the server containing the database details. You can use `cptserver.template.toml` as template. `3306` is usually the default port.
 
 db_server = 'localhost'
 db_port = 3306
