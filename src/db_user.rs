@@ -97,7 +97,7 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
 
 pub fn user_create(user: &mut User) -> Result<u64, Error> {
     user.key = match crate::common::check_user_key(&user.key) {
-        Err(e) => Some(crate::common::random_string(6)),
+        Err(_) => Some(crate::common::random_string(6)),
         Ok(key) => Some(key),
     };
 
