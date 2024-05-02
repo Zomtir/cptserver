@@ -2,8 +2,10 @@ use rocket::data::ToByteUnit;
 use rocket::form::{self, DataField, FromFormField, ValueField};
 
 // Common module
+mod acceptance_status;
 mod clock;
 mod club;
+mod confirmation_status;
 mod course;
 mod event;
 mod location;
@@ -13,8 +15,10 @@ mod team;
 mod user;
 
 // Re-export
+pub use acceptance_status::*;
 pub use clock::*;
 pub use club::*;
+pub use confirmation_status::*;
 pub use course::*;
 pub use event::*;
 pub use location::*;

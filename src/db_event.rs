@@ -1,7 +1,7 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Event, EventStatus, Location, User};
+use crate::common::{AcceptanceStatus, ConfirmationStatus, Event, Location, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
@@ -51,7 +51,7 @@ pub fn event_info(event_id: u64) -> Result<Event, Error> {
 pub fn event_list(
     begin: Option<chrono::NaiveDateTime>,
     end: Option<chrono::NaiveDateTime>,
-    status: Option<EventStatus>,
+    status: Option<AcceptanceStatus>,
     location_id: Option<u64>,
     course_true: Option<bool>,
     course_id: Option<u64>,
@@ -502,6 +502,81 @@ pub fn event_owner_uninvite_remove(event_id: u64, user_id: u64) -> Result<(), Er
     Ok(())
 }
 
+/* OWNER REGISTRATIONS */
+
+pub fn event_owner_registration_list(event_id: u64) -> Result<Vec<User>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
+        FROM event_owner_registrations
+        JOIN users u ON u.user_id = event_owner_registrations.user_id
+        WHERE event_id = :event_id;",
+    )?;
+    let params = params! {
+        "event_id" => event_id,
+    };
+    let map = |(user_id, user_key, firstname, lastname, nickname)| {
+        User::from_info(user_id, user_key, firstname, lastname, nickname)
+    };
+
+    let users = conn.exec_map(&stmt, &params, &map)?;
+    Ok(users)
+}
+
+pub fn event_owner_registration_status(event_id: u64, user_id: u64) -> Result<ConfirmationStatus, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT r.status
+        FROM event_owner_registrations r
+        WHERE r.event_id = :event_id AND r.user_id = :user_id;",
+    )?;
+
+    let params = params! {
+        "event_id" => event_id,
+        "user_id" => user_id,
+    };
+
+    let row = conn.exec_first::<String, _, _>(&stmt, &params)?;
+
+    match row {
+        Some(status) => Ok(ConfirmationStatus::from_str(&status).unwrap()),
+        None => Ok(ConfirmationStatus::Null),
+    }
+}
+
+pub fn event_owner_registration_edit(event_id: u64, user_id: u64, status: ConfirmationStatus) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "INSERT INTO event_owner_registrations (event_id, user_id, status)
+        VALUES (:event_id, :user_id, :status)
+        ON DUPLICATE KEY UPDATE status = :status;",
+    )?;
+    let params = params! {
+        "event_id" => &event_id,
+        "user_id" => &user_id,
+        "status" => &status,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+pub fn event_owner_registration_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "DELETE FROM event_owner_registrations
+        WHERE event_id = :event_id AND user_id = :user_id;",
+    )?;
+
+    let params = params! {
+        "event_id" => &event_id,
+        "user_id" => &user_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
 /* PARTICIPANT RELATED */
 
 pub fn event_participant_pool(event_id: u64) -> Result<Vec<User>, Error> {
@@ -711,6 +786,85 @@ pub fn event_participant_uninvite_remove(event_id: u64, user_id: u64) -> Result<
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "DELETE FROM event_participant_uninvites
+        WHERE event_id = :event_id AND user_id = :user_id;",
+    )?;
+
+    let params = params! {
+        "event_id" => &event_id,
+        "user_id" => &user_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+/* PARTICIPANT REGISTRATIONS */
+
+pub fn event_participant_registration_list(event_id: u64) -> Result<Vec<User>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
+        FROM event_participant_registrations
+        JOIN users u ON u.user_id = event_participant_registrations.user_id
+        WHERE event_id = :event_id;",
+    )?;
+    let params = params! {
+        "event_id" => event_id,
+    };
+    let map = |(user_id, user_key, firstname, lastname, nickname)| {
+        User::from_info(user_id, user_key, firstname, lastname, nickname)
+    };
+
+    let users = conn.exec_map(&stmt, &params, &map)?;
+    Ok(users)
+}
+
+pub fn event_participant_registration_status(event_id: u64, user_id: u64) -> Result<ConfirmationStatus, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT r.status
+        FROM event_participant_registrations r
+        WHERE r.event_id = :event_id AND r.user_id = :user_id;",
+    )?;
+
+    let params = params! {
+        "event_id" => event_id,
+        "user_id" => user_id,
+    };
+
+    let row = conn.exec_first::<String, _, _>(&stmt, &params)?;
+
+    match row {
+        Some(status) => Ok(ConfirmationStatus::from_str(&status).unwrap()),
+        None => Ok(ConfirmationStatus::Null),
+    }
+}
+
+pub fn event_participant_registration_edit(
+    event_id: u64,
+    user_id: u64,
+    status: ConfirmationStatus,
+) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "INSERT INTO event_participant_registrations (event_id, user_id, status)
+        VALUES (:event_id, :user_id, :status)
+        ON DUPLICATE KEY UPDATE status = :status;",
+    )?;
+    let params = params! {
+        "event_id" => &event_id,
+        "user_id" => &user_id,
+        "status" => &status,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+pub fn event_participant_registration_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "DELETE FROM event_participant_registrations
         WHERE event_id = :event_id AND user_id = :user_id;",
     )?;
 

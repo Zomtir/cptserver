@@ -1,6 +1,6 @@
 use rocket::serde::json::Json;
 
-use crate::common::{Event, EventStatus, User, WebBool, WebDateTime};
+use crate::common::{AcceptanceStatus, Event, User, WebBool, WebDateTime};
 use crate::error::Error;
 use crate::session::UserSession;
 
@@ -9,7 +9,7 @@ pub fn event_list(
     session: UserSession,
     begin: Option<WebDateTime>,
     end: Option<WebDateTime>,
-    status: Option<EventStatus>,
+    status: Option<AcceptanceStatus>,
     location_id: Option<u64>,
     course_true: Option<WebBool>,
     course_id: Option<u64>,
@@ -247,6 +247,16 @@ pub fn event_owner_uninvite_remove(session: UserSession, event_id: u64, user_id:
     Ok(())
 }
 
+#[rocket::get("/admin/event_owner_registration_list?<event_id>")]
+pub fn event_owner_registration_list(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>, Error> {
+    if !session.right.right_event_write {
+        return Err(Error::RightEventMissing);
+    };
+
+    let users = crate::db_event::event_owner_registration_list(event_id)?;
+    Ok(Json(users))
+}
+
 #[rocket::get("/admin/event_participant_pool?<event_id>")]
 pub fn event_participant_pool(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>, Error> {
     if !session.right.right_event_write {
@@ -345,4 +355,14 @@ pub fn event_participant_uninvite_remove(session: UserSession, event_id: u64, us
 
     crate::db_event::event_participant_uninvite_remove(event_id, user_id)?;
     Ok(())
+}
+
+#[rocket::get("/admin/event_participant_registration_list?<event_id>")]
+pub fn event_participant_registration_list(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>, Error> {
+    if !session.right.right_event_write {
+        return Err(Error::RightEventMissing);
+    };
+
+    let users = crate::db_event::event_participant_registration_list(event_id)?;
+    Ok(Json(users))
 }

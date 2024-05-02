@@ -1,4 +1,4 @@
-use crate::common::{Event, EventStatus, User, WebDateTime};
+use crate::common::{AcceptanceStatus, Event, User, WebDateTime};
 use crate::error::Error;
 use crate::session::UserSession;
 use rocket::serde::json::Json;
@@ -12,7 +12,7 @@ pub fn event_list(
     session: UserSession,
     begin: WebDateTime,
     end: WebDateTime,
-    status: Option<EventStatus>,
+    status: Option<AcceptanceStatus>,
     location_id: Option<u64>,
 ) -> Result<Json<Vec<Event>>, Error> {
     let events = crate::db_event::event_list(

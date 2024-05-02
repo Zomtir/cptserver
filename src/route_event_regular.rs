@@ -1,4 +1,4 @@
-use crate::common::{Event, EventStatus, WebBool, WebDateTime};
+use crate::common::{AcceptanceStatus, ConfirmationStatus, Event, WebBool, WebDateTime};
 use crate::error::Error;
 use crate::session::UserSession;
 use rocket::serde::json::Json;
@@ -13,7 +13,7 @@ pub fn event_list(
     begin: Option<WebDateTime>,
     end: Option<WebDateTime>,
     location_id: Option<u64>,
-    status: Option<EventStatus>,
+    status: Option<AcceptanceStatus>,
     course_true: Option<WebBool>,
     course_id: Option<u64>,
 ) -> Result<Json<Vec<Event>>, Error> {
@@ -81,6 +81,52 @@ pub fn event_bookmark_edit(session: UserSession, event_id: u64, bookmark: bool) 
     match bookmark {
         true => crate::db_event::event_bookmark_add(event_id, session.user.id)?,
         false => crate::db_event::event_bookmark_remove(event_id, session.user.id)?,
+    }
+    Ok(())
+}
+
+#[rocket::get("/regular/event_owner_registration_status?<event_id>")]
+pub fn event_owner_registration_status(session: UserSession, event_id: u64) -> Result<String, Error> {
+    // TODO check if you can own
+
+    let status = crate::db_event::event_owner_registration_status(event_id, session.user.id)?;
+    Ok(status.to_str().to_string())
+}
+
+#[rocket::head("/regular/event_owner_registration_edit?<event_id>&<status>")]
+pub fn event_owner_registration_edit(
+    session: UserSession,
+    event_id: u64,
+    status: ConfirmationStatus,
+) -> Result<(), Error> {
+    // TODO check if you can own
+
+    match status {
+        ConfirmationStatus::Null => crate::db_event::event_owner_registration_remove(event_id, session.user.id)?,
+        _ => crate::db_event::event_owner_registration_edit(event_id, session.user.id, status)?,
+    }
+    Ok(())
+}
+
+#[rocket::get("/regular/event_participant_registration_status?<event_id>")]
+pub fn event_participant_registration_status(session: UserSession, event_id: u64) -> Result<String, Error> {
+    // TODO check if you can participate
+
+    let status = crate::db_event::event_participant_registration_status(event_id, session.user.id)?;
+    Ok(status.to_str().to_string())
+}
+
+#[rocket::head("/regular/event_participant_registration_edit?<event_id>&<status>")]
+pub fn event_participant_registration_edit(
+    session: UserSession,
+    event_id: u64,
+    status: ConfirmationStatus,
+) -> Result<(), Error> {
+    // TODO check if you can participate
+
+    match status {
+        ConfirmationStatus::Null => crate::db_event::event_participant_registration_remove(event_id, session.user.id)?,
+        _ => crate::db_event::event_participant_registration_edit(event_id, session.user.id, status)?,
     }
     Ok(())
 }

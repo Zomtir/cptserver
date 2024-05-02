@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8001
--- Generation Time: Apr 29, 2024 at 09:38 AM
+-- Generation Time: May 09, 2024 at 01:00 PM
 -- Server version: 10.11.6-MariaDB-0ubuntu0.23.10.2
--- PHP Version: 8.2.10-2ubuntu1
+-- PHP Version: 8.2.10-2ubuntu2.1
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -196,6 +196,18 @@ CREATE TABLE `event_owner_invites` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `event_owner_registrations`
+--
+
+CREATE TABLE `event_owner_registrations` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  `status` enum('POSITIVE','NEUTRAL','NEGATIVE','') NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `event_owner_uninvites`
 --
 
@@ -224,6 +236,18 @@ CREATE TABLE `event_participants` (
 CREATE TABLE `event_participant_invites` (
   `event_id` int(11) NOT NULL,
   `user_id` mediumint(9) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `event_participant_registrations`
+--
+
+CREATE TABLE `event_participant_registrations` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  `status` enum('POSITIVE','NEUTRAL','NEGATIVE','') NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -510,6 +534,13 @@ ALTER TABLE `event_owner_invites`
   ADD KEY `REF_user` (`user_id`);
 
 --
+-- Indexes for table `event_owner_registrations`
+--
+ALTER TABLE `event_owner_registrations`
+  ADD PRIMARY KEY (`event_id`,`user_id`),
+  ADD KEY `REF_user` (`user_id`);
+
+--
 -- Indexes for table `event_owner_uninvites`
 --
 ALTER TABLE `event_owner_uninvites`
@@ -527,6 +558,13 @@ ALTER TABLE `event_participants`
 -- Indexes for table `event_participant_invites`
 --
 ALTER TABLE `event_participant_invites`
+  ADD PRIMARY KEY (`event_id`,`user_id`),
+  ADD KEY `REF_user` (`user_id`);
+
+--
+-- Indexes for table `event_participant_registrations`
+--
+ALTER TABLE `event_participant_registrations`
   ADD PRIMARY KEY (`event_id`,`user_id`),
   ADD KEY `REF_user` (`user_id`);
 
@@ -779,6 +817,13 @@ ALTER TABLE `event_owner_invites`
   ADD CONSTRAINT `event_owner_invites_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
+-- Constraints for table `event_owner_registrations`
+--
+ALTER TABLE `event_owner_registrations`
+  ADD CONSTRAINT `event_owner_registrations_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `event_owner_registrations_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+
+--
 -- Constraints for table `event_owner_uninvites`
 --
 ALTER TABLE `event_owner_uninvites`
@@ -798,6 +843,13 @@ ALTER TABLE `event_participants`
 ALTER TABLE `event_participant_invites`
   ADD CONSTRAINT `event_participant_invites_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `event_participant_invites_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `event_participant_registrations`
+--
+ALTER TABLE `event_participant_registrations`
+  ADD CONSTRAINT `event_participant_registrations_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `event_participant_registrations_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `event_participant_uninvites`
