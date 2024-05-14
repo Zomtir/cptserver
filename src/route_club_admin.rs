@@ -1,6 +1,6 @@
 use rocket::serde::json::Json;
 
-use crate::common::Club;
+use crate::common::{Club, Term, User, WebDate};
 use crate::error::Error;
 use crate::session::UserSession;
 
@@ -42,4 +42,49 @@ pub fn club_delete(session: UserSession, club_id: u32) -> Result<(), Error> {
 
     crate::db_club::club_delete(club_id)?;
     Ok(())
+}
+
+/* STATISTICS */
+
+#[rocket::get("/admin/club_statistic_terms?<club_id>&<point_in_time>")]
+pub fn club_statistic_terms(
+    session: UserSession,
+    club_id: u32,
+    point_in_time: WebDate,
+) -> Result<Json<Vec<Term>>, Error> {
+    if !session.right.right_club_write {
+        return Err(Error::RightClubMissing);
+    };
+
+    let terms = crate::db_term::term_list(Some(club_id), None, Some(point_in_time.to_naive()))?;
+    Ok(Json(terms))
+}
+
+#[rocket::get("/admin/club_statistic_members?<club_id>&<point_in_time>")]
+pub fn club_statistic_members(
+    session: UserSession,
+    club_id: u32,
+    point_in_time: WebDate,
+) -> Result<Json<Vec<(User, u32)>>, Error> {
+    if !session.right.right_club_write {
+        return Err(Error::RightClubMissing);
+    };
+
+    let leaderboard = crate::db_club::club_member_leaderboard(club_id, None, point_in_time.to_naive())?;
+    Ok(Json(leaderboard))
+}
+
+#[rocket::get("/admin/club_statistic_team?<club_id>&<point_in_time>&<team_id>")]
+pub fn club_statistic_team(
+    session: UserSession,
+    club_id: u32,
+    point_in_time: WebDate,
+    team_id: u32,
+) -> Result<Json<Vec<User>>, Error> {
+    if !session.right.right_club_write {
+        return Err(Error::RightClubMissing);
+    };
+
+    let users = crate::db_club::club_team_comparison(club_id, team_id, point_in_time.to_naive())?;
+    Ok(Json(users))
 }

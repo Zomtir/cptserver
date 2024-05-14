@@ -5,7 +5,11 @@ use crate::common::{Club, Term, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
-pub fn list_terms(user_id: Option<i64>) -> Result<Vec<Term>, Error> {
+pub fn term_list(
+    club_id: Option<u32>,
+    user_id: Option<u32>,
+    point_in_time: Option<chrono::NaiveDate>,
+) -> Result<Vec<Term>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT t.term_id,
@@ -15,11 +19,15 @@ pub fn list_terms(user_id: Option<i64>) -> Result<Vec<Term>, Error> {
         FROM terms t
         JOIN users u ON (u.user_id = t.user_id)
         JOIN clubs c ON (c.club_id = t.club_id)
-        WHERE (:user_id IS NULL OR :user_id = t.user_id);",
+        WHERE (:club_id IS NULL OR :club_id = t.club_id)
+        AND (:user_id IS NULL OR :user_id = t.user_id)
+        AND (:point_in_time IS NULL OR (:point_in_time BETWEEN t.term_begin AND t.term_end));",
     )?;
 
     let params = params! {
+        "club_id" => club_id,
         "user_id" => user_id,
+        "point_in_time" => point_in_time,
     };
 
     let map = |(
@@ -52,7 +60,7 @@ pub fn list_terms(user_id: Option<i64>) -> Result<Vec<Term>, Error> {
     Ok(terms)
 }
 
-pub fn create_term(term: &Term) -> Result<u32, Error> {
+pub fn term_create(term: &Term) -> Result<u32, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO terms (user_id, club_id, term_begin, term_end)
@@ -70,7 +78,7 @@ pub fn create_term(term: &Term) -> Result<u32, Error> {
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn edit_term(term_id: i64, term: &Term) -> Result<(), Error> {
+pub fn term_edit(term_id: i64, term: &Term) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE terms SET
@@ -93,7 +101,7 @@ pub fn edit_term(term_id: i64, term: &Term) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn delete_term(term_id: i64) -> Result<(), Error> {
+pub fn term_delete(term_id: i64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep("DELETE t FROM terms t WHERE t.term_id = :term_id")?;
 
@@ -103,79 +111,4 @@ pub fn delete_term(term_id: i64) -> Result<(), Error> {
 
     conn.exec_drop(&stmt, &params)?;
     Ok(())
-}
-
-pub fn get_user_membership_days(active: Option<bool>) -> Result<Vec<(i64, i64)>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep(
-        "SELECT t.user_id, SUM(DATEDIFF(t.term_end, t.term_begin)) as active_days 
-        FROM terms t
-        JOIN users u ON u.user_id = t.user_id
-        WHERE (:active IS NULL OR :active = u.active)
-        GROUP BY t.user_id
-        ORDER BY active_days DESC;",
-    )?;
-
-    let params = params! {
-        "active" => &active,
-    };
-
-    let map = |(user_id, active_days): (i64, i64)| (user_id, active_days);
-
-    let leaderboard = conn.exec_map(&stmt, &params, &map)?;
-    Ok(leaderboard)
-}
-
-pub fn get_wrong_active_users() -> Result<Vec<User>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep(
-        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
-        FROM users u
-        LEFT JOIN
-        (
-            SELECT t.user_id as user_id, TRUE as valid
-            FROM terms t
-            WHERE IFNULL(t.term_begin,'0000-01-01') < UTC_DATE()
-            AND IFNULL(t.term_end,'9999-12-31') > UTC_DATE()
-            GROUP BY t.user_id
-        ) AS termstatus ON u.user_id = termstatus.user_id
-        WHERE u.active = TRUE
-        AND termstatus.valid IS NULL;",
-    )?;
-
-    let params = params::Params::Empty;
-
-    let map = |(user_id, user_key, firstname, lastname, nickname)| {
-        User::from_info(user_id, user_key, firstname, lastname, nickname)
-    };
-
-    let users = conn.exec_map(&stmt, &params, &map)?;
-    Ok(users)
-}
-
-pub fn get_wrong_inactive_users() -> Result<Vec<User>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep(
-        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
-        FROM users u
-        LEFT JOIN
-        (
-            SELECT t.user_id as user_id, TRUE as valid
-            FROM terms t
-            WHERE IFNULL(t.term_begin,'0000-01-01') < UTC_DATE()
-            AND IFNULL(t.term_end,'9999-12-31') > UTC_DATE()
-            GROUP BY t.user_id
-        ) AS termstatus ON u.user_id = termstatus.user_id
-        WHERE u.active = FALSE
-        AND termstatus.valid = TRUE;",
-    )?;
-
-    let params = params::Params::Empty;
-
-    let map = |(user_id, user_key, firstname, lastname, nickname)| {
-        User::from_info(user_id, user_key, firstname, lastname, nickname)
-    };
-
-    let users = conn.exec_map(&stmt, &params, &map)?;
-    Ok(users)
 }
