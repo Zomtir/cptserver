@@ -200,6 +200,8 @@ fn rocket() -> _ {
                 route_event_admin::event_create,
                 route_event_admin::event_edit,
                 route_event_admin::event_password_edit,
+                route_event_admin::event_course_info,
+                route_event_admin::event_course_edit,
                 route_event_admin::event_delete,
                 route_event_admin::event_accept,
                 route_event_admin::event_deny,

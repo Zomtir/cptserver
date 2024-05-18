@@ -879,6 +879,23 @@ pub fn event_participant_registration_remove(event_id: u64, user_id: u64) -> Res
 
 /* COURSE RELATED */
 
+pub fn event_course_info(event_id: u64) -> Result<Option<u32>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT course_id
+        FROM events
+        WHERE event_id = :event_id",
+    )?;
+    let params = params! {
+        "event_id" => event_id,
+    };
+
+    match conn.exec_first::<Option<u32>, _, _>(&stmt, &params)? {
+        None => Err(Error::EventMissing),
+        Some(course_id) => Ok(course_id),
+    }
+}
+
 pub fn event_course_edit(event_id: u64, course_id: Option<u64>) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
 
@@ -895,41 +912,6 @@ pub fn event_course_edit(event_id: u64, course_id: Option<u64>) -> Result<(), Er
 
     conn.exec_drop(&stmt, &params)?;
     Ok(())
-}
-
-pub fn event_course_true(event_id: u64, course_id: u64) -> Result<bool, Error> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep(
-        "SELECT COUNT(1)
-        FROM events
-        WHERE event_id = :event_id AND course_id = :course_id",
-    )?;
-    let params = params! {
-        "event_id" => event_id,
-        "course_id" => course_id,
-    };
-
-    match conn.exec_first::<u64, _, _>(&stmt, &params)? {
-        None => Ok(false),
-        Some(count) => Ok(count == 1),
-    }
-}
-
-pub fn event_course_any(event_id: u64) -> Result<bool, Error> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep(
-        "SELECT COUNT(1)
-        FROM events
-        WHERE event_id = :event_id AND course_id IS NOT NULL;",
-    )?;
-    let params = params! {
-        "event_id" => event_id,
-    };
-
-    match conn.exec_first::<u64, _, _>(&stmt, &params)? {
-        None => Ok(false),
-        Some(count) => Ok(count == 1),
-    }
 }
 
 /* MODERATOR RELATED */

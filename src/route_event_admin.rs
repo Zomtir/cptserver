@@ -78,6 +78,26 @@ pub fn event_password_edit(session: UserSession, event_id: u64, password: String
     Ok(())
 }
 
+#[rocket::get("/admin/event_course_info?<event_id>")]
+pub fn event_course_info(session: UserSession, event_id: u64) -> Result<Json<Option<u32>>, Error> {
+    if !session.right.right_event_write {
+        return Err(Error::RightEventMissing);
+    };
+
+    let course_id = crate::db_event::event_course_info(event_id)?;
+    Ok(Json(course_id))
+}
+
+#[rocket::head("/admin/event_course_edit?<event_id>&<course_id>")]
+pub fn event_course_edit(session: UserSession, event_id: u64, course_id: Option<u64>) -> Result<(), Error> {
+    if !session.right.right_event_write {
+        return Err(Error::RightEventMissing);
+    };
+
+    crate::db_event::event_course_edit(event_id, course_id)?;
+    Ok(())
+}
+
 #[rocket::head("/admin/event_delete?<event_id>")]
 pub fn event_delete(session: UserSession, event_id: u64) -> Result<(), Error> {
     if !session.right.right_event_write {
