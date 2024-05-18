@@ -11,6 +11,7 @@ pub struct Skill {
     pub max: Option<u8>,
 }
 
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Requirement {
     pub id: u32,
     pub course: Course,

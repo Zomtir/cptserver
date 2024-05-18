@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Course, Team, User};
+use crate::common::{Course, Requirement, Skill, Team, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
@@ -163,7 +163,7 @@ pub fn course_moderator_true(course_id: u64, user_id: u64) -> Result<bool, Error
     }
 }
 
-pub fn course_moderator_add(course_id: u64, user_id: u64) -> Option<()> {
+pub fn course_moderator_add(course_id: u64, user_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO course_moderators (course_id, user_id)
@@ -174,10 +174,8 @@ pub fn course_moderator_add(course_id: u64, user_id: u64) -> Option<()> {
         "user_id" => &user_id,
     };
 
-    match conn.exec_drop(&stmt.unwrap(), &params) {
-        Err(..) => None,
-        Ok(..) => Some(()),
-    }
+    conn.exec_drop(&stmt.unwrap(), &params)?;
+    Ok(())
 }
 
 pub fn course_moderator_remove(course_id: u64, user_id: u64) -> Result<(), Error> {
@@ -193,10 +191,8 @@ pub fn course_moderator_remove(course_id: u64, user_id: u64) -> Result<(), Error
         "user_id" => &user_id,
     };
 
-    match conn.exec_drop(&stmt, &params) {
-        Err(..) => Err(Error::DatabaseError),
-        Ok(..) => Ok(()),
-    }
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
 }
 
 /* OWNER SUMMONS */
@@ -417,6 +413,90 @@ pub fn course_participant_unsummon_remove(course_id: u64, team_id: u64) -> Resul
     let params = params! {
         "course_id" => &course_id,
         "team_id" => &team_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+/* REQUIREMENTS */
+
+pub fn course_requirement_list(course_id: u64) -> Result<Vec<Requirement>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT r.requirement_id,
+            c.course_id, c.course_key, c.title, c.active, c.public,
+            s.skill_id, s.skill_key, s.title, s.min, s.max,
+            r.rank
+            FROM course_requirements r
+        JOIN courses c ON c.course_id = r.course_id
+        JOIN skills s ON s.skill_id = r.skill_id
+        WHERE c.course_id = :course_id;",
+    )?;
+
+    let params = params! {
+        "course_id" => course_id,
+    };
+    let map = |(
+        requirement_id,
+        course_id,
+        course_key,
+        course_title,
+        course_active,
+        course_public,
+        skill_id,
+        skill_key,
+        skill_title,
+        skill_min,
+        skill_max,
+        rank,
+    )| Requirement {
+        id: requirement_id,
+        course: Course {
+            id: course_id,
+            key: course_key,
+            title: course_title,
+            active: course_active,
+            public: course_public,
+        },
+        skill: Skill {
+            id: skill_id,
+            key: skill_key,
+            title: skill_title,
+            min: skill_min,
+            max: skill_max,
+        },
+        rank: rank,
+    };
+
+    let reqs = conn.exec_map(&stmt, &params, &map)?;
+    Ok(reqs)
+}
+
+pub fn course_requirement_add(course_id: u64, skill_id: u32, rank: u32) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "INSERT INTO course_requirements (course_id, skill_id, rank)
+        SELECT :course_id, :skill_id, :rank;",
+    );
+    let params = params! {
+        "course_id" => &course_id,
+        "skill_id" => &skill_id,
+        "rank" => &rank,
+    };
+
+    conn.exec_drop(&stmt.unwrap(), &params)?;
+    Ok(())
+}
+
+pub fn course_requirement_remove(requirement_id: u64) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "DELETE r FROM course_requirements r
+        WHERE r.requirement_id = :requirement_id;",
+    )?;
+    let params = params! {
+        "requirement_id" => &requirement_id,
     };
 
     conn.exec_drop(&stmt, &params)?;

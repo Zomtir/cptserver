@@ -1,6 +1,6 @@
 use rocket::serde::json::Json;
 
-use crate::common::{Course, Event, Team, User, WebBool};
+use crate::common::{Course, Event, Requirement, Team, User, WebBool};
 use crate::error::Error;
 use crate::session::UserSession;
 use chrono::NaiveDateTime;
@@ -76,10 +76,8 @@ pub fn course_moderator_add(session: UserSession, course_id: u64, user_id: u64) 
         return Err(Error::RightCourseMissing);
     };
 
-    match crate::db_course::course_moderator_add(course_id, user_id) {
-        None => Err(Error::DatabaseError),
-        Some(..) => Ok(()),
-    }
+    crate::db_course::course_moderator_add(course_id, user_id)?;
+    Ok(())
 }
 
 #[rocket::head("/admin/course_moderator_remove?<course_id>&<user_id>")]
@@ -209,6 +207,36 @@ pub fn course_participant_unsummon_remove(session: UserSession, course_id: u64, 
     };
 
     crate::db_course::course_participant_unsummon_remove(course_id, team_id)?;
+    Ok(())
+}
+
+#[rocket::get("/admin/course_requirement_list?<course_id>")]
+pub fn course_requirement_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Requirement>>, Error> {
+    if !session.right.right_course_write {
+        return Err(Error::RightCourseMissing);
+    };
+
+    let reqs = crate::db_course::course_requirement_list(course_id)?;
+    Ok(Json(reqs))
+}
+
+#[rocket::head("/admin/course_requirement_add?<course_id>&<skill_id>&<rank>")]
+pub fn course_requirement_add(session: UserSession, course_id: u64, skill_id: u32, rank: u32) -> Result<(), Error> {
+    if !session.right.right_course_write {
+        return Err(Error::RightCourseMissing);
+    };
+
+    crate::db_course::course_requirement_add(course_id, skill_id, rank)?;
+    Ok(())
+}
+
+#[rocket::head("/admin/course_requirement_remove?<requirement_id>")]
+pub fn course_requirement_remove(session: UserSession, requirement_id: u64) -> Result<(), Error> {
+    if !session.right.right_course_write {
+        return Err(Error::RightCourseMissing);
+    };
+
+    crate::db_course::course_requirement_remove(requirement_id)?;
     Ok(())
 }
 

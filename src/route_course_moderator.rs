@@ -36,10 +36,8 @@ pub fn course_moderator_add(session: UserSession, course_id: u64, user_id: u64) 
         true => (),
     };
 
-    match crate::db_course::course_moderator_add(course_id, user_id) {
-        None => Err(Error::DatabaseError),
-        Some(..) => Ok(()),
-    }
+    crate::db_course::course_moderator_add(course_id, user_id)?;
+    Ok(())
 }
 
 #[rocket::head("/mod/course_moderator_remove?<course_id>&<user_id>")]
