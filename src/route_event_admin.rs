@@ -46,7 +46,7 @@ pub fn event_create(session: UserSession, course_id: Option<u64>, mut event: Jso
         return Err(Error::RightEventMissing);
     };
 
-    if course_id == None || !session.right.right_course_write {
+    if course_id.is_none() || !session.right.right_course_write {
         return Err(Error::RightCourseMissing);
     };
 

@@ -15,7 +15,7 @@ pub fn user_list(active: Option<bool>) -> Result<Vec<User>, Error> {
         "SELECT user_id, user_key, firstname, lastname, nickname
         FROM users
         WHERE :active IS NULL OR :active = active;",
-    );
+    )?;
 
     let params = params! {
         "active" => &active,
@@ -25,7 +25,8 @@ pub fn user_list(active: Option<bool>) -> Result<Vec<User>, Error> {
         User::from_info(user_id, user_key, firstname, lastname, nickname)
     };
 
-    Ok(conn.exec_map(&stmt.unwrap(), &params, &map)?)
+    let users = conn.exec_map(&stmt, &params, &map)?;
+    Ok(users)
 }
 
 pub fn user_info(user_id: u64) -> Result<User, Error> {

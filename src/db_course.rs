@@ -168,13 +168,13 @@ pub fn course_moderator_add(course_id: u64, user_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "INSERT INTO course_moderators (course_id, user_id)
                           SELECT :course_id, :user_id",
-    );
+    )?;
     let params = params! {
         "course_id" => &course_id,
         "user_id" => &user_id,
     };
 
-    conn.exec_drop(&stmt.unwrap(), &params)?;
+    conn.exec_drop(&stmt, &params)?;
     Ok(())
 }
 
@@ -466,7 +466,7 @@ pub fn course_requirement_list(course_id: u64) -> Result<Vec<Requirement>, Error
             min: skill_min,
             max: skill_max,
         },
-        rank: rank,
+        rank,
     };
 
     let reqs = conn.exec_map(&stmt, &params, &map)?;
@@ -478,14 +478,14 @@ pub fn course_requirement_add(course_id: u64, skill_id: u32, rank: u32) -> Resul
     let stmt = conn.prep(
         "INSERT INTO course_requirements (course_id, skill_id, rank)
         SELECT :course_id, :skill_id, :rank;",
-    );
+    )?;
     let params = params! {
         "course_id" => &course_id,
         "skill_id" => &skill_id,
         "rank" => &rank,
     };
 
-    conn.exec_drop(&stmt.unwrap(), &params)?;
+    conn.exec_drop(&stmt, &params)?;
     Ok(())
 }
 

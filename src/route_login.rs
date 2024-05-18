@@ -33,13 +33,13 @@ pub fn user_login(credit: Json<Credential>) -> Result<String, Error> {
         LEFT JOIN team_members ON (u.user_id = team_members.user_id)
         LEFT JOIN teams ON (team_members.team_id = teams.team_id)
         WHERE u.user_key = :user_key
-        GROUP BY u.user_id",
-    );
+        GROUP BY u.user_id;",
+    )?;
     let params = params! { "user_key" => credit.login.to_string() };
 
-    let mut row: mysql::Row = match conn.exec_first(&stmt.unwrap(), &params) {
-        Err(..) | Ok(None) => return Err(Error::UserMissing),
-        Ok(Some(row)) => row,
+    let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
+        None => return Err(Error::UserMissing),
+        Some(row) => row,
     };
 
     let user: User = User::from_info(
@@ -86,7 +86,7 @@ pub fn user_login(credit: Json<Credential>) -> Result<String, Error> {
     let token = crate::common::random_string(30);
     let session: UserSession = UserSession {
         expiry: chrono::Utc::now() + chrono::Duration::hours(3),
-        user: user,
+        user,
         right: Right {
             right_club_write: row.take("right_club_write").unwrap(),
             right_club_read: row.take("right_club_read").unwrap(),

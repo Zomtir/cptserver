@@ -75,7 +75,7 @@ pub fn competence_create(competence: &Competence) -> Result<u32, Error> {
     let stmt = conn.prep(
         "INSERT INTO user_competences (user_id, skill_id, `rank`, date, judge_id)
         SELECT :user_id, :skill_id, :rank, :date, :judge_id",
-    );
+    )?;
     let params = params! {
         "user_id" => &competence.user.id,
         "skill_id" => &competence.skill.id,
@@ -84,7 +84,7 @@ pub fn competence_create(competence: &Competence) -> Result<u32, Error> {
         "judge_id" => &competence.judge.id,
     };
 
-    conn.exec_drop(&stmt.unwrap(), &params)?;
+    conn.exec_drop(&stmt, &params)?;
 
     Ok(conn.last_insert_id() as u32)
 }
@@ -99,8 +99,8 @@ pub fn competence_edit(competence_id: u64, competence: &Competence) -> Result<()
             `rank` = :rank,
             date = :date,
             judge_id = :judge_id
-        WHERE competence_id = :competence_id",
-    );
+        WHERE competence_id = :competence_id;",
+    )?;
 
     let params = params! {
         "competence_id" => &competence_id,
@@ -111,24 +111,20 @@ pub fn competence_edit(competence_id: u64, competence: &Competence) -> Result<()
         "judge_id" => &competence.judge.id,
     };
 
-    match conn.exec_drop(&stmt.unwrap(), &params) {
-        Err(..) => Err(Error::DatabaseError),
-        Ok(..) => Ok(()),
-    }
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
 }
 
 pub fn competence_delete(competence_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep("DELETE uc FROM user_competences uc WHERE uc.competence_id = :competence_id");
+    let stmt = conn.prep("DELETE uc FROM user_competences uc WHERE uc.competence_id = :competence_id")?;
 
     let params = params! {
         "competence_id" => competence_id
     };
 
-    match conn.exec_drop(&stmt.unwrap(), &params) {
-        Err(..) => Err(Error::DatabaseError),
-        Ok(..) => Ok(()),
-    }
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
 }
 
 pub fn competence_summary(user_id: u64) -> Result<Vec<(Skill, i16)>, Error> {

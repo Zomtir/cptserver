@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8001
--- Generation Time: May 09, 2024 at 01:00 PM
+-- Generation Time: May 22, 2024 at 07:55 AM
 -- Server version: 10.11.6-MariaDB-0ubuntu0.23.10.2
 -- PHP Version: 8.2.10-2ubuntu2.1
 
@@ -37,13 +37,14 @@ CREATE TABLE `clubs` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `club_inventory`
+-- Table structure for table `club_stocks`
 --
 
-CREATE TABLE `club_inventory` (
+CREATE TABLE `club_stocks` (
   `club_id` tinyint(4) NOT NULL,
   `item_id` int(11) NOT NULL,
-  `count` int(11) NOT NULL
+  `owned` int(11) NOT NULL,
+  `loaned` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -269,17 +270,17 @@ CREATE TABLE `event_participant_uninvites` (
 
 CREATE TABLE `items` (
   `item_id` int(11) NOT NULL,
-  `item` varchar(30) NOT NULL,
+  `name` varchar(30) NOT NULL,
   `category_id` smallint(6) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `item_category`
+-- Table structure for table `item_categories`
 --
 
-CREATE TABLE `item_category` (
+CREATE TABLE `item_categories` (
   `category_id` smallint(6) NOT NULL,
   `name` varchar(30) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -424,8 +425,8 @@ CREATE TABLE `user_possessions` (
   `possession_id` int(11) NOT NULL,
   `user_id` mediumint(9) NOT NULL,
   `item_id` int(11) NOT NULL,
-  `owner_id` tinyint(4) DEFAULT NULL,
-  `transfer_date` date NOT NULL
+  `club_id` tinyint(4) DEFAULT NULL,
+  `transfer_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -440,9 +441,9 @@ ALTER TABLE `clubs`
   ADD UNIQUE KEY `KEY` (`club_key`);
 
 --
--- Indexes for table `club_inventory`
+-- Indexes for table `club_stocks`
 --
-ALTER TABLE `club_inventory`
+ALTER TABLE `club_stocks`
   ADD PRIMARY KEY (`club_id`,`item_id`),
   ADD KEY `REF_item` (`item_id`);
 
@@ -583,9 +584,9 @@ ALTER TABLE `items`
   ADD KEY `REF_CATEGORY` (`category_id`);
 
 --
--- Indexes for table `item_category`
+-- Indexes for table `item_categories`
 --
-ALTER TABLE `item_category`
+ALTER TABLE `item_categories`
   ADD PRIMARY KEY (`category_id`);
 
 --
@@ -644,7 +645,10 @@ ALTER TABLE `user_competences`
 -- Indexes for table `user_possessions`
 --
 ALTER TABLE `user_possessions`
-  ADD PRIMARY KEY (`possession_id`);
+  ADD PRIMARY KEY (`possession_id`),
+  ADD KEY `REF_user` (`user_id`),
+  ADD KEY `REF_item` (`item_id`),
+  ADD KEY `REF_club` (`club_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -681,9 +685,9 @@ ALTER TABLE `items`
   MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `item_category`
+-- AUTO_INCREMENT for table `item_categories`
 --
-ALTER TABLE `item_category`
+ALTER TABLE `item_categories`
   MODIFY `category_id` smallint(6) NOT NULL AUTO_INCREMENT;
 
 --
@@ -733,11 +737,11 @@ ALTER TABLE `user_possessions`
 --
 
 --
--- Constraints for table `club_inventory`
+-- Constraints for table `club_stocks`
 --
-ALTER TABLE `club_inventory`
-  ADD CONSTRAINT `club_inventory_ibfk_1` FOREIGN KEY (`club_id`) REFERENCES `clubs` (`club_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `club_inventory_ibfk_2` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON UPDATE CASCADE;
+ALTER TABLE `club_stocks`
+  ADD CONSTRAINT `club_stocks_ibfk_1` FOREIGN KEY (`club_id`) REFERENCES `clubs` (`club_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `club_stocks_ibfk_2` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `course_bookmarks`
@@ -862,7 +866,7 @@ ALTER TABLE `event_participant_uninvites`
 -- Constraints for table `items`
 --
 ALTER TABLE `items`
-  ADD CONSTRAINT `items_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `item_category` (`category_id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `items_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `item_categories` (`category_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `team_members`
@@ -885,6 +889,14 @@ ALTER TABLE `user_competences`
   ADD CONSTRAINT `user_competences_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `user_competences_ibfk_2` FOREIGN KEY (`skill_id`) REFERENCES `skills` (`skill_id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `user_competences_ibfk_3` FOREIGN KEY (`judge_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `user_possessions`
+--
+ALTER TABLE `user_possessions`
+  ADD CONSTRAINT `user_possessions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `user_possessions_ibfk_2` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `user_possessions_ibfk_3` FOREIGN KEY (`club_id`) REFERENCES `clubs` (`club_id`) ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

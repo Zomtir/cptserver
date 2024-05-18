@@ -12,6 +12,7 @@ mod db_club;
 mod db_competence;
 mod db_course;
 mod db_event;
+mod db_inventory;
 mod db_location;
 mod db_skill;
 mod db_team;
@@ -44,6 +45,8 @@ mod route_competence_admin;
 mod route_competence_regular;
 
 mod route_location_admin;
+
+mod route_inventory_admin;
 
 mod route_skill_admin;
 
@@ -268,6 +271,23 @@ fn rocket() -> _ {
                 route_location_admin::location_create,
                 route_location_admin::location_edit,
                 route_location_admin::location_delete,
+                route_inventory_admin::item_list,
+                route_inventory_admin::item_create,
+                route_inventory_admin::item_edit,
+                route_inventory_admin::item_delete,
+                route_inventory_admin::itemcat_list,
+                route_inventory_admin::itemcat_create,
+                route_inventory_admin::itemcat_edit,
+                route_inventory_admin::itemcat_delete,
+                route_inventory_admin::stock_list,
+                route_inventory_admin::stock_edit,
+                route_inventory_admin::item_loan,
+                route_inventory_admin::item_return,
+                route_inventory_admin::item_handout,
+                route_inventory_admin::item_handback,
+                route_inventory_admin::possession_list,
+                route_inventory_admin::possession_create,
+                route_inventory_admin::possession_delete,
                 route_skill_admin::skill_list,
                 route_skill_admin::skill_create,
                 route_skill_admin::skill_edit,

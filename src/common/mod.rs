@@ -8,6 +8,7 @@ mod club;
 mod confirmation_status;
 mod course;
 mod event;
+mod item;
 mod location;
 mod math;
 mod skill;
@@ -21,6 +22,7 @@ pub use club::*;
 pub use confirmation_status::*;
 pub use course::*;
 pub use event::*;
+pub use item::*;
 pub use location::*;
 pub use math::*;
 pub use skill::*;
@@ -47,7 +49,7 @@ impl<'r> FromFormField<'r> for WebBool {
     }
 }
 
-impl<'r> WebBool {
+impl WebBool {
     pub fn to_bool(&self) -> bool {
         self.0
     }

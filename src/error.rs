@@ -45,6 +45,11 @@ pub enum Error {
     CourseLoginFail,
     CourseKeyInvalid,
 
+    InventoryStockInvalid,
+    InventoryStockLimit,
+    InventoryStockConflict,
+    InventoryPossessionMissing,
+
     RightConflict,
     RightClubMissing,
     RightCompetenceMissing,
@@ -100,6 +105,11 @@ impl Error {
             Error::CourseModeratorPermission => "COURSE_MODERATOR_PERMISSION",
             Error::CourseLoginFail => "COURSE_LOGIN_FAIL",
             Error::CourseKeyInvalid => "COURSE_KEY_INVALID",
+
+            Error::InventoryStockInvalid => "INVENTORY_STOCK_INVALID",
+            Error::InventoryStockLimit => "INVENTORY_STOCK_LIMIT",
+            Error::InventoryStockConflict => "INVENTORY_STOCK_CONFLICT",
+            Error::InventoryPossessionMissing => "INVENTORY_POSSESSION_MISSING",
 
             Error::RightConflict => "RIGHT_CONFLICT",
             Error::RightClubMissing => "RIGHT_TERM_MISSING",
@@ -157,6 +167,11 @@ impl std::fmt::Display for Error {
             Error::CourseModeratorPermission => write!(f, "The user has insufficient course moderator permissions"),
             Error::CourseLoginFail => write!(f, "Course login failed"),
             Error::CourseKeyInvalid => write!(f, "Course key has an invalid format"),
+
+            Error::InventoryStockInvalid => write!(f, "Current inventory stock is invalid"),
+            Error::InventoryStockLimit => write!(f, "Inventory stock limit was reached"),
+            Error::InventoryStockConflict => write!(f, "Action does conflict with current stock values"),
+            Error::InventoryPossessionMissing => write!(f, "Inventory possession is missing"),
 
             Error::RightConflict => write!(f, "Conflicting right permissions"),
             Error::RightClubMissing => write!(f, "Club permissions are missing"),
