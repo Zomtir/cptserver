@@ -1,3 +1,22 @@
+## Release v0.9 (27th May 2024)
+
+- feat: Inventory management
+    - feat: Added items and item categories
+    - feat: Added user item possessions
+    - feat: Added club item stocks
+    - feat: Added functions to loan, return, hand-out and hand-back items
+- feat: Added course requirements
+- feat: Event admin can edit course belonging
+- feat: club statistics
+    - Added club statistic for terms valid at a point in time
+    - Added club statistic for users being members at a point in time
+    - Added club statistic for users being in a team but not in the club
+- feat: Initial super user
+- feat: Add event user/owner registrations
+- chore: Cargo update
+- chore: Mark unused variable
+- fix: Lower case server config file
+
 ## Release v0.8 (29th Apr 2024)
 
 - Renamed slot to event
