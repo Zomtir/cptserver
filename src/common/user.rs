@@ -98,7 +98,7 @@ pub fn check_user_email(email: &Option<String>) -> Result<String, Error> {
     Ok(text.into())
 }
 
-pub fn validate_user_email(text: &String) -> Result<(), Error> {
+pub fn validate_user_email(text: &str) -> Result<(), Error> {
     match Regex::new(r"^([a-z0-9._\-]([a-z0-9._\-+]*)?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})") {
         Err(..) => Err(Error::RegexError),
         Ok(regex) => match regex.is_match(text) {

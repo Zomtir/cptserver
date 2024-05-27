@@ -186,13 +186,13 @@ pub fn stock_list(club_id: Option<u32>, item_id: Option<u32>) -> Result<Vec<Stoc
             item: Item {
                 id: row.take("item_id").unwrap(),
                 name: row.take("item_name").unwrap(),
-                category: match row.take("category_id").unwrap() {
-                    None => None,
-                    Some(id) => Some(ItemCategory {
+                category: row
+                    .take::<Option<u64>, &str>("category_id")
+                    .unwrap()
+                    .map(|id| ItemCategory {
                         id,
                         name: row.take("category_name").unwrap(),
                     }),
-                },
             },
             owned: row.take("owned").unwrap(),
             loaned: row.take("loaned").unwrap(),
@@ -238,13 +238,13 @@ pub fn stock_info(club_id: u64, item_id: u64) -> Result<Option<Stock>, Error> {
         item: Item {
             id: row.take("item_id").unwrap(),
             name: row.take("item_name").unwrap(),
-            category: match row.take("category_id").unwrap() {
-                None => None,
-                Some(id) => Some(ItemCategory {
+            category: row
+                .take::<Option<u64>, &str>("category_id")
+                .unwrap()
+                .map(|id| ItemCategory {
                     id,
                     name: row.take("category_name").unwrap(),
                 }),
-            },
         },
         owned: row.take("owned").unwrap(),
         loaned: row.take("loaned").unwrap(),
@@ -360,24 +360,21 @@ pub fn possession_list(
             item: Item {
                 id: row.take("item_id").unwrap(),
                 name: row.take("item_name").unwrap(),
-                category: match row.take("category_id").unwrap() {
-                    None => None,
-                    Some(id) => Some(ItemCategory {
+                category: row
+                    .take::<Option<u64>, &str>("category_id")
+                    .unwrap()
+                    .map(|id| ItemCategory {
                         id,
                         name: row.take("category_name").unwrap(),
                     }),
-                },
             },
             owned: row.take("owned").unwrap(),
-            club: match row.take("club_id").unwrap() {
-                None => None,
-                Some(id) => Some(Club {
-                    id,
-                    key: row.take("club_key").unwrap(),
-                    name: row.take("club_name").unwrap(),
-                    description: row.take("club_description").unwrap(),
-                }),
-            },
+            club: row.take::<Option<u64>, &str>("club_id").unwrap().map(|id| Club {
+                id,
+                key: row.take("club_key").unwrap(),
+                name: row.take("club_name").unwrap(),
+                description: row.take("club_description").unwrap(),
+            }),
             transfer_date: row.take("transfer_date").unwrap(),
         };
         possessions.push(up);
@@ -423,24 +420,22 @@ pub fn possession_info(possession_id: u64) -> Result<Possession, Error> {
         item: Item {
             id: row.take("item_id").unwrap(),
             name: row.take("item_name").unwrap(),
-            category: match row.take("category_id").unwrap() {
-                None => None,
-                Some(id) => Some(ItemCategory {
+            category: row
+                .take::<Option<u64>, &str>("category_id")
+                .unwrap()
+                .map(|id| ItemCategory {
                     id,
                     name: row.take("category_name").unwrap(),
                 }),
-            },
         },
         owned: row.take("owned").unwrap(),
-        club: match row.take("club_id").unwrap() {
-            None => None,
-            Some(id) => Some(Club {
-                id,
-                key: row.take("club_key").unwrap(),
-                name: row.take("club_name").unwrap(),
-                description: row.take("club_description").unwrap(),
-            }),
-        },
+        club: row.take::<Option<u64>, &str>("club_id").unwrap().map(|id| Club {
+            id,
+            key: row.take("club_key").unwrap(),
+            name: row.take("club_name").unwrap(),
+            description: row.take("club_description").unwrap(),
+        }),
+
         transfer_date: row.take("transfer_date").unwrap(),
     };
 
