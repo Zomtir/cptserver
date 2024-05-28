@@ -68,23 +68,23 @@ pub fn itemcat_create(session: UserSession, itemcat: Json<ItemCategory>) -> Resu
     Ok(id.to_string())
 }
 
-#[rocket::post("/admin/itemcat_edit?<itemcat_id>", format = "application/json", data = "<itemcat>")]
-pub fn itemcat_edit(session: UserSession, itemcat_id: u64, itemcat: Json<ItemCategory>) -> Result<(), Error> {
+#[rocket::post("/admin/itemcat_edit?<category_id>", format = "application/json", data = "<itemcat>")]
+pub fn itemcat_edit(session: UserSession, category_id: u64, itemcat: Json<ItemCategory>) -> Result<(), Error> {
     if !session.right.right_inventory_write {
         return Err(Error::RightInventoryMissing);
     };
 
-    crate::db_inventory::itemcat_edit(itemcat_id, &itemcat)?;
+    crate::db_inventory::itemcat_edit(category_id, &itemcat)?;
     Ok(())
 }
 
-#[rocket::head("/admin/itemcat_delete?<itemcat_id>")]
-pub fn itemcat_delete(session: UserSession, itemcat_id: u64) -> Result<(), Error> {
+#[rocket::head("/admin/itemcat_delete?<category_id>")]
+pub fn itemcat_delete(session: UserSession, category_id: u64) -> Result<(), Error> {
     if !session.right.right_inventory_write {
         return Err(Error::RightInventoryMissing);
     };
 
-    crate::db_inventory::itemcat_delete(itemcat_id)?;
+    crate::db_inventory::itemcat_delete(category_id)?;
     Ok(())
 }
 
