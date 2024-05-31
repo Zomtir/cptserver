@@ -316,7 +316,7 @@ pub fn stock_delete(club_id: u64, item_id: u64) -> Result<(), Error> {
 /* POSSESSIONS */
 
 pub fn possession_list(
-    user_id: Option<u32>,
+    user_id: Option<u64>,
     owned: Option<bool>,
     club_id: Option<u32>,
 ) -> Result<Vec<Possession>, Error> {

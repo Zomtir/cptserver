@@ -284,7 +284,7 @@ pub fn item_handback(session: UserSession, possession_id: u64) -> Result<(), Err
 #[rocket::get("/admin/possession_list?<user_id>&<owned>&<club_id>")]
 pub fn possession_list(
     session: UserSession,
-    user_id: Option<u32>,
+    user_id: Option<u64>,
     owned: Option<WebBool>,
     club_id: Option<u32>,
 ) -> Result<Json<Vec<Possession>>, Error> {
