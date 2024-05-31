@@ -115,15 +115,18 @@ pub fn club_member_leaderboard(
 ) -> Result<Vec<(User, u32)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
-            SUM(DATEDIFF(
-                COALESCE(t.term_end, :point_in_time),
-                COALESCE(t.term_begin, DATE_SUB(COALESCE(t.term_end, :point_in_time), INTERVAL 1 YEAR)))
-            ) AS active_days
-        FROM terms t
-        JOIN users u ON u.user_id = t.user_id
-        WHERE t.club_id = :club_id
-        AND (:point_in_time <= COALESCE(t.term_end, :point_in_time))
+        "WITH effective_terms AS (
+            SELECT t.user_id,
+                LEAST(COALESCE(t.term_end, :point_in_time), :point_in_time) AS effective_end,
+                LEAST(COALESCE(t.term_begin, :point_in_time), :point_in_time) AS effective_begin
+            FROM terms t
+            WHERE t.club_id = :club_id
+        )
+        SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
+               SUM(DATEDIFF(et.effective_end, et.effective_begin)) AS active_days
+        FROM effective_terms et
+        JOIN users u ON u.user_id = et.user_id
+        WHERE :point_in_time BETWEEN et.effective_begin AND et.effective_end
         AND (:active IS NULL OR :active = u.active)
         GROUP BY u.user_id
         ORDER BY active_days DESC;",
