@@ -13,3 +13,9 @@ pub fn possession_list(
     let possessions = crate::db_inventory::possession_list(Some(session.user.id), owned.map(|b| b.to_bool()), club_id)?;
     Ok(Json(possessions))
 }
+
+#[rocket::get("/admin/itemcat_list")]
+pub fn itemcat_list(session: UserSession) -> Result<Json<Vec<ItemCategory>>, Error> {
+    let itemcats = crate::db_inventory::itemcat_list()?;
+    Ok(Json(itemcats))
+}

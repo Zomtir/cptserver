@@ -274,6 +274,7 @@ fn rocket() -> _ {
                 route_location_admin::location_edit,
                 route_location_admin::location_delete,
                 route_inventory_regular::possession_list,
+                route_inventory_regular::itemcat_list,
                 route_inventory_admin::item_list,
                 route_inventory_admin::item_create,
                 route_inventory_admin::item_edit,
