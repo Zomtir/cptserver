@@ -989,3 +989,43 @@ pub fn event_bookmark_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
     conn.exec_drop(&stmt, &params)?;
     Ok(())
 }
+
+/* STATISTICS */
+
+pub fn event_statistic_preparation(
+    event_id: u64,
+    category1: Option<u32>,
+    category2: Option<u32>,
+    category3: Option<u32>,
+) -> Result<Vec<(User, u32, u32, u32)>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
+            COUNT(CASE WHEN i.category_id = :category1 THEN 1 END) AS count1,
+            COUNT(CASE WHEN i.category_id = :category2 THEN 1 END) AS count2,
+            COUNT(CASE WHEN i.category_id = :category3 THEN 1 END) AS count3
+        FROM event_participants ep
+        JOIN users u ON ep.user_id = u.user_id
+        LEFT JOIN user_possessions up ON up.user_id = ep.user_id
+        LEFT JOIN items i ON up.item_id = i.item_id
+        WHERE ep.event_id = :event_id
+        GROUP BY u.user_id;",
+    )?;
+    let params = params! {
+        "event_id" => event_id,
+        "category1" => category1,
+        "category2" => category2,
+        "category3" => category3,
+    };
+    let map = |(user_id, user_key, firstname, lastname, nickname, count1, count2, count3)| {
+        (
+            { User::from_info(user_id, user_key, firstname, lastname, nickname) },
+            count1,
+            count2,
+            count3,
+        )
+    };
+
+    let stats = conn.exec_map(&stmt, &params, &map)?;
+    Ok(stats)
+}

@@ -236,6 +236,7 @@ fn rocket() -> _ {
                 route_event_admin::event_participant_uninvite_add,
                 route_event_admin::event_participant_uninvite_remove,
                 route_event_admin::event_participant_registration_list,
+                route_event_admin::event_statistic_preparation,
                 route_event_moderator::event_list,
                 route_event_moderator::event_create,
                 route_event_moderator::event_edit,

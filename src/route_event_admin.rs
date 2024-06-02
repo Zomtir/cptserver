@@ -386,3 +386,19 @@ pub fn event_participant_registration_list(session: UserSession, event_id: u64) 
     let users = crate::db_event::event_participant_registration_list(event_id)?;
     Ok(Json(users))
 }
+
+#[rocket::get("/admin/event_statistic_preparation?<event_id>&<category1>&<category2>&<category3>")]
+pub fn event_statistic_preparation(
+    session: UserSession,
+    event_id: u64,
+    category1: Option<u32>,
+    category2: Option<u32>,
+    category3: Option<u32>,
+) -> Result<Json<Vec<(User, u32, u32, u32)>>, Error> {
+    if !session.right.right_event_read {
+        return Err(Error::RightEventMissing);
+    };
+
+    let stats = crate::db_event::event_statistic_preparation(event_id, category1, category2, category3)?;
+    Ok(Json(stats))
+}
