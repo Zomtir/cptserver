@@ -12,7 +12,7 @@ pub fn course_list(
     active: Option<WebBool>,
     public: Option<WebBool>,
 ) -> Result<Json<Vec<Course>>, Error> {
-    if !session.right.right_course_write {
+    if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
 
@@ -52,7 +52,7 @@ pub fn course_delete(session: UserSession, course_id: u64) -> Result<(), Error> 
 
 #[rocket::get("/admin/course_event_list?<course_id>")]
 pub fn course_event_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Event>>, Error> {
-    if !session.right.right_course_write {
+    if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
 
@@ -62,7 +62,7 @@ pub fn course_event_list(session: UserSession, course_id: u64) -> Result<Json<Ve
 
 #[rocket::get("/admin/course_moderator_list?<course_id>")]
 pub fn course_moderator_list(session: UserSession, course_id: u64) -> Result<Json<Vec<User>>, Error> {
-    if !session.right.right_course_write {
+    if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
 
@@ -92,7 +92,7 @@ pub fn course_moderator_remove(session: UserSession, course_id: u64, user_id: u6
 
 #[rocket::get("/admin/course_owner_summon_list?<course_id>")]
 pub fn course_owner_summon_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Team>>, Error> {
-    if !session.right.right_course_write {
+    if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
 
@@ -122,7 +122,7 @@ pub fn course_owner_summon_remove(session: UserSession, course_id: u64, team_id:
 
 #[rocket::get("/admin/course_owner_unsummon_list?<course_id>")]
 pub fn course_owner_unsummon_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Team>>, Error> {
-    if !session.right.right_course_write {
+    if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
 
@@ -152,7 +152,7 @@ pub fn course_owner_unsummon_remove(session: UserSession, course_id: u64, team_i
 
 #[rocket::get("/admin/course_participant_summon_list?<course_id>")]
 pub fn course_participant_summon_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Team>>, Error> {
-    if !session.right.right_course_write {
+    if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
 
@@ -182,7 +182,7 @@ pub fn course_participant_summon_remove(session: UserSession, course_id: u64, te
 
 #[rocket::get("/admin/course_participant_unsummon_list?<course_id>")]
 pub fn course_participant_unsummon_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Team>>, Error> {
-    if !session.right.right_course_write {
+    if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
 
@@ -212,7 +212,7 @@ pub fn course_participant_unsummon_remove(session: UserSession, course_id: u64, 
 
 #[rocket::get("/admin/course_requirement_list?<course_id>")]
 pub fn course_requirement_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Requirement>>, Error> {
-    if !session.right.right_course_write {
+    if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
 
@@ -245,7 +245,7 @@ pub fn course_statistic_class(
     session: UserSession,
     course_id: u64,
 ) -> Result<Json<Vec<(u64, String, NaiveDateTime, NaiveDateTime, u64, u64)>>, Error> {
-    if !session.right.right_course_write {
+    if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
 
@@ -258,7 +258,7 @@ pub fn course_statistic_participant(
     session: UserSession,
     course_id: u64,
 ) -> Result<Json<Vec<(u64, String, String, u64)>>, Error> {
-    if !session.right.right_course_write {
+    if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
 
@@ -272,7 +272,7 @@ pub fn course_statistic_participant1(
     course_id: u64,
     participant_id: u64,
 ) -> Result<Json<Vec<(u64, String, NaiveDateTime, NaiveDateTime)>>, Error> {
-    if !session.right.right_course_write {
+    if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
 
@@ -285,7 +285,7 @@ pub fn course_statistic_owner(
     session: UserSession,
     course_id: u64,
 ) -> Result<Json<Vec<(u64, String, String, u64)>>, Error> {
-    if !session.right.right_course_write {
+    if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
 
@@ -299,7 +299,7 @@ pub fn course_statistic_owner1(
     course_id: u64,
     owner_id: u64,
 ) -> Result<Json<Vec<(u64, String, NaiveDateTime, NaiveDateTime)>>, Error> {
-    if !session.right.right_course_write {
+    if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
 

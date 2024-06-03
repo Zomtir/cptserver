@@ -1,6 +1,6 @@
 use rocket::serde::json::Json;
 
-use crate::common::{Possession, WebBool};
+use crate::common::{ItemCategory, Possession, WebBool};
 use crate::error::Error;
 use crate::session::UserSession;
 
@@ -14,8 +14,8 @@ pub fn possession_list(
     Ok(Json(possessions))
 }
 
-#[rocket::get("/admin/itemcat_list")]
-pub fn itemcat_list(session: UserSession) -> Result<Json<Vec<ItemCategory>>, Error> {
+#[rocket::get("/regular/itemcat_list")]
+pub fn itemcat_list(_session: UserSession) -> Result<Json<Vec<ItemCategory>>, Error> {
     let itemcats = crate::db_inventory::itemcat_list()?;
     Ok(Json(itemcats))
 }

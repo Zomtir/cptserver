@@ -8,7 +8,7 @@ use crate::session::{Credential, UserSession};
 
 #[rocket::get("/admin/user_list?<active>")]
 pub fn user_list(session: UserSession, active: Option<WebBool>) -> Result<Json<Vec<User>>, Error> {
-    if !session.right.right_user_write {
+    if !session.right.right_user_read {
         return Err(Error::RightUserMissing);
     };
 
@@ -18,7 +18,7 @@ pub fn user_list(session: UserSession, active: Option<WebBool>) -> Result<Json<V
 
 #[rocket::get("/admin/user_detailed?<user_id>")]
 pub fn user_detailed(session: UserSession, user_id: u64) -> Result<Json<User>, Error> {
-    if !session.right.right_user_write {
+    if !session.right.right_user_read {
         return Err(Error::RightUserMissing);
     };
 

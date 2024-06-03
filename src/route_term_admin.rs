@@ -6,7 +6,7 @@ use crate::session::UserSession;
 
 #[rocket::get("/admin/term_list?<user_id>")]
 pub fn term_list(session: UserSession, user_id: Option<u32>) -> Result<Json<Vec<Term>>, Error> {
-    if !session.right.right_club_write {
+    if !session.right.right_club_read {
         return Err(Error::RightClubMissing);
     };
 

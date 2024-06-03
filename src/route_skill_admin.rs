@@ -6,7 +6,7 @@ use crate::session::UserSession;
 
 #[rocket::get("/admin/skill_list")]
 pub fn skill_list(session: UserSession) -> Result<Json<Vec<Skill>>, Error> {
-    if !session.right.right_competence_write {
+    if !session.right.right_competence_read {
         return Err(Error::RightCompetenceMissing);
     };
 

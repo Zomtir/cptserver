@@ -12,7 +12,7 @@ pub fn competence_list(
     min: Option<i16>,
     max: Option<i16>,
 ) -> Result<Json<Vec<Competence>>, Error> {
-    if !session.right.right_competence_write {
+    if !session.right.right_competence_read {
         return Err(Error::RightCompetenceMissing);
     };
 

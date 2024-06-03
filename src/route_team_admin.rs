@@ -8,7 +8,7 @@ use crate::session::UserSession;
 
 #[rocket::get("/admin/team_list")]
 pub fn team_list(session: UserSession) -> Result<Json<Vec<Team>>, Error> {
-    if !session.right.right_team_write {
+    if !session.right.right_team_read {
         return Err(Error::RightTeamMissing);
     };
 
@@ -58,7 +58,7 @@ pub fn team_delete(session: UserSession, team_id: u32) -> Result<(), Error> {
 
 #[rocket::get("/admin/team_member_list?<team_id>")]
 pub fn team_member_list(session: UserSession, team_id: u32) -> Result<Json<Vec<User>>, Error> {
-    if !session.right.right_team_write {
+    if !session.right.right_team_read {
         return Err(Error::RightTeamMissing);
     };
 

@@ -6,7 +6,7 @@ use crate::session::UserSession;
 
 #[rocket::get("/admin/club_list")]
 pub fn club_list(session: UserSession) -> Result<Json<Vec<Club>>, Error> {
-    if !session.right.right_club_write {
+    if !session.right.right_club_read {
         return Err(Error::RightClubMissing);
     };
 
@@ -52,7 +52,7 @@ pub fn club_statistic_terms(
     club_id: u32,
     point_in_time: WebDate,
 ) -> Result<Json<Vec<Term>>, Error> {
-    if !session.right.right_club_write {
+    if !session.right.right_club_read {
         return Err(Error::RightClubMissing);
     };
 
@@ -66,7 +66,7 @@ pub fn club_statistic_members(
     club_id: u32,
     point_in_time: WebDate,
 ) -> Result<Json<Vec<(User, u32)>>, Error> {
-    if !session.right.right_club_write {
+    if !session.right.right_club_read {
         return Err(Error::RightClubMissing);
     };
 
@@ -81,7 +81,7 @@ pub fn club_statistic_team(
     point_in_time: WebDate,
     team_id: u32,
 ) -> Result<Json<Vec<User>>, Error> {
-    if !session.right.right_club_write {
+    if !session.right.right_club_read {
         return Err(Error::RightClubMissing);
     };
 

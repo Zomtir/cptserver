@@ -6,7 +6,7 @@ use crate::session::UserSession;
 
 #[rocket::get("/admin/location_list")]
 pub fn location_list(session: UserSession) -> Result<Json<Vec<Location>>, Error> {
-    if !session.right.right_location_write {
+    if !session.right.right_location_read {
         return Err(Error::RightLocationMissing);
     };
 
