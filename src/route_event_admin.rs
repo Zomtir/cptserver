@@ -387,8 +387,8 @@ pub fn event_participant_registration_list(session: UserSession, event_id: u64) 
     Ok(Json(users))
 }
 
-#[rocket::get("/admin/event_statistic_preparation?<event_id>&<category1>&<category2>&<category3>")]
-pub fn event_statistic_preparation(
+#[rocket::get("/admin/event_statistic_packlist?<event_id>&<category1>&<category2>&<category3>")]
+pub fn event_statistic_packlist(
     session: UserSession,
     event_id: u64,
     category1: Option<u32>,
@@ -399,6 +399,16 @@ pub fn event_statistic_preparation(
         return Err(Error::RightEventMissing);
     };
 
-    let stats = crate::db_event::event_statistic_preparation(event_id, category1, category2, category3)?;
+    let stats = crate::db_event::event_statistic_packlist(event_id, category1, category2, category3)?;
+    Ok(Json(stats))
+}
+
+#[rocket::get("/admin/event_statistic_division?<event_id>")]
+pub fn event_statistic_division(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>, Error> {
+    if !session.right.right_event_read {
+        return Err(Error::RightEventMissing);
+    };
+
+    let stats = crate::db_event::event_statistic_division(event_id)?;
     Ok(Json(stats))
 }

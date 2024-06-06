@@ -992,7 +992,7 @@ pub fn event_bookmark_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
 
 /* STATISTICS */
 
-pub fn event_statistic_preparation(
+pub fn event_statistic_packlist(
     event_id: u64,
     category1: Option<u32>,
     category2: Option<u32>,
@@ -1024,6 +1024,29 @@ pub fn event_statistic_preparation(
             count2,
             count3,
         )
+    };
+
+    let stats = conn.exec_map(&stmt, &params, &map)?;
+    Ok(stats)
+}
+
+pub fn event_statistic_division(event_id: u64) -> Result<Vec<User>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname, u.federationnumber, u.birthday, u.gender
+        FROM event_participants ep
+        JOIN users u ON ep.user_id = u.user_id
+        WHERE ep.event_id = :event_id",
+    )?;
+    let params = params! {
+        "event_id" => event_id,
+    };
+    let map = |(user_id, user_key, firstname, lastname, nickname, federationnumber, birthday, gender)| {
+        let mut user = User::from_info(user_id, user_key, firstname, lastname, nickname);
+        user.birthday = birthday;
+        user.federationnumber = federationnumber;
+        user.gender = gender;
+        user
     };
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
