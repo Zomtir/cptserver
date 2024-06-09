@@ -4,13 +4,13 @@ use crate::common::Term;
 use crate::error::Error;
 use crate::session::UserSession;
 
-#[rocket::get("/admin/term_list?<user_id>")]
-pub fn term_list(session: UserSession, user_id: Option<u32>) -> Result<Json<Vec<Term>>, Error> {
+#[rocket::get("/admin/term_list?<club_id>&<user_id>")]
+pub fn term_list(session: UserSession, club_id: Option<u32>, user_id: Option<u32>) -> Result<Json<Vec<Term>>, Error> {
     if !session.right.right_club_read {
         return Err(Error::RightClubMissing);
     };
 
-    let terms = crate::db_term::term_list(None, user_id, None)?;
+    let terms = crate::db_term::term_list(club_id, user_id, None)?;
     Ok(Json(terms))
 }
 
