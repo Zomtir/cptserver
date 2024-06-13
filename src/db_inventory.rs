@@ -317,6 +317,7 @@ pub fn stock_delete(club_id: u64, item_id: u64) -> Result<(), Error> {
 
 pub fn possession_list(
     user_id: Option<u64>,
+    item_id: Option<u64>,
     owned: Option<bool>,
     club_id: Option<u32>,
 ) -> Result<Vec<Possession>, Error> {
@@ -333,12 +334,14 @@ pub fn possession_list(
         LEFT JOIN item_categories ic ON (i.category_id = ic.category_id)
         LEFT JOIN clubs c ON (up.club_id = c.club_id)
         WHERE (:user_id IS NULL OR up.user_id = :user_id)
+        AND (:item_id IS NULL OR up.item_id = :item_id)
         AND (:owned IS NULL OR up.owned = :owned)
         AND (:club_id IS NULL OR up.club_id = :club_id);",
     )?;
 
     let params = params! {
         "user_id" => user_id,
+        "item_id" => item_id,
         "owned" => owned,
         "club_id" => club_id,
     };

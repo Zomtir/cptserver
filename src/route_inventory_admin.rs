@@ -281,10 +281,11 @@ pub fn item_handback(session: UserSession, possession_id: u64) -> Result<(), Err
 
 /* POSSESSIONS */
 
-#[rocket::get("/admin/possession_list?<user_id>&<owned>&<club_id>")]
+#[rocket::get("/admin/possession_list?<user_id>&<item_id>&<owned>&<club_id>")]
 pub fn possession_list(
     session: UserSession,
     user_id: Option<u64>,
+    item_id: Option<u64>,
     owned: Option<WebBool>,
     club_id: Option<u32>,
 ) -> Result<Json<Vec<Possession>>, Error> {
@@ -292,7 +293,7 @@ pub fn possession_list(
         return Err(Error::RightInventoryMissing);
     };
 
-    let possessions = crate::db_inventory::possession_list(user_id, owned.map(|b| b.to_bool()), club_id)?;
+    let possessions = crate::db_inventory::possession_list(user_id, item_id, owned.map(|b| b.to_bool()), club_id)?;
     Ok(Json(possessions))
 }
 
