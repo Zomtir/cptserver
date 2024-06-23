@@ -1,3 +1,6 @@
+pub mod course;
+pub mod event;
+
 use mysql::{Pool, PooledConn};
 
 use crate::error::Error;

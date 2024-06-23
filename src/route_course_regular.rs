@@ -10,6 +10,6 @@ use crate::session::UserSession;
 
 #[rocket::get("/regular/course_availability")]
 pub fn course_availability(session: UserSession) -> Result<Json<Vec<Course>>, Error> {
-    let courses = crate::db_course::course_available(session.user.id)?;
+    let courses = crate::db::course::course_available(session.user.id)?;
     Ok(Json(courses))
 }

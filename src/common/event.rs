@@ -13,14 +13,41 @@ pub struct Event {
     pub key: String,
     pub pwd: Option<String>,
     pub title: String,
-    pub location: Location,
     pub begin: chrono::NaiveDateTime,
     pub end: chrono::NaiveDateTime,
-    pub status: String,
-    pub public: bool,
-    pub scrutable: bool,
-    pub note: String,
+    pub location: Option<Location>,
+    pub note: Option<String>,
+    pub occurrence: Option<String>,
+    pub acceptance: Option<String>,
+    pub public: Option<bool>,
+    pub scrutable: Option<bool>,
     pub course_id: Option<u32>,
+}
+
+impl Event {
+    pub fn from_info(
+        id: u64,
+        key: String,
+        title: String,
+        begin: chrono::NaiveDateTime,
+        end: chrono::NaiveDateTime,
+    ) -> Event {
+        Event {
+            id,
+            key,
+            pwd: None,
+            title,
+            begin,
+            end,
+            location: None,
+            note: None,
+            occurrence: None,
+            acceptance: None,
+            public: None,
+            scrutable: None,
+            course_id: None,
+        }
+    }
 }
 
 /*

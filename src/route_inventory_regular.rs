@@ -10,7 +10,8 @@ pub fn possession_list(
     owned: Option<WebBool>,
     club_id: Option<u32>,
 ) -> Result<Json<Vec<Possession>>, Error> {
-    let possessions = crate::db_inventory::possession_list(Some(session.user.id), None, owned.map(|b| b.to_bool()), club_id)?;
+    let possessions =
+        crate::db_inventory::possession_list(Some(session.user.id), None, owned.map(|b| b.to_bool()), club_id)?;
     Ok(Json(possessions))
 }
 

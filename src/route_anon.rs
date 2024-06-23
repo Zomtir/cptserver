@@ -32,7 +32,7 @@ pub fn club_list() -> Result<Json<Vec<Club>>, Error> {
 
 #[rocket::get("/anon/course_list")]
 pub fn course_list() -> Result<Json<Vec<Course>>, Error> {
-    let courses = crate::db_course::course_list(None, Some(true), Some(true))?;
+    let courses = crate::db::course::course_list(None, Some(true), Some(true))?;
     Ok(Json(courses))
 }
 
