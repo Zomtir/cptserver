@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8001
--- Generation Time: May 22, 2024 at 07:55 AM
--- Server version: 10.11.6-MariaDB-0ubuntu0.23.10.2
--- PHP Version: 8.2.10-2ubuntu2.1
+-- Generation Time: Jun 26, 2024 at 05:33 PM
+-- Server version: 10.11.8-MariaDB-0ubuntu0.23.10.1
+-- PHP Version: 8.2.10-2ubuntu2.2
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -75,6 +75,18 @@ CREATE TABLE `course_bookmarks` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `course_leader_sieves`
+--
+
+CREATE TABLE `course_leader_sieves` (
+  `course_id` mediumint(9) NOT NULL,
+  `team_id` mediumint(9) NOT NULL,
+  `access` tinyint(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `course_moderators`
 --
 
@@ -86,45 +98,13 @@ CREATE TABLE `course_moderators` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `course_owner_summons`
+-- Table structure for table `course_participant_sieves`
 --
 
-CREATE TABLE `course_owner_summons` (
+CREATE TABLE `course_participant_sieves` (
   `course_id` mediumint(9) NOT NULL,
-  `team_id` mediumint(9) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `course_owner_unsummons`
---
-
-CREATE TABLE `course_owner_unsummons` (
-  `course_id` mediumint(9) NOT NULL,
-  `team_id` mediumint(9) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `course_participant_summons`
---
-
-CREATE TABLE `course_participant_summons` (
-  `course_id` mediumint(9) NOT NULL,
-  `team_id` mediumint(9) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `course_participant_unsummons`
---
-
-CREATE TABLE `course_participant_unsummons` (
-  `course_id` mediumint(9) NOT NULL,
-  `team_id` mediumint(9) NOT NULL
+  `team_id` mediumint(9) NOT NULL,
+  `access` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -143,6 +123,18 @@ CREATE TABLE `course_requirements` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `course_supporter_sieves`
+--
+
+CREATE TABLE `course_supporter_sieves` (
+  `course_id` mediumint(9) NOT NULL,
+  `team_id` mediumint(9) NOT NULL,
+  `access` tinyint(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `events`
 --
 
@@ -151,10 +143,11 @@ CREATE TABLE `events` (
   `event_key` char(12) NOT NULL,
   `pwd` tinytext NOT NULL,
   `title` varchar(100) NOT NULL,
-  `location_id` smallint(6) NOT NULL,
   `begin` datetime NOT NULL,
   `end` datetime NOT NULL,
-  `status` enum('DRAFT','PENDING','OCCURRING','CANCELED','REJECTED') NOT NULL DEFAULT 'PENDING',
+  `location_id` smallint(6) NOT NULL,
+  `occurrence` enum('OCCURRING','CANCELED','VOIDED') NOT NULL DEFAULT 'OCCURRING',
+  `acceptance` enum('DRAFT','PENDING','ACCEPTED','REJECTED') NOT NULL DEFAULT 'DRAFT',
   `public` tinyint(1) NOT NULL DEFAULT 0,
   `scrutable` tinyint(1) NOT NULL DEFAULT 1,
   `note` text NOT NULL DEFAULT '',
@@ -175,6 +168,41 @@ CREATE TABLE `event_bookmarks` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `event_leader_filters`
+--
+
+CREATE TABLE `event_leader_filters` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  `access` tinyint(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `event_leader_presences`
+--
+
+CREATE TABLE `event_leader_presences` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `event_leader_registrations`
+--
+
+CREATE TABLE `event_leader_registrations` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  `status` enum('POSITIVE','NEUTRAL','NEGATIVE','') NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `event_owners`
 --
 
@@ -186,55 +214,22 @@ CREATE TABLE `event_owners` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `event_owner_invites`
+-- Table structure for table `event_participant_filters`
 --
 
-CREATE TABLE `event_owner_invites` (
-  `event_id` int(11) NOT NULL,
-  `user_id` mediumint(9) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `event_owner_registrations`
---
-
-CREATE TABLE `event_owner_registrations` (
+CREATE TABLE `event_participant_filters` (
   `event_id` int(11) NOT NULL,
   `user_id` mediumint(9) NOT NULL,
-  `status` enum('POSITIVE','NEUTRAL','NEGATIVE','') NOT NULL
+  `access` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `event_owner_uninvites`
+-- Table structure for table `event_participant_presences`
 --
 
-CREATE TABLE `event_owner_uninvites` (
-  `event_id` int(11) NOT NULL,
-  `user_id` mediumint(9) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `event_participants`
---
-
-CREATE TABLE `event_participants` (
-  `event_id` int(11) NOT NULL,
-  `user_id` mediumint(9) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `event_participant_invites`
---
-
-CREATE TABLE `event_participant_invites` (
+CREATE TABLE `event_participant_presences` (
   `event_id` int(11) NOT NULL,
   `user_id` mediumint(9) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -254,12 +249,36 @@ CREATE TABLE `event_participant_registrations` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `event_participant_uninvites`
+-- Table structure for table `event_supporter_filters`
 --
 
-CREATE TABLE `event_participant_uninvites` (
+CREATE TABLE `event_supporter_filters` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  `access` tinyint(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `event_supporter_presences`
+--
+
+CREATE TABLE `event_supporter_presences` (
   `event_id` int(11) NOT NULL,
   `user_id` mediumint(9) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `event_supporter_registrations`
+--
+
+CREATE TABLE `event_supporter_registrations` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  `status` enum('POSITIVE','NEUTRAL','NEGATIVE','') NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -425,6 +444,7 @@ CREATE TABLE `user_possessions` (
   `possession_id` int(11) NOT NULL,
   `user_id` mediumint(9) NOT NULL,
   `item_id` int(11) NOT NULL,
+  `owned` tinyint(1) NOT NULL DEFAULT 1,
   `club_id` tinyint(4) DEFAULT NULL,
   `transfer_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -462,6 +482,13 @@ ALTER TABLE `course_bookmarks`
   ADD KEY `REF_user` (`user_id`);
 
 --
+-- Indexes for table `course_leader_sieves`
+--
+ALTER TABLE `course_leader_sieves`
+  ADD PRIMARY KEY (`course_id`,`team_id`),
+  ADD KEY `REF_team` (`team_id`);
+
+--
 -- Indexes for table `course_moderators`
 --
 ALTER TABLE `course_moderators`
@@ -469,30 +496,9 @@ ALTER TABLE `course_moderators`
   ADD KEY `user_id` (`user_id`);
 
 --
--- Indexes for table `course_owner_summons`
+-- Indexes for table `course_participant_sieves`
 --
-ALTER TABLE `course_owner_summons`
-  ADD PRIMARY KEY (`course_id`,`team_id`),
-  ADD KEY `REF_team` (`team_id`);
-
---
--- Indexes for table `course_owner_unsummons`
---
-ALTER TABLE `course_owner_unsummons`
-  ADD PRIMARY KEY (`course_id`,`team_id`),
-  ADD KEY `REF_team` (`team_id`);
-
---
--- Indexes for table `course_participant_summons`
---
-ALTER TABLE `course_participant_summons`
-  ADD PRIMARY KEY (`course_id`,`team_id`),
-  ADD KEY `REF_team` (`team_id`);
-
---
--- Indexes for table `course_participant_unsummons`
---
-ALTER TABLE `course_participant_unsummons`
+ALTER TABLE `course_participant_sieves`
   ADD PRIMARY KEY (`course_id`,`team_id`),
   ADD KEY `REF_team` (`team_id`);
 
@@ -503,6 +509,13 @@ ALTER TABLE `course_requirements`
   ADD PRIMARY KEY (`requirement_id`),
   ADD KEY `REF_skill` (`skill_id`),
   ADD KEY `REF_course` (`course_id`);
+
+--
+-- Indexes for table `course_supporter_sieves`
+--
+ALTER TABLE `course_supporter_sieves`
+  ADD PRIMARY KEY (`course_id`,`team_id`),
+  ADD KEY `REF_team` (`team_id`);
 
 --
 -- Indexes for table `events`
@@ -521,6 +534,27 @@ ALTER TABLE `event_bookmarks`
   ADD KEY `REF_user` (`user_id`);
 
 --
+-- Indexes for table `event_leader_filters`
+--
+ALTER TABLE `event_leader_filters`
+  ADD PRIMARY KEY (`event_id`,`user_id`),
+  ADD KEY `REF_user` (`user_id`);
+
+--
+-- Indexes for table `event_leader_presences`
+--
+ALTER TABLE `event_leader_presences`
+  ADD PRIMARY KEY (`event_id`,`user_id`),
+  ADD KEY `REF_user` (`user_id`);
+
+--
+-- Indexes for table `event_leader_registrations`
+--
+ALTER TABLE `event_leader_registrations`
+  ADD PRIMARY KEY (`event_id`,`user_id`),
+  ADD KEY `REF_user` (`user_id`);
+
+--
 -- Indexes for table `event_owners`
 --
 ALTER TABLE `event_owners`
@@ -528,37 +562,16 @@ ALTER TABLE `event_owners`
   ADD KEY `REF_user` (`user_id`);
 
 --
--- Indexes for table `event_owner_invites`
+-- Indexes for table `event_participant_filters`
 --
-ALTER TABLE `event_owner_invites`
+ALTER TABLE `event_participant_filters`
   ADD PRIMARY KEY (`event_id`,`user_id`),
   ADD KEY `REF_user` (`user_id`);
 
 --
--- Indexes for table `event_owner_registrations`
+-- Indexes for table `event_participant_presences`
 --
-ALTER TABLE `event_owner_registrations`
-  ADD PRIMARY KEY (`event_id`,`user_id`),
-  ADD KEY `REF_user` (`user_id`);
-
---
--- Indexes for table `event_owner_uninvites`
---
-ALTER TABLE `event_owner_uninvites`
-  ADD PRIMARY KEY (`event_id`,`user_id`),
-  ADD KEY `REF_user` (`user_id`);
-
---
--- Indexes for table `event_participants`
---
-ALTER TABLE `event_participants`
-  ADD PRIMARY KEY (`event_id`,`user_id`),
-  ADD KEY `REF_user` (`user_id`);
-
---
--- Indexes for table `event_participant_invites`
---
-ALTER TABLE `event_participant_invites`
+ALTER TABLE `event_participant_presences`
   ADD PRIMARY KEY (`event_id`,`user_id`),
   ADD KEY `REF_user` (`user_id`);
 
@@ -570,9 +583,23 @@ ALTER TABLE `event_participant_registrations`
   ADD KEY `REF_user` (`user_id`);
 
 --
--- Indexes for table `event_participant_uninvites`
+-- Indexes for table `event_supporter_filters`
 --
-ALTER TABLE `event_participant_uninvites`
+ALTER TABLE `event_supporter_filters`
+  ADD PRIMARY KEY (`event_id`,`user_id`),
+  ADD KEY `REF_user` (`user_id`);
+
+--
+-- Indexes for table `event_supporter_presences`
+--
+ALTER TABLE `event_supporter_presences`
+  ADD PRIMARY KEY (`event_id`,`user_id`),
+  ADD KEY `REF_user` (`user_id`);
+
+--
+-- Indexes for table `event_supporter_registrations`
+--
+ALTER TABLE `event_supporter_registrations`
   ADD PRIMARY KEY (`event_id`,`user_id`),
   ADD KEY `REF_user` (`user_id`);
 
@@ -751,6 +778,13 @@ ALTER TABLE `course_bookmarks`
   ADD CONSTRAINT `course_bookmarks_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
+-- Constraints for table `course_leader_sieves`
+--
+ALTER TABLE `course_leader_sieves`
+  ADD CONSTRAINT `course_leader_sieves_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `course_leader_sieves_ibfk_2` FOREIGN KEY (`team_id`) REFERENCES `teams` (`team_id`) ON UPDATE CASCADE;
+
+--
 -- Constraints for table `course_moderators`
 --
 ALTER TABLE `course_moderators`
@@ -758,32 +792,11 @@ ALTER TABLE `course_moderators`
   ADD CONSTRAINT `course_moderators_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
--- Constraints for table `course_owner_summons`
+-- Constraints for table `course_participant_sieves`
 --
-ALTER TABLE `course_owner_summons`
-  ADD CONSTRAINT `course_owner_summons_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `course_owner_summons_ibfk_2` FOREIGN KEY (`team_id`) REFERENCES `teams` (`team_id`) ON UPDATE CASCADE;
-
---
--- Constraints for table `course_owner_unsummons`
---
-ALTER TABLE `course_owner_unsummons`
-  ADD CONSTRAINT `course_owner_unsummons_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `course_owner_unsummons_ibfk_2` FOREIGN KEY (`team_id`) REFERENCES `teams` (`team_id`) ON UPDATE CASCADE;
-
---
--- Constraints for table `course_participant_summons`
---
-ALTER TABLE `course_participant_summons`
-  ADD CONSTRAINT `course_participant_summons_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `course_participant_summons_ibfk_2` FOREIGN KEY (`team_id`) REFERENCES `teams` (`team_id`) ON UPDATE CASCADE;
-
---
--- Constraints for table `course_participant_unsummons`
---
-ALTER TABLE `course_participant_unsummons`
-  ADD CONSTRAINT `course_participant_unsummons_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `course_participant_unsummons_ibfk_2` FOREIGN KEY (`team_id`) REFERENCES `teams` (`team_id`) ON UPDATE CASCADE;
+ALTER TABLE `course_participant_sieves`
+  ADD CONSTRAINT `course_participant_sieves_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `course_participant_sieves_ibfk_2` FOREIGN KEY (`team_id`) REFERENCES `teams` (`team_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `course_requirements`
@@ -791,6 +804,13 @@ ALTER TABLE `course_participant_unsummons`
 ALTER TABLE `course_requirements`
   ADD CONSTRAINT `course_requirements_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `course_requirements_ibfk_2` FOREIGN KEY (`skill_id`) REFERENCES `skills` (`skill_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `course_supporter_sieves`
+--
+ALTER TABLE `course_supporter_sieves`
+  ADD CONSTRAINT `course_supporter_sieves_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `course_supporter_sieves_ibfk_2` FOREIGN KEY (`team_id`) REFERENCES `teams` (`team_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `events`
@@ -807,6 +827,27 @@ ALTER TABLE `event_bookmarks`
   ADD CONSTRAINT `event_bookmarks_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
+-- Constraints for table `event_leader_filters`
+--
+ALTER TABLE `event_leader_filters`
+  ADD CONSTRAINT `event_leader_filters_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `event_leader_filters_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `event_leader_presences`
+--
+ALTER TABLE `event_leader_presences`
+  ADD CONSTRAINT `event_leader_presences_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `event_leader_presences_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `event_leader_registrations`
+--
+ALTER TABLE `event_leader_registrations`
+  ADD CONSTRAINT `event_leader_registrations_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `event_leader_registrations_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+
+--
 -- Constraints for table `event_owners`
 --
 ALTER TABLE `event_owners`
@@ -814,39 +855,18 @@ ALTER TABLE `event_owners`
   ADD CONSTRAINT `event_owners_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
--- Constraints for table `event_owner_invites`
+-- Constraints for table `event_participant_filters`
 --
-ALTER TABLE `event_owner_invites`
-  ADD CONSTRAINT `event_owner_invites_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `event_owner_invites_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+ALTER TABLE `event_participant_filters`
+  ADD CONSTRAINT `event_participant_filters_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `event_participant_filters_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
--- Constraints for table `event_owner_registrations`
+-- Constraints for table `event_participant_presences`
 --
-ALTER TABLE `event_owner_registrations`
-  ADD CONSTRAINT `event_owner_registrations_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `event_owner_registrations_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
-
---
--- Constraints for table `event_owner_uninvites`
---
-ALTER TABLE `event_owner_uninvites`
-  ADD CONSTRAINT `event_owner_uninvites_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `event_owner_uninvites_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
-
---
--- Constraints for table `event_participants`
---
-ALTER TABLE `event_participants`
-  ADD CONSTRAINT `event_participants_ibfk_2` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `event_participants_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
-
---
--- Constraints for table `event_participant_invites`
---
-ALTER TABLE `event_participant_invites`
-  ADD CONSTRAINT `event_participant_invites_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `event_participant_invites_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+ALTER TABLE `event_participant_presences`
+  ADD CONSTRAINT `event_participant_presences_ibfk_2` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `event_participant_presences_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `event_participant_registrations`
@@ -856,11 +876,25 @@ ALTER TABLE `event_participant_registrations`
   ADD CONSTRAINT `event_participant_registrations_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
--- Constraints for table `event_participant_uninvites`
+-- Constraints for table `event_supporter_filters`
 --
-ALTER TABLE `event_participant_uninvites`
-  ADD CONSTRAINT `event_participant_uninvites_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `event_participant_uninvites_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+ALTER TABLE `event_supporter_filters`
+  ADD CONSTRAINT `event_supporter_filters_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `event_supporter_filters_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `event_supporter_presences`
+--
+ALTER TABLE `event_supporter_presences`
+  ADD CONSTRAINT `event_supporter_presences_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `event_supporter_presences_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `event_supporter_registrations`
+--
+ALTER TABLE `event_supporter_registrations`
+  ADD CONSTRAINT `event_supporter_registrations_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `event_supporter_registrations_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `items`
