@@ -267,8 +267,8 @@ pub fn event_participant_presence_add(session: UserSession, event_id: u64, user_
 
     let pool = crate::db::event::participant::event_participant_presence_pool(event_id, true)?;
 
-    if pool.iter().any(|user| user.id != session.user.id) {
-        return Err(Error::RightEventMissing);
+    if !pool.iter().any(|user| user.id == user_id) {
+        return Err(Error::EventPresenceForbidden);
     }
 
     crate::db::event::participant::event_participant_presence_add(event_id, user_id)?;

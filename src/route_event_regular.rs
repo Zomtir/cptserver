@@ -56,8 +56,8 @@ pub fn event_leader_presence_true(session: UserSession, event_id: u64) -> Result
 pub fn event_leader_presence_add(session: UserSession, event_id: u64) -> Result<(), Error> {
     let pool = crate::db::event::leader::event_leader_presence_pool(event_id, true)?;
 
-    if pool.iter().any(|user| user.id != session.user.id) {
-        return Err(Error::RightEventMissing);
+    if !pool.iter().any(|user| user.id == session.user.id) {
+        return Err(Error::EventPresenceForbidden);
     }
 
     crate::db::event::leader::event_leader_presence_add(event_id, session.user.id)?;
@@ -80,8 +80,8 @@ pub fn event_supporter_presence_true(session: UserSession, event_id: u64) -> Res
 pub fn event_supporter_presence_add(session: UserSession, event_id: u64) -> Result<(), Error> {
     let pool = crate::db::event::supporter::event_supporter_presence_pool(event_id, true)?;
 
-    if pool.iter().any(|user| user.id != session.user.id) {
-        return Err(Error::RightEventMissing);
+    if !pool.iter().any(|user| user.id == session.user.id) {
+        return Err(Error::EventPresenceForbidden);
     }
 
     crate::db::event::supporter::event_supporter_presence_add(event_id, session.user.id)?;
@@ -104,8 +104,8 @@ pub fn event_participant_presence_true(session: UserSession, event_id: u64) -> R
 pub fn event_participant_presence_add(session: UserSession, event_id: u64) -> Result<(), Error> {
     let pool = crate::db::event::participant::event_participant_presence_pool(event_id, true)?;
 
-    if pool.iter().any(|user| user.id != session.user.id) {
-        return Err(Error::RightEventMissing);
+    if !pool.iter().any(|user| user.id == session.user.id) {
+        return Err(Error::EventPresenceForbidden);
     }
 
     crate::db::event::participant::event_participant_presence_add(event_id, session.user.id)?;
