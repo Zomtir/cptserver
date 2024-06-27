@@ -82,6 +82,6 @@ pub fn validate_event_dates(event: &mut Event) -> Result<(), Error> {
     if latest_end < event.end {
         event.end = latest_end;
     }
-    
+
     Ok(())
 }

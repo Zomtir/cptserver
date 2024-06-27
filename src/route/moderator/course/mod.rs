@@ -19,7 +19,7 @@ pub fn course_responsibility(
 }
 
 #[rocket::get("/mod/course_moderator_list?<course_id>")]
-pub fn course_moderator_list(session: UserSession, course_id: u64) -> Result<Json<Vec<User>>, Error> {
+pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Json<Vec<User>>, Error> {
     match crate::db::course::moderator::course_moderator_true(course_id, session.user.id)? {
         false => return Err(Error::CourseModeratorPermission),
         true => (),
@@ -30,7 +30,7 @@ pub fn course_moderator_list(session: UserSession, course_id: u64) -> Result<Jso
 }
 
 #[rocket::head("/mod/course_moderator_add?<course_id>&<user_id>")]
-pub fn course_moderator_add(session: UserSession, course_id: u64, user_id: u64) -> Result<(), Error> {
+pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u64) -> Result<(), Error> {
     match crate::db::course::moderator::course_moderator_true(course_id, session.user.id)? {
         false => return Err(Error::CourseModeratorPermission),
         true => (),
@@ -41,7 +41,7 @@ pub fn course_moderator_add(session: UserSession, course_id: u64, user_id: u64) 
 }
 
 #[rocket::head("/mod/course_moderator_remove?<course_id>&<user_id>")]
-pub fn course_moderator_remove(session: UserSession, course_id: u64, user_id: u64) -> Result<(), Error> {
+pub fn course_moderator_remove(session: UserSession, course_id: u32, user_id: u64) -> Result<(), Error> {
     match crate::db::course::moderator::course_moderator_true(course_id, session.user.id)? {
         false => return Err(Error::CourseModeratorPermission),
         true => (),

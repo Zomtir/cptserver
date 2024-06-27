@@ -5,7 +5,7 @@ use crate::error::Error;
 use crate::session::UserSession;
 
 #[rocket::get("/admin/course_moderator_list?<course_id>")]
-pub fn course_moderator_list(session: UserSession, course_id: u64) -> Result<Json<Vec<User>>, Error> {
+pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Json<Vec<User>>, Error> {
     if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
@@ -15,7 +15,7 @@ pub fn course_moderator_list(session: UserSession, course_id: u64) -> Result<Jso
 }
 
 #[rocket::head("/admin/course_moderator_add?<course_id>&<user_id>")]
-pub fn course_moderator_add(session: UserSession, course_id: u64, user_id: u64) -> Result<(), Error> {
+pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u64) -> Result<(), Error> {
     if !session.right.right_course_write {
         return Err(Error::RightCourseMissing);
     };
@@ -25,7 +25,7 @@ pub fn course_moderator_add(session: UserSession, course_id: u64, user_id: u64) 
 }
 
 #[rocket::head("/admin/course_moderator_remove?<course_id>&<user_id>")]
-pub fn course_moderator_remove(session: UserSession, course_id: u64, user_id: u64) -> Result<(), Error> {
+pub fn course_moderator_remove(session: UserSession, course_id: u32, user_id: u64) -> Result<(), Error> {
     if !session.right.right_course_write {
         return Err(Error::RightCourseMissing);
     };

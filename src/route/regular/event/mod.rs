@@ -16,7 +16,7 @@ pub fn event_list(
     occurrence: Option<Occurrence>,
     acceptance: Option<Acceptance>,
     course_true: Option<WebBool>,
-    course_id: Option<u64>,
+    course_id: Option<u32>,
 ) -> Result<Json<Vec<Event>>, Error> {
     let events = crate::db::event::event_list(
         begin.map(|dt| dt.to_naive()),

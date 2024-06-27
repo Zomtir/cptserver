@@ -5,7 +5,7 @@ use crate::common::User;
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
-pub fn course_moderator_list(course_id: u64) -> Result<Vec<User>, Error> {
+pub fn course_moderator_list(course_id: u32) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
@@ -25,7 +25,7 @@ pub fn course_moderator_list(course_id: u64) -> Result<Vec<User>, Error> {
     Ok(members)
 }
 
-pub fn course_moderator_true(course_id: u64, user_id: u64) -> Result<bool, Error> {
+pub fn course_moderator_true(course_id: u32, user_id: u64) -> Result<bool, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT COUNT(1)
@@ -44,7 +44,7 @@ pub fn course_moderator_true(course_id: u64, user_id: u64) -> Result<bool, Error
     }
 }
 
-pub fn course_moderator_add(course_id: u64, user_id: u64) -> Result<(), Error> {
+pub fn course_moderator_add(course_id: u32, user_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO course_moderators (course_id, user_id)
@@ -59,7 +59,7 @@ pub fn course_moderator_add(course_id: u64, user_id: u64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn course_moderator_remove(course_id: u64, user_id: u64) -> Result<(), Error> {
+pub fn course_moderator_remove(course_id: u32, user_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn
         .prep(

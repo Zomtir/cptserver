@@ -61,7 +61,7 @@ pub fn event_list(
     occurrence: Option<Occurrence>,
     acceptance: Option<Acceptance>,
     course_true: Option<bool>,
-    course_id: Option<u64>,
+    course_id: Option<u32>,
     owner_id: Option<u64>,
 ) -> Result<Vec<Event>, Error> {
     // If there is a search window, make sure it is somewhat correct
@@ -135,7 +135,7 @@ pub fn event_list(
     Ok(events)
 }
 
-pub fn event_create(event: &Event, acceptance: &Acceptance, course_id: Option<u64>) -> Result<u64, Error> {
+pub fn event_create(event: &Event, acceptance: &Acceptance, course_id: Option<u32>) -> Result<u64, Error> {
     if event.key.len() < 3 || event.key.len() > 12 {
         return Err(Error::EventKeyInvalid);
     }
@@ -312,7 +312,7 @@ pub fn event_course_info(event_id: u64) -> Result<Option<u32>, Error> {
     }
 }
 
-pub fn event_course_edit(event_id: u64, course_id: Option<u64>) -> Result<(), Error> {
+pub fn event_course_edit(event_id: u64, course_id: Option<u32>) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(

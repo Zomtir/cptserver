@@ -85,7 +85,7 @@ pub fn course_create(course: &Course) -> Result<u32, Error> {
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn course_edit(course_id: u64, course: &Course) -> Result<(), Error> {
+pub fn course_edit(course_id: u32, course: &Course) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE courses SET
@@ -109,7 +109,7 @@ pub fn course_edit(course_id: u64, course: &Course) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn course_delete(course_id: u64) -> Result<(), Error> {
+pub fn course_delete(course_id: u32) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "DELETE c FROM courses c
@@ -127,7 +127,7 @@ pub fn course_delete(course_id: u64) -> Result<(), Error> {
 
 /* REQUIREMENTS */
 
-pub fn course_requirement_list(course_id: u64) -> Result<Vec<Requirement>, Error> {
+pub fn course_requirement_list(course_id: u32) -> Result<Vec<Requirement>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT r.requirement_id,
@@ -179,7 +179,7 @@ pub fn course_requirement_list(course_id: u64) -> Result<Vec<Requirement>, Error
     Ok(reqs)
 }
 
-pub fn course_requirement_add(course_id: u64, skill_id: u32, rank: u32) -> Result<(), Error> {
+pub fn course_requirement_add(course_id: u32, skill_id: u32, rank: u32) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO course_requirements (course_id, skill_id, rank)
@@ -211,7 +211,7 @@ pub fn course_requirement_remove(requirement_id: u64) -> Result<(), Error> {
 
 /* STATISTICS */
 
-pub fn course_statistic_class(course_id: u64) -> Result<Vec<(Event, u64, u64, u64)>, Error> {
+pub fn course_statistic_class(course_id: u32) -> Result<Vec<(Event, u64, u64, u64)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT 
@@ -254,7 +254,7 @@ pub fn course_statistic_class(course_id: u64) -> Result<Vec<(Event, u64, u64, u6
     Ok(stats)
 }
 
-pub fn course_statistic_leader(course_id: u64) -> Result<Vec<(u64, String, String, u64)>, Error> {
+pub fn course_statistic_leader(course_id: u32) -> Result<Vec<(u64, String, String, u64)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
@@ -285,7 +285,7 @@ pub fn course_statistic_leader(course_id: u64) -> Result<Vec<(u64, String, Strin
 }
 
 pub fn course_statistic_leader1(
-    course_id: u64,
+    course_id: u32,
     leader_id: u64,
 ) -> Result<Vec<(u64, String, NaiveDateTime, NaiveDateTime)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
@@ -314,7 +314,7 @@ pub fn course_statistic_leader1(
     Ok(stats)
 }
 
-pub fn course_statistic_supporter(course_id: u64) -> Result<Vec<(u64, String, String, u64)>, Error> {
+pub fn course_statistic_supporter(course_id: u32) -> Result<Vec<(u64, String, String, u64)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
@@ -345,7 +345,7 @@ pub fn course_statistic_supporter(course_id: u64) -> Result<Vec<(u64, String, St
 }
 
 pub fn course_statistic_supporter1(
-    course_id: u64,
+    course_id: u32,
     supporter_id: u64,
 ) -> Result<Vec<(u64, String, NaiveDateTime, NaiveDateTime)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
@@ -374,7 +374,7 @@ pub fn course_statistic_supporter1(
     Ok(stats)
 }
 
-pub fn course_statistic_participant(course_id: u64) -> Result<Vec<(u64, String, String, u64)>, Error> {
+pub fn course_statistic_participant(course_id: u32) -> Result<Vec<(u64, String, String, u64)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
@@ -405,7 +405,7 @@ pub fn course_statistic_participant(course_id: u64) -> Result<Vec<(u64, String, 
 }
 
 pub fn course_statistic_participant1(
-    course_id: u64,
+    course_id: u32,
     participant_id: u64,
 ) -> Result<Vec<(u64, String, NaiveDateTime, NaiveDateTime)>, Error> {
     let mut conn: PooledConn = get_pool_conn();

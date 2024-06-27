@@ -93,16 +93,46 @@ pub fn readConfig() {
 
     println!("Server settings");
     println!("    => admin: {:?}", server_conf.cpt_admin);
-    println!("    => session_duration_hour: {:?}", server_conf.cpt_session_duration_hours);
-    println!("    => event_acceptance_auto: {:?}", server_conf.cpt_event_acceptance_auto);
-    println!("    => event_search_date_min_year: {:?}", server_conf.cpt_event_search_date_min_year);
-    println!("    => event_search_date_max_year: {:?}", server_conf.cpt_event_search_date_max_year);
-    println!("    => event_search_window_min_days: {:?}", server_conf.cpt_event_search_window_min_days);
-    println!("    => event_search_window_max_days: {:?}", server_conf.cpt_event_search_window_max_days);
-    println!("    => event_occurrence_duration_min_minutes: {:?}", server_conf.cpt_event_occurrence_duration_min_minutes);
-    println!("    => event_occurrence_duration_max_days: {:?}", server_conf.cpt_event_occurrence_duration_max_days);
-    println!("    => event_occurrence_snap_minutes: {:?}", server_conf.cpt_event_occurrence_snap_minutes);
-    println!("    => event_login_buffer_hours: {:?}", server_conf.cpt_event_login_buffer_hours);
+    println!(
+        "    => session_duration_hour: {:?}",
+        server_conf.cpt_session_duration_hours
+    );
+    println!(
+        "    => event_acceptance_auto: {:?}",
+        server_conf.cpt_event_acceptance_auto
+    );
+    println!(
+        "    => event_search_date_min_year: {:?}",
+        server_conf.cpt_event_search_date_min_year
+    );
+    println!(
+        "    => event_search_date_max_year: {:?}",
+        server_conf.cpt_event_search_date_max_year
+    );
+    println!(
+        "    => event_search_window_min_days: {:?}",
+        server_conf.cpt_event_search_window_min_days
+    );
+    println!(
+        "    => event_search_window_max_days: {:?}",
+        server_conf.cpt_event_search_window_max_days
+    );
+    println!(
+        "    => event_occurrence_duration_min_minutes: {:?}",
+        server_conf.cpt_event_occurrence_duration_min_minutes
+    );
+    println!(
+        "    => event_occurrence_duration_max_days: {:?}",
+        server_conf.cpt_event_occurrence_duration_max_days
+    );
+    println!(
+        "    => event_occurrence_snap_minutes: {:?}",
+        server_conf.cpt_event_occurrence_snap_minutes
+    );
+    println!(
+        "    => event_login_buffer_hours: {:?}",
+        server_conf.cpt_event_login_buffer_hours
+    );
 
     unsafe {
         CONFIG = Some(server_conf);

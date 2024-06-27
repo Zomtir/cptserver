@@ -5,7 +5,7 @@ use crate::error::Error;
 use crate::session::UserSession;
 
 #[rocket::get("/mod/event_list?<course_id>")]
-pub fn event_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Event>>, Error> {
+pub fn event_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Event>>, Error> {
     match crate::db::course::moderator::course_moderator_true(course_id, session.user.id)? {
         false => return Err(Error::CourseModeratorPermission),
         true => (),
@@ -16,7 +16,7 @@ pub fn event_list(session: UserSession, course_id: u64) -> Result<Json<Vec<Event
 }
 
 #[rocket::post("/mod/event_create?<course_id>", format = "application/json", data = "<event>")]
-pub fn event_create(session: UserSession, course_id: u64, mut event: Json<Event>) -> Result<String, Error> {
+pub fn event_create(session: UserSession, course_id: u32, mut event: Json<Event>) -> Result<String, Error> {
     match crate::db::course::moderator::course_moderator_true(course_id, session.user.id)? {
         false => return Err(Error::CourseModeratorPermission),
         true => (),

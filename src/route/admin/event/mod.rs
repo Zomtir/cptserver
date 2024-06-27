@@ -20,7 +20,7 @@ pub fn event_list(
     occurrence: Option<Occurrence>,
     acceptance: Option<Acceptance>,
     course_true: Option<WebBool>,
-    course_id: Option<u64>,
+    course_id: Option<u32>,
     owner_id: Option<u64>,
 ) -> Result<Json<Vec<Event>>, Error> {
     if !session.right.right_event_read {
@@ -50,7 +50,7 @@ pub fn event_info(session: UserSession, event_id: u64) -> Result<Json<Event>, Er
 }
 
 #[rocket::post("/admin/event_create?<course_id>", format = "application/json", data = "<event>")]
-pub fn event_create(session: UserSession, course_id: Option<u64>, mut event: Json<Event>) -> Result<String, Error> {
+pub fn event_create(session: UserSession, course_id: Option<u32>, mut event: Json<Event>) -> Result<String, Error> {
     if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
     };
@@ -98,9 +98,12 @@ pub fn event_course_info(session: UserSession, event_id: u64) -> Result<Json<Opt
 }
 
 #[rocket::head("/admin/event_course_edit?<event_id>&<course_id>")]
-pub fn event_course_edit(session: UserSession, event_id: u64, course_id: Option<u64>) -> Result<(), Error> {
+pub fn event_course_edit(session: UserSession, event_id: u64, course_id: Option<u32>) -> Result<(), Error> {
     if !session.right.right_event_write {
         return Err(Error::RightEventMissing);
+    };
+    if !session.right.right_course_write {
+        return Err(Error::RightCourseMissing);
     };
 
     crate::db::event::event_course_edit(event_id, course_id)?;
