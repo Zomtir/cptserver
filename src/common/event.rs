@@ -63,19 +63,25 @@ pub fn validate_clear_password(password: String) -> Result<String, Error> {
 }
 
 pub fn is_event_valid(event: &Event) -> bool {
-    event.begin + crate::config::CONFIG_SLOT_WINDOW_MINIMUM() < event.end
+    event.begin + crate::config::EVENT_OCCURRENCE_DURATION_MIN() < event.end
+        || event.begin + crate::config::EVENT_OCCURRENCE_DURATION_MAX() > event.end
 }
 
 pub fn validate_event_dates(event: &mut Event) -> Result<(), Error> {
-    event.begin = event.begin.duration_round(crate::config::CONFIG_SLOT_WINDOW_SNAP())?;
+    event.begin = event.begin.duration_round(crate::config::EVENT_OCCURRENCE_SNAP())?;
+    event.end = event.end.duration_round(crate::config::EVENT_OCCURRENCE_SNAP())?;
 
-    event.end = event.end.duration_round(crate::config::CONFIG_SLOT_WINDOW_SNAP())?;
-
-    let earliest_end = event.begin + crate::config::CONFIG_SLOT_WINDOW_MINIMUM();
+    let earliest_end = event.begin + crate::config::EVENT_OCCURRENCE_DURATION_MIN();
 
     if earliest_end > event.end {
         event.end = earliest_end;
     }
 
+    let latest_end = event.begin + crate::config::EVENT_OCCURRENCE_DURATION_MAX();
+
+    if latest_end < event.end {
+        event.end = latest_end;
+    }
+    
     Ok(())
 }

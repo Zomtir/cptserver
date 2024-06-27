@@ -83,9 +83,11 @@ pub fn user_login(credit: Json<Credential>) -> Result<String, Error> {
         return Err(Error::UserLoginFail);
     };
 
-    let token = crate::common::random_string(30);
+    let session_token: String = crate::common::random_string(30);
+    let session_expiry = chrono::Utc::now() + crate::config::SESSION_DURATION();
+
     let session: UserSession = UserSession {
-        expiry: chrono::Utc::now() + chrono::Duration::hours(3),
+        expiry: session_expiry,
         user,
         right: Right {
             right_club_write: row.take("right_club_write").unwrap(),
@@ -107,9 +109,9 @@ pub fn user_login(credit: Json<Credential>) -> Result<String, Error> {
         },
     };
 
-    USERSESSIONS.lock().unwrap().insert(token.clone(), session);
+    USERSESSIONS.lock().unwrap().insert(session_token.clone(), session);
 
-    Ok(token)
+    Ok(session_token)
 }
 
 #[rocket::post("/event_login", format = "application/json", data = "<credit>")]
@@ -133,21 +135,21 @@ pub fn event_login(credit: Json<Credential>) -> Result<String, Error> {
         return Err(Error::EventLoginFail);
     };
 
-    let event_token: String = crate::common::random_string(30);
-    let event_expiry = chrono::Utc::now() + chrono::Duration::hours(3);
+    let session_token: String = crate::common::random_string(30);
+    let session_expiry = chrono::Utc::now() + crate::config::SESSION_DURATION();
 
     let event_id: u64 = row.take("event_id").unwrap();
 
     let session: EventSession = EventSession {
-        token: event_token.to_string(),
-        expiry: event_expiry,
+        token: session_token.to_string(),
+        expiry: session_expiry,
         event_id,
         event_key: credit.login.to_string(),
     };
 
-    EVENTSESSIONS.lock().unwrap().insert(event_token.to_string(), session);
+    EVENTSESSIONS.lock().unwrap().insert(session_token.to_string(), session);
 
-    Ok(event_token)
+    Ok(session_token)
 }
 
 #[rocket::get("/course_login?<course_key>")]
@@ -163,8 +165,8 @@ pub fn course_login(course_key: String) -> Result<String, Error> {
     )?;
     let params = params! {
         "course_key" => course_key,
-        "date_min" => (chrono::Utc::now() - crate::config::CONFIG_SLOT_PUBLIC_LOGIN_TIME()).naive_utc(),
-        "date_max" => (chrono::Utc::now() + crate::config::CONFIG_SLOT_PUBLIC_LOGIN_TIME()).naive_utc(),
+        "date_min" => (chrono::Utc::now() - crate::config::EVENT_LOGIN_BUFFER()).naive_utc(),
+        "date_max" => (chrono::Utc::now() + crate::config::EVENT_LOGIN_BUFFER()).naive_utc(),
     };
     let map = |(event_key, event_pwd): (String, String)| Credential {
         login: event_key.to_string(),

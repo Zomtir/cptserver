@@ -81,7 +81,7 @@ pub fn event_submit(session: UserSession, event_id: u64) -> Result<(), Error> {
 
     let is_free: bool = crate::db::event::event_free_true(&event)?;
 
-    let acceptance = match crate::config::CONFIG_RESERVATION_AUTO_CHECK {
+    let acceptance = match crate::config::EVENT_ACCEPTENCE_AUTO() {
         false => Acceptance::Pending,
         true => match is_free {
             true => Acceptance::Accepted,

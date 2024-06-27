@@ -1,41 +1,66 @@
 #![allow(non_snake_case)]
 
+extern crate lazy_static;
+
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
-pub struct ServerConfig {
-    pub rocket_address: Option<String>,
-    pub rocket_port: Option<u16>,
-    pub rocket_log_level: Option<String>,
+static mut CONFIG: Option<ServerConfig> = None;
 
-    pub db_server: Option<String>,
-    pub db_port: Option<u16>,
-    pub db_database: Option<String>,
-    pub db_user: Option<String>,
-    pub db_password: Option<String>,
+#[derive(Serialize, Deserialize)]
+#[serde(default)]
+pub struct ServerConfig {
+    pub rocket_address: String,
+    pub rocket_port: u16,
+    pub rocket_log_level: String,
+
+    pub db_server: String,
+    pub db_port: u16,
+    pub db_database: String,
+    pub db_user: String,
+    pub db_password: String,
 
     pub cpt_admin: Option<String>,
+    pub cpt_session_duration_hours: u32,
+    pub cpt_event_acceptance_auto: bool,
+    pub cpt_event_search_date_min_year: u16,
+    pub cpt_event_search_date_max_year: u16,
+    pub cpt_event_search_window_min_days: u16,
+    pub cpt_event_search_window_max_days: u16,
+    pub cpt_event_occurrence_duration_min_minutes: u16,
+    pub cpt_event_occurrence_duration_max_days: u16,
+    pub cpt_event_occurrence_snap_minutes: u16,
+    pub cpt_event_login_buffer_hours: u16,
 }
 
-impl ::std::default::Default for ServerConfig {
+impl Default for ServerConfig {
     fn default() -> Self {
         Self {
-            rocket_address: Some("127.0.0.1".into()),
-            rocket_port: Some(8000),
-            rocket_log_level: Some("Normal".into()),
+            rocket_address: "127.0.0.1".into(),
+            rocket_port: 8000,
+            rocket_log_level: "Normal".into(),
 
-            db_server: Some("localhost".into()),
-            db_port: Some(3306),
-            db_database: Some("cptdb".into()),
-            db_user: Some("cptdb-user".into()),
-            db_password: Some("cptdb-password".into()),
+            db_server: "localhost".into(),
+            db_port: 3306,
+            db_database: "cptdb".into(),
+            db_user: "cptdb-user".into(),
+            db_password: "cptdb-password".into(),
 
             cpt_admin: None,
+            cpt_session_duration_hours: 3,
+            cpt_event_acceptance_auto: true,
+            cpt_event_search_date_min_year: 1000,
+            cpt_event_search_date_max_year: 3000,
+            cpt_event_search_window_min_days: 1,
+            cpt_event_search_window_max_days: 800,
+            cpt_event_occurrence_duration_min_minutes: 15,
+            cpt_event_occurrence_duration_max_days: 14,
+            cpt_event_occurrence_snap_minutes: 15,
+            cpt_event_login_buffer_hours: 24,
         }
     }
 }
 
-pub fn readConfig() -> ServerConfig {
+pub fn readConfig() {
     let mut confdir: String = match std::env::var("CPTSERVER_CONFIG") {
         Err(..) => ".".to_string(),
         Ok(dir) => dir,
@@ -49,7 +74,11 @@ pub fn readConfig() -> ServerConfig {
 
     let mut server_conf: ServerConfig = confy::load_path(confpath).unwrap();
 
-    server_conf.cpt_admin = crate::common::check_user_key(&server_conf.cpt_admin).ok();
+    if let Some(ref admin) = server_conf.cpt_admin {
+        if crate::common::validate_user_key(&admin).is_err() {
+            server_conf.cpt_admin = None;
+        }
+    }
 
     println!("Rocket settings");
     println!("    => address: {:?}", server_conf.rocket_address);
@@ -64,43 +93,100 @@ pub fn readConfig() -> ServerConfig {
 
     println!("Server settings");
     println!("    => admin: {:?}", server_conf.cpt_admin);
+    println!("    => session_duration_hour: {:?}", server_conf.cpt_session_duration_hours);
+    println!("    => event_acceptance_auto: {:?}", server_conf.cpt_event_acceptance_auto);
+    println!("    => event_search_date_min_year: {:?}", server_conf.cpt_event_search_date_min_year);
+    println!("    => event_search_date_max_year: {:?}", server_conf.cpt_event_search_date_max_year);
+    println!("    => event_search_window_min_days: {:?}", server_conf.cpt_event_search_window_min_days);
+    println!("    => event_search_window_max_days: {:?}", server_conf.cpt_event_search_window_max_days);
+    println!("    => event_occurrence_duration_min_minutes: {:?}", server_conf.cpt_event_occurrence_duration_min_minutes);
+    println!("    => event_occurrence_duration_max_days: {:?}", server_conf.cpt_event_occurrence_duration_max_days);
+    println!("    => event_occurrence_snap_minutes: {:?}", server_conf.cpt_event_occurrence_snap_minutes);
+    println!("    => event_login_buffer_hours: {:?}", server_conf.cpt_event_login_buffer_hours);
 
-    server_conf
+    unsafe {
+        CONFIG = Some(server_conf);
+    }
 }
 
 /*
- * GLOBAL CONFIG FLAGS
+ * GLOBAL CONFIG GETTERS
  */
 
-// Rust/chrono does not support constant contructors for Duration atm, that's why there are functions rather than static constants
-
-pub static CONFIG_RESERVATION_AUTO_CHECK: bool = false;
-//pub static CONFIG_COURSE_MODERATOR_PROMOTION : bool = true; // TODO
-
-pub fn CONFIG_SLOT_LIST_DATE_MIN() -> chrono::NaiveDateTime {
-    chrono::NaiveDateTime::from(chrono::NaiveDate::from_ymd_opt(1000, 1, 1).unwrap())
+pub fn DB_URL() -> String {
+    unsafe {
+        format!(
+            "mysql://{user}:{password}@{server}:{port}/{database}",
+            server = CONFIG.as_ref().unwrap().db_server,
+            port = CONFIG.as_ref().unwrap().db_port,
+            database = CONFIG.as_ref().unwrap().db_database,
+            user = CONFIG.as_ref().unwrap().db_user,
+            password = CONFIG.as_ref().unwrap().db_password,
+        )
+    }
 }
 
-pub fn CONFIG_SLOT_LIST_DATE_MAX() -> chrono::NaiveDateTime {
-    chrono::NaiveDateTime::from(chrono::NaiveDate::from_ymd_opt(3000, 1, 1).unwrap())
+pub fn ROCKET_CONFIG() -> rocket::config::Config {
+    unsafe {
+        rocket::Config {
+            address: CONFIG.as_ref().unwrap().rocket_address.parse().unwrap(),
+            port: CONFIG.as_ref().unwrap().rocket_port,
+            log_level: CONFIG.as_ref().unwrap().rocket_log_level.parse().unwrap(),
+            ..rocket::Config::default()
+        }
+    }
 }
 
-pub fn CONFIG_SLOT_LIST_TIME_MIN() -> chrono::Duration {
-    chrono::Duration::days(1)
+pub fn ADMIN_USER() -> Option<&'static String> {
+    unsafe { CONFIG.as_ref().unwrap().cpt_admin.as_ref() }
 }
 
-pub fn CONFIG_SLOT_LIST_TIME_MAX() -> chrono::Duration {
-    chrono::Duration::days(366)
+pub fn SESSION_DURATION() -> chrono::Duration {
+    unsafe { chrono::Duration::hours(CONFIG.as_ref().unwrap().cpt_session_duration_hours as i64) }
 }
 
-pub fn CONFIG_SLOT_PUBLIC_LOGIN_TIME() -> chrono::Duration {
-    chrono::Duration::hours(24)
+pub fn EVENT_ACCEPTENCE_AUTO() -> bool {
+    unsafe { CONFIG.as_ref().unwrap().cpt_event_acceptance_auto }
 }
 
-pub fn CONFIG_SLOT_WINDOW_MINIMUM() -> chrono::Duration {
-    chrono::Duration::minutes(15)
+pub fn EVENT_SEARCH_DATE_MIN() -> chrono::NaiveDateTime {
+    unsafe {
+        chrono::NaiveDateTime::from(
+            chrono::NaiveDate::from_ymd_opt(CONFIG.as_ref().unwrap().cpt_event_search_date_min_year as i32, 1, 1)
+                .unwrap(),
+        )
+    }
 }
 
-pub fn CONFIG_SLOT_WINDOW_SNAP() -> chrono::Duration {
-    chrono::Duration::minutes(15)
+pub fn EVENT_SEARCH_DATE_MAX() -> chrono::NaiveDateTime {
+    unsafe {
+        chrono::NaiveDateTime::from(
+            chrono::NaiveDate::from_ymd_opt(CONFIG.as_ref().unwrap().cpt_event_search_date_max_year as i32, 1, 1)
+                .unwrap(),
+        )
+    }
+}
+
+pub fn EVENT_SEARCH_WINDOW_MIN() -> chrono::Duration {
+    unsafe { chrono::Duration::days(CONFIG.as_ref().unwrap().cpt_event_search_window_min_days as i64) }
+}
+
+pub fn EVENT_SEARCH_WINDOW_MAX() -> chrono::Duration {
+    unsafe { chrono::Duration::days(CONFIG.as_ref().unwrap().cpt_event_search_window_max_days as i64) }
+}
+
+pub fn EVENT_OCCURRENCE_DURATION_MIN() -> chrono::Duration {
+    unsafe { chrono::Duration::minutes(CONFIG.as_ref().unwrap().cpt_event_occurrence_duration_min_minutes as i64) }
+}
+
+pub fn EVENT_OCCURRENCE_DURATION_MAX() -> chrono::Duration {
+    unsafe { chrono::Duration::days(CONFIG.as_ref().unwrap().cpt_event_occurrence_duration_max_days as i64) }
+}
+
+pub fn EVENT_OCCURRENCE_SNAP() -> chrono::Duration {
+    unsafe { chrono::Duration::minutes(CONFIG.as_ref().unwrap().cpt_event_occurrence_snap_minutes as i64) }
+}
+
+pub fn EVENT_LOGIN_BUFFER() -> chrono::Duration {
+    unsafe { chrono::Duration::hours(CONFIG.as_ref().unwrap().cpt_event_login_buffer_hours as i64) }
 }

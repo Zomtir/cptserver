@@ -61,14 +61,14 @@ fn index() -> &'static str {
 
 #[rocket::launch]
 fn rocket() -> _ {
-    let server_config = config::readConfig();
+    config::readConfig();
 
-    if db::connect_db(&server_config).is_err() {
+    if db::connect_db().is_err() {
         panic!("Database connection failed")
     };
 
     // Promote an admin user, if demanded by the config, and make him session admin
-    if let Some(admin) = server_config.cpt_admin {
+    if let Some(admin) = crate::config::ADMIN_USER() {
         // Create the user, if not existing
         let elevate: bool = match crate::db_user::user_created_true(&admin) {
             // Database query failed, do not elevate
@@ -90,24 +90,11 @@ fn rocket() -> _ {
         };
 
         if elevate {
-            *crate::session::ADMINSESSION.lock().unwrap() = Some(admin)
+            *crate::session::ADMINSESSION.lock().unwrap() = Some(admin.clone())
         };
     }
 
-    let rocket_config = rocket::Config {
-        address: server_config
-            .rocket_address
-            .unwrap_or("127.0.0.1".into())
-            .parse()
-            .unwrap(),
-        port: server_config.rocket_port.unwrap_or(8000),
-        log_level: server_config
-            .rocket_log_level
-            .unwrap_or("Normal".into())
-            .parse()
-            .unwrap(),
-        ..rocket::Config::default()
-    };
+    let rocket_config = crate::config::ROCKET_CONFIG();
 
     // CORS
     let allowed_origins = AllowedOrigins::all();

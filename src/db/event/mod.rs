@@ -68,11 +68,11 @@ pub fn event_list(
     if let (Some(begin), Some(end)) = (begin, end) {
         let delta = end.signed_duration_since(begin);
 
-        if delta < crate::config::CONFIG_SLOT_LIST_TIME_MIN() || delta > crate::config::CONFIG_SLOT_LIST_TIME_MAX() {
+        if delta < crate::config::EVENT_SEARCH_WINDOW_MIN() || delta > crate::config::EVENT_SEARCH_WINDOW_MAX() {
             return Err(Error::EventSearchLimit);
         }
 
-        if begin < crate::config::CONFIG_SLOT_LIST_DATE_MIN() || end > crate::config::CONFIG_SLOT_LIST_DATE_MAX() {
+        if begin < crate::config::EVENT_SEARCH_DATE_MIN() || end > crate::config::EVENT_SEARCH_DATE_MAX() {
             return Err(Error::EventSearchLimit);
         }
     }
