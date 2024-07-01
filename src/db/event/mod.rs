@@ -2,6 +2,7 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Acceptance, Event, Location, Occurrence, User};
+use crate::session::Credential;
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
@@ -52,6 +53,24 @@ pub fn event_info(event_id: u64) -> Result<Event, Error> {
     };
 
     Ok(event)
+}
+
+pub fn event_credential(event_id: u64) -> Result<Credential, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT e.event_key, e.pwd
+        FROM events e
+        WHERE event_id = :event_id;",
+    )?;
+    let params = params! {
+        "event_id" => event_id,
+    };
+
+    let map = |(key, pwd)| Credential { login: key, password: pwd, salt: "".to_string()};
+
+    let mut credits = conn.exec_map(&stmt, &params, &map)?;
+
+    Ok(credits.remove(0))
 }
 
 pub fn event_list(

@@ -7,7 +7,7 @@ use rocket::serde::json::Json;
 
 use crate::common::{Acceptance, Event, Occurrence, User, WebBool, WebDateTime};
 use crate::error::Error;
-use crate::session::UserSession;
+use crate::session::{Credential, UserSession};
 
 #[rocket::get(
     "/admin/event_list?<begin>&<end>&<location_id>&<occurrence>&<acceptance>&<course_true>&<course_id>&<owner_id>"
@@ -47,6 +47,15 @@ pub fn event_info(session: UserSession, event_id: u64) -> Result<Json<Event>, Er
     };
 
     Ok(Json(crate::db::event::event_info(event_id)?))
+}
+
+#[rocket::get("/admin/event_credential?<event_id>")]
+pub fn event_credential(session: UserSession, event_id: u64) -> Result<Json<Credential>, Error> {
+    if !session.right.right_event_read {
+        return Err(Error::RightEventMissing);
+    };
+
+    Ok(Json(crate::db::event::event_credential(event_id)?))
 }
 
 #[rocket::post("/admin/event_create?<course_id>", format = "application/json", data = "<event>")]

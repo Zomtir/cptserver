@@ -182,6 +182,7 @@ fn rocket() -> _ {
                 route::moderator::course::course_moderator_remove,
                 route::admin::event::event_list,
                 route::admin::event::event_info,
+                route::admin::event::event_credential,
                 route::admin::event::event_create,
                 route::admin::event::event_edit,
                 route::admin::event::event_password_edit,
