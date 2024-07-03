@@ -138,17 +138,12 @@ pub fn event_accept(session: UserSession, event_id: u64) -> Result<(), Error> {
     // Perhaps lock the DB during checking and potentially accepting the request
     let event: Event = crate::db::event::event_info(event_id)?;
 
-    // The check is here intentional to be able to return early although it is also checked during is_event_free
+    // Check if the event is somewhat reasonable
     if !crate::common::is_event_valid(&event) {
         return Err(Error::EventWindowInvalid);
     }
 
-    let acceptance = match crate::db::event::event_free_true(&event)? {
-        false => Acceptance::Rejected,
-        true => Acceptance::Accepted,
-    };
-
-    crate::db::event::event_acceptance_edit(event.id, &acceptance)?;
+    crate::db::event::event_acceptance_edit(event.id, &Acceptance::Accepted)?;
     Ok(())
 }
 
