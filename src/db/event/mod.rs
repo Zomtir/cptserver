@@ -192,9 +192,10 @@ pub fn event_edit(event_id: u64, event: &Event) -> Result<(), Error> {
         SET
             event_key = :event_key,
             title = :title,
-            location_id = :location_id,
             begin = :begin,
             end = :end,
+            location_id = :location_id,
+            occurrence = :occurrence,
             public = :public,
             scrutable = :scrutable,
             note = :note
@@ -205,9 +206,10 @@ pub fn event_edit(event_id: u64, event: &Event) -> Result<(), Error> {
         "event_id" => &event_id,
         "event_key" => &event.key,
         "title" => &event.title,
-        "location_id" => &event.location.as_ref().map(|location| location.id),
         "begin" => &event.begin,
         "end" => &event.end,
+        "location_id" => &event.location.as_ref().map(|location| location.id),
+        "occurrence" => &event.occurrence,
         "public" => &event.public,
         "scrutable" => &event.scrutable,
         "note" => &event.note,
