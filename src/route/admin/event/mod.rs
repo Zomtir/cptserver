@@ -70,7 +70,7 @@ pub fn event_create(session: UserSession, course_id: Option<u32>, mut event: Jso
 
     crate::common::validate_event_dates(&mut event)?;
 
-    let id = crate::db::event::event_create(&event, &Acceptance::Accepted, course_id)?;
+    let id = crate::db::event::event_create(&event, &Acceptance::Draft, course_id)?;
     Ok(id.to_string())
 }
 
@@ -169,6 +169,16 @@ pub fn event_suspend(session: UserSession, event_id: u64) -> Result<(), Error> {
     };
 
     crate::db::event::event_acceptance_edit(event_id, &Acceptance::Pending)?;
+    Ok(())
+}
+
+#[rocket::head("/admin/event_withdraw?<event_id>")]
+pub fn event_withdraw(session: UserSession, event_id: u64) -> Result<(), Error> {
+    if !session.right.right_event_write {
+        return Err(Error::RightEventMissing);
+    };
+
+    crate::db::event::event_acceptance_edit(event_id, &Acceptance::Draft)?;
     Ok(())
 }
 

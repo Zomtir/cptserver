@@ -192,6 +192,7 @@ fn rocket() -> _ {
                 route::admin::event::event_accept,
                 route::admin::event::event_reject,
                 route::admin::event::event_suspend,
+                route::admin::event::event_withdraw,
                 route::admin::event::statistic_packlist,
                 route::admin::event::statistic_division,
                 route::admin::event::owner::owner_list,
