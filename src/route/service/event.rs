@@ -4,10 +4,6 @@ use crate::common::{Event, User};
 use crate::error::Error;
 use crate::session::EventSession;
 
-/*
- * ROUTES
- */
-
 #[rocket::get("/service/event_info")]
 pub fn event_info(session: EventSession) -> Result<Json<Event>, Error> {
     Ok(Json(crate::db::event::event_info(session.event_id)?))
@@ -35,8 +31,8 @@ pub fn event_leader_presence_list(session: EventSession) -> Result<Json<Vec<User
 pub fn event_leader_presence_add(user_id: u64, session: EventSession) -> Result<(), Error> {
     let pool = crate::db::event::leader::event_leader_presence_pool(session.event_id, true)?;
 
-    if pool.iter().any(|user| user.id != user_id) {
-        return Err(Error::RightEventMissing);
+    if !pool.iter().any(|user| user.id == user_id) {
+        return Err(Error::EventPresenceForbidden);
     }
     crate::db::event::leader::event_leader_presence_add(session.event_id, user_id)
 }
@@ -62,8 +58,8 @@ pub fn event_supporter_presence_list(session: EventSession) -> Result<Json<Vec<U
 pub fn event_supporter_presence_add(user_id: u64, session: EventSession) -> Result<(), Error> {
     let pool = crate::db::event::supporter::event_supporter_presence_pool(session.event_id, true)?;
 
-    if pool.iter().any(|user| user.id != user_id) {
-        return Err(Error::RightEventMissing);
+    if !pool.iter().any(|user| user.id == user_id) {
+        return Err(Error::EventPresenceForbidden);
     }
     crate::db::event::supporter::event_supporter_presence_add(session.event_id, user_id)
 }
@@ -89,8 +85,8 @@ pub fn event_participant_presence_list(session: EventSession) -> Result<Json<Vec
 pub fn event_participant_presence_add(user_id: u64, session: EventSession) -> Result<(), Error> {
     let pool = crate::db::event::participant::event_participant_presence_pool(session.event_id, true)?;
 
-    if pool.iter().any(|user| user.id != user_id) {
-        return Err(Error::RightEventMissing);
+    if !pool.iter().any(|user| user.id == user_id) {
+        return Err(Error::EventPresenceForbidden);
     }
     crate::db::event::participant::event_participant_presence_add(session.event_id, user_id)
 }

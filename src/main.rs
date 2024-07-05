@@ -31,8 +31,6 @@ mod route_user_regular;
 
 mod route_club_admin;
 
-mod route_event_service;
-
 mod route_competence_admin;
 mod route_competence_regular;
 
@@ -329,20 +327,20 @@ fn rocket() -> _ {
                 route_competence_admin::competence_delete,
                 route_competence_regular::competence_list,
                 route_competence_regular::competence_summary,
-                route_event_service::event_info,
-                route_event_service::event_note_edit,
-                route_event_service::event_leader_presence_pool,
-                route_event_service::event_leader_presence_list,
-                route_event_service::event_leader_presence_add,
-                route_event_service::event_leader_presence_remove,
-                route_event_service::event_supporter_presence_pool,
-                route_event_service::event_supporter_presence_list,
-                route_event_service::event_supporter_presence_add,
-                route_event_service::event_supporter_presence_remove,
-                route_event_service::event_participant_presence_pool,
-                route_event_service::event_participant_presence_list,
-                route_event_service::event_participant_presence_add,
-                route_event_service::event_participant_presence_remove,
+                route::service::event::event_info,
+                route::service::event::event_note_edit,
+                route::service::event::event_leader_presence_pool,
+                route::service::event::event_leader_presence_list,
+                route::service::event::event_leader_presence_add,
+                route::service::event::event_leader_presence_remove,
+                route::service::event::event_supporter_presence_pool,
+                route::service::event::event_supporter_presence_list,
+                route::service::event::event_supporter_presence_add,
+                route::service::event::event_supporter_presence_remove,
+                route::service::event::event_participant_presence_pool,
+                route::service::event::event_participant_presence_list,
+                route::service::event::event_participant_presence_add,
+                route::service::event::event_participant_presence_remove,
             ],
         )
         .attach(cors)

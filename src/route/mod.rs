@@ -16,3 +16,5 @@ pub mod regular {
     pub mod course;
     pub mod event;
 }
+
+pub mod service;
