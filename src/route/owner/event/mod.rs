@@ -32,9 +32,8 @@ pub fn event_list(
 
 #[rocket::get("/owner/event_info?<event_id>")]
 pub fn event_info(session: UserSession, event_id: u64) -> Result<Json<Event>, Error> {
-    match crate::db::event::owner::event_owner_true(event_id, session.user.id)? {
-        false => return Err(Error::EventOwnerPermission),
-        true => (),
+    if !crate::db::event::owner::event_owner_true(event_id, session.user.id)? {
+        return Err(Error::EventOwnerPermission);
     };
 
     Ok(Json(crate::db::event::event_info(event_id)?))
@@ -43,9 +42,8 @@ pub fn event_info(session: UserSession, event_id: u64) -> Result<Json<Event>, Er
 // TODO, check if new time is free
 #[rocket::post("/owner/event_edit?<event_id>", format = "application/json", data = "<event>")]
 pub fn event_edit(session: UserSession, event_id: u64, mut event: Json<Event>) -> Result<(), Error> {
-    match crate::db::event::owner::event_owner_true(event_id, session.user.id)? {
-        false => return Err(Error::EventOwnerPermission),
-        true => (),
+    if !crate::db::event::owner::event_owner_true(event_id, session.user.id)? {
+        return Err(Error::EventOwnerPermission);
     };
 
     crate::common::validate_event_dates(&mut event)?;
@@ -57,9 +55,8 @@ pub fn event_edit(session: UserSession, event_id: u64, mut event: Json<Event>) -
 
 #[rocket::post("/owner/event_password_edit?<event_id>", format = "text/plain", data = "<password>")]
 pub fn event_password_edit(session: UserSession, event_id: u64, password: String) -> Result<(), Error> {
-    match crate::db::event::owner::event_owner_true(event_id, session.user.id)? {
-        false => return Err(Error::EventOwnerPermission),
-        true => (),
+    if !crate::db::event::owner::event_owner_true(event_id, session.user.id)? {
+        return Err(Error::EventOwnerPermission);
     };
 
     crate::db::event::event_password_edit(event_id, password)?;
@@ -100,9 +97,8 @@ pub fn event_course_edit(session: UserSession, event_id: u64, course_id: Option<
 
 #[rocket::head("/owner/event_submit?<event_id>")]
 pub fn event_submit(session: UserSession, event_id: u64) -> Result<(), Error> {
-    match crate::db::event::owner::event_owner_true(event_id, session.user.id)? {
-        false => return Err(Error::EventOwnerPermission),
-        true => (),
+    if !crate::db::event::owner::event_owner_true(event_id, session.user.id)? {
+        return Err(Error::EventOwnerPermission);
     };
 
     let event: Event = crate::db::event::event_info(event_id)?;
@@ -128,9 +124,8 @@ pub fn event_submit(session: UserSession, event_id: u64) -> Result<(), Error> {
 
 #[rocket::head("/owner/event_withdraw?<event_id>")]
 pub fn event_withdraw(session: UserSession, event_id: u64) -> Result<(), Error> {
-    match crate::db::event::owner::event_owner_true(event_id, session.user.id)? {
-        false => return Err(Error::EventOwnerPermission),
-        true => (),
+    if !crate::db::event::owner::event_owner_true(event_id, session.user.id)? {
+        return Err(Error::EventOwnerPermission);
     };
 
     crate::db::event::event_acceptance_edit(event_id, &Acceptance::Draft)?;
@@ -139,9 +134,8 @@ pub fn event_withdraw(session: UserSession, event_id: u64) -> Result<(), Error> 
 
 #[rocket::head("/owner/event_delete?<event_id>")]
 pub fn event_delete(session: UserSession, event_id: u64) -> Result<(), Error> {
-    match crate::db::event::owner::event_owner_true(event_id, session.user.id)? {
-        false => return Err(Error::EventOwnerPermission),
-        true => (),
+    if !crate::db::event::owner::event_owner_true(event_id, session.user.id)? {
+        return Err(Error::EventOwnerPermission);
     };
 
     crate::db::event::event_delete(event_id)?;
