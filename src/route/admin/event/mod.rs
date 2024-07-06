@@ -202,3 +202,13 @@ pub fn statistic_division(session: UserSession, event_id: u64) -> Result<Json<Ve
     let stats = crate::db::event::event_statistic_division(event_id)?;
     Ok(Json(stats))
 }
+
+#[rocket::get("/admin/event_statistic_organisation?<event_id>")]
+pub fn statistic_organisation(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>, Error> {
+    if !session.right.right_event_read {
+        return Err(Error::RightEventMissing);
+    };
+
+    let stats = crate::db::event::event_statistic_organisation(event_id)?;
+    Ok(Json(stats))
+}

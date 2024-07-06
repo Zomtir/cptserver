@@ -170,6 +170,7 @@ fn rocket() -> _ {
                 route::admin::event::event_withdraw,
                 route::admin::event::statistic_packlist,
                 route::admin::event::statistic_division,
+                route::admin::event::statistic_organisation,
                 route::admin::event::owner::owner_list,
                 route::admin::event::owner::owner_add,
                 route::admin::event::owner::owner_remove,

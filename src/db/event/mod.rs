@@ -493,3 +493,38 @@ pub fn event_statistic_division(event_id: u64) -> Result<Vec<User>, Error> {
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
 }
+
+pub fn event_statistic_organisation(event_id: u64) -> Result<Vec<User>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
+            u.federationnumber, u.ferderationpermissionsolo, u.federationpermissionteam, u.federationresidency
+        FROM event_participant_presences ep
+        JOIN users u ON ep.user_id = u.user_id
+        WHERE ep.event_id = :event_id;",
+    )?;
+    let params = params! {
+        "event_id" => event_id,
+    };
+    let map = |(
+        user_id,
+        user_key,
+        firstname,
+        lastname,
+        nickname,
+        federationnumber,
+        federationpermissionsolo,
+        federationpermissionteam,
+        federationresidency,
+    )| {
+        let mut user = User::from_info(user_id, user_key, firstname, lastname, nickname);
+        user.federationnumber = federationnumber;
+        user.federationpermissionsolo = federationpermissionsolo;
+        user.federationpermissionteam = federationpermissionteam;
+        user.federationresidency = federationresidency;
+        user
+    };
+
+    let stats = conn.exec_map(&stmt, &params, &map)?;
+    Ok(stats)
+}
