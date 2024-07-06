@@ -2,9 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Acceptance, Event, Location, Occurrence, User};
-use crate::session::Credential;
 use crate::db::get_pool_conn;
 use crate::error::Error;
+use crate::session::Credential;
 
 pub mod leader;
 pub mod owner;
@@ -66,7 +66,11 @@ pub fn event_credential(event_id: u64) -> Result<Credential, Error> {
         "event_id" => event_id,
     };
 
-    let map = |(key, pwd)| Credential { login: key, password: pwd, salt: "".to_string()};
+    let map = |(key, pwd)| Credential {
+        login: key,
+        password: pwd,
+        salt: "".to_string(),
+    };
 
     let mut credits = conn.exec_map(&stmt, &params, &map)?;
 

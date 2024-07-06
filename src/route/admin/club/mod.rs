@@ -1,3 +1,5 @@
+pub mod term;
+
 use rocket::serde::json::Json;
 
 use crate::common::{Club, Term, User, WebDate};
