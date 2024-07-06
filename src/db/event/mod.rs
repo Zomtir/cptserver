@@ -498,7 +498,7 @@ pub fn event_statistic_organisation(event_id: u64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
-            u.federationnumber, u.ferderationpermissionsolo, u.federationpermissionteam, u.federationresidency
+            u.federationnumber, u.federationpermissionsolo, u.federationpermissionteam, u.federationresidency
         FROM event_participant_presences ep
         JOIN users u ON ep.user_id = u.user_id
         WHERE ep.event_id = :event_id;",
