@@ -38,7 +38,7 @@ cpt_admin = 'admin'
 
 Compiling and executing the application for developement is the usualy `cargo` workflow.
 
-```BASH
+```bash
 # Format your code if you made changes
 cargo fmt
 # Run a sanity check on your changes
@@ -64,11 +64,10 @@ might be incomplete and unstable.
 
 ```
 # Tag the commit with a release tag and a 'v' prefix.
-# The `PATCH` version is omitted for the `.0` increment.
-git tag v0.7
+git tag v1.1.1
 
 # Adapt the Cargo toml file
-> version = "0.7.0"
+> version = "1.1.1"
 ```
 
 PRODUCTION
@@ -76,7 +75,7 @@ PRODUCTION
 
 To build a binary for production, choose a reliable version and build it with the `--release` flag.
 
-```BASH
+```bash
 cargo build --release
 ```
 
@@ -85,12 +84,12 @@ The binary can be found at `./target/release/cptserver`.
 There is also a systemd unit file (`cptserver.service`) with the assumption that you have your binary
 installed at `/opt/cptserver/`.
 
-LICENSE
+License
 =======
 
-The code is dedicated to the [Public Domain](LICENSE.md).
+The code is dedicated to the Public Domain as declared in the [License](LICENSE.md).
 
-CONTRIBUTING
+Contributing
 ============
 
 Contributing to the project implies a copyright release as stated in the [Waiver](WAIVER.md) unless 
@@ -103,11 +102,14 @@ while listing yourself as [Author](AUTHORS.md).
 ```bash
 # Generate a GPG key
 gpg --full-generate-key
-# Sign the waiver
-gpg --no-version --armor --sign WAIVER.md
-# Copy the signature
-cat WAIVER.md.asc
 # Optionally export your public key and add it to your Github account and/or a keyserver.
 gpg --list-keys
 gpg --armor --export <KEYID>
+# Sign the waiver
+gpg --detach-sig --armor WAIVER.md
+# View the signature
+cat WAIVER.md.asc
+# Verify the signature
+gpg --verify WAIVER.md.asc WAIVER.md
 ```
+
