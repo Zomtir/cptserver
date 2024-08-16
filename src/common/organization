@@ -1,0 +1,20 @@
+use crate::common::User;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Organisation {
+    pub organisation_id: Option<String>,
+    pub abbrevation: Option<String>,
+    pub name: Option<String>,
+    pub member_identifier: Option<u64>,
+}
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Affiliation {
+    pub id: u64,
+    pub user: User,
+    pub organisation: Organisation,
+    pub permission_solo_date: Option<chrono::NaiveDate>,
+    pub permission_team_date: Option<chrono::NaiveDate>,
+    pub residency_move_date: Option<chrono::NaiveDate>,
+}
