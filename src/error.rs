@@ -50,7 +50,10 @@ pub enum Error {
     InventoryStockInvalid,
     InventoryStockLimit,
     InventoryStockConflict,
+    InventoryStockMissing,
     InventoryPossessionMissing,
+    InventoryLoanConflict,
+    InventoryTransferConflict,
 
     RightConflict,
     RightClubMissing,
@@ -113,7 +116,10 @@ impl Error {
             Error::InventoryStockInvalid => "INVENTORY_STOCK_INVALID",
             Error::InventoryStockLimit => "INVENTORY_STOCK_LIMIT",
             Error::InventoryStockConflict => "INVENTORY_STOCK_CONFLICT",
+            Error::InventoryStockMissing => "INVENTORY_STOCK_MISSING",
             Error::InventoryPossessionMissing => "INVENTORY_POSSESSION_MISSING",
+            Error::InventoryLoanConflict => "INVENTORY_LOAN_CONFLICT",
+            Error::InventoryTransferConflict => "INVENTORY_TRANSFER_CONFLICT",
 
             Error::RightConflict => "RIGHT_CONFLICT",
             Error::RightClubMissing => "RIGHT_TERM_MISSING",
@@ -177,7 +183,10 @@ impl std::fmt::Display for Error {
             Error::InventoryStockInvalid => write!(f, "Current inventory stock is invalid"),
             Error::InventoryStockLimit => write!(f, "Inventory stock limit was reached"),
             Error::InventoryStockConflict => write!(f, "Action does conflict with current stock values"),
+            Error::InventoryStockMissing => write!(f, "Inventory stock is missing"),
             Error::InventoryPossessionMissing => write!(f, "Inventory possession is missing"),
+            Error::InventoryLoanConflict => write!(f, "Inventory loaning has internal conflicts"),
+            Error::InventoryTransferConflict => write!(f, "Inventory transfer has internal conflicts"),
 
             Error::RightConflict => write!(f, "Conflicting right permissions"),
             Error::RightClubMissing => write!(f, "Club permissions are missing"),

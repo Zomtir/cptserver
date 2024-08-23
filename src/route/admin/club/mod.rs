@@ -49,11 +49,7 @@ pub fn club_delete(session: UserSession, club_id: u32) -> Result<(), Error> {
 /* STATISTICS */
 
 #[rocket::get("/admin/club_statistic_terms?<club_id>&<point_in_time>")]
-pub fn statistic_terms(
-    session: UserSession,
-    club_id: u32,
-    point_in_time: WebDate,
-) -> Result<Json<Vec<Term>>, Error> {
+pub fn statistic_terms(session: UserSession, club_id: u32, point_in_time: WebDate) -> Result<Json<Vec<Term>>, Error> {
     if !session.right.right_club_read {
         return Err(Error::RightClubMissing);
     };

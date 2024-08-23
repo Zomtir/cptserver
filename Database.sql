@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8001
--- Generation Time: Jul 04, 2024 at 06:11 AM
+-- Generation Time: Aug 23, 2024 at 07:44 AM
 -- Server version: 10.11.8-MariaDB-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -41,8 +41,10 @@ CREATE TABLE `clubs` (
 --
 
 CREATE TABLE `club_stocks` (
+  `stock_id` int(11) NOT NULL,
   `club_id` tinyint(4) NOT NULL,
   `item_id` int(11) NOT NULL,
+  `storage` varchar(30) NOT NULL,
   `owned` int(11) NOT NULL,
   `loaned` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -320,6 +322,34 @@ CREATE TABLE `locations` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `organisations`
+--
+
+CREATE TABLE `organisations` (
+  `organisation_id` smallint(6) NOT NULL,
+  `organisation_key` varchar(10) NOT NULL,
+  `name` varchar(30) NOT NULL,
+  `description` int(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `organisation_members`
+--
+
+CREATE TABLE `organisation_members` (
+  `organisation_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  `number` int(11) NOT NULL,
+  `permission_team_date` date NOT NULL,
+  `permission_solo_date` date NOT NULL,
+  `local_residency_date` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `skills`
 --
 
@@ -393,7 +423,7 @@ CREATE TABLE `terms` (
 
 CREATE TABLE `users` (
   `user_id` mediumint(9) NOT NULL,
-  `user_key` char(12) NOT NULL,
+  `user_key` char(20) NOT NULL,
   `pwd` binary(32) NOT NULL,
   `pepper` binary(16) NOT NULL,
   `salt` binary(16) NOT NULL,
@@ -444,9 +474,9 @@ CREATE TABLE `user_possessions` (
   `possession_id` int(11) NOT NULL,
   `user_id` mediumint(9) NOT NULL,
   `item_id` int(11) NOT NULL,
+  `acquisition_date` date NOT NULL,
   `owned` tinyint(1) NOT NULL DEFAULT 1,
-  `club_id` tinyint(4) DEFAULT NULL,
-  `transfer_date` date DEFAULT NULL
+  `stock_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -464,8 +494,9 @@ ALTER TABLE `clubs`
 -- Indexes for table `club_stocks`
 --
 ALTER TABLE `club_stocks`
-  ADD PRIMARY KEY (`club_id`,`item_id`),
-  ADD KEY `REF_item` (`item_id`);
+  ADD PRIMARY KEY (`stock_id`),
+  ADD KEY `REF_item` (`item_id`),
+  ADD KEY `REF_club` (`club_id`) USING BTREE;
 
 --
 -- Indexes for table `courses`
@@ -624,6 +655,13 @@ ALTER TABLE `locations`
   ADD UNIQUE KEY `KEY` (`location_key`);
 
 --
+-- Indexes for table `organisations`
+--
+ALTER TABLE `organisations`
+  ADD PRIMARY KEY (`organisation_id`),
+  ADD UNIQUE KEY `KEY` (`organisation_key`);
+
+--
 -- Indexes for table `skills`
 --
 ALTER TABLE `skills`
@@ -675,7 +713,7 @@ ALTER TABLE `user_possessions`
   ADD PRIMARY KEY (`possession_id`),
   ADD KEY `REF_user` (`user_id`),
   ADD KEY `REF_item` (`item_id`),
-  ADD KEY `REF_club` (`club_id`);
+  ADD KEY `REF_stock` (`stock_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -686,6 +724,12 @@ ALTER TABLE `user_possessions`
 --
 ALTER TABLE `clubs`
   MODIFY `club_id` tinyint(4) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `club_stocks`
+--
+ALTER TABLE `club_stocks`
+  MODIFY `stock_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `courses`
@@ -930,7 +974,7 @@ ALTER TABLE `user_competences`
 ALTER TABLE `user_possessions`
   ADD CONSTRAINT `user_possessions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `user_possessions_ibfk_2` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `user_possessions_ibfk_3` FOREIGN KEY (`club_id`) REFERENCES `clubs` (`club_id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `user_possessions_ibfk_3` FOREIGN KEY (`stock_id`) REFERENCES `club_stocks` (`stock_id`) ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -100,12 +100,8 @@ pub fn stock_list(session: UserSession, club_id: Option<u32>, item_id: Option<u3
     Ok(Json(stocks))
 }
 
-#[rocket::post(
-    "/admin/stock_edit?<club_id>&<item_id>",
-    format = "application/json",
-    data = "<stock>"
-)]
-pub fn stock_edit(session: UserSession, club_id: u64, item_id: u64, stock: Json<Stock>) -> Result<(), Error> {
+#[rocket::post("/admin/stock_create", format = "application/json", data = "<stock>")]
+pub fn stock_create(session: UserSession, stock: Json<Stock>) -> Result<(), Error> {
     if !session.right.right_inventory_write {
         return Err(Error::RightInventoryMissing);
     };
@@ -114,70 +110,83 @@ pub fn stock_edit(session: UserSession, club_id: u64, item_id: u64, stock: Json<
         return Err(Error::InventoryStockLimit);
     }
 
-    let (db_owned, db_loaned) = match crate::db_inventory::stock_info(club_id, item_id)? {
-        None => (0, 0),
-        Some(db_stock) => (db_stock.owned, db_stock.loaned),
-    };
-
-    let overhead = db_owned as i64 - db_loaned as i64;
-    let delta = stock.owned as i64 - db_owned as i64;
-
-    // Having more loaned items than stocked items is usually bad
-    if overhead < 0 {
-        return Err(Error::InventoryStockInvalid);
-    }
-
-    // No change, useless request
-    if delta == 0 {
-        return Ok(());
-    }
-
-    // Do not remove loaned items
-    if overhead + delta < 0 {
-        return Err(Error::InventoryStockConflict);
-    }
-
-    // Check if the client has a different loan information
-    if db_loaned != stock.loaned {
-        return Err(Error::InventoryStockConflict);
-    }
-
-    // So far no conflicts, apply the change
-    match (db_owned, stock.owned) {
-        (0, 0) => (), // This should never be reached due to the safeguard
-        (0, _) => crate::db_inventory::stock_create(club_id, item_id, stock.owned)?,
-        (_, 0) => crate::db_inventory::stock_delete(club_id, item_id)?,
-        (_, _) => crate::db_inventory::stock_edit(club_id, item_id, stock.owned, stock.loaned)?,
-    }
+    crate::db_inventory::stock_create(stock.club.id, stock.item.id, &stock.storage, stock.owned)?;
 
     Ok(())
 }
 
-#[rocket::head("/admin/item_loan?<club_id>&<item_id>&<user_id>")]
-pub fn item_loan(session: UserSession, club_id: u64, item_id: u64, user_id: u64) -> Result<(), Error> {
+#[rocket::post("/admin/stock_edit?<stock_id>", format = "application/json", data = "<stock>")]
+pub fn stock_edit(session: UserSession, stock_id: u64, stock: Json<Stock>) -> Result<(), Error> {
     if !session.right.right_inventory_write {
         return Err(Error::RightInventoryMissing);
     };
 
-    let (db_owned, db_loaned) = match crate::db_inventory::stock_info(club_id, item_id)? {
-        None => (0, 0),
-        Some(db_stock) => (db_stock.owned, db_stock.loaned),
-    };
+    if stock.owned > 100 {
+        return Err(Error::InventoryStockLimit);
+    }
 
-    let overhead = db_owned as i64 - db_loaned as i64;
+    let db_stock = crate::db_inventory::stock_info(stock_id)?;
 
-    // No items available to loan
-    if overhead < 1 {
+    let delta = stock.owned as i64 - db_stock.owned as i64;
+
+    // No change, useless request
+    if delta == 0 && db_stock.storage == stock.storage {
+        return Ok(());
+    }
+
+    // Do not remove loaned items
+    if stock.owned < db_stock.loaned {
         return Err(Error::InventoryStockConflict);
     }
 
-    crate::db_inventory::stock_edit(club_id, item_id, db_owned, db_loaned + 1)?;
+    // Check if the client has a different loan information
+    if db_stock.loaned != stock.loaned {
+        return Err(Error::InventoryStockConflict);
+    }
+
+    crate::db_inventory::stock_edit(stock_id, &stock.storage, stock.owned, stock.loaned)?;
+
+    Ok(())
+}
+
+#[rocket::head("/admin/stock_delete?<stock_id>")]
+pub fn stock_delete(session: UserSession, stock_id: u64) -> Result<(), Error> {
+    if !session.right.right_inventory_write {
+        return Err(Error::RightInventoryMissing);
+    };
+
+    let stock = crate::db_inventory::stock_info(stock_id)?;
+
+    // Cannot delete a stock that is incomplete
+    if stock.loaned > 0 {
+        return Err(Error::InventoryLoanConflict);
+    }
+
+    crate::db_inventory::stock_delete(stock_id)?;
+
+    Ok(())
+}
+
+#[rocket::head("/admin/item_loan?<stock_id>&<user_id>")]
+pub fn item_loan(session: UserSession, stock_id: u64, user_id: u64) -> Result<(), Error> {
+    if !session.right.right_inventory_write {
+        return Err(Error::RightInventoryMissing);
+    };
+
+    let stock = crate::db_inventory::stock_info(stock_id)?;
+
+    // No items available to loan
+    if stock.owned <= stock.loaned {
+        return Err(Error::InventoryStockConflict);
+    }
+
+    crate::db_inventory::stock_edit(stock_id, &stock.storage, stock.owned, stock.loaned + 1)?;
     crate::db_inventory::possession_create(
         user_id,
-        item_id,
+        stock.item.id,
+        chrono::Utc::now().date_naive(),
         false,
-        Some(club_id),
-        Some(chrono::Utc::now().date_naive()),
+        Some(stock_id),
     )?;
 
     Ok(())
@@ -190,27 +199,25 @@ pub fn item_return(session: UserSession, possession_id: u64) -> Result<(), Error
     };
 
     let possession = crate::db_inventory::possession_info(possession_id)?;
+    let stock = crate::db_inventory::possession_ownership(possession_id)?;
 
-    let club_id = match (possession.owned, possession.club, possession.transfer_date) {
+    let stock = match (possession.owned, stock) {
         // Cannot return items which are owned by a user
-        (true, _, _) => return Err(Error::Default),
-        (false, Some(club), Some(_)) => club.id,
-        // Either club or transfer date is null, therefor it is an internal error
-        _ => return Err(Error::Default),
-    };
-    let item_id = possession.item.id;
-
-    let (db_owned, db_loaned) = match crate::db_inventory::stock_info(club_id, item_id)? {
-        None => (0, 0),
-        Some(db_stock) => (db_stock.owned, db_stock.loaned),
+        (true, None) => return Err(Error::InventoryLoanConflict),
+        // Invalid database state, belongs to user but has stock information
+        (true, Some(_)) => return Err(Error::DatabaseError),
+        // Invalid database state, does not belong to the user but is missing stock information
+        (false, None) => return Err(Error::DatabaseError),
+        // Does not belong to user, can be returned
+        (false, Some(stock)) => stock,
     };
 
     // Should not happen, but make sure that there are loaned items that can be returned
-    if db_loaned < 1 {
-        return Err(Error::Default);
+    if stock.loaned < 1 {
+        return Err(Error::DatabaseError);
     }
 
-    crate::db_inventory::stock_edit(club_id, item_id, db_owned, db_loaned - 1)?;
+    crate::db_inventory::stock_edit(stock.id, &stock.storage, stock.owned, stock.loaned - 1)?;
     crate::db_inventory::possession_delete(possession_id)?;
 
     Ok(())
@@ -222,59 +229,52 @@ pub fn item_handout(session: UserSession, possession_id: u64) -> Result<(), Erro
         return Err(Error::RightInventoryMissing);
     };
 
-    let mut possession = crate::db_inventory::possession_info(possession_id)?;
+    let possession = crate::db_inventory::possession_info(possession_id)?;
+    let stock = crate::db_inventory::possession_ownership(possession_id)?;
 
-    let club_id = match (&possession.owned, &possession.club, &possession.transfer_date) {
-        // Cannot hand out items twice
-        (true, _, _) => return Err(Error::Default),
-        (false, Some(club), Some(_)) => club.id,
-        // Either club or transfer date is null, therefor it is an internal error
-        _ => return Err(Error::Default),
-    };
-    let item_id = possession.item.id;
-
-    let (db_owned, db_loaned) = match crate::db_inventory::stock_info(club_id, item_id)? {
-        None => (0, 0),
-        Some(db_stock) => (db_stock.owned, db_stock.loaned),
+    let stock = match (possession.owned, stock) {
+        // Cannot hand out items that already belong to a user
+        (true, None) => return Err(Error::InventoryLoanConflict),
+        // Invalid database state, belongs to user but has stock information
+        (true, Some(_)) => return Err(Error::DatabaseError),
+        // Invalid database state, does not belong to the user but is missing stock information
+        (false, None) => return Err(Error::DatabaseError),
+        // Does not belong to user, can be handened out
+        (false, Some(stock)) => stock,
     };
 
     // Should not happen, but make sure that there are loaned items that can be handed out
-    if db_owned < 1 || db_loaned < 1 {
-        return Err(Error::Default);
+    if stock.owned < 1 || stock.loaned < 1 {
+        return Err(Error::InventoryLoanConflict);
     }
 
-    possession.owned = true;
-    crate::db_inventory::possession_edit(possession_id, &possession)?;
-    crate::db_inventory::stock_edit(club_id, item_id, db_owned - 1, db_loaned - 1)?;
+    crate::db_inventory::possession_edit(possession_id, &possession, None)?;
+    crate::db_inventory::stock_edit(stock.id, &stock.storage, stock.owned - 1, stock.loaned - 1)?;
 
     Ok(())
 }
 
-#[rocket::head("/admin/item_handback?<possession_id>")]
-pub fn item_handback(session: UserSession, possession_id: u64) -> Result<(), Error> {
+#[rocket::head("/admin/item_restock?<possession_id>&<stock_id>")]
+pub fn item_restock(session: UserSession, possession_id: u64, stock_id: u64) -> Result<(), Error> {
     if !session.right.right_inventory_write {
         return Err(Error::RightInventoryMissing);
     };
 
-    let mut possession = crate::db_inventory::possession_info(possession_id)?;
+    let possession = crate::db_inventory::possession_info(possession_id)?;
+    let stock = crate::db_inventory::stock_info(stock_id)?;
 
-    let club_id = match (&possession.owned, &possession.club, &possession.transfer_date) {
-        // Cannot hand back items one does not own
-        (false, _, _) => return Err(Error::Default),
-        (true, Some(club), Some(_)) => club.id,
-        // Either club or transfer date is null, therefor it is an internal error
-        _ => return Err(Error::Default),
-    };
-    let item_id = possession.item.id;
-
-    let (db_owned, db_loaned) = match crate::db_inventory::stock_info(club_id, item_id)? {
-        None => (0, 0),
-        Some(db_stock) => (db_stock.owned, db_stock.loaned),
+    // Cannot restock items on a stock of a different item type
+    if possession.item.id != stock.item.id {
+        return Err(Error::InventoryStockConflict);
     };
 
-    possession.owned = false;
-    crate::db_inventory::possession_edit(possession_id, &possession)?;
-    crate::db_inventory::stock_edit(club_id, item_id, db_owned + 1, db_loaned + 1)?;
+    // Cannot restock items one does not own
+    if !possession.owned {
+        return Err(Error::InventoryLoanConflict);
+    };
+
+    crate::db_inventory::possession_edit(possession_id, &possession, Some(stock_id))?;
+    crate::db_inventory::stock_edit(stock_id, &stock.storage, stock.owned + 1, stock.loaned + 1)?;
 
     Ok(())
 }
@@ -303,7 +303,7 @@ pub fn possession_create(session: UserSession, user_id: u64, item_id: u64) -> Re
         return Err(Error::RightInventoryMissing);
     };
 
-    crate::db_inventory::possession_create(user_id, item_id, true, None, None)?;
+    crate::db_inventory::possession_create(user_id, item_id, chrono::Utc::now().date_naive(), true, None)?;
     Ok(())
 }
 

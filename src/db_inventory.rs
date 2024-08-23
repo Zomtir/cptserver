@@ -155,9 +155,10 @@ pub fn stock_list(club_id: Option<u32>, item_id: Option<u32>) -> Result<Vec<Stoc
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
+            cs.stock_id,
             c.club_id, c.club_key, c.name as club_name, c.description as club_description,
             i.item_id, i.name as item_name, ic.category_id, ic.name as category_name,
-            cs.owned, cs.loaned
+            cs.storage, cs.owned, cs.loaned
         FROM club_stocks cs
         JOIN clubs c ON (cs.club_id = c.club_id)
         JOIN items i ON (cs.item_id = i.item_id)
@@ -177,6 +178,7 @@ pub fn stock_list(club_id: Option<u32>, item_id: Option<u32>) -> Result<Vec<Stoc
 
     for mut row in rows {
         let cs = Stock {
+            id: row.take("stock_id").unwrap(),
             club: Club {
                 id: row.take("club_id").unwrap(),
                 key: row.take("club_key").unwrap(),
@@ -194,6 +196,7 @@ pub fn stock_list(club_id: Option<u32>, item_id: Option<u32>) -> Result<Vec<Stoc
                         name: row.take("category_name").unwrap(),
                     }),
             },
+            storage: row.take("storage").unwrap(),
             owned: row.take("owned").unwrap(),
             loaned: row.take("loaned").unwrap(),
         };
@@ -203,32 +206,32 @@ pub fn stock_list(club_id: Option<u32>, item_id: Option<u32>) -> Result<Vec<Stoc
     Ok(stocks)
 }
 
-pub fn stock_info(club_id: u64, item_id: u64) -> Result<Option<Stock>, Error> {
+pub fn stock_info(stock_id: u64) -> Result<Stock, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
+            cs.stock_id,
             c.club_id, c.club_key, c.name as club_name, c.description as club_description,
             i.item_id, i.name as item_name, ic.category_id, ic.name as category_name,
-            cs.owned, cs.loaned
+            cs.storage, cs.owned, cs.loaned
         FROM club_stocks cs
         JOIN clubs c ON (cs.club_id = c.club_id)
         JOIN items i ON (cs.item_id = i.item_id)
         LEFT JOIN item_categories ic ON (i.category_id = ic.category_id)
-        WHERE cs.club_id = :club_id
-        AND cs.item_id = :item_id;",
+        WHERE cs.stock_id = :stock_id;",
     )?;
 
     let params = params! {
-        "club_id" => club_id,
-        "item_id" => item_id,
+        "stock_id" => stock_id,
     };
 
     let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
-        None => return Ok(None),
+        None => return Err(Error::InventoryStockMissing),
         Some(row) => row,
     };
 
     let stock = Stock {
+        id: row.take("stock_id").unwrap(),
         club: Club {
             id: row.take("club_id").unwrap(),
             key: row.take("club_key").unwrap(),
@@ -246,23 +249,25 @@ pub fn stock_info(club_id: u64, item_id: u64) -> Result<Option<Stock>, Error> {
                     name: row.take("category_name").unwrap(),
                 }),
         },
+        storage: row.take("storage").unwrap(),
         owned: row.take("owned").unwrap(),
         loaned: row.take("loaned").unwrap(),
     };
 
-    Ok(Some(stock))
+    Ok(stock)
 }
 
-pub fn stock_create(club_id: u64, item_id: u64, owned: u32) -> Result<(), Error> {
+pub fn stock_create(club_id: u64, item_id: u64, storage: &String, owned: u32) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "INSERT INTO club_stocks (club_id, item_id, owned, loaned)
-        SELECT :club_id, :item_id, :owned, :loaned;",
+        "INSERT INTO club_stocks (club_id, item_id, storage, owned, loaned)
+        SELECT :club_id, :item_id, :storage, :owned, :loaned;",
     )?;
 
     let params = params! {
         "club_id" => &club_id,
         "item_id" => &item_id,
+        "storage" => storage,
         "owned" => &owned,
         "loaned" => 0,
     };
@@ -272,22 +277,20 @@ pub fn stock_create(club_id: u64, item_id: u64, owned: u32) -> Result<(), Error>
     Ok(())
 }
 
-pub fn stock_edit(club_id: u64, item_id: u64, owned: u32, loaned: u32) -> Result<(), Error> {
+pub fn stock_edit(stock_id: u64, storage: &String, owned: u32, loaned: u32) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE club_stocks
         SET
-            club_id  = :club_id,
-            item_id = :item_id,
+            storage = :storage,
             owned = :owned,
             loaned = :loaned
-        WHERE club_id = :club_id
-        AND item_id = :item_id;",
+        WHERE stock_id = :stock_id;",
     )?;
 
     let params = params! {
-        "club_id" => &club_id,
-        "item_id" => &item_id,
+        "stock_id" => &stock_id,
+        "storage" => &storage,
         "owned" => &owned,
         "loaned" => &loaned,
     };
@@ -296,17 +299,15 @@ pub fn stock_edit(club_id: u64, item_id: u64, owned: u32, loaned: u32) -> Result
     Ok(())
 }
 
-pub fn stock_delete(club_id: u64, item_id: u64) -> Result<(), Error> {
+pub fn stock_delete(stock_id: u64) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "DELETE cs FROM club_stocks cs
-        WHERE cs.club_id = :club_id
-        AND cs.item_id = :item_id;",
+        WHERE cs.stock_id = :stock_id;",
     )?;
 
     let params = params! {
-        "club_id" => club_id,
-        "item_id" => item_id,
+        "stock_id" => stock_id,
     };
 
     conn.exec_drop(&stmt, &params)?;
@@ -315,103 +316,8 @@ pub fn stock_delete(club_id: u64, item_id: u64) -> Result<(), Error> {
 
 /* POSSESSIONS */
 
-pub fn possession_list(
-    user_id: Option<u64>,
-    item_id: Option<u64>,
-    owned: Option<bool>,
-    club_id: Option<u32>,
-) -> Result<Vec<Possession>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep(
-        "SELECT up.possession_id, up.owned,
-            u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
-            i.item_id, i.name as item_name, ic.category_id, ic.name as category_name,
-            c.club_id, c.club_key, c.name as club_name, c.description as club_description,
-            up.transfer_date
-        FROM user_possessions up
-        JOIN users u ON (up.user_id = u.user_id)
-        JOIN items i ON (up.item_id = i.item_id)
-        LEFT JOIN item_categories ic ON (i.category_id = ic.category_id)
-        LEFT JOIN clubs c ON (up.club_id = c.club_id)
-        WHERE (:user_id IS NULL OR up.user_id = :user_id)
-        AND (:item_id IS NULL OR up.item_id = :item_id)
-        AND (:owned IS NULL OR up.owned = :owned)
-        AND (:club_id IS NULL OR up.club_id = :club_id);",
-    )?;
-
-    let params = params! {
-        "user_id" => user_id,
-        "item_id" => item_id,
-        "owned" => owned,
-        "club_id" => club_id,
-    };
-
-    let rows: Vec<mysql::Row> = conn.exec(&stmt, &params)?;
-
-    let mut possessions: Vec<Possession> = Vec::new();
-
-    for mut row in rows {
-        let up = Possession {
-            id: row.take("possession_id").unwrap(),
-            user: User::from_info(
-                row.take("user_id").unwrap(),
-                row.take("user_key").unwrap(),
-                row.take("firstname").unwrap(),
-                row.take("lastname").unwrap(),
-                row.take("nickname").unwrap(),
-            ),
-            item: Item {
-                id: row.take("item_id").unwrap(),
-                name: row.take("item_name").unwrap(),
-                category: row
-                    .take::<Option<u64>, &str>("category_id")
-                    .unwrap()
-                    .map(|id| ItemCategory {
-                        id,
-                        name: row.take("category_name").unwrap(),
-                    }),
-            },
-            owned: row.take("owned").unwrap(),
-            club: row.take::<Option<u64>, &str>("club_id").unwrap().map(|id| Club {
-                id,
-                key: row.take("club_key").unwrap(),
-                name: row.take("club_name").unwrap(),
-                description: row.take("club_description").unwrap(),
-            }),
-            transfer_date: row.take("transfer_date").unwrap(),
-        };
-        possessions.push(up);
-    }
-
-    Ok(possessions)
-}
-
-pub fn possession_info(possession_id: u64) -> Result<Possession, Error> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep(
-        "SELECT up.possession_id, up.owned,
-            u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
-            i.item_id, i.name as item_name, ic.category_id, ic.name as category_name,
-            c.club_id, c.club_key, c.name as club_name, c.description as club_description,
-            up.transfer_date
-        FROM user_possessions up
-        JOIN users u ON (up.user_id = u.user_id)
-        JOIN items i ON (up.item_id = i.item_id)
-        LEFT JOIN item_categories ic ON (i.category_id = ic.category_id)
-        LEFT JOIN clubs c ON (up.club_id = c.club_id)
-        WHERE (up.possession_id = :possession_id);",
-    )?;
-
-    let params = params! {
-        "possession_id" => possession_id,
-    };
-
-    let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
-        None => return Err(Error::InventoryPossessionMissing),
-        Some(row) => row,
-    };
-
-    let possession = Possession {
+fn sql_possession(mut row: mysql::Row) -> Possession {
+    Possession {
         id: row.take("possession_id").unwrap(),
         user: User::from_info(
             row.take("user_id").unwrap(),
@@ -431,55 +337,165 @@ pub fn possession_info(possession_id: u64) -> Result<Possession, Error> {
                     name: row.take("category_name").unwrap(),
                 }),
         },
+        acquisition_date: row.take("acquisition_date").unwrap(),
         owned: row.take("owned").unwrap(),
-        club: row.take::<Option<u64>, &str>("club_id").unwrap().map(|id| Club {
-            id,
+    }
+}
+
+pub fn possession_list(
+    user_id: Option<u64>,
+    item_id: Option<u64>,
+    owned: Option<bool>,
+    club_id: Option<u32>,
+) -> Result<Vec<Possession>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT up.possession_id,
+            u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
+            i.item_id, i.name as item_name, ic.category_id, ic.name as category_name,
+            up.acquisition_date, up.owned
+        FROM user_possessions up
+        JOIN users u ON (up.user_id = u.user_id)
+        JOIN items i ON (up.item_id = i.item_id)
+        LEFT JOIN item_categories ic ON (i.category_id = ic.category_id)
+        LEFT JOIN club_stocks cs ON (up.stock_id = cs.stock_id)
+        WHERE (:user_id IS NULL OR up.user_id = :user_id)
+        AND (:item_id IS NULL OR up.item_id = :item_id)
+        AND (:owned IS NULL OR up.owned = :owned)
+        AND (:club_id IS NULL OR cs.club_id = :club_id);",
+    )?;
+
+    let params = params! {
+        "user_id" => user_id,
+        "item_id" => item_id,
+        "owned" => owned,
+        "club_id" => club_id,
+    };
+
+    let rows: Vec<mysql::Row> = conn.exec(&stmt, &params)?;
+
+    let mut possessions: Vec<Possession> = Vec::new();
+
+    for row in rows {
+        possessions.push(sql_possession(row));
+    }
+
+    Ok(possessions)
+}
+
+pub fn possession_info(possession_id: u64) -> Result<Possession, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT up.possession_id,
+            u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
+            i.item_id, i.name as item_name, ic.category_id, ic.name as category_name,
+            up.acquisition_date, up.owned
+        FROM user_possessions up
+        JOIN users u ON (up.user_id = u.user_id)
+        JOIN items i ON (up.item_id = i.item_id)
+        LEFT JOIN item_categories ic ON (i.category_id = ic.category_id)
+        WHERE (up.possession_id = :possession_id);",
+    )?;
+
+    let params = params! {
+        "possession_id" => possession_id,
+    };
+
+    let row: mysql::Row = match conn.exec_first(&stmt, &params)? {
+        None => return Err(Error::InventoryPossessionMissing),
+        Some(row) => row,
+    };
+
+    Ok(sql_possession(row))
+}
+
+pub fn possession_ownership(possession_id: u64) -> Result<Option<Stock>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT cs.stock_id,
+            c.club_id, c.club_key, c.name as club_name, c.description as club_description,
+            i.item_id, i.name as item_name, ic.category_id, ic.name as category_name,
+            cs.storage, cs.owned, cs.loaned
+        FROM user_possessions up
+        JOIN users u ON (up.user_id = u.user_id)
+        JOIN items i ON (up.item_id = i.item_id)
+        LEFT JOIN item_categories ic ON (i.category_id = ic.category_id)
+        LEFT JOIN club_stocks cs ON (up.stock_id = cs.stock_id)
+        LEFT JOIN clubs c ON (c.club_id = cs.club_id)
+        WHERE (up.possession_id = :possession_id);",
+    )?;
+
+    let params = params! {
+        "possession_id" => possession_id,
+    };
+
+    let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
+        None => return Ok(None),
+        Some(row) => row,
+    };
+
+    let stock = Stock {
+        id: row.take("stock_id").unwrap(),
+        club: Club {
+            id: row.take("club_id").unwrap(),
             key: row.take("club_key").unwrap(),
             name: row.take("club_name").unwrap(),
             description: row.take("club_description").unwrap(),
-        }),
-
-        transfer_date: row.take("transfer_date").unwrap(),
+        },
+        item: Item {
+            id: row.take("item_id").unwrap(),
+            name: row.take("item_name").unwrap(),
+            category: row
+                .take::<Option<u64>, &str>("category_id")
+                .unwrap()
+                .map(|id| ItemCategory {
+                    id,
+                    name: row.take("category_name").unwrap(),
+                }),
+        },
+        storage: row.take("storage").unwrap(),
+        owned: row.take("owned").unwrap(),
+        loaned: row.take("loaned").unwrap(),
     };
 
-    Ok(possession)
+    Ok(Some(stock))
 }
 
 pub fn possession_create(
     user_id: u64,
     item_id: u64,
+    acquisition_date: chrono::NaiveDate,
     owned: bool,
-    club_id: Option<u64>,
-    transfer_date: Option<chrono::NaiveDate>,
+    stock_id: Option<u64>,
 ) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "INSERT INTO user_possessions (user_id, item_id, owned, club_id, transfer_date)
-        SELECT :user_id, :item_id, :owned, :club_id, :transfer_date;",
+        "INSERT INTO user_possessions (user_id, item_id, acquisition_date, owned, stock_id)
+        SELECT :user_id, :item_id, :acquisition_date, :owned, :stock_id;",
     )?;
 
     let params = params! {
         "user_id" => &user_id,
         "item_id" => &item_id,
+        "acquisition_date" => &acquisition_date,
         "owned" => &owned,
-        "club_id" => &club_id,
-        "transfer_date" => &transfer_date,
+        "stock_id" => &stock_id,
     };
 
     conn.exec_drop(&stmt, &params)?;
     Ok(())
 }
 
-pub fn possession_edit(possession_id: u64, possession: &Possession) -> Result<(), Error> {
+pub fn possession_edit(possession_id: u64, possession: &Possession, stock_id: Option<u64>) -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE user_possessions
         SET
             user_id  = :user_id,
             item_id = :item_id,
+            acquisition_date = :acquisition_date,
             owned = :owned,
-            club_id = :club_id,
-            transfer_date = :transfer_date
+            stock_id = :stock_id
         WHERE possession_id = :possession_id;",
     )?;
 
@@ -487,9 +503,9 @@ pub fn possession_edit(possession_id: u64, possession: &Possession) -> Result<()
         "possession_id" => &possession_id,
         "user_id" => &possession.user.id,
         "item_id" => &possession.item.id,
-        "owned" => &possession.owned,
-        "club_id" => &possession.club.as_ref().map(|club| club.id),
-        "transfer_date" => &possession.transfer_date,
+        "acquisition_date" => &possession.acquisition_date,
+        "owned" => stock_id.is_none(),
+        "stock_id" => stock_id,
     };
 
     conn.exec_drop(&stmt, &params)?;
