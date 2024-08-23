@@ -28,8 +28,6 @@ pub struct User {
     pub federationpermissionsolo: Option<chrono::NaiveDate>,
     pub federationpermissionteam: Option<chrono::NaiveDate>,
     pub federationresidency: Option<chrono::NaiveDate>,
-    pub datadeclaration: Option<u8>,
-    pub datadisclaimer: Option<String>,
     pub note: Option<String>,
 }
 
@@ -55,8 +53,6 @@ impl User {
             federationpermissionsolo: None,
             federationpermissionteam: None,
             federationresidency: None,
-            datadeclaration: None,
-            datadisclaimer: None,
             note: None,
         }
     }

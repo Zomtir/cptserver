@@ -52,8 +52,6 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
             federationpermissionsolo,
             federationpermissionteam,
             federationresidency,
-            datadeclaration,
-            datadisclaimer,
             note
         FROM users
         WHERE users.user_id = :user_id;",
@@ -88,8 +86,6 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
         federationpermissionsolo: row.take("federationpermissionsolo").unwrap(),
         federationpermissionteam: row.take("federationpermissionteam").unwrap(),
         federationresidency: row.take("federationresidency").unwrap(),
-        datadeclaration: row.take("datadeclaration").unwrap(),
-        datadisclaimer: row.take("datadisclaimer").unwrap(),
         note: row.take("note").unwrap(),
     };
 
@@ -110,11 +106,11 @@ pub fn user_create(user: &mut User) -> Result<u64, Error> {
         "INSERT INTO users (user_key, pwd, pepper, salt, enabled, active, firstname, lastname, nickname,
         address, email, phone, iban, birthday, birthlocation, nationality, gender,
         federationnumber, federationpermissionsolo, federationpermissionteam, federationresidency,
-        datadeclaration, datadisclaimer, note)
+        note)
     VALUES (:user_key, :pwd, :pepper, :salt, :enabled, :active, :firstname, :lastname, :nickname,
         :address, :email, :phone, :iban, :birthday, :birthlocation, :nationality, :gender,
         :federationnumber, :federationpermissionsolo, :federationpermissionteam, :federationresidency,
-        :datadeclaration, :datadisclaimer, :note);",
+        :note);",
     )?;
 
     let params = params! {
@@ -139,8 +135,6 @@ pub fn user_create(user: &mut User) -> Result<u64, Error> {
         "federationpermissionsolo" => &user.federationpermissionsolo,
         "federationpermissionteam" => &user.federationpermissionteam,
         "federationresidency" => &user.federationresidency,
-        "datadeclaration" => &user.datadeclaration,
-        "datadisclaimer" => &user.datadisclaimer,
         "note" => &user.note,
     };
 
@@ -174,8 +168,6 @@ pub fn user_edit(user_id: u64, user: &mut User) -> Result<(), Error> {
         federationpermissionsolo = ?,
         federationpermissionteam = ?,
         federationresidency = ?,
-        datadeclaration = ?,
-        datadisclaimer = ?,
         note = ?
         WHERE user_id = ?;",
     )?;
@@ -199,8 +191,6 @@ pub fn user_edit(user_id: u64, user: &mut User) -> Result<(), Error> {
         user.federationpermissionsolo.into(),
         user.federationpermissionteam.into(),
         user.federationresidency.into(),
-        user.datadeclaration.into(),
-        user.datadisclaimer.clone().into(),
         user.note.clone().into(),
         user_id.into(),
     ];
