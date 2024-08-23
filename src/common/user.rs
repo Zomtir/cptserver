@@ -11,23 +11,44 @@ use serde::{Deserialize, Serialize};
 pub struct User {
     pub id: u64,
     pub key: Option<String>,
-    pub enabled: Option<bool>,
-    pub active: Option<bool>,
+
     pub firstname: String,
     pub lastname: String,
     pub nickname: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub enabled: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub active: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub address: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub phone: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub iban: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub birthday: Option<chrono::NaiveDate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub birthlocation: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub nationality: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub gender: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub federationnumber: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub federationpermissionsolo: Option<chrono::NaiveDate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub federationpermissionteam: Option<chrono::NaiveDate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub federationresidency: Option<chrono::NaiveDate>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,
 }
 
