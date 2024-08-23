@@ -3,11 +3,10 @@ pub mod moderator;
 pub mod participant;
 pub mod supporter;
 
-use chrono::NaiveDateTime;
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Course, Event, Requirement, Skill};
+use crate::common::{Course, Event, Requirement, Skill, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
@@ -254,13 +253,15 @@ pub fn course_statistic_class(course_id: u32) -> Result<Vec<(Event, u64, u64, u6
     Ok(stats)
 }
 
-pub fn course_statistic_leader(course_id: u32) -> Result<Vec<(u64, String, String, u64)>, Error> {
+pub fn course_statistic_leader(course_id: u32) -> Result<Vec<(User, u64)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
             u.user_id,
+            u.user_key,
             u.firstname,
             u.lastname,
+            u.nickname,
             COUNT(p.event_id)
         FROM
             users u
@@ -278,20 +279,20 @@ pub fn course_statistic_leader(course_id: u32) -> Result<Vec<(u64, String, Strin
         "course_id" => &course_id,
     };
 
-    let map = |(user_id, firstname, lastname, count)| (user_id, firstname, lastname, count);
+    let map = |(user_id, user_key, firstname, lastname, nickname, count)| {
+        (User::from_info(user_id, user_key, firstname, lastname, nickname), count)
+    };
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
 }
 
-pub fn course_statistic_leader1(
-    course_id: u32,
-    leader_id: u64,
-) -> Result<Vec<(u64, String, NaiveDateTime, NaiveDateTime)>, Error> {
+pub fn course_statistic_leader1(course_id: u32, leader_id: u64) -> Result<Vec<Event>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
             events.event_id,
+            events.event_key,
             events.title,
             events.begin,
             events.end
@@ -308,19 +309,21 @@ pub fn course_statistic_leader1(
         "leader_id" => &leader_id,
     };
 
-    let map = |(event_id, title, begin, end)| (event_id, title, begin, end);
+    let map = |(event_id, event_key, title, begin, end)| Event::from_info(event_id, event_key, title, begin, end);
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
 }
 
-pub fn course_statistic_supporter(course_id: u32) -> Result<Vec<(u64, String, String, u64)>, Error> {
+pub fn course_statistic_supporter(course_id: u32) -> Result<Vec<(User, u64)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
             u.user_id,
+            u.user_key,
             u.firstname,
             u.lastname,
+            u.nickname,
             COUNT(p.event_id)
         FROM
             users u
@@ -338,20 +341,20 @@ pub fn course_statistic_supporter(course_id: u32) -> Result<Vec<(u64, String, St
         "course_id" => &course_id,
     };
 
-    let map = |(user_id, firstname, lastname, count)| (user_id, firstname, lastname, count);
+    let map = |(user_id, user_key, firstname, lastname, nickname, count)| {
+        (User::from_info(user_id, user_key, firstname, lastname, nickname), count)
+    };
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
 }
 
-pub fn course_statistic_supporter1(
-    course_id: u32,
-    supporter_id: u64,
-) -> Result<Vec<(u64, String, NaiveDateTime, NaiveDateTime)>, Error> {
+pub fn course_statistic_supporter1(course_id: u32, supporter_id: u64) -> Result<Vec<Event>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
             events.event_id,
+            events.event_key,
             events.title,
             events.begin,
             events.end
@@ -368,19 +371,21 @@ pub fn course_statistic_supporter1(
         "supporter_id" => &supporter_id,
     };
 
-    let map = |(event_id, title, begin, end)| (event_id, title, begin, end);
+    let map = |(event_id, event_key, title, begin, end)| Event::from_info(event_id, event_key, title, begin, end);
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
 }
 
-pub fn course_statistic_participant(course_id: u32) -> Result<Vec<(u64, String, String, u64)>, Error> {
+pub fn course_statistic_participant(course_id: u32) -> Result<Vec<(User, u64)>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
             u.user_id,
+            u.user_key,
             u.firstname,
             u.lastname,
+            u.nickname,
             COUNT(p.event_id)
         FROM
             users u
@@ -398,20 +403,20 @@ pub fn course_statistic_participant(course_id: u32) -> Result<Vec<(u64, String, 
         "course_id" => &course_id,
     };
 
-    let map = |(user_id, firstname, lastname, count)| (user_id, firstname, lastname, count);
+    let map = |(user_id, user_key, firstname, lastname, nickname, count)| {
+        (User::from_info(user_id, user_key, firstname, lastname, nickname), count)
+    };
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
 }
 
-pub fn course_statistic_participant1(
-    course_id: u32,
-    participant_id: u64,
-) -> Result<Vec<(u64, String, NaiveDateTime, NaiveDateTime)>, Error> {
+pub fn course_statistic_participant1(course_id: u32, participant_id: u64) -> Result<Vec<Event>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
             events.event_id,
+            events.event_key,
             events.title,
             events.begin,
             events.end
@@ -428,7 +433,7 @@ pub fn course_statistic_participant1(
         "participant_id" => &participant_id,
     };
 
-    let map = |(event_id, title, begin, end)| (event_id, title, begin, end);
+    let map = |(event_id, event_key, title, begin, end)| Event::from_info(event_id, event_key, title, begin, end);
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)

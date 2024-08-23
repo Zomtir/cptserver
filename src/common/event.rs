@@ -11,16 +11,26 @@ use serde::{Deserialize, Serialize};
 pub struct Event {
     pub id: u64,
     pub key: String,
-    pub pwd: Option<String>,
     pub title: String,
     pub begin: chrono::NaiveDateTime,
     pub end: chrono::NaiveDateTime,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pwd: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub location: Option<Location>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub occurrence: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub acceptance: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub public: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub scrutable: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub course_id: Option<u32>,
 }
 

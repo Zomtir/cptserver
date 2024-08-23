@@ -5,10 +5,9 @@ pub mod supporter;
 
 use rocket::serde::json::Json;
 
-use crate::common::{Acceptance, Course, Event, Requirement, WebBool};
+use crate::common::{Acceptance, Course, Event, Requirement, User, WebBool};
 use crate::error::Error;
 use crate::session::UserSession;
-use chrono::NaiveDateTime;
 
 #[rocket::get("/admin/course_list?<mod_id>&<active>&<public>")]
 pub fn course_list(
@@ -118,10 +117,7 @@ pub fn course_statistic_class(
 }
 
 #[rocket::get("/admin/course_statistic_leader?<course_id>")]
-pub fn course_statistic_leader(
-    session: UserSession,
-    course_id: u32,
-) -> Result<Json<Vec<(u64, String, String, u64)>>, Error> {
+pub fn course_statistic_leader(session: UserSession, course_id: u32) -> Result<Json<Vec<(User, u64)>>, Error> {
     if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
@@ -135,7 +131,7 @@ pub fn course_statistic_leader1(
     session: UserSession,
     course_id: u32,
     leader_id: u64,
-) -> Result<Json<Vec<(u64, String, NaiveDateTime, NaiveDateTime)>>, Error> {
+) -> Result<Json<Vec<Event>>, Error> {
     if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
@@ -145,10 +141,7 @@ pub fn course_statistic_leader1(
 }
 
 #[rocket::get("/admin/course_statistic_supporter?<course_id>")]
-pub fn course_statistic_supporter(
-    session: UserSession,
-    course_id: u32,
-) -> Result<Json<Vec<(u64, String, String, u64)>>, Error> {
+pub fn course_statistic_supporter(session: UserSession, course_id: u32) -> Result<Json<Vec<(User, u64)>>, Error> {
     if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
@@ -162,7 +155,7 @@ pub fn course_statistic_supporter1(
     session: UserSession,
     course_id: u32,
     supporter_id: u64,
-) -> Result<Json<Vec<(u64, String, NaiveDateTime, NaiveDateTime)>>, Error> {
+) -> Result<Json<Vec<Event>>, Error> {
     if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
@@ -172,10 +165,7 @@ pub fn course_statistic_supporter1(
 }
 
 #[rocket::get("/admin/course_statistic_participant?<course_id>")]
-pub fn course_statistic_participant(
-    session: UserSession,
-    course_id: u32,
-) -> Result<Json<Vec<(u64, String, String, u64)>>, Error> {
+pub fn course_statistic_participant(session: UserSession, course_id: u32) -> Result<Json<Vec<(User, u64)>>, Error> {
     if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
@@ -189,7 +179,7 @@ pub fn course_statistic_participant1(
     session: UserSession,
     course_id: u32,
     participant_id: u64,
-) -> Result<Json<Vec<(u64, String, NaiveDateTime, NaiveDateTime)>>, Error> {
+) -> Result<Json<Vec<Event>>, Error> {
     if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
