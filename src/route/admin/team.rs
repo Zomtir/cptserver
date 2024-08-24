@@ -12,7 +12,7 @@ pub fn team_list(session: UserSession) -> Result<Json<Vec<Team>>, Error> {
         return Err(Error::RightTeamMissing);
     };
 
-    let teams = crate::db_team::team_list()?;
+    let teams = crate::db::team::team_list()?;
     Ok(Json(teams))
 }
 
@@ -22,7 +22,7 @@ pub fn team_create(session: UserSession, team: Json<Team>) -> Result<String, Err
         return Err(Error::RightTeamMissing);
     };
 
-    let team_id = crate::db_team::team_create(&team)?;
+    let team_id = crate::db::team::team_create(&team)?;
     Ok(team_id.to_string())
 }
 
@@ -32,7 +32,7 @@ pub fn team_edit(session: UserSession, team_id: u32, team: Json<Team>) -> Result
         return Err(Error::RightTeamMissing);
     };
 
-    crate::db_team::team_edit(&team_id, &team)?;
+    crate::db::team::team_edit(&team_id, &team)?;
     Ok(())
 }
 
@@ -42,7 +42,7 @@ pub fn team_right_edit(session: UserSession, team_id: u32, right: Json<Right>) -
         return Err(Error::RightTeamMissing);
     };
 
-    crate::db_team::team_right_edit(&team_id, &right)?;
+    crate::db::team::team_right_edit(&team_id, &right)?;
     Ok(())
 }
 
@@ -52,7 +52,7 @@ pub fn team_delete(session: UserSession, team_id: u32) -> Result<(), Error> {
         return Err(Error::RightTeamMissing);
     };
 
-    crate::db_team::team_delete(&team_id)?;
+    crate::db::team::team_delete(&team_id)?;
     Ok(())
 }
 
@@ -62,7 +62,7 @@ pub fn team_member_list(session: UserSession, team_id: u32) -> Result<Json<Vec<U
         return Err(Error::RightTeamMissing);
     };
 
-    let users = crate::db_team::team_member_list(team_id)?;
+    let users = crate::db::team::team_member_list(team_id)?;
     Ok(Json(users))
 }
 
@@ -72,7 +72,7 @@ pub fn team_member_add(session: UserSession, team_id: u32, user_id: u32) -> Resu
         return Err(Error::RightTeamMissing);
     };
 
-    crate::db_team::team_member_add(&team_id, &user_id)?;
+    crate::db::team::team_member_add(&team_id, &user_id)?;
     Ok(())
 
     // TODO: remove/add permissions of currently logged-in users
@@ -84,7 +84,7 @@ pub fn team_member_remove(session: UserSession, team_id: u32, user_id: u32) -> R
         return Err(Error::RightTeamMissing);
     };
 
-    crate::db_team::team_member_remove(&team_id, &user_id)?;
+    crate::db::team::team_member_remove(&team_id, &user_id)?;
     Ok(())
 
     // TODO: remove/add permissions of currently logged-in users

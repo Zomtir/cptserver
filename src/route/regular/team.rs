@@ -8,6 +8,6 @@ use crate::session::UserSession;
 
 #[rocket::get("/regular/team_list")]
 pub fn team_list(_session: UserSession) -> Result<Json<Vec<Team>>, Error> {
-    let teams = crate::db_team::team_list()?;
+    let teams = crate::db::team::team_list()?;
     Ok(Json(teams))
 }

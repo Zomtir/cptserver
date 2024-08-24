@@ -9,7 +9,6 @@ extern crate mysql_common;
 mod config;
 mod db;
 mod db_competence;
-mod db_team;
 mod db_user;
 
 mod common;
