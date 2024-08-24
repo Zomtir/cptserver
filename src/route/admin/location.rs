@@ -10,7 +10,7 @@ pub fn location_list(session: UserSession) -> Result<Json<Vec<Location>>, Error>
         return Err(Error::RightLocationMissing);
     };
 
-    let locations = crate::db_location::location_list()?;
+    let locations = crate::db::location::location_list()?;
     Ok(Json(locations))
 }
 
@@ -20,7 +20,7 @@ pub fn location_create(session: UserSession, location: Json<Location>) -> Result
         return Err(Error::RightLocationMissing);
     };
 
-    let id = crate::db_location::location_create(&location)?;
+    let id = crate::db::location::location_create(&location)?;
     Ok(id.to_string())
 }
 
@@ -34,7 +34,7 @@ pub fn location_edit(session: UserSession, location_id: u32, location: Json<Loca
         return Err(Error::RightLocationMissing);
     };
 
-    crate::db_location::location_edit(location_id, &location)?;
+    crate::db::location::location_edit(location_id, &location)?;
     Ok(())
 }
 
@@ -44,6 +44,6 @@ pub fn location_delete(session: UserSession, location_id: u32) -> Result<(), Err
         return Err(Error::RightLocationMissing);
     };
 
-    crate::db_location::location_delete(location_id)?;
+    crate::db::location::location_delete(location_id)?;
     Ok(())
 }

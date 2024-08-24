@@ -14,7 +14,7 @@ pub fn status() -> Status {
 
 #[rocket::get("/anon/location_list")]
 pub fn location_list() -> Result<Json<Vec<Location>>, Error> {
-    let locations = crate::db_location::location_list()?;
+    let locations = crate::db::location::location_list()?;
     Ok(Json(locations))
 }
 

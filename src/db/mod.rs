@@ -2,6 +2,7 @@ pub mod club;
 pub mod course;
 pub mod event;
 pub mod inventory;
+pub mod location;
 
 use mysql::{Pool, PooledConn};
 
