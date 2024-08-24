@@ -1,4 +1,5 @@
 pub mod club;
+pub mod competence;
 pub mod course;
 pub mod event;
 pub mod inventory;

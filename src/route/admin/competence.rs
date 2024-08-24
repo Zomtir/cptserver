@@ -16,7 +16,7 @@ pub fn competence_list(
         return Err(Error::RightCompetenceMissing);
     };
 
-    let competences = crate::db_competence::competence_list(user_id, skill_id, min.unwrap_or(0), max.unwrap_or(10))?;
+    let competences = crate::db::competence::competence_list(user_id, skill_id, min.unwrap_or(0), max.unwrap_or(10))?;
     Ok(Json(competences))
 }
 
@@ -26,7 +26,7 @@ pub fn competence_create(session: UserSession, competence: Json<Competence>) -> 
         return Err(Error::RightCompetenceMissing);
     };
 
-    let id = crate::db_competence::competence_create(&competence)?;
+    let id = crate::db::competence::competence_create(&competence)?;
     Ok(id.to_string())
 }
 
@@ -40,7 +40,7 @@ pub fn competence_edit(session: UserSession, competence_id: u64, competence: Jso
         return Err(Error::RightCompetenceMissing);
     };
 
-    crate::db_competence::competence_edit(competence_id, &competence)?;
+    crate::db::competence::competence_edit(competence_id, &competence)?;
     Ok(())
 }
 
@@ -50,6 +50,6 @@ pub fn competence_delete(session: UserSession, competence_id: u64) -> Result<(),
         return Err(Error::RightCompetenceMissing);
     };
 
-    crate::db_competence::competence_delete(competence_id)?;
+    crate::db::competence::competence_delete(competence_id)?;
     Ok(())
 }
