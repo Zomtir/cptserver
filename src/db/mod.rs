@@ -1,3 +1,4 @@
+pub mod club;
 pub mod course;
 pub mod event;
 

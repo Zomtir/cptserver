@@ -8,7 +8,6 @@ extern crate mysql_common;
 
 mod config;
 mod db;
-mod db_club;
 mod db_competence;
 mod db_inventory;
 mod db_location;

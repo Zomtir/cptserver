@@ -26,7 +26,7 @@ pub fn skill_list() -> Result<Json<Vec<Skill>>, Error> {
 
 #[rocket::get("/anon/club_list")]
 pub fn club_list() -> Result<Json<Vec<Club>>, Error> {
-    let clubs = crate::db_club::club_list()?;
+    let clubs = crate::db::club::club_list()?;
     Ok(Json(clubs))
 }
 

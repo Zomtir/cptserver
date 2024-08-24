@@ -12,7 +12,7 @@ pub fn club_list(session: UserSession) -> Result<Json<Vec<Club>>, Error> {
         return Err(Error::RightClubMissing);
     };
 
-    let clubs = crate::db_club::club_list()?;
+    let clubs = crate::db::club::club_list()?;
     Ok(Json(clubs))
 }
 
@@ -22,7 +22,7 @@ pub fn club_create(session: UserSession, club: Json<Club>) -> Result<String, Err
         return Err(Error::RightClubMissing);
     };
 
-    let id = crate::db_club::club_create(&club)?;
+    let id = crate::db::club::club_create(&club)?;
     Ok(id.to_string())
 }
 
@@ -32,7 +32,7 @@ pub fn club_edit(session: UserSession, club_id: u32, club: Json<Club>) -> Result
         return Err(Error::RightClubMissing);
     };
 
-    crate::db_club::club_edit(club_id, &club)?;
+    crate::db::club::club_edit(club_id, &club)?;
     Ok(())
 }
 
@@ -42,7 +42,7 @@ pub fn club_delete(session: UserSession, club_id: u32) -> Result<(), Error> {
         return Err(Error::RightClubMissing);
     };
 
-    crate::db_club::club_delete(club_id)?;
+    crate::db::club::club_delete(club_id)?;
     Ok(())
 }
 
@@ -68,7 +68,7 @@ pub fn statistic_members(
         return Err(Error::RightClubMissing);
     };
 
-    let leaderboard = crate::db_club::club_member_leaderboard(club_id, None, point_in_time.to_naive())?;
+    let leaderboard = crate::db::club::club_member_leaderboard(club_id, None, point_in_time.to_naive())?;
     Ok(Json(leaderboard))
 }
 
@@ -83,7 +83,7 @@ pub fn statistic_team(
         return Err(Error::RightClubMissing);
     };
 
-    let users = crate::db_club::club_team_comparison(club_id, team_id, point_in_time.to_naive())?;
+    let users = crate::db::club::club_team_comparison(club_id, team_id, point_in_time.to_naive())?;
     Ok(Json(users))
 }
 
@@ -97,6 +97,6 @@ pub fn statistic_organisation(
         return Err(Error::RightClubMissing);
     };
 
-    let users = crate::db_club::club_member_organisation(club_id, None, point_in_time.to_naive())?;
+    let users = crate::db::club::club_member_organisation(club_id, None, point_in_time.to_naive())?;
     Ok(Json(users))
 }
