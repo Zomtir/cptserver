@@ -54,7 +54,7 @@ pub fn statistic_terms(session: UserSession, club_id: u32, point_in_time: WebDat
         return Err(Error::RightClubMissing);
     };
 
-    let terms = crate::db_term::term_list(Some(club_id), None, Some(point_in_time.to_naive()))?;
+    let terms = crate::db::club::term_list(Some(club_id), None, Some(point_in_time.to_naive()))?;
     Ok(Json(terms))
 }
 

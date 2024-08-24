@@ -10,7 +10,7 @@ pub fn term_list(session: UserSession, club_id: Option<u32>, user_id: Option<u32
         return Err(Error::RightClubMissing);
     };
 
-    let terms = crate::db_term::term_list(club_id, user_id, None)?;
+    let terms = crate::db::club::term_list(club_id, user_id, None)?;
     Ok(Json(terms))
 }
 
@@ -20,7 +20,7 @@ pub fn term_create(session: UserSession, term: Json<Term>) -> Result<String, Err
         return Err(Error::RightClubMissing);
     };
 
-    let id = crate::db_term::term_create(&term)?;
+    let id = crate::db::club::term_create(&term)?;
     Ok(id.to_string())
 }
 
@@ -30,7 +30,7 @@ pub fn term_edit(session: UserSession, term_id: i64, term: Json<Term>) -> Result
         return Err(Error::RightClubMissing);
     };
 
-    crate::db_term::term_edit(term_id, &term)?;
+    crate::db::club::term_edit(term_id, &term)?;
     Ok(())
 }
 
@@ -40,6 +40,6 @@ pub fn term_delete(session: UserSession, term_id: i64) -> Result<(), Error> {
         return Err(Error::RightClubMissing);
     };
 
-    crate::db_term::term_delete(term_id)?;
+    crate::db::club::term_delete(term_id)?;
     Ok(())
 }

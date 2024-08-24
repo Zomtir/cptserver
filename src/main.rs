@@ -12,7 +12,6 @@ mod db_competence;
 mod db_location;
 mod db_skill;
 mod db_team;
-mod db_term;
 mod db_user;
 
 mod common;
