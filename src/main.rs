@@ -8,7 +8,6 @@ extern crate mysql_common;
 
 mod config;
 mod db;
-mod db_user;
 
 mod common;
 mod error;
@@ -32,7 +31,7 @@ fn rocket() -> _ {
     // Promote an admin user, if demanded by the config, and make him session admin
     if let Some(admin) = crate::config::ADMIN_USER() {
         // Create the user, if not existing
-        let elevate: bool = match crate::db_user::user_created_true(&admin) {
+        let elevate: bool = match crate::db::user::user_created_true(&admin) {
             // Database query failed, do not elevate
             Err(_) => false,
             // User is missing, create him
@@ -45,7 +44,7 @@ fn rocket() -> _ {
                     None,
                 );
                 // Elevate unless database query failed
-                crate::db_user::user_create(&mut user).is_ok()
+                crate::db::user::user_create(&mut user).is_ok()
             }
             // User is existing, elevate him
             Ok(true) => true,

@@ -38,7 +38,7 @@ pub fn course_list() -> Result<Json<Vec<Course>>, Error> {
 
 #[rocket::get("/user_salt?<user_key>")]
 pub fn user_salt(user_key: String) -> Result<String, Error> {
-    let salt = crate::db_user::user_salt_value(&user_key);
+    let salt = crate::db::user::user_salt_value(&user_key);
 
     // If the user does not exist, just return a random salt to prevent data scraping
     match salt {

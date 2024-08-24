@@ -5,10 +5,6 @@ use crate::common::User;
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
-/*
- * METHODS
- */
-
 pub fn user_list(active: Option<bool>) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(

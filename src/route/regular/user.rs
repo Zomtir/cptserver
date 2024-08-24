@@ -10,7 +10,7 @@ use crate::session::{Credential, UserSession};
 
 #[rocket::get("/regular/user_info")]
 pub fn user_info(session: UserSession) -> Result<Json<User>, Error> {
-    let user = crate::db_user::user_info(session.user.id)?;
+    let user = crate::db::user::user_info(session.user.id)?;
     Ok(Json(user))
 }
 
@@ -38,12 +38,12 @@ pub fn user_right(session: UserSession) -> Json<Right> {
 
 #[rocket::post("/regular/user_password", format = "application/json", data = "<credit>")]
 pub fn user_password(session: UserSession, credit: Json<Credential>) -> Result<(), Error> {
-    crate::db_user::user_password_edit(session.user.id, &credit.password, &credit.salt)?;
+    crate::db::user::user_password_edit(session.user.id, &credit.password, &credit.salt)?;
     Ok(())
 }
 
 #[rocket::get("/regular/user_list")]
 pub fn user_list(_session: UserSession) -> Result<Json<Vec<User>>, Error> {
-    let users = crate::db_user::user_list(Some(true))?;
+    let users = crate::db::user::user_list(Some(true))?;
     Ok(Json(users))
 }

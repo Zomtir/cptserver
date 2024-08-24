@@ -6,6 +6,7 @@ pub mod inventory;
 pub mod location;
 pub mod skill;
 pub mod team;
+pub mod user;
 
 use mysql::{Pool, PooledConn};
 
