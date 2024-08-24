@@ -8,31 +8,28 @@ pub mod skill;
 pub mod team;
 pub mod user;
 
-use mysql::{Pool, PooledConn};
-
 use crate::error::Error;
+use mysql::{Pool, PooledConn};
+use std::sync::OnceLock;
 
-static mut POOL: Option<Pool> = None;
+static POOL: OnceLock<Pool> = OnceLock::new();
 
 pub fn connect_db() -> Result<(), Error> {
     let db_url = crate::config::DB_URL();
 
-    unsafe {
-        let pool = mysql::Pool::new(mysql::Opts::from_url(&db_url)?)?;
-        POOL = Some(pool);
-    }
+    let pool = mysql::Pool::new(mysql::Opts::from_url(&db_url)?)?;
+    let _ = POOL.set(pool);
+
     Ok(())
 }
 
 pub fn get_pool_conn() -> PooledConn {
-    unsafe {
-        match &POOL {
-            None => panic!("No pool available to establish a database connection"),
-            Some(pool) => match pool.clone().get_conn() {
-                Err(..) => panic!("Pool did not hand out a database connection"),
-                Ok(conn) => conn,
-            },
-        }
+    match POOL.get() {
+        None => panic!("No pool available to establish a database connection"),
+        Some(pool) => match pool.get_conn() {
+            Err(..) => panic!("Pool did not hand out a database connection"),
+            Ok(conn) => conn,
+        },
     }
 }
 

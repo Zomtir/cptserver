@@ -3,8 +3,9 @@
 extern crate lazy_static;
 
 use serde::{Deserialize, Serialize};
+use std::sync::OnceLock;
 
-static mut CONFIG: Option<ServerConfig> = None;
+static CONFIG: OnceLock<ServerConfig> = OnceLock::new();
 
 #[derive(Serialize, Deserialize)]
 #[serde(default)]
@@ -134,9 +135,7 @@ pub fn readConfig() {
         server_conf.cpt_event_login_buffer_hours
     );
 
-    unsafe {
-        CONFIG = Some(server_conf);
-    }
+    let _ = CONFIG.set(server_conf);
 }
 
 /*
@@ -144,79 +143,69 @@ pub fn readConfig() {
  */
 
 pub fn DB_URL() -> String {
-    unsafe {
-        format!(
-            "mysql://{user}:{password}@{server}:{port}/{database}",
-            server = CONFIG.as_ref().unwrap().db_server,
-            port = CONFIG.as_ref().unwrap().db_port,
-            database = CONFIG.as_ref().unwrap().db_database,
-            user = CONFIG.as_ref().unwrap().db_user,
-            password = CONFIG.as_ref().unwrap().db_password,
-        )
-    }
+    format!(
+        "mysql://{user}:{password}@{server}:{port}/{database}",
+        server = CONFIG.get().unwrap().db_server,
+        port = CONFIG.get().unwrap().db_port,
+        database = CONFIG.get().unwrap().db_database,
+        user = CONFIG.get().unwrap().db_user,
+        password = CONFIG.get().unwrap().db_password,
+    )
 }
 
 pub fn ROCKET_CONFIG() -> rocket::config::Config {
-    unsafe {
-        rocket::Config {
-            address: CONFIG.as_ref().unwrap().rocket_address.parse().unwrap(),
-            port: CONFIG.as_ref().unwrap().rocket_port,
-            log_level: CONFIG.as_ref().unwrap().rocket_log_level.parse().unwrap(),
-            ..rocket::Config::default()
-        }
+    rocket::Config {
+        address: CONFIG.get().unwrap().rocket_address.parse().unwrap(),
+        port: CONFIG.get().unwrap().rocket_port,
+        log_level: CONFIG.get().unwrap().rocket_log_level.parse().unwrap(),
+        ..rocket::Config::default()
     }
 }
 
 pub fn ADMIN_USER() -> Option<&'static String> {
-    unsafe { CONFIG.as_ref().unwrap().cpt_admin.as_ref() }
+    CONFIG.get().unwrap().cpt_admin.as_ref()
 }
 
 pub fn SESSION_DURATION() -> chrono::Duration {
-    unsafe { chrono::Duration::hours(CONFIG.as_ref().unwrap().cpt_session_duration_hours as i64) }
+    chrono::Duration::hours(CONFIG.get().unwrap().cpt_session_duration_hours as i64)
 }
 
 pub fn EVENT_ACCEPTENCE_AUTO() -> bool {
-    unsafe { CONFIG.as_ref().unwrap().cpt_event_acceptance_auto }
+    CONFIG.get().unwrap().cpt_event_acceptance_auto
 }
 
 pub fn EVENT_SEARCH_DATE_MIN() -> chrono::NaiveDateTime {
-    unsafe {
-        chrono::NaiveDateTime::from(
-            chrono::NaiveDate::from_ymd_opt(CONFIG.as_ref().unwrap().cpt_event_search_date_min_year as i32, 1, 1)
-                .unwrap(),
-        )
-    }
+    chrono::NaiveDateTime::from(
+        chrono::NaiveDate::from_ymd_opt(CONFIG.get().unwrap().cpt_event_search_date_min_year as i32, 1, 1).unwrap(),
+    )
 }
 
 pub fn EVENT_SEARCH_DATE_MAX() -> chrono::NaiveDateTime {
-    unsafe {
-        chrono::NaiveDateTime::from(
-            chrono::NaiveDate::from_ymd_opt(CONFIG.as_ref().unwrap().cpt_event_search_date_max_year as i32, 1, 1)
-                .unwrap(),
-        )
-    }
+    chrono::NaiveDateTime::from(
+        chrono::NaiveDate::from_ymd_opt(CONFIG.get().unwrap().cpt_event_search_date_max_year as i32, 1, 1).unwrap(),
+    )
 }
 
 pub fn EVENT_SEARCH_WINDOW_MIN() -> chrono::Duration {
-    unsafe { chrono::Duration::days(CONFIG.as_ref().unwrap().cpt_event_search_window_min_days as i64) }
+    chrono::Duration::days(CONFIG.get().unwrap().cpt_event_search_window_min_days as i64)
 }
 
 pub fn EVENT_SEARCH_WINDOW_MAX() -> chrono::Duration {
-    unsafe { chrono::Duration::days(CONFIG.as_ref().unwrap().cpt_event_search_window_max_days as i64) }
+    chrono::Duration::days(CONFIG.get().unwrap().cpt_event_search_window_max_days as i64)
 }
 
 pub fn EVENT_OCCURRENCE_DURATION_MIN() -> chrono::Duration {
-    unsafe { chrono::Duration::minutes(CONFIG.as_ref().unwrap().cpt_event_occurrence_duration_min_minutes as i64) }
+    chrono::Duration::minutes(CONFIG.get().unwrap().cpt_event_occurrence_duration_min_minutes as i64)
 }
 
 pub fn EVENT_OCCURRENCE_DURATION_MAX() -> chrono::Duration {
-    unsafe { chrono::Duration::days(CONFIG.as_ref().unwrap().cpt_event_occurrence_duration_max_days as i64) }
+    chrono::Duration::days(CONFIG.get().unwrap().cpt_event_occurrence_duration_max_days as i64)
 }
 
 pub fn EVENT_OCCURRENCE_SNAP() -> chrono::Duration {
-    unsafe { chrono::Duration::minutes(CONFIG.as_ref().unwrap().cpt_event_occurrence_snap_minutes as i64) }
+    chrono::Duration::minutes(CONFIG.get().unwrap().cpt_event_occurrence_snap_minutes as i64)
 }
 
 pub fn EVENT_LOGIN_BUFFER() -> chrono::Duration {
-    unsafe { chrono::Duration::hours(CONFIG.as_ref().unwrap().cpt_event_login_buffer_hours as i64) }
+    chrono::Duration::hours(CONFIG.get().unwrap().cpt_event_login_buffer_hours as i64)
 }
