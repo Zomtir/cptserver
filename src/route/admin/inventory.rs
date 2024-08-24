@@ -12,7 +12,7 @@ pub fn item_list(session: UserSession, category_id: Option<u32>) -> Result<Json<
         return Err(Error::RightInventoryMissing);
     };
 
-    let items = crate::db_inventory::item_list(category_id)?;
+    let items = crate::db::inventory::item_list(category_id)?;
     Ok(Json(items))
 }
 
@@ -22,7 +22,7 @@ pub fn item_create(session: UserSession, item: Json<Item>) -> Result<String, Err
         return Err(Error::RightInventoryMissing);
     };
 
-    let id = crate::db_inventory::item_create(&item)?;
+    let id = crate::db::inventory::item_create(&item)?;
     Ok(id.to_string())
 }
 
@@ -32,7 +32,7 @@ pub fn item_edit(session: UserSession, item_id: u64, item: Json<Item>) -> Result
         return Err(Error::RightInventoryMissing);
     };
 
-    crate::db_inventory::item_edit(item_id, &item)?;
+    crate::db::inventory::item_edit(item_id, &item)?;
     Ok(())
 }
 
@@ -42,7 +42,7 @@ pub fn item_delete(session: UserSession, item_id: u64) -> Result<(), Error> {
         return Err(Error::RightInventoryMissing);
     };
 
-    crate::db_inventory::item_delete(item_id)?;
+    crate::db::inventory::item_delete(item_id)?;
     Ok(())
 }
 
@@ -54,7 +54,7 @@ pub fn itemcat_list(session: UserSession) -> Result<Json<Vec<ItemCategory>>, Err
         return Err(Error::RightInventoryMissing);
     };
 
-    let itemcats = crate::db_inventory::itemcat_list()?;
+    let itemcats = crate::db::inventory::itemcat_list()?;
     Ok(Json(itemcats))
 }
 
@@ -64,7 +64,7 @@ pub fn itemcat_create(session: UserSession, itemcat: Json<ItemCategory>) -> Resu
         return Err(Error::RightInventoryMissing);
     };
 
-    let id = crate::db_inventory::itemcat_create(&itemcat)?;
+    let id = crate::db::inventory::itemcat_create(&itemcat)?;
     Ok(id.to_string())
 }
 
@@ -74,7 +74,7 @@ pub fn itemcat_edit(session: UserSession, category_id: u64, itemcat: Json<ItemCa
         return Err(Error::RightInventoryMissing);
     };
 
-    crate::db_inventory::itemcat_edit(category_id, &itemcat)?;
+    crate::db::inventory::itemcat_edit(category_id, &itemcat)?;
     Ok(())
 }
 
@@ -84,7 +84,7 @@ pub fn itemcat_delete(session: UserSession, category_id: u64) -> Result<(), Erro
         return Err(Error::RightInventoryMissing);
     };
 
-    crate::db_inventory::itemcat_delete(category_id)?;
+    crate::db::inventory::itemcat_delete(category_id)?;
     Ok(())
 }
 
@@ -96,7 +96,7 @@ pub fn stock_list(session: UserSession, club_id: Option<u32>, item_id: Option<u3
         return Err(Error::RightInventoryMissing);
     };
 
-    let stocks = crate::db_inventory::stock_list(club_id, item_id)?;
+    let stocks = crate::db::inventory::stock_list(club_id, item_id)?;
     Ok(Json(stocks))
 }
 
@@ -110,7 +110,7 @@ pub fn stock_create(session: UserSession, stock: Json<Stock>) -> Result<(), Erro
         return Err(Error::InventoryStockLimit);
     }
 
-    crate::db_inventory::stock_create(stock.club.id, stock.item.id, &stock.storage, stock.owned)?;
+    crate::db::inventory::stock_create(stock.club.id, stock.item.id, &stock.storage, stock.owned)?;
 
     Ok(())
 }
@@ -125,7 +125,7 @@ pub fn stock_edit(session: UserSession, stock_id: u64, stock: Json<Stock>) -> Re
         return Err(Error::InventoryStockLimit);
     }
 
-    let db_stock = crate::db_inventory::stock_info(stock_id)?;
+    let db_stock = crate::db::inventory::stock_info(stock_id)?;
 
     let delta = stock.owned as i64 - db_stock.owned as i64;
 
@@ -144,7 +144,7 @@ pub fn stock_edit(session: UserSession, stock_id: u64, stock: Json<Stock>) -> Re
         return Err(Error::InventoryStockConflict);
     }
 
-    crate::db_inventory::stock_edit(stock_id, &stock.storage, stock.owned, stock.loaned)?;
+    crate::db::inventory::stock_edit(stock_id, &stock.storage, stock.owned, stock.loaned)?;
 
     Ok(())
 }
@@ -155,14 +155,14 @@ pub fn stock_delete(session: UserSession, stock_id: u64) -> Result<(), Error> {
         return Err(Error::RightInventoryMissing);
     };
 
-    let stock = crate::db_inventory::stock_info(stock_id)?;
+    let stock = crate::db::inventory::stock_info(stock_id)?;
 
     // Cannot delete a stock that is incomplete
     if stock.loaned > 0 {
         return Err(Error::InventoryLoanConflict);
     }
 
-    crate::db_inventory::stock_delete(stock_id)?;
+    crate::db::inventory::stock_delete(stock_id)?;
 
     Ok(())
 }
@@ -173,15 +173,15 @@ pub fn item_loan(session: UserSession, stock_id: u64, user_id: u64) -> Result<()
         return Err(Error::RightInventoryMissing);
     };
 
-    let stock = crate::db_inventory::stock_info(stock_id)?;
+    let stock = crate::db::inventory::stock_info(stock_id)?;
 
     // No items available to loan
     if stock.owned <= stock.loaned {
         return Err(Error::InventoryStockConflict);
     }
 
-    crate::db_inventory::stock_edit(stock_id, &stock.storage, stock.owned, stock.loaned + 1)?;
-    crate::db_inventory::possession_create(
+    crate::db::inventory::stock_edit(stock_id, &stock.storage, stock.owned, stock.loaned + 1)?;
+    crate::db::inventory::possession_create(
         user_id,
         stock.item.id,
         chrono::Utc::now().date_naive(),
@@ -198,8 +198,8 @@ pub fn item_return(session: UserSession, possession_id: u64) -> Result<(), Error
         return Err(Error::RightInventoryMissing);
     };
 
-    let possession = crate::db_inventory::possession_info(possession_id)?;
-    let stock = crate::db_inventory::possession_ownership(possession_id)?;
+    let possession = crate::db::inventory::possession_info(possession_id)?;
+    let stock = crate::db::inventory::possession_ownership(possession_id)?;
 
     let stock = match (possession.owned, stock) {
         // Cannot return items which are owned by a user
@@ -217,8 +217,8 @@ pub fn item_return(session: UserSession, possession_id: u64) -> Result<(), Error
         return Err(Error::DatabaseError);
     }
 
-    crate::db_inventory::stock_edit(stock.id, &stock.storage, stock.owned, stock.loaned - 1)?;
-    crate::db_inventory::possession_delete(possession_id)?;
+    crate::db::inventory::stock_edit(stock.id, &stock.storage, stock.owned, stock.loaned - 1)?;
+    crate::db::inventory::possession_delete(possession_id)?;
 
     Ok(())
 }
@@ -229,8 +229,8 @@ pub fn item_handout(session: UserSession, possession_id: u64) -> Result<(), Erro
         return Err(Error::RightInventoryMissing);
     };
 
-    let possession = crate::db_inventory::possession_info(possession_id)?;
-    let stock = crate::db_inventory::possession_ownership(possession_id)?;
+    let possession = crate::db::inventory::possession_info(possession_id)?;
+    let stock = crate::db::inventory::possession_ownership(possession_id)?;
 
     let stock = match (possession.owned, stock) {
         // Cannot hand out items that already belong to a user
@@ -248,8 +248,8 @@ pub fn item_handout(session: UserSession, possession_id: u64) -> Result<(), Erro
         return Err(Error::InventoryLoanConflict);
     }
 
-    crate::db_inventory::possession_edit(possession_id, &possession, None)?;
-    crate::db_inventory::stock_edit(stock.id, &stock.storage, stock.owned - 1, stock.loaned - 1)?;
+    crate::db::inventory::possession_edit(possession_id, &possession, None)?;
+    crate::db::inventory::stock_edit(stock.id, &stock.storage, stock.owned - 1, stock.loaned - 1)?;
 
     Ok(())
 }
@@ -260,8 +260,8 @@ pub fn item_restock(session: UserSession, possession_id: u64, stock_id: u64) -> 
         return Err(Error::RightInventoryMissing);
     };
 
-    let possession = crate::db_inventory::possession_info(possession_id)?;
-    let stock = crate::db_inventory::stock_info(stock_id)?;
+    let possession = crate::db::inventory::possession_info(possession_id)?;
+    let stock = crate::db::inventory::stock_info(stock_id)?;
 
     // Cannot restock items on a stock of a different item type
     if possession.item.id != stock.item.id {
@@ -273,8 +273,8 @@ pub fn item_restock(session: UserSession, possession_id: u64, stock_id: u64) -> 
         return Err(Error::InventoryLoanConflict);
     };
 
-    crate::db_inventory::possession_edit(possession_id, &possession, Some(stock_id))?;
-    crate::db_inventory::stock_edit(stock_id, &stock.storage, stock.owned + 1, stock.loaned + 1)?;
+    crate::db::inventory::possession_edit(possession_id, &possession, Some(stock_id))?;
+    crate::db::inventory::stock_edit(stock_id, &stock.storage, stock.owned + 1, stock.loaned + 1)?;
 
     Ok(())
 }
@@ -293,7 +293,7 @@ pub fn possession_list(
         return Err(Error::RightInventoryMissing);
     };
 
-    let possessions = crate::db_inventory::possession_list(user_id, item_id, owned.map(|b| b.to_bool()), club_id)?;
+    let possessions = crate::db::inventory::possession_list(user_id, item_id, owned.map(|b| b.to_bool()), club_id)?;
     Ok(Json(possessions))
 }
 
@@ -303,7 +303,7 @@ pub fn possession_create(session: UserSession, user_id: u64, item_id: u64) -> Re
         return Err(Error::RightInventoryMissing);
     };
 
-    crate::db_inventory::possession_create(user_id, item_id, chrono::Utc::now().date_naive(), true, None)?;
+    crate::db::inventory::possession_create(user_id, item_id, chrono::Utc::now().date_naive(), true, None)?;
     Ok(())
 }
 
@@ -313,13 +313,13 @@ pub fn possession_delete(session: UserSession, possession_id: u64) -> Result<(),
         return Err(Error::RightInventoryMissing);
     };
 
-    let possession = crate::db_inventory::possession_info(possession_id)?;
+    let possession = crate::db::inventory::possession_info(possession_id)?;
 
     // Cannot delete items one does not own
     if !&possession.owned {
         return Err(Error::Default);
     }
 
-    crate::db_inventory::possession_delete(possession_id)?;
+    crate::db::inventory::possession_delete(possession_id)?;
     Ok(())
 }
