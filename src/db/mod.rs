@@ -3,6 +3,7 @@ pub mod course;
 pub mod event;
 pub mod inventory;
 pub mod location;
+pub mod skill;
 
 use mysql::{Pool, PooledConn};
 

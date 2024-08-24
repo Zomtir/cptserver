@@ -10,7 +10,7 @@ pub fn skill_list(session: UserSession) -> Result<Json<Vec<Skill>>, Error> {
         return Err(Error::RightCompetenceMissing);
     };
 
-    let skills = crate::db_skill::skill_list()?;
+    let skills = crate::db::skill::skill_list()?;
     Ok(Json(skills))
 }
 
@@ -20,7 +20,7 @@ pub fn skill_create(session: UserSession, skill: Json<Skill>) -> Result<String, 
         return Err(Error::RightCompetenceMissing);
     };
 
-    let id = crate::db_skill::skill_create(&skill)?;
+    let id = crate::db::skill::skill_create(&skill)?;
     Ok(id.to_string())
 }
 
@@ -30,7 +30,7 @@ pub fn skill_edit(session: UserSession, skill_id: u32, skill: Json<Skill>) -> Re
         return Err(Error::RightCompetenceMissing);
     };
 
-    crate::db_skill::skill_edit(skill_id, &skill)?;
+    crate::db::skill::skill_edit(skill_id, &skill)?;
     Ok(())
 }
 
@@ -40,6 +40,6 @@ pub fn skill_delete(session: UserSession, skill_id: u32) -> Result<(), Error> {
         return Err(Error::RightCompetenceMissing);
     };
 
-    crate::db_skill::skill_delete(skill_id)?;
+    crate::db::skill::skill_delete(skill_id)?;
     Ok(())
 }
