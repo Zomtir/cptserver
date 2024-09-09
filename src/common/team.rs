@@ -23,6 +23,8 @@ pub struct Right {
     pub right_inventory_read: bool,
     pub right_location_write: bool,
     pub right_location_read: bool,
+    pub right_organisation_write: bool,
+    pub right_organisation_read: bool,
     pub right_team_write: bool,
     pub right_team_read: bool,
     pub right_user_write: bool,

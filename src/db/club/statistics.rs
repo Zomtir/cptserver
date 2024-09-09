@@ -1,7 +1,7 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::User;
+use crate::common::{Affiliation, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
@@ -82,9 +82,10 @@ pub fn club_member_leaderboard(
 
 pub fn club_member_organisation(
     club_id: u32,
+    organisation_id: u64,
     active: Option<bool>,
     point_in_time: chrono::NaiveDate,
-) -> Result<Vec<User>, Error> {
+) -> Result<Vec<Affiliation>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "WITH effective_terms AS (
@@ -95,39 +96,31 @@ pub fn club_member_organisation(
             WHERE t.club_id = :club_id
         )
         SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
-            u.federationnumber, u.federationpermissionsolo, u.federationpermissionteam, u.federationresidency
+            o.organisation_id, o.abbreviation AS organisation_abbreviation, o.name AS organisation_name,
+            oa.member_identifier, oa.permission_solo_date, oa.permission_team_date, oa.residency_move_date
         FROM effective_terms et
         JOIN users u ON u.user_id = et.user_id
+        LEFT JOIN organisation_affiliations oa ON oa.user_id = u.user_id AND oa.organisation_id = :organisation_id
+        LEFT JOIN organisations o ON o.organisation_id = oa.organisation_id
         WHERE :point_in_time BETWEEN et.effective_begin AND et.effective_end
         AND (:active IS NULL OR :active = u.active)
         GROUP BY u.user_id;",
     )?;
 
     let params = params! {
-        "active" => &active,
         "club_id" => &club_id,
+        "organisation_id" => organisation_id,
+        "active" => &active,
         "point_in_time" => point_in_time,
     };
 
-    let map = |(
-        user_id,
-        user_key,
-        firstname,
-        lastname,
-        nickname,
-        federationnumber,
-        federationpermissionsolo,
-        federationpermissionteam,
-        federationresidency,
-    )| {
-        let mut user = User::from_info(user_id, user_key, firstname, lastname, nickname);
-        user.federationnumber = federationnumber;
-        user.federationpermissionsolo = federationpermissionsolo;
-        user.federationpermissionteam = federationpermissionteam;
-        user.federationresidency = federationresidency;
-        user
-    };
+    let rows: Vec<mysql::Row> = conn.exec(&stmt, &params)?;
 
-    let users = conn.exec_map(&stmt, &params, &map)?;
-    Ok(users)
+    let mut affiliations: Vec<Affiliation> = Vec::new();
+
+    for row in rows {
+        affiliations.push(crate::db::organisation::sql_affiliation(row));
+    }
+
+    Ok(affiliations)
 }

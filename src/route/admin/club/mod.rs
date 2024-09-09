@@ -2,7 +2,7 @@ pub mod term;
 
 use rocket::serde::json::Json;
 
-use crate::common::{Club, Term, User, WebDate};
+use crate::common::{Affiliation, Club, Term, User, WebDate};
 use crate::error::Error;
 use crate::session::UserSession;
 
@@ -83,20 +83,21 @@ pub fn statistic_team(
         return Err(Error::RightClubMissing);
     };
 
-    let users = crate::db::club::club_team_comparison(club_id, team_id, point_in_time.to_naive())?;
-    Ok(Json(users))
+    let list = crate::db::club::club_team_comparison(club_id, team_id, point_in_time.to_naive())?;
+    Ok(Json(list))
 }
 
-#[rocket::get("/admin/club_statistic_organisation?<club_id>&<point_in_time>")]
+#[rocket::get("/admin/club_statistic_organisation?<club_id>&<organisation_id>&<point_in_time>")]
 pub fn statistic_organisation(
     session: UserSession,
     club_id: u32,
+    organisation_id: u64,
     point_in_time: WebDate,
-) -> Result<Json<Vec<User>>, Error> {
+) -> Result<Json<Vec<Affiliation>>, Error> {
     if !session.right.right_club_read {
         return Err(Error::RightClubMissing);
     };
 
-    let users = crate::db::club::club_member_organisation(club_id, None, point_in_time.to_naive())?;
-    Ok(Json(users))
+    let list = crate::db::club::club_member_organisation(club_id, organisation_id, None, point_in_time.to_naive())?;
+    Ok(Json(list))
 }

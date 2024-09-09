@@ -62,6 +62,7 @@ pub enum Error {
     RightEventMissing,
     RightInventoryMissing,
     RightLocationMissing,
+    RightOrganisationMissing,
     RightTeamMissing,
     RightUserMissing,
 }
@@ -128,6 +129,7 @@ impl Error {
             Error::RightEventMissing => "RIGHT_EVENT_MISSING",
             Error::RightInventoryMissing => "RIGHT_INVENTORY_MISSING",
             Error::RightLocationMissing => "RIGHT_LOCATION_MISSING",
+            Error::RightOrganisationMissing => "RIGHT_ORGANISATION_MISSING",
             Error::RightTeamMissing => "RIGHT_TEAM_MISSING",
             Error::RightUserMissing => "RIGHT_USER_MISSING",
         };
@@ -195,6 +197,7 @@ impl std::fmt::Display for Error {
             Error::RightEventMissing => write!(f, "Event permissions are missing"),
             Error::RightInventoryMissing => write!(f, "Inventory permissions are missing"),
             Error::RightLocationMissing => write!(f, "Location permissions are missing"),
+            Error::RightOrganisationMissing => write!(f, "Organisation permissions are missing"),
             Error::RightTeamMissing => write!(f, "Team permissions are missing"),
             Error::RightUserMissing => write!(f, "User permissions are missing"),
         }

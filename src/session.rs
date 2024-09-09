@@ -78,6 +78,8 @@ impl UserSession {
                 right_inventory_read: true,
                 right_location_write: true,
                 right_location_read: true,
+                right_organisation_write: true,
+                right_organisation_read: true,
                 right_team_write: true,
                 right_team_read: true,
                 right_user_write: true,

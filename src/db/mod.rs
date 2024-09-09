@@ -4,6 +4,7 @@ pub mod course;
 pub mod event;
 pub mod inventory;
 pub mod location;
+pub mod organisation;
 pub mod skill;
 pub mod team;
 pub mod user;

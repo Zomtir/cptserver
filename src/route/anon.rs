@@ -3,7 +3,7 @@ extern crate lazy_static;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 
-use crate::common::{Club, Course, Location, Skill};
+use crate::common::{Club, Course, Location, Organisation, Skill};
 
 use crate::error::Error;
 
@@ -16,6 +16,12 @@ pub fn status() -> Status {
 pub fn location_list() -> Result<Json<Vec<Location>>, Error> {
     let locations = crate::db::location::location_list()?;
     Ok(Json(locations))
+}
+
+#[rocket::get("/anon/organisation_list")]
+pub fn organisation_list() -> Result<Json<Vec<Organisation>>, Error> {
+    let organisations = crate::db::organisation::organisation_list()?;
+    Ok(Json(organisations))
 }
 
 #[rocket::get("/anon/skill_list")]

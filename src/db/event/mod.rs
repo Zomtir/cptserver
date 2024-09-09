@@ -1,7 +1,7 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Acceptance, Event, Location, Occurrence, User};
+use crate::common::{Acceptance, Affiliation, Event, Location, Occurrence, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 use crate::session::Credential;
@@ -474,7 +474,7 @@ pub fn event_statistic_packlist(
 pub fn event_statistic_division(event_id: u64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname, u.federationnumber, u.birthday, u.gender
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname, u.birthday, u.gender
         FROM event_participant_presences ep
         JOIN users u ON ep.user_id = u.user_id
         WHERE ep.event_id = :event_id;",
@@ -482,49 +482,41 @@ pub fn event_statistic_division(event_id: u64) -> Result<Vec<User>, Error> {
     let params = params! {
         "event_id" => event_id,
     };
-    let map = |(user_id, user_key, firstname, lastname, nickname, federationnumber, birthday, gender)| {
+    let map = |(user_id, user_key, firstname, lastname, nickname, birthday, gender)| {
         let mut user = User::from_info(user_id, user_key, firstname, lastname, nickname);
         user.birthday = birthday;
-        user.federationnumber = federationnumber;
         user.gender = gender;
         user
     };
 
-    let stats = conn.exec_map(&stmt, &params, &map)?;
-    Ok(stats)
+    let list = conn.exec_map(&stmt, &params, &map)?;
+    Ok(list)
 }
 
-pub fn event_statistic_organisation(event_id: u64) -> Result<Vec<User>, Error> {
+pub fn event_statistic_organisation(event_id: u64, organisation_id: u64) -> Result<Vec<Affiliation>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
-            u.federationnumber, u.federationpermissionsolo, u.federationpermissionteam, u.federationresidency
+            o.organisation_id, o.abbreviation AS organisation_abbreviation, o.name AS organisation_name,
+            oa.member_identifier, oa.permission_solo_date, oa.permission_team_date, oa.residency_move_date
         FROM event_participant_presences ep
         JOIN users u ON ep.user_id = u.user_id
+        LEFT JOIN organisation_affiliations oa ON oa.user_id = u.user_id AND oa.organisation_id = :organisation_id
+        LEFT JOIN organisations o ON o.organisation_id = oa.organisation_id
         WHERE ep.event_id = :event_id;",
     )?;
     let params = params! {
         "event_id" => event_id,
-    };
-    let map = |(
-        user_id,
-        user_key,
-        firstname,
-        lastname,
-        nickname,
-        federationnumber,
-        federationpermissionsolo,
-        federationpermissionteam,
-        federationresidency,
-    )| {
-        let mut user = User::from_info(user_id, user_key, firstname, lastname, nickname);
-        user.federationnumber = federationnumber;
-        user.federationpermissionsolo = federationpermissionsolo;
-        user.federationpermissionteam = federationpermissionteam;
-        user.federationresidency = federationresidency;
-        user
+        "organisation_id" => organisation_id,
     };
 
-    let stats = conn.exec_map(&stmt, &params, &map)?;
-    Ok(stats)
+    let rows: Vec<mysql::Row> = conn.exec(&stmt, &params)?;
+
+    let mut affiliations: Vec<Affiliation> = Vec::new();
+
+    for row in rows {
+        affiliations.push(crate::db::organisation::sql_affiliation(row));
+    }
+
+    Ok(affiliations)
 }

@@ -44,10 +44,6 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
             birthlocation,
             nationality,
             gender,
-            federationnumber,
-            federationpermissionsolo,
-            federationpermissionteam,
-            federationresidency,
             note
         FROM users
         WHERE users.user_id = :user_id;",
@@ -78,10 +74,6 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
         birthlocation: row.take("birthlocation").unwrap(),
         nationality: row.take("nationality").unwrap(),
         gender: row.take("gender").unwrap(),
-        federationnumber: row.take("federationnumber").unwrap(),
-        federationpermissionsolo: row.take("federationpermissionsolo").unwrap(),
-        federationpermissionteam: row.take("federationpermissionteam").unwrap(),
-        federationresidency: row.take("federationresidency").unwrap(),
         note: row.take("note").unwrap(),
     };
 
@@ -101,11 +93,9 @@ pub fn user_create(user: &mut User) -> Result<u64, Error> {
     let stmt = conn.prep(
         "INSERT INTO users (user_key, pwd, pepper, salt, enabled, active, firstname, lastname, nickname,
         address, email, phone, iban, birthday, birthlocation, nationality, gender,
-        federationnumber, federationpermissionsolo, federationpermissionteam, federationresidency,
         note)
     VALUES (:user_key, :pwd, :pepper, :salt, :enabled, :active, :firstname, :lastname, :nickname,
         :address, :email, :phone, :iban, :birthday, :birthlocation, :nationality, :gender,
-        :federationnumber, :federationpermissionsolo, :federationpermissionteam, :federationresidency,
         :note);",
     )?;
 
@@ -127,10 +117,6 @@ pub fn user_create(user: &mut User) -> Result<u64, Error> {
         "birthlocation" => &user.birthlocation,
         "nationality" => &user.nationality,
         "gender" => &user.gender,
-        "federationnumber" => &user.federationnumber,
-        "federationpermissionsolo" => &user.federationpermissionsolo,
-        "federationpermissionteam" => &user.federationpermissionteam,
-        "federationresidency" => &user.federationresidency,
         "note" => &user.note,
     };
 
@@ -160,10 +146,6 @@ pub fn user_edit(user_id: u64, user: &mut User) -> Result<(), Error> {
         birthlocation = ?,
         nationality = ?,
         gender = ?,
-        federationnumber = ?,
-        federationpermissionsolo = ?,
-        federationpermissionteam = ?,
-        federationresidency = ?,
         note = ?
         WHERE user_id = ?;",
     )?;
@@ -183,10 +165,6 @@ pub fn user_edit(user_id: u64, user: &mut User) -> Result<(), Error> {
         user.birthlocation.clone().into(),
         user.nationality.clone().into(),
         user.gender.clone().clone().into(),
-        user.federationnumber.into(),
-        user.federationpermissionsolo.into(),
-        user.federationpermissionteam.into(),
-        user.federationresidency.into(),
         user.note.clone().into(),
         user_id.into(),
     ];

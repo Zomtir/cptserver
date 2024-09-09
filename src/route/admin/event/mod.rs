@@ -5,7 +5,7 @@ pub mod supporter;
 
 use rocket::serde::json::Json;
 
-use crate::common::{Acceptance, Event, Occurrence, User, WebBool, WebDateTime};
+use crate::common::{Acceptance, Affiliation, Event, Occurrence, User, WebBool, WebDateTime};
 use crate::error::Error;
 use crate::session::{Credential, UserSession};
 
@@ -203,12 +203,16 @@ pub fn statistic_division(session: UserSession, event_id: u64) -> Result<Json<Ve
     Ok(Json(stats))
 }
 
-#[rocket::get("/admin/event_statistic_organisation?<event_id>")]
-pub fn statistic_organisation(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>, Error> {
+#[rocket::get("/admin/event_statistic_organisation?<event_id>&<organisation_id>")]
+pub fn statistic_organisation(
+    session: UserSession,
+    event_id: u64,
+    organisation_id: u64,
+) -> Result<Json<Vec<Affiliation>>, Error> {
     if !session.right.right_event_read {
         return Err(Error::RightEventMissing);
     };
 
-    let stats = crate::db::event::event_statistic_organisation(event_id)?;
+    let stats = crate::db::event::event_statistic_organisation(event_id, organisation_id)?;
     Ok(Json(stats))
 }

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8001
--- Generation Time: Aug 23, 2024 at 07:44 AM
+-- Generation Time: Sep 09, 2024 at 05:56 PM
 -- Server version: 10.11.8-MariaDB-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -327,24 +327,23 @@ CREATE TABLE `locations` (
 
 CREATE TABLE `organisations` (
   `organisation_id` smallint(6) NOT NULL,
-  `organisation_key` varchar(10) NOT NULL,
-  `name` varchar(30) NOT NULL,
-  `description` int(100) NOT NULL
+  `abbreviation` varchar(10) NOT NULL,
+  `name` varchar(30) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `organisation_members`
+-- Table structure for table `organisation_affiliations`
 --
 
-CREATE TABLE `organisation_members` (
-  `organisation_id` int(11) NOT NULL,
+CREATE TABLE `organisation_affiliations` (
+  `organisation_id` smallint(6) NOT NULL,
   `user_id` mediumint(9) NOT NULL,
-  `number` int(11) NOT NULL,
-  `permission_team_date` date NOT NULL,
-  `permission_solo_date` date NOT NULL,
-  `local_residency_date` date NOT NULL
+  `member_identifier` char(10) DEFAULT NULL,
+  `permission_solo_date` date DEFAULT NULL,
+  `permission_team_date` date DEFAULT NULL,
+  `residency_move_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -384,6 +383,8 @@ CREATE TABLE `teams` (
   `right_inventory_read` tinyint(1) NOT NULL DEFAULT 0,
   `right_location_write` tinyint(1) NOT NULL DEFAULT 0,
   `right_location_read` tinyint(1) NOT NULL DEFAULT 0,
+  `right_organisation_write` tinyint(1) NOT NULL,
+  `right_organisation_read` tinyint(1) NOT NULL,
   `right_team_write` tinyint(1) NOT NULL DEFAULT 0,
   `right_team_read` tinyint(1) NOT NULL DEFAULT 0,
   `right_user_write` tinyint(1) NOT NULL DEFAULT 0,
@@ -440,12 +441,6 @@ CREATE TABLE `users` (
   `birthlocation` varchar(60) DEFAULT NULL,
   `nationality` varchar(40) DEFAULT NULL,
   `gender` enum('MALE','FEMALE','OTHER') DEFAULT NULL,
-  `federationNumber` mediumint(9) DEFAULT NULL,
-  `federationPermissionSolo` date DEFAULT NULL,
-  `federationPermissionTeam` date DEFAULT NULL,
-  `federationResidency` date DEFAULT NULL,
-  `dataDeclaration` tinyint(1) DEFAULT NULL,
-  `dataDisclaimer` text DEFAULT NULL,
   `note` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -658,8 +653,14 @@ ALTER TABLE `locations`
 -- Indexes for table `organisations`
 --
 ALTER TABLE `organisations`
-  ADD PRIMARY KEY (`organisation_id`),
-  ADD UNIQUE KEY `KEY` (`organisation_key`);
+  ADD PRIMARY KEY (`organisation_id`);
+
+--
+-- Indexes for table `organisation_affiliations`
+--
+ALTER TABLE `organisation_affiliations`
+  ADD KEY `organisation_members_ibfk_1` (`organisation_id`),
+  ADD KEY `organisation_members_ibfk_2` (`user_id`);
 
 --
 -- Indexes for table `skills`
@@ -766,6 +767,12 @@ ALTER TABLE `item_categories`
 --
 ALTER TABLE `locations`
   MODIFY `location_id` smallint(6) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `organisations`
+--
+ALTER TABLE `organisations`
+  MODIFY `organisation_id` smallint(6) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `skills`
@@ -945,6 +952,13 @@ ALTER TABLE `event_supporter_registrations`
 --
 ALTER TABLE `items`
   ADD CONSTRAINT `items_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `item_categories` (`category_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `organisation_affiliations`
+--
+ALTER TABLE `organisation_affiliations`
+  ADD CONSTRAINT `organisation_affiliations_ibfk_1` FOREIGN KEY (`organisation_id`) REFERENCES `organisations` (`organisation_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `organisation_affiliations_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `team_members`

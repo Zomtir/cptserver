@@ -40,15 +40,6 @@ pub struct User {
     pub gender: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub federationnumber: Option<u64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub federationpermissionsolo: Option<chrono::NaiveDate>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub federationpermissionteam: Option<chrono::NaiveDate>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub federationresidency: Option<chrono::NaiveDate>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,
 }
 
@@ -70,10 +61,6 @@ impl User {
             birthlocation: None,
             nationality: None,
             gender: None,
-            federationnumber: None,
-            federationpermissionsolo: None,
-            federationpermissionteam: None,
-            federationresidency: None,
             note: None,
         }
     }
