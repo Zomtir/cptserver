@@ -31,7 +31,7 @@ pub struct User {
     pub iban: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub birthday: Option<chrono::NaiveDate>,
+    pub birth_date: Option<chrono::NaiveDate>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub birthlocation: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -57,7 +57,7 @@ impl User {
             email: None,
             phone: None,
             iban: None,
-            birthday: None,
+            birth_date: None,
             birthlocation: None,
             nationality: None,
             gender: None,
