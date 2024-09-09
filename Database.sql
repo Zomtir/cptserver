@@ -438,7 +438,7 @@ CREATE TABLE `users` (
   `phone` varchar(20) DEFAULT NULL,
   `iban` char(22) DEFAULT NULL,
   `birth_date` date DEFAULT NULL,
-  `birthlocation` varchar(60) DEFAULT NULL,
+  `birth_location` varchar(60) DEFAULT NULL,
   `nationality` varchar(40) DEFAULT NULL,
   `gender` enum('MALE','FEMALE','OTHER') DEFAULT NULL,
   `note` text DEFAULT NULL

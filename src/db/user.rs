@@ -41,7 +41,7 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
             phone,
             iban,
             birth_date,
-            birthlocation,
+            birth_location,
             nationality,
             gender,
             note
@@ -71,7 +71,7 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
         phone: row.take("phone").unwrap(),
         iban: row.take("iban").unwrap(),
         birth_date: row.take("birth_date").unwrap(),
-        birthlocation: row.take("birthlocation").unwrap(),
+        birth_location: row.take("birth_location").unwrap(),
         nationality: row.take("nationality").unwrap(),
         gender: row.take("gender").unwrap(),
         note: row.take("note").unwrap(),
@@ -92,10 +92,10 @@ pub fn user_create(user: &mut User) -> Result<u64, Error> {
 
     let stmt = conn.prep(
         "INSERT INTO users (user_key, pwd, pepper, salt, enabled, active, firstname, lastname, nickname,
-        address, email, phone, iban, birth_date, birthlocation, nationality, gender,
+        address, email, phone, iban, birth_date, birth_location, nationality, gender,
         note)
     VALUES (:user_key, :pwd, :pepper, :salt, :enabled, :active, :firstname, :lastname, :nickname,
-        :address, :email, :phone, :iban, :birth_date, :birthlocation, :nationality, :gender,
+        :address, :email, :phone, :iban, :birth_date, :birth_location, :nationality, :gender,
         :note);",
     )?;
 
@@ -114,7 +114,7 @@ pub fn user_create(user: &mut User) -> Result<u64, Error> {
         "phone" => &user.phone,
         "iban" => &user.iban,
         "birth_date" => &user.birth_date,
-        "birthlocation" => &user.birthlocation,
+        "birth_location" => &user.birth_location,
         "nationality" => &user.nationality,
         "gender" => &user.gender,
         "note" => &user.note,
@@ -143,7 +143,7 @@ pub fn user_edit(user_id: u64, user: &mut User) -> Result<(), Error> {
         phone = ?,
         iban = ?,
         birth_date = ?,
-        birthlocation = ?,
+        birth_location = ?,
         nationality = ?,
         gender = ?,
         note = ?
@@ -162,7 +162,7 @@ pub fn user_edit(user_id: u64, user: &mut User) -> Result<(), Error> {
         user.phone.clone().into(),
         user.iban.clone().into(),
         user.birth_date.into(),
-        user.birthlocation.clone().into(),
+        user.birth_location.clone().into(),
         user.nationality.clone().into(),
         user.gender.clone().clone().into(),
         user.note.clone().into(),
