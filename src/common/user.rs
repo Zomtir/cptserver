@@ -38,6 +38,10 @@ pub struct User {
     pub nationality: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gender: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub height: Option<u16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub weight: Option<u16>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,
@@ -61,6 +65,8 @@ impl User {
             birth_location: None,
             nationality: None,
             gender: None,
+            height: None,
+            weight: None,
             note: None,
         }
     }

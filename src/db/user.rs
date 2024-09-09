@@ -44,6 +44,8 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
             birth_location,
             nationality,
             gender,
+            height,
+            weight,
             note
         FROM users
         WHERE users.user_id = :user_id;",
@@ -74,6 +76,8 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
         birth_location: row.take("birth_location").unwrap(),
         nationality: row.take("nationality").unwrap(),
         gender: row.take("gender").unwrap(),
+        height: row.take("height").unwrap(),
+        weight: row.take("weight").unwrap(),
         note: row.take("note").unwrap(),
     };
 
@@ -92,10 +96,10 @@ pub fn user_create(user: &mut User) -> Result<u64, Error> {
 
     let stmt = conn.prep(
         "INSERT INTO users (user_key, pwd, pepper, salt, enabled, active, firstname, lastname, nickname,
-        address, email, phone, iban, birth_date, birth_location, nationality, gender,
+        address, email, phone, iban, birth_date, birth_location, nationality, gender, height, weight,
         note)
     VALUES (:user_key, :pwd, :pepper, :salt, :enabled, :active, :firstname, :lastname, :nickname,
-        :address, :email, :phone, :iban, :birth_date, :birth_location, :nationality, :gender,
+        :address, :email, :phone, :iban, :birth_date, :birth_location, :nationality, :gender, :height, :weight,
         :note);",
     )?;
 
@@ -117,6 +121,8 @@ pub fn user_create(user: &mut User) -> Result<u64, Error> {
         "birth_location" => &user.birth_location,
         "nationality" => &user.nationality,
         "gender" => &user.gender,
+        "height" => &user.height,
+        "weight" => &user.weight,
         "note" => &user.note,
     };
 
@@ -146,6 +152,8 @@ pub fn user_edit(user_id: u64, user: &mut User) -> Result<(), Error> {
         birth_location = ?,
         nationality = ?,
         gender = ?,
+        height = ?,
+        weight = ?,
         note = ?
         WHERE user_id = ?;",
     )?;
@@ -164,7 +172,9 @@ pub fn user_edit(user_id: u64, user: &mut User) -> Result<(), Error> {
         user.birth_date.into(),
         user.birth_location.clone().into(),
         user.nationality.clone().into(),
-        user.gender.clone().clone().into(),
+        user.gender.clone().into(),
+        user.height.clone().into(),
+        user.weight.clone().into(),
         user.note.clone().into(),
         user_id.into(),
     ];

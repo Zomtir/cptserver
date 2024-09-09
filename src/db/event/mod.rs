@@ -474,7 +474,7 @@ pub fn event_statistic_packlist(
 pub fn event_statistic_division(event_id: u64) -> Result<Vec<User>, Error> {
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
-        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname, u.birth_date, u.gender
+        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname, u.birth_date, u.gender, u.height, u.weight
         FROM event_participant_presences ep
         JOIN users u ON ep.user_id = u.user_id
         WHERE ep.event_id = :event_id;",
@@ -482,10 +482,12 @@ pub fn event_statistic_division(event_id: u64) -> Result<Vec<User>, Error> {
     let params = params! {
         "event_id" => event_id,
     };
-    let map = |(user_id, user_key, firstname, lastname, nickname, birth_date, gender)| {
+    let map = |(user_id, user_key, firstname, lastname, nickname, birth_date, gender, height, weight)| {
         let mut user = User::from_info(user_id, user_key, firstname, lastname, nickname);
         user.birth_date = birth_date;
         user.gender = gender;
+        user.height = height;
+        user.weight = weight;
         user
     };
 
