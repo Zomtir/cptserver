@@ -1,9 +1,9 @@
-ABOUT
+About
 =====
 
 This is the server application for providing an API for the cptclient. CPT stands for Course Participation Tracker.
 
-PREPARATIONS
+Preparations
 ============
 
 The server requires a database with the structure described `Database.sql`. The easiest way to setup is to setup a MariaDB database. Adapt the names to your liking.
@@ -49,7 +49,7 @@ cargo build
 cargo run
 ```
 
-RELEASES
+Releases
 ========
 
 This is the targeted release procedure.
@@ -67,7 +67,7 @@ git tag v1.1.1
 > version = "1.1.1"
 ```
 
-PRODUCTION
+Production
 ==========
 
 To build a binary for production, choose a reliable version and build it with the `--release` flag.

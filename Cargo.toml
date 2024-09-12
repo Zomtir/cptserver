@@ -4,8 +4,6 @@ version = "1.0.0"
 authors = ["Moritz Oberhauser <moritz.oberhauser@gmail.com>"]
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 mysql = "^25.0"
 mysql_common = {version = "^0.32.2", features = ["chrono", "frunk"]}
@@ -13,7 +11,6 @@ chrono = { version = "^0.4.31", features = ["serde"]}
 http = "0.2"
 rocket = { version = "0.5.0", features = ["json"] }
 rocket_cors = "0.6.0"
-#rocket_cors = { git = "https://github.com/lawliet89/rocket_cors", branch = "master" }
 serde = { version = "^1.0", features = ["derive"] }
 serde_with = { version = "^3.8", features = ["chrono_0_4"] }
 serde_json = "^1.0"
