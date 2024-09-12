@@ -1,3 +1,57 @@
+## Release v1.0.0 (12th Sep 2024)
+
+- license: Cosmetic changes to the license and waiver
+- feat: SQL and API rewrite for event and course updates
+    - Event leader, supporter, participant presence
+    - Event leader, supporter, participant filter for access
+    - Event leader, supporter, participant registrations
+    - Event acceptance status
+    - Event occurrence status
+    - Course leader, supporter, participant team sieves
+    - Make event owner a distinct meta role
+    - Adapated event and course related statistics for new user presence types
+- feat: Added Organisations and Affiliations
+    - Added DB layout
+    - Added structs
+    - Added SQL calls
+    - Added routes
+- feat: Added Club statistic organisation
+- feat: Added Event statistic organisation
+- feat: DB updates for acceptance, occurrence, filters, sieves, access
+- feat: Made configs customizable
+- feat: Use OnceLock for POOL and CONFIG
+- feat: Optionally serialize user fields
+- feat: Add height and weight to user
+- feat: Added id to club_stocks
+- feat: Group stats into stripped json
+- feat: Allow DB cascade delete for event references
+- feat: Prevent event owner from demoting oneself
+- feat: Admin event withdraw
+- feat: Event credential route for admins
+- feat: Event course API for owner
+- feat: Filter possessions by item
+- feat: Allow admin to filter terms by club
+- feat: Event statistic for participant age/gender divisions
+- feat: Item category list for regular users
+- feat: Event item preparation
+- feat: Personal possession list
+- refactor: Renamed user birthlocation to user birth_location
+- refactor: Renamed user birthday to user birth_date
+- refactor: Moved all routes in to modules
+- refactor: Move all db calls into module
+- remove: Removed user data declaration
+- chore: Cargo update
+- chore: More consistent function names
+- fix: Fixed typo in event SQL call
+- fix: Fixed service event presence pool check
+- fix: Do not autodecline on date overlap for admins
+- fix: Allow change of occurrence
+- fix: Fixed read/write permissions on routes
+- fix: Wrong pool checks for presence
+- fix: Streamlined club membership for future terms
+- fix: Inconsistent itemcat API parameters
+- fix: Handle Rust 1.81 compiler warnings
+
 ## Release v0.9 (27th May 2024)
 
 - feat: Inventory management

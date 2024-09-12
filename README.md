@@ -52,15 +52,12 @@ cargo run
 RELEASES
 ========
 
-When you make a new release, this is the targeted procedure.
+This is the targeted release procedure.
 
 The versioning scheme is `MAJOR.MINOR.PATCH`, increment the:
 - MAJOR version when you make substantial API changes or core reworks
 - MINOR version when you make any API changes
 - PATCH version when you make backward compatible changes
-
-As long as the `MAJOR` release is `0.x`, it is considered a pre-release. The API and feature set
-might be incomplete and unstable.
 
 ```
 # Tag the commit with a release tag and a 'v' prefix.
@@ -92,7 +89,7 @@ The code is dedicated to the Public Domain as declared in the [License](LICENSE.
 Contributing
 ============
 
-Contributing to the project implies a copyright release as stated in the [Waiver](WAIVER.md) unless 
+Contributing to the project implies a copyright release according to the [Waiver](WAIVER.md) unless 
 stated otherwise.
 
 You are very welcome to explicitly state your approval with a simple statement such as
