@@ -94,7 +94,6 @@ pub struct EventSession {
     pub token: String,
     pub expiry: chrono::DateTime<chrono::Utc>,
     pub event_id: u64,
-    pub event_key: String,
 }
 
 #[rocket::async_trait]

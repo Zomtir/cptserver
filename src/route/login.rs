@@ -148,7 +148,6 @@ pub fn event_login(credit: Json<Credential>) -> Result<String, Error> {
         token: session_token.to_string(),
         expiry: session_expiry,
         event_id,
-        event_key: credit.login.to_string(),
     };
 
     EVENTSESSIONS.lock().unwrap().insert(session_token.to_string(), session);

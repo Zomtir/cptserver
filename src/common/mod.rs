@@ -25,6 +25,7 @@ pub use club::*;
 pub use confirmation::*;
 pub use course::*;
 pub use event::*;
+#[allow(unused_imports)]
 pub use gender::*;
 pub use item::*;
 pub use location::*;
