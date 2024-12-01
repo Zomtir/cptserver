@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8001
--- Generation Time: Sep 09, 2024 at 08:35 PM
+-- Generation Time: Dec 01, 2024 at 09:38 PM
 -- Server version: 10.11.8-MariaDB-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -474,6 +474,16 @@ CREATE TABLE `user_possessions` (
   `acquisition_date` date NOT NULL,
   `owned` tinyint(1) NOT NULL DEFAULT 1,
   `stock_id` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `_info`
+--
+
+CREATE TABLE `_info` (
+  `version` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --

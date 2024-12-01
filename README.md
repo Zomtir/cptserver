@@ -6,7 +6,7 @@ This is the server application for providing an API for the cptclient. CPT stand
 Preparations
 ============
 
-The server requires a database with the structure described `Database.sql`. The easiest way to setup is to setup a MariaDB database. Adapt the names to your liking.
+The server requires a suitable SQL database. The easiest way to setup is to setup a MariaDB database. Adapt the names to your liking. The program installs and updates the schema automatically.
 
 ```SQL
 CREATE USER 'cptdb-user'@'localhost' IDENTIFIED BY 'cptdb-password';
@@ -14,13 +14,7 @@ CREATE DATABASE cptdb;
 GRANT ALL PRIVILEGES ON cptdb.* TO 'cptdb-user'@'localhost';
 ```
 
-Then import the `Database.sql` file via `phymyadmin` or use the CML. You will be promted to enter the 'cptdb-password'.
-
-```BASH
-mariadb -u cptdb-user -p cptdb < Database.sql
-```
-
-Finally, set up a config file called `cptserver.toml` for the server containing the database details. You can use `cptserver.template.toml` as template. `3306` is usually the default port.
+Then set up a config file called `cptserver.toml` for the server containing the database details. You can use `cptserver.template.toml` as template. `3306` is usually the default port.
 
 ```
 db_server = 'localhost'
@@ -63,8 +57,17 @@ The versioning scheme is `MAJOR.MINOR.PATCH`, increment the:
 # Tag the commit with a release tag and a 'v' prefix.
 git tag v1.1.1
 
-# Adapt the Cargo toml file
+# Adapt the Cargo.toml file
 > version = "1.1.1"
+
+# Adapt the release.sh script
+> RELEASE_VERSION="1.1.1"
+
+# Update the database scheme version in src/db/mod.rs if neccessary
+> static SCHEME_VERSION : u8 = 0;
+
+# Create an database update script under sql/update_X.sql
+# Export the current schema from the database and safe it as sql/schema_X.sql
 ```
 
 Production

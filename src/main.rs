@@ -28,6 +28,10 @@ fn rocket() -> _ {
         panic!("Database connection failed")
     };
 
+    if db::update_db().is_err() {
+        panic!("Database update failed")
+    };
+
     // Promote an admin user, if demanded by the config, and make him session admin
     if let Some(admin) = crate::config::ADMIN_USER() {
         // Create the user, if not existing
