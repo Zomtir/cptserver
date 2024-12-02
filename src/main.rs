@@ -129,6 +129,8 @@ fn rocket() -> _ {
                 route::admin::course::course_requirement_list,
                 route::admin::course::course_requirement_add,
                 route::admin::course::course_requirement_remove,
+                route::admin::course::course_club_info,
+                route::admin::course::course_club_edit,
                 route::admin::course::course_statistic_class,
                 route::admin::course::course_statistic_leader,
                 route::admin::course::course_statistic_leader1,

@@ -103,6 +103,29 @@ pub fn course_requirement_remove(session: UserSession, requirement_id: u64) -> R
     Ok(())
 }
 
+#[rocket::get("/admin/course_club_info?<course_id>")]
+pub fn course_club_info(session: UserSession, course_id: u64) -> Result<Json<Option<u32>>, Error> {
+    if !session.right.right_course_read {
+        return Err(Error::RightCourseMissing);
+    };
+
+    let club_id = crate::db::course::course_club_info(course_id)?;
+    Ok(Json(club_id))
+}
+
+#[rocket::head("/admin/course_club_edit?<course_id>&<club_id>")]
+pub fn course_club_edit(session: UserSession, course_id: u64, club_id: Option<u32>) -> Result<(), Error> {
+    if !session.right.right_course_write {
+        return Err(Error::RightCourseMissing);
+    };
+    if !session.right.right_club_write {
+        return Err(Error::RightClubMissing);
+    };
+
+    crate::db::course::course_club_edit(course_id, club_id)?;
+    Ok(())
+}
+
 #[rocket::get("/admin/course_statistic_class?<course_id>")]
 pub fn course_statistic_class(
     session: UserSession,

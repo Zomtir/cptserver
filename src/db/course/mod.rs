@@ -208,6 +208,43 @@ pub fn course_requirement_remove(requirement_id: u64) -> Result<(), Error> {
     Ok(())
 }
 
+/* CLUB RELATED */
+
+pub fn course_club_info(course_id: u64) -> Result<Option<u32>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT club_id
+        FROM courses
+        WHERE course_id = :course_id",
+    )?;
+    let params = params! {
+        "course_id" => course_id,
+    };
+
+    match conn.exec_first::<Option<u32>, _, _>(&stmt, &params)? {
+        None => Err(Error::CourseMissing),
+        Some(club_id) => Ok(club_id),
+    }
+}
+
+pub fn course_club_edit(course_id: u64, club_id: Option<u32>) -> Result<(), Error> {
+    let mut conn: PooledConn = get_pool_conn();
+
+    let stmt = conn.prep(
+        "UPDATE courses
+        SET club_id = :club_id
+        WHERE course_id = :course_id",
+    )?;
+
+    let params = params! {
+        "course_id" => &course_id,
+        "club_id" => &club_id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
 /* STATISTICS */
 
 pub fn course_statistic_class(course_id: u32) -> Result<Vec<(Event, u64, u64, u64)>, Error> {
