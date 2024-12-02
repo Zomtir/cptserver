@@ -36,6 +36,21 @@ pub fn club_list() -> Result<Json<Vec<Club>>, Error> {
     Ok(Json(clubs))
 }
 
+#[rocket::get("/anon/club_image?<club_id>")]
+pub fn club_image(club_id: u32) -> Result<Vec<u8>, Error> {
+    let club = crate::db::club::club_info(club_id)?;
+
+    let image_url = match club.image_url {
+        None => "resources/club_placeholder.png".to_string(),
+        Some(url) => format!("data/clubs/{}", url)
+    };
+    
+    match std::fs::read(image_url) {
+        Ok(img) => Ok(img),
+        Err(_) => Err(Error::Default),
+    }
+}
+
 #[rocket::get("/anon/course_list")]
 pub fn course_list() -> Result<Json<Vec<Course>>, Error> {
     let courses = crate::db::course::course_list(None, Some(true), Some(true))?;

@@ -14,7 +14,7 @@ pub fn term_list(
     let stmt = conn.prep(
         "SELECT t.term_id,
             u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
-            c.club_id, c.club_key, c.name, c.description,
+            c.club_id, c.club_key, c.name,
             t.term_begin, t.term_end
         FROM terms t
         JOIN users u ON (u.user_id = t.user_id)
@@ -40,18 +40,16 @@ pub fn term_list(
         club_id,
         club_key,
         club_name,
-        club_description,
         begin,
         end,
     )| Term {
         id: term_id,
         user: User::from_info(user_id, user_key, firstname, lastname, nickname),
-        club: Club {
-            id: club_id,
-            key: club_key,
-            name: club_name,
-            description: club_description,
-        },
+        club: Club::from_info(
+            club_id,
+            club_key,
+            club_name,
+        ),
         begin,
         end,
     };

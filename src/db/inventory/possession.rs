@@ -102,7 +102,7 @@ pub fn possession_ownership(possession_id: u64) -> Result<Option<Stock>, Error> 
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT cs.stock_id,
-            c.club_id, c.club_key, c.name as club_name, c.description as club_description,
+            c.club_id, c.club_key, c.name as club_name,
             i.item_id, i.name as item_name, ic.category_id, ic.name as category_name,
             cs.storage, cs.owned, cs.loaned
         FROM user_possessions up
@@ -125,12 +125,11 @@ pub fn possession_ownership(possession_id: u64) -> Result<Option<Stock>, Error> 
 
     let stock = Stock {
         id: row.take("stock_id").unwrap(),
-        club: Club {
-            id: row.take("club_id").unwrap(),
-            key: row.take("club_key").unwrap(),
-            name: row.take("club_name").unwrap(),
-            description: row.take("club_description").unwrap(),
-        },
+        club: Club::from_info(
+            row.take("club_id").unwrap(),
+            row.take("club_key").unwrap(),
+            row.take("club_name").unwrap(),
+        ),
         item: Item {
             id: row.take("item_id").unwrap(),
             name: row.take("item_name").unwrap(),

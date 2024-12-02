@@ -16,6 +16,17 @@ pub fn club_list(session: UserSession) -> Result<Json<Vec<Club>>, Error> {
     Ok(Json(clubs))
 }
 
+#[rocket::get("/admin/club_info?<club_id>")]
+pub fn club_info(session: UserSession, club_id: u32) -> Result<Json<Club>, Error> {
+    if !session.right.right_club_read {
+        return Err(Error::RightClubMissing);
+    };
+
+    let club = crate::db::club::club_info(club_id)?;
+
+    Ok(Json(club))
+}
+
 #[rocket::post("/admin/club_create", format = "application/json", data = "<club>")]
 pub fn club_create(session: UserSession, club: Json<Club>) -> Result<String, Error> {
     if !session.right.right_club_write {

@@ -47,6 +47,8 @@ pub enum Error {
     CourseLoginFail,
     CourseKeyInvalid,
 
+    ClubMissing,
+
     InventoryStockInvalid,
     InventoryStockLimit,
     InventoryStockConflict,
@@ -113,6 +115,8 @@ impl Error {
             Error::CourseModeratorPermission => "COURSE_MODERATOR_PERMISSION",
             Error::CourseLoginFail => "COURSE_LOGIN_FAIL",
             Error::CourseKeyInvalid => "COURSE_KEY_INVALID",
+
+            Error::ClubMissing => "CLUB_MISSING",
 
             Error::InventoryStockInvalid => "INVENTORY_STOCK_INVALID",
             Error::InventoryStockLimit => "INVENTORY_STOCK_LIMIT",
@@ -181,6 +185,8 @@ impl std::fmt::Display for Error {
             Error::CourseModeratorPermission => write!(f, "The user has insufficient course moderator permissions"),
             Error::CourseLoginFail => write!(f, "Course login failed"),
             Error::CourseKeyInvalid => write!(f, "Course key has an invalid format"),
+
+            Error::ClubMissing => write!(f, "Club is missing"),
 
             Error::InventoryStockInvalid => write!(f, "Current inventory stock is invalid"),
             Error::InventoryStockLimit => write!(f, "Inventory stock limit was reached"),
