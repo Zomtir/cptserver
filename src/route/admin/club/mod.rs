@@ -2,7 +2,7 @@ pub mod term;
 
 use rocket::serde::json::Json;
 
-use crate::common::{Affiliation, Club, Term, User, WebDate};
+use crate::common::{Affiliation, Club, Event, Term, User, WebDate, WebDateTime};
 use crate::error::Error;
 use crate::session::UserSession;
 
@@ -100,4 +100,69 @@ pub fn statistic_organisation(
 
     let list = crate::db::club::club_member_organisation(club_id, organisation_id, None, point_in_time.to_naive())?;
     Ok(Json(list))
+}
+
+#[rocket::get("/admin/club_statistic_user_leader?<club_id>&<leader_id>&<time_window_begin>&<time_window_end>")]
+pub fn club_statistic_user_leader(
+    session: UserSession,
+    club_id: u32,
+    leader_id: u64,
+    time_window_begin: WebDateTime,
+    time_window_end: WebDateTime,
+) -> Result<Json<Vec<Event>>, Error> {
+    if !session.right.right_club_read {
+        return Err(Error::RightClubMissing);
+    };
+
+    let stats = crate::db::club::club_statistic_user_leader(
+        club_id,
+        leader_id,
+        time_window_begin.to_naive(),
+        time_window_end.to_naive(),
+    )?;
+    Ok(Json(stats))
+}
+
+#[rocket::get(
+    "/admin/club_statistic_user_participant?<club_id>&<participant_id>&<time_window_begin>&<time_window_end>"
+)]
+pub fn club_statistic_user_participant(
+    session: UserSession,
+    club_id: u32,
+    participant_id: u64,
+    time_window_begin: WebDateTime,
+    time_window_end: WebDateTime,
+) -> Result<Json<Vec<Event>>, Error> {
+    if !session.right.right_club_read {
+        return Err(Error::RightClubMissing);
+    };
+
+    let stats = crate::db::club::club_statistic_user_participant(
+        club_id,
+        participant_id,
+        time_window_begin.to_naive(),
+        time_window_end.to_naive(),
+    )?;
+    Ok(Json(stats))
+}
+
+#[rocket::get("/admin/club_statistic_user_supporter?<club_id>&<supporter_id>&<time_window_begin>&<time_window_end>")]
+pub fn club_statistic_user_supporter(
+    session: UserSession,
+    club_id: u32,
+    supporter_id: u64,
+    time_window_begin: WebDateTime,
+    time_window_end: WebDateTime,
+) -> Result<Json<Vec<Event>>, Error> {
+    if !session.right.right_club_read {
+        return Err(Error::RightClubMissing);
+    };
+
+    let stats = crate::db::club::club_statistic_user_supporter(
+        club_id,
+        supporter_id,
+        time_window_begin.to_naive(),
+        time_window_end.to_naive(),
+    )?;
+    Ok(Json(stats))
 }

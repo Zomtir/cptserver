@@ -16,7 +16,7 @@ use std::sync::OnceLock;
 
 static POOL: OnceLock<Pool> = OnceLock::new();
 
-static SCHEME_VERSION : u8 = 0; 
+static SCHEME_VERSION: u8 = 0;
 
 pub fn connect_db() -> Result<(), Error> {
     let db_url = crate::config::DB_URL();
@@ -30,11 +30,11 @@ pub fn connect_db() -> Result<(), Error> {
 pub fn update_db() -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
 
-    let latest_version : u8 = SCHEME_VERSION;
+    let latest_version: u8 = SCHEME_VERSION;
 
     // Check if the database has tables
     let query_empty = "SELECT COUNT(*) FROM information_schema.tables WHERE TABLE_TYPE = 'BASE TABLE';";
-    let is_empty : bool = conn.query_first::<u8,_>(query_empty)?.unwrap() < 1;
+    let is_empty: bool = conn.query_first::<u8, _>(query_empty)?.unwrap() < 1;
 
     // Case 1: The database is empty and we do a fresh install
     if is_empty {
@@ -44,11 +44,10 @@ pub fn update_db() -> Result<(), Error> {
             Ok(schema) => format!("{}\nINSERT INTO _info (version) VALUES ({});", schema, latest_version),
         };
         conn.query_drop(&query_schema)?;
-    }
-    else {
+    } else {
         // Check if schema info exists
         let query_info = "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '_info';";
-        let has_info : bool = conn.query_first::<u8,_>(query_info)?.unwrap() > 0;
+        let has_info: bool = conn.query_first::<u8, _>(query_info)?.unwrap() > 0;
 
         // Case 2: Schema info is missing which is taken as indicator of schema version 0
         if !has_info {
@@ -62,11 +61,11 @@ pub fn update_db() -> Result<(), Error> {
 
         // Case 3: Schema info exists or was set in case 2
         let query_version = "SELECT version FROM _info;";
-        let mut current_version : u8 = conn.query_first::<u8,_>(query_version)?.unwrap();
+        let mut current_version: u8 = conn.query_first::<u8, _>(query_version)?.unwrap();
 
         // Do incremental upgrades
         while current_version < latest_version {
-            let query_update = match std::fs::read_to_string(format!("sql/update_{}.sql", current_version+1)) {
+            let query_update = match std::fs::read_to_string(format!("sql/update_{}.sql", current_version + 1)) {
                 Err(_) => return Err(Error::DatabaseError),
                 Ok(update) => update,
             };

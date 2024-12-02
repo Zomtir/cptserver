@@ -1,7 +1,7 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Affiliation, User};
+use crate::common::{Affiliation, Event, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
@@ -123,4 +123,121 @@ pub fn club_member_organisation(
     }
 
     Ok(affiliations)
+}
+
+pub fn club_statistic_user_leader(
+    club_id: u32,
+    leader_id: u64,
+    time_window_begin: chrono::NaiveDateTime,
+    time_window_end: chrono::NaiveDateTime,
+) -> Result<Vec<Event>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT
+            events.event_id,
+            events.event_key,
+            events.title,
+            events.begin,
+            events.end
+        FROM
+            events
+        JOIN
+            event_leader_presences p ON events.event_id = p.event_id
+        JOIN
+            courses ON events.course_id = courses.course_id
+        WHERE
+            courses.club_id = :club_id AND p.user_id = :leader_id
+        AND
+            events.begin BETWEEN :time_window_begin AND :time_window_end;",
+    )?;
+
+    let params = params! {
+        "club_id" => &club_id,
+        "leader_id" => &leader_id,
+        "time_window_begin" => &time_window_begin,
+        "time_window_end" => &time_window_end,
+    };
+
+    let map = |(event_id, event_key, title, begin, end)| Event::from_info(event_id, event_key, title, begin, end);
+
+    let stats = conn.exec_map(&stmt, &params, &map)?;
+    Ok(stats)
+}
+
+pub fn club_statistic_user_participant(
+    club_id: u32,
+    participant_id: u64,
+    time_window_begin: chrono::NaiveDateTime,
+    time_window_end: chrono::NaiveDateTime,
+) -> Result<Vec<Event>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT
+            events.event_id,
+            events.event_key,
+            events.title,
+            events.begin,
+            events.end
+        FROM
+            events
+        JOIN
+            event_participant_presences p ON events.event_id = p.event_id
+        JOIN
+            courses ON events.course_id = courses.course_id
+        WHERE
+            courses.club_id = :club_id AND p.user_id = :participant_id
+        AND
+            events.begin BETWEEN :time_window_begin AND :time_window_end;",
+    )?;
+
+    let params = params! {
+        "club_id" => &club_id,
+        "participant_id" => &participant_id,
+        "time_window_begin" => &time_window_begin,
+        "time_window_end" => &time_window_end,
+    };
+
+    let map = |(event_id, event_key, title, begin, end)| Event::from_info(event_id, event_key, title, begin, end);
+
+    let stats = conn.exec_map(&stmt, &params, &map)?;
+    Ok(stats)
+}
+
+pub fn club_statistic_user_supporter(
+    club_id: u32,
+    supporter_id: u64,
+    time_window_begin: chrono::NaiveDateTime,
+    time_window_end: chrono::NaiveDateTime,
+) -> Result<Vec<Event>, Error> {
+    let mut conn: PooledConn = get_pool_conn();
+    let stmt = conn.prep(
+        "SELECT
+            events.event_id,
+            events.event_key,
+            events.title,
+            events.begin,
+            events.end
+        FROM
+            events
+        JOIN
+            event_supporter_presences p ON events.event_id = p.event_id
+        JOIN
+            courses ON events.course_id = courses.course_id
+        WHERE
+            courses.club_id = :club_id AND p.user_id = :supporter_id
+        AND
+            events.begin BETWEEN :time_window_begin AND :time_window_end;",
+    )?;
+
+    let params = params! {
+        "club_id" => &club_id,
+        "supporter_id" => &supporter_id,
+        "time_window_begin" => &time_window_begin,
+        "time_window_end" => &time_window_end,
+    };
+
+    let map = |(event_id, event_key, title, begin, end)| Event::from_info(event_id, event_key, title, begin, end);
+
+    let stats = conn.exec_map(&stmt, &params, &map)?;
+    Ok(stats)
 }
