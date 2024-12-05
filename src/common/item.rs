@@ -1,5 +1,4 @@
 use crate::common::{Club, User};
-use mysql_common::chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -30,6 +29,6 @@ pub struct Possession {
     pub id: u32,
     pub user: User,
     pub item: Item,
-    pub acquisition_date: NaiveDate,
+    pub acquisition_date: chrono::NaiveDate,
     pub owned: bool,
 }

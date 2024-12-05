@@ -1,5 +1,4 @@
 use crate::common::{Course, User};
-use mysql_common::chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -25,6 +24,6 @@ pub struct Competence {
     pub user: User,
     pub skill: Skill,
     pub rank: u8,
-    pub date: NaiveDate,
+    pub date: chrono::NaiveDate,
     pub judge: User,
 }
