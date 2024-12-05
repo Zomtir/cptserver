@@ -1,4 +1,4 @@
-use crate::common::License;
+use crate::common::{BankAccount, License};
 use crate::error::Error;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -28,8 +28,6 @@ pub struct User {
     pub email: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub phone: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub iban: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub birth_date: Option<chrono::NaiveDate>,
@@ -43,6 +41,9 @@ pub struct User {
     pub height: Option<u16>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub weight: Option<u16>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bank_account: Option<BankAccount>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub license_main: Option<License>,
@@ -66,13 +67,13 @@ impl User {
             address: None,
             email: None,
             phone: None,
-            iban: None,
             birth_date: None,
             birth_location: None,
             nationality: None,
             gender: None,
             height: None,
             weight: None,
+            bank_account: None,
             license_main: None,
             license_extra: None,
             note: None,

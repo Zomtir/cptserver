@@ -1,7 +1,7 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{License, User};
+use crate::common::{BankAccount, License, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
@@ -39,13 +39,16 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
             address,
             email,
             phone,
-            iban,
             birth_date,
             birth_location,
             nationality,
             gender,
             height,
             weight,
+            ba.id AS ba_id,
+            ba.iban AS ba_iban,
+            ba.bic AS ba_bic,
+            ba.institute AS ba_institute,
             lm.id AS license_main_id,
             lm.number AS license_main_number,
             lm.name AS license_main_name,
@@ -56,6 +59,7 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
             le.expiration AS license_extra_expiration,
             note
         FROM users
+        LEFT JOIN bank_accounts ba ON users.bank_account = ba.id
         LEFT JOIN licenses lm ON users.license_main = lm.id
         LEFT JOIN licenses le ON users.license_extra = le.id
         WHERE users.user_id = :user_id;",
@@ -81,13 +85,18 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
         address: row.take("address").unwrap(),
         email: row.take("email").unwrap(),
         phone: row.take("phone").unwrap(),
-        iban: row.take("iban").unwrap(),
         birth_date: row.take("birth_date").unwrap(),
         birth_location: row.take("birth_location").unwrap(),
         nationality: row.take("nationality").unwrap(),
         gender: row.take("gender").unwrap(),
         height: row.take("height").unwrap(),
         weight: row.take("weight").unwrap(),
+        bank_account: row.take::<Option<u32>, &str>("ba_id").unwrap().map(|id| BankAccount {
+            id,
+            iban: row.take("ba_iban").unwrap(),
+            bic: row.take("ba_bic").unwrap(),
+            institute: row.take("ba_institute").unwrap(),
+        }),
         license_main: row
             .take::<Option<u32>, &str>("license_main_id")
             .unwrap()
@@ -124,10 +133,10 @@ pub fn user_create(user: &mut User) -> Result<u64, Error> {
 
     let stmt = conn.prep(
         "INSERT INTO users (user_key, pwd, pepper, salt, enabled, active, firstname, lastname, nickname,
-        address, email, phone, iban, birth_date, birth_location, nationality, gender, height, weight,
+        address, email, phone, birth_date, birth_location, nationality, gender, height, weight,
         note)
     VALUES (:user_key, :pwd, :pepper, :salt, :enabled, :active, :firstname, :lastname, :nickname,
-        :address, :email, :phone, :iban, :birth_date, :birth_location, :nationality, :gender, :height, :weight,
+        :address, :email, :phone, :birth_date, :birth_location, :nationality, :gender, :height, :weight,
         :note);",
     )?;
 
@@ -144,7 +153,6 @@ pub fn user_create(user: &mut User) -> Result<u64, Error> {
         "address" => &user.address,
         "email" => &user.email,
         "phone" => &user.phone,
-        "iban" => &user.iban,
         "birth_date" => &user.birth_date,
         "birth_location" => &user.birth_location,
         "nationality" => &user.nationality,
@@ -175,7 +183,6 @@ pub fn user_edit(user_id: u64, user: &mut User) -> Result<(), Error> {
         address = ?,
         email = ?,
         phone = ?,
-        iban = ?,
         birth_date = ?,
         birth_location = ?,
         nationality = ?,
@@ -196,7 +203,6 @@ pub fn user_edit(user_id: u64, user: &mut User) -> Result<(), Error> {
         user.address.clone().into(),
         user.email.clone().into(),
         user.phone.clone().into(),
-        user.iban.clone().into(),
         user.birth_date.into(),
         user.birth_location.clone().into(),
         user.nationality.clone().into(),

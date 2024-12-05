@@ -20,4 +20,26 @@ CREATE TABLE `licenses` (`id` MEDIUMINT NOT NULL AUTO_INCREMENT , `number` INT N
 ALTER TABLE `users` ADD `license_main` MEDIUMINT NULL DEFAULT NULL AFTER `weight`, ADD `license_extra` MEDIUMINT NULL DEFAULT NULL AFTER `license_main`;
 -- Add foreign key constraints
 ALTER TABLE `users` ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY (`license_main`) REFERENCES `licenses`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-ALTER TABLE `users` ADD CONSTRAINT `users_ibfk_2` FOREIGN KEY (`license_extra`) REFERENCES `licenses`(`id`) ON DELETE SET NULL ON UPDATE CASCADE; 
+ALTER TABLE `users` ADD CONSTRAINT `users_ibfk_2` FOREIGN KEY (`license_extra`) REFERENCES `licenses`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- Add bank accounts
+CREATE TABLE `bank_accounts` (`id` MEDIUMINT NOT NULL AUTO_INCREMENT , `iban` CHAR(34) NOT NULL , `bic` CHAR(11) NOT NULL , `institute` VARCHAR(50) NOT NULL , PRIMARY KEY (`id`)) ENGINE = InnoDB;
+-- Associate bank_account with user
+ALTER TABLE `users` ADD `bank_account` MEDIUMINT NULL DEFAULT NULL AFTER `weight`;
+-- Add foreign key constraints
+ALTER TABLE `users` ADD CONSTRAINT `users_ibfk_3` FOREIGN KEY (`bank_account`) REFERENCES `bank_accounts`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- Transfer the IBAN
+
+-- 1) Remove spaces from the IBAN
+UPDATE users SET iban = REPLACE(iban, ' ', '') WHERE iban IS NOT NULL;
+-- 2) Add a temporary user_id column to the bank_accounts table
+ALTER TABLE bank_accounts ADD COLUMN temp_user_id MEDIUMINT NULL;
+-- 3) Create a bank account for each user with an IBAN
+INSERT INTO bank_accounts (iban, bic, institute, temp_user_id) SELECT iban, '', '', user_id FROM users WHERE iban IS NOT NULL;
+-- 4) Update the user bank_accounts by using the temp_user_id
+UPDATE users JOIN bank_accounts ON users.user_id = bank_accounts.temp_user_id SET users.bank_account = bank_accounts.id;
+-- 6) Remove the temporary column
+ALTER TABLE bank_accounts DROP COLUMN temp_user_id;
+-- 7) Remove the IBAN column from users
+ALTER TABLE users DROP COLUMN iban;
