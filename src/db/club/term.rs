@@ -30,29 +30,14 @@ pub fn term_list(
         "point_in_time" => point_in_time,
     };
 
-    let map = |(
-        term_id,
-        user_id,
-        user_key,
-        firstname,
-        lastname,
-        nickname,
-        club_id,
-        club_key,
-        club_name,
-        begin,
-        end,
-    )| Term {
-        id: term_id,
-        user: User::from_info(user_id, user_key, firstname, lastname, nickname),
-        club: Club::from_info(
-            club_id,
-            club_key,
-            club_name,
-        ),
-        begin,
-        end,
-    };
+    let map =
+        |(term_id, user_id, user_key, firstname, lastname, nickname, club_id, club_key, club_name, begin, end)| Term {
+            id: term_id,
+            user: User::from_info(user_id, user_key, firstname, lastname, nickname),
+            club: Club::from_info(club_id, club_key, club_name),
+            begin,
+            end,
+        };
 
     let terms = conn.exec_map(&stmt, &params, &map)?;
     Ok(terms)

@@ -14,11 +14,7 @@ pub fn club_list() -> Result<Vec<Club>, Error> {
 
     let params = params::Params::Empty;
 
-    let map = |(club_id, club_key, club_name)| Club::from_info(
-        club_id,
-        club_key,
-        club_name,
-    );
+    let map = |(club_id, club_key, club_name)| Club::from_info(club_id, club_key, club_name);
 
     let entries = conn.exec_map(&stmt, &params, &map)?;
     Ok(entries)

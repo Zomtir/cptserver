@@ -1,3 +1,4 @@
+use crate::common::License;
 use crate::error::Error;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -44,6 +45,11 @@ pub struct User {
     pub weight: Option<u16>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub license_main: Option<License>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub license_extra: Option<License>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,
 }
 
@@ -67,6 +73,8 @@ impl User {
             gender: None,
             height: None,
             weight: None,
+            license_main: None,
+            license_extra: None,
             note: None,
         }
     }

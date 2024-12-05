@@ -42,9 +42,9 @@ pub fn club_image(club_id: u32) -> Result<Vec<u8>, Error> {
 
     let image_url = match club.image_url {
         None => "resources/club_placeholder.png".to_string(),
-        Some(url) => format!("data/clubs/{}", url)
+        Some(url) => format!("data/clubs/{}", url),
     };
-    
+
     match std::fs::read(image_url) {
         Ok(img) => Ok(img),
         Err(_) => Err(Error::Default),

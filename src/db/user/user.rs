@@ -1,7 +1,7 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::User;
+use crate::common::{License, User};
 use crate::db::get_pool_conn;
 use crate::error::Error;
 
@@ -46,8 +46,18 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
             gender,
             height,
             weight,
+            lm.id AS license_main_id,
+            lm.number AS license_main_number,
+            lm.name AS license_main_name,
+            lm.expiration AS license_main_expiration,
+            le.id AS license_extra_id,
+            le.number AS license_extra_number,
+            le.name AS license_extra_name,
+            le.expiration AS license_extra_expiration,
             note
         FROM users
+        LEFT JOIN licenses lm ON users.license_main = lm.id
+        LEFT JOIN licenses le ON users.license_extra = le.id
         WHERE users.user_id = :user_id;",
     )?;
 
@@ -78,6 +88,24 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
         gender: row.take("gender").unwrap(),
         height: row.take("height").unwrap(),
         weight: row.take("weight").unwrap(),
+        license_main: row
+            .take::<Option<u32>, &str>("license_main_id")
+            .unwrap()
+            .map(|id| License {
+                id,
+                number: row.take("license_main_number").unwrap(),
+                name: row.take("license_main_name").unwrap(),
+                expiration: row.take("license_main_expiration").unwrap(),
+            }),
+        license_extra: row
+            .take::<Option<u32>, &str>("license_extra_id")
+            .unwrap()
+            .map(|id| License {
+                id,
+                number: row.take("license_extra_number").unwrap(),
+                name: row.take("license_extra_name").unwrap(),
+                expiration: row.take("license_extra_expiration").unwrap(),
+            }),
         note: row.take("note").unwrap(),
     };
 

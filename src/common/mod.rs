@@ -10,6 +10,7 @@ mod course;
 mod event;
 mod gender;
 mod item;
+mod license;
 mod location;
 mod math;
 mod occurrence;
@@ -28,6 +29,7 @@ pub use event::*;
 #[allow(unused_imports)]
 pub use gender::*;
 pub use item::*;
+pub use license::*;
 pub use location::*;
 pub use math::*;
 pub use occurrence::*;
