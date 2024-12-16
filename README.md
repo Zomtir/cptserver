@@ -48,26 +48,42 @@ Releases
 
 This is the targeted release procedure.
 
+Collect the changes since the previous release and add them to the [CHANGELOG](CHANGELOG.md).
+```
+git log --format=%B v1.0.0..HEAD
+```
+
 The versioning scheme is `MAJOR.MINOR.PATCH`, increment the:
 - MAJOR version when you make substantial API changes or core reworks
 - MINOR version when you make any API changes
 - PATCH version when you make backward compatible changes
 
+Adapt the Cargo.toml file.
+
 ```
-# Tag the commit with a release tag and a 'v' prefix.
+version = "1.1.1"
+```
+
+Adapt the release.sh script
+```
+RELEASE_VERSION="1.1.1"
+```
+
+Update the database scheme version to version `X` in src/db/mod.rs if neccessary, whereas `X` is the next increment from the previous one.
+
+```
+static SCHEME_VERSION : u8 = X;
+```
+
+Create an database update script under `sql/update_X.sql`.
+
+Export the current schema from the database and save it as `sql/schema_X.sql`
+
+Commit the changes and tag the commit.
+
+```
+git commit -m "Release v1.1.1"
 git tag v1.1.1
-
-# Adapt the Cargo.toml file
-> version = "1.1.1"
-
-# Adapt the release.sh script
-> RELEASE_VERSION="1.1.1"
-
-# Update the database scheme version in src/db/mod.rs if neccessary
-> static SCHEME_VERSION : u8 = 0;
-
-# Create an database update script under sql/update_X.sql
-# Export the current schema from the database and safe it as sql/schema_X.sql
 ```
 
 Production

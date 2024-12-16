@@ -1,3 +1,21 @@
+## Release v1.1.0 (21st Dec 2024)
+
+- feat: Added user bank accounts
+- feat: Added user licenses
+- feat: Added club image, disciplines and chairman and club_info API
+- feat: Added club statistics for user presence
+- feat: Added option to assign courses to clubs
+- feat: Automatic db schema install and update
+- feat: Include location at event statistics
+- refactor: Minor chrono definition changes
+- fix: Relativ paths do not work on production
+- fix: Limit chars on filename path
+- chore: Created a release shell script
+- chore: Include build process in release script
+- chore: Update rust and cargo to 1.83
+- chore: Update db schema to 1
+- chore: Readme and Cargo cleanups
+
 ## Release v1.0.0 (12th Sep 2024)
 
 - license: Cosmetic changes to the license and waiver

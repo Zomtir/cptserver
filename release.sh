@@ -1,7 +1,7 @@
 #! /bin/bash
 
 RELEASE_DIR=./release
-RELEASE_VERSION="1.0.0"
+RELEASE_VERSION="1.1.0"
 RELEASE_ARCH="debian13-x86_64"
 
 if [[ -z "$RELEASE_DIR" || "$RELEASE_DIR" == "/" ]]; then
