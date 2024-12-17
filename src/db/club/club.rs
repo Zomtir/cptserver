@@ -50,6 +50,10 @@ pub fn club_info(club_id: u32) -> Result<Club, Error> {
 }
 
 pub fn club_create(club: &Club) -> Result<u32, Error> {
+    if let Some(image_url) = &club.image_url {
+        crate::common::fs::validate_path(image_url)?;
+    }
+
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO clubs (club_key, name, description, disciplines, image_url, chairman)
@@ -71,6 +75,10 @@ pub fn club_create(club: &Club) -> Result<u32, Error> {
 }
 
 pub fn club_edit(club_id: u32, club: &Club) -> Result<(), Error> {
+    if let Some(image_url) = &club.image_url {
+        crate::common::fs::validate_path(image_url)?;
+    }
+
     let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE clubs SET
