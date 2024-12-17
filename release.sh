@@ -16,6 +16,7 @@ cargo build --release
 
 cp {target/release/cptserver,cptserver.service,cptserver.template.toml} $RELEASE_DIR/$RELEASE_NAME/
 cp {README.md,LICENSE.md,CHANGELOG.md} $RELEASE_DIR/$RELEASE_NAME/
+cp -r resources $RELEASE_DIR/$RELEASE_NAME/
 cp -r sql $RELEASE_DIR/$RELEASE_NAME/
 
 cd $RELEASE_DIR/

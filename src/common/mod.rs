@@ -9,6 +9,7 @@ mod club;
 mod confirmation;
 mod course;
 mod event;
+pub mod fs;
 mod gender;
 mod item;
 mod license;

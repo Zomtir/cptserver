@@ -41,14 +41,12 @@ pub fn club_image(club_id: u32) -> Result<Vec<u8>, Error> {
     let club = crate::db::club::club_info(club_id)?;
 
     let image_url = match club.image_url {
-        None => "resources/club_placeholder.png".to_string(),
+        None => "resources/club_banner_placeholder.png".to_string(),
         Some(url) => format!("data/clubs/{}", url),
     };
 
-    match std::fs::read(image_url) {
-        Ok(img) => Ok(img),
-        Err(_) => Err(Error::Default),
-    }
+    let local_path = crate::common::fs::local_path(&image_url)?;
+    std::fs::read(local_path).map_err(|_| Error::Default)
 }
 
 #[rocket::get("/anon/course_list")]

@@ -38,12 +38,16 @@ pub fn update_db() -> Result<(), Error> {
 
     // Case 1: The database is empty and we do a fresh install
     if is_empty {
-        let query_schema = match std::fs::read_to_string(format!("sql/schema_{}.sql", latest_version)) {
-            Err(_) => return Err(Error::DatabaseError),
-            // Load the schema, and inser the latest version number
-            Ok(schema) => format!("{}\nINSERT INTO _info (version) VALUES ({});", schema, latest_version),
-        };
+        let partial_path = format!("sql/schema_{}.sql", latest_version);
+        let local_path = crate::common::fs::local_path(&partial_path)?;
+
+        // Apply the schema
+        let query_schema = std::fs::read_to_string(local_path).map_err(|_| Error::Default)?;
         conn.query_drop(&query_schema)?;
+
+        // Insert the latest version number
+        let query_version = format!("INSERT INTO _info (version) VALUES ({});", latest_version);
+        conn.query_drop(&query_version)?;
     } else {
         // Check if schema info exists
         let query_info = "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '_info';";
@@ -51,11 +55,11 @@ pub fn update_db() -> Result<(), Error> {
 
         // Case 2: Schema info is missing which is taken as indicator of schema version 0
         if !has_info {
+            let partial_path = "sql/update_0.sql";
+            let local_path = crate::common::fs::local_path(&partial_path)?;
+
             // Run the script that makes the version 0 explicit
-            let query_update0 = match std::fs::read_to_string("sql/update_0.sql") {
-                Err(_) => return Err(Error::DatabaseError),
-                Ok(update0) => update0,
-            };
+            let query_update0 = std::fs::read_to_string(local_path).map_err(|_| Error::Default)?;
             conn.query_drop(&query_update0)?;
         }
 
@@ -65,10 +69,11 @@ pub fn update_db() -> Result<(), Error> {
 
         // Do incremental upgrades
         while current_version < latest_version {
-            let query_update = match std::fs::read_to_string(format!("sql/update_{}.sql", current_version + 1)) {
-                Err(_) => return Err(Error::DatabaseError),
-                Ok(update) => update,
-            };
+            let partial_path = format!("sql/update_{}.sql", current_version + 1);
+            let local_path = crate::common::fs::local_path(&partial_path)?;
+
+            // Apply the next update
+            let query_update = std::fs::read_to_string(local_path).map_err(|_| Error::Default)?;
             conn.query_drop(query_update)?;
             current_version += 1;
         }
