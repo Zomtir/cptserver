@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8001
--- Generation Time: Dec 01, 2024 at 09:38 PM
+-- Generation Time: Dec 17, 2024 at 09:18 AM
 -- Server version: 10.11.8-MariaDB-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -24,6 +24,19 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `bank_accounts`
+--
+
+CREATE TABLE `bank_accounts` (
+  `id` mediumint(9) NOT NULL,
+  `iban` char(34) NOT NULL,
+  `bic` char(11) NOT NULL,
+  `institute` varchar(50) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `clubs`
 --
 
@@ -31,7 +44,10 @@ CREATE TABLE `clubs` (
   `club_id` tinyint(4) NOT NULL,
   `club_key` varchar(10) NOT NULL,
   `name` varchar(30) NOT NULL,
-  `description` varchar(100) NOT NULL
+  `description` varchar(100) DEFAULT NULL,
+  `disciplines` varchar(500) DEFAULT NULL,
+  `image_url` varchar(50) DEFAULT NULL,
+  `chairman` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -60,7 +76,8 @@ CREATE TABLE `courses` (
   `course_key` char(10) NOT NULL,
   `title` varchar(100) NOT NULL,
   `active` tinyint(1) NOT NULL DEFAULT 1,
-  `public` tinyint(1) NOT NULL DEFAULT 1
+  `public` tinyint(1) NOT NULL DEFAULT 1,
+  `club_id` tinyint(4) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -309,6 +326,19 @@ CREATE TABLE `item_categories` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `licenses`
+--
+
+CREATE TABLE `licenses` (
+  `id` mediumint(9) NOT NULL,
+  `number` int(11) NOT NULL,
+  `name` varchar(50) NOT NULL,
+  `expiration` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `locations`
 --
 
@@ -436,13 +466,15 @@ CREATE TABLE `users` (
   `address` varchar(60) DEFAULT NULL,
   `email` varchar(40) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
-  `iban` char(22) DEFAULT NULL,
   `birth_date` date DEFAULT NULL,
   `birth_location` varchar(60) DEFAULT NULL,
   `nationality` varchar(40) DEFAULT NULL,
   `gender` enum('MALE','FEMALE','OTHER') DEFAULT NULL,
   `height` smallint(6) DEFAULT NULL,
   `weight` smallint(6) DEFAULT NULL,
+  `bank_account` mediumint(9) DEFAULT NULL,
+  `license_main` mediumint(9) DEFAULT NULL,
+  `license_extra` mediumint(9) DEFAULT NULL,
   `note` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -491,6 +523,12 @@ CREATE TABLE `_info` (
 --
 
 --
+-- Indexes for table `bank_accounts`
+--
+ALTER TABLE `bank_accounts`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `clubs`
 --
 ALTER TABLE `clubs`
@@ -510,7 +548,8 @@ ALTER TABLE `club_stocks`
 --
 ALTER TABLE `courses`
   ADD PRIMARY KEY (`course_id`),
-  ADD UNIQUE KEY `KEY` (`course_key`);
+  ADD UNIQUE KEY `KEY` (`course_key`),
+  ADD KEY `courses_ibfk_1` (`club_id`);
 
 --
 -- Indexes for table `course_bookmarks`
@@ -655,6 +694,12 @@ ALTER TABLE `item_categories`
   ADD PRIMARY KEY (`category_id`);
 
 --
+-- Indexes for table `licenses`
+--
+ALTER TABLE `licenses`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `locations`
 --
 ALTER TABLE `locations`
@@ -708,7 +753,10 @@ ALTER TABLE `terms`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`user_id`),
-  ADD UNIQUE KEY `KEY` (`user_key`);
+  ADD UNIQUE KEY `KEY` (`user_key`),
+  ADD KEY `users_ibfk_1` (`license_main`),
+  ADD KEY `users_ibfk_2` (`license_extra`),
+  ADD KEY `users_ibfk_3` (`bank_account`);
 
 --
 -- Indexes for table `user_competences`
@@ -731,6 +779,12 @@ ALTER TABLE `user_possessions`
 --
 -- AUTO_INCREMENT for dumped tables
 --
+
+--
+-- AUTO_INCREMENT for table `bank_accounts`
+--
+ALTER TABLE `bank_accounts`
+  MODIFY `id` mediumint(9) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `clubs`
@@ -773,6 +827,12 @@ ALTER TABLE `items`
 --
 ALTER TABLE `item_categories`
   MODIFY `category_id` smallint(6) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `licenses`
+--
+ALTER TABLE `licenses`
+  MODIFY `id` mediumint(9) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `locations`
@@ -832,6 +892,12 @@ ALTER TABLE `user_possessions`
 ALTER TABLE `club_stocks`
   ADD CONSTRAINT `club_stocks_ibfk_1` FOREIGN KEY (`club_id`) REFERENCES `clubs` (`club_id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `club_stocks_ibfk_2` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `courses`
+--
+ALTER TABLE `courses`
+  ADD CONSTRAINT `courses_ibfk_1` FOREIGN KEY (`club_id`) REFERENCES `clubs` (`club_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `course_bookmarks`
@@ -985,6 +1051,14 @@ ALTER TABLE `team_members`
 ALTER TABLE `terms`
   ADD CONSTRAINT `terms_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `terms_ibfk_2` FOREIGN KEY (`club_id`) REFERENCES `clubs` (`club_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `users`
+--
+ALTER TABLE `users`
+  ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY (`license_main`) REFERENCES `licenses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `users_ibfk_2` FOREIGN KEY (`license_extra`) REFERENCES `licenses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `users_ibfk_3` FOREIGN KEY (`bank_account`) REFERENCES `bank_accounts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Constraints for table `user_competences`

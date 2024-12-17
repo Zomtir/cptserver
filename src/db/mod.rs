@@ -16,7 +16,7 @@ use std::sync::OnceLock;
 
 static POOL: OnceLock<Pool> = OnceLock::new();
 
-static SCHEME_VERSION: u8 = 0;
+static SCHEME_VERSION: u8 = 1;
 
 pub fn connect_db() -> Result<(), Error> {
     let db_url = crate::config::DB_URL();
