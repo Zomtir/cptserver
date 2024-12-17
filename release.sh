@@ -12,6 +12,8 @@ fi
 RELEASE_NAME="cptserver-$RELEASE_VERSION-$RELEASE_ARCH"
 mkdir -p $RELEASE_DIR/$RELEASE_NAME/
 
+cargo build --release
+
 cp {target/release/cptserver,cptserver.service,cptserver.template.toml} $RELEASE_DIR/$RELEASE_NAME/
 cp {README.md,LICENSE.md,CHANGELOG.md} $RELEASE_DIR/$RELEASE_NAME/
 cp -r sql $RELEASE_DIR/$RELEASE_NAME/
