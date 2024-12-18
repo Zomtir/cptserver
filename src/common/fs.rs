@@ -1,6 +1,6 @@
 use crate::error::Error;
-use std::path::PathBuf;
 use regex::Regex;
+use std::path::PathBuf;
 
 pub fn local_path(partial_path: &str) -> Result<PathBuf, Error> {
     let exe_path = std::env::current_exe().map_err(|_| Error::Default)?;

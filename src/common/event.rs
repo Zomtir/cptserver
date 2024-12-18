@@ -41,6 +41,7 @@ impl Event {
         title: String,
         begin: chrono::NaiveDateTime,
         end: chrono::NaiveDateTime,
+        location: Option<Location>,
     ) -> Event {
         Event {
             id,
@@ -49,13 +50,43 @@ impl Event {
             title,
             begin,
             end,
-            location: None,
+            location: location,
             note: None,
             occurrence: None,
             acceptance: None,
             public: None,
             scrutable: None,
             course_id: None,
+        }
+    }
+
+    pub fn sqlmap() -> impl Fn(
+        (
+            u64,
+            String,
+            String,
+            chrono::NaiveDateTime,
+            chrono::NaiveDateTime,
+            Option<u32>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+        ),
+    ) -> Event {
+        |(event_id, event_key, title, begin, end, location_id, location_key, location_name, location_description)| {
+            Event::from_info(
+                event_id,
+                event_key,
+                title,
+                begin,
+                end,
+                location_id.map(|id| Location {
+                    id,
+                    key: location_key.unwrap(),
+                    name: location_name.unwrap(),
+                    description: location_description.unwrap(),
+                }),
+            )
         }
     }
 }

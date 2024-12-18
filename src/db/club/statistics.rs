@@ -138,9 +138,15 @@ pub fn club_statistic_user_leader(
             events.event_key,
             events.title,
             events.begin,
-            events.end
+            events.end,
+            locations.location_id,
+            locations.location_key,
+            locations.name AS location_name,
+            locations.description AS location_description
         FROM
             events
+        JOIN
+            locations ON locations.location_id = events.location_id
         JOIN
             event_leader_presences p ON events.event_id = p.event_id
         JOIN
@@ -158,7 +164,7 @@ pub fn club_statistic_user_leader(
         "time_window_end" => &time_window_end,
     };
 
-    let map = |(event_id, event_key, title, begin, end)| Event::from_info(event_id, event_key, title, begin, end);
+    let map = Event::sqlmap();
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
@@ -177,9 +183,15 @@ pub fn club_statistic_user_participant(
             events.event_key,
             events.title,
             events.begin,
-            events.end
+            events.end,
+            locations.location_id,
+            locations.location_key,
+            locations.name AS location_name,
+            locations.description AS location_description
         FROM
             events
+        JOIN
+            locations ON locations.location_id = events.location_id
         JOIN
             event_participant_presences p ON events.event_id = p.event_id
         JOIN
@@ -197,7 +209,7 @@ pub fn club_statistic_user_participant(
         "time_window_end" => &time_window_end,
     };
 
-    let map = |(event_id, event_key, title, begin, end)| Event::from_info(event_id, event_key, title, begin, end);
+    let map = Event::sqlmap();
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
@@ -216,9 +228,15 @@ pub fn club_statistic_user_supporter(
             events.event_key,
             events.title,
             events.begin,
-            events.end
+            events.end,
+            locations.location_id,
+            locations.location_key,
+            locations.name AS location_name,
+            locations.description AS location_description
         FROM
             events
+        JOIN
+            locations ON locations.location_id = events.location_id
         JOIN
             event_supporter_presences p ON events.event_id = p.event_id
         JOIN
@@ -236,7 +254,7 @@ pub fn club_statistic_user_supporter(
         "time_window_end" => &time_window_end,
     };
 
-    let map = |(event_id, event_key, title, begin, end)| Event::from_info(event_id, event_key, title, begin, end);
+    let map = Event::sqlmap();
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)

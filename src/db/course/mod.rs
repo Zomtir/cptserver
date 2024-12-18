@@ -279,7 +279,7 @@ pub fn course_statistic_class(course_id: u32) -> Result<Vec<(Event, u64, u64, u6
 
     let map = |(event_id, event_key, title, begin, end, leader_count, supporter_count, participant_count)| {
         (
-            Event::from_info(event_id, event_key, title, begin, end),
+            Event::from_info(event_id, event_key, title, begin, end, None),
             leader_count,
             supporter_count,
             participant_count,
@@ -332,9 +332,15 @@ pub fn course_statistic_leader1(course_id: u32, leader_id: u64) -> Result<Vec<Ev
             events.event_key,
             events.title,
             events.begin,
-            events.end
+            events.end,
+            locations.location_id,
+            locations.location_key,
+            locations.name AS location_name,
+            locations.description AS location_description
         FROM
             events
+        JOIN
+            locations ON locations.location_id = events.location_id
         JOIN
             event_leader_presences p ON events.event_id = p.event_id
         WHERE
@@ -346,7 +352,7 @@ pub fn course_statistic_leader1(course_id: u32, leader_id: u64) -> Result<Vec<Ev
         "leader_id" => &leader_id,
     };
 
-    let map = |(event_id, event_key, title, begin, end)| Event::from_info(event_id, event_key, title, begin, end);
+    let map = Event::sqlmap();
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
@@ -394,9 +400,15 @@ pub fn course_statistic_supporter1(course_id: u32, supporter_id: u64) -> Result<
             events.event_key,
             events.title,
             events.begin,
-            events.end
+            events.end,
+            locations.location_id,
+            locations.location_key,
+            locations.name AS location_name,
+            locations.description AS location_description
         FROM
             events
+        JOIN
+            locations ON locations.location_id = events.location_id
         JOIN
             event_supporter_presences p ON events.event_id = p.event_id
         WHERE
@@ -408,7 +420,7 @@ pub fn course_statistic_supporter1(course_id: u32, supporter_id: u64) -> Result<
         "supporter_id" => &supporter_id,
     };
 
-    let map = |(event_id, event_key, title, begin, end)| Event::from_info(event_id, event_key, title, begin, end);
+    let map = Event::sqlmap();
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
@@ -456,9 +468,15 @@ pub fn course_statistic_participant1(course_id: u32, participant_id: u64) -> Res
             events.event_key,
             events.title,
             events.begin,
-            events.end
+            events.end,
+            locations.location_id,
+            locations.location_key,
+            locations.name AS location_name,
+            locations.description AS location_description
         FROM
             events
+        JOIN
+            locations ON locations.location_id = events.location_id
         JOIN
             event_participant_presences p ON events.event_id = p.event_id
         WHERE
@@ -470,7 +488,7 @@ pub fn course_statistic_participant1(course_id: u32, participant_id: u64) -> Res
         "participant_id" => &participant_id,
     };
 
-    let map = |(event_id, event_key, title, begin, end)| Event::from_info(event_id, event_key, title, begin, end);
+    let map = Event::sqlmap();
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
