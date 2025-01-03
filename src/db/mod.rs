@@ -27,7 +27,7 @@ pub fn connect_db() -> Result<(), Error> {
     Ok(())
 }
 
-pub fn update_db() -> Result<(), Error> {
+pub fn migrate_db() -> Result<(), Error> {
     let mut conn: PooledConn = get_pool_conn();
 
     let latest_version: u8 = SCHEME_VERSION;
@@ -55,26 +55,26 @@ pub fn update_db() -> Result<(), Error> {
 
         // Case 2: Schema info is missing which is taken as indicator of schema version 0
         if !has_info {
-            let partial_path = "sql/update_0.sql";
+            let partial_path = "sql/migrate_0.sql";
             let local_path = crate::common::fs::local_path(&partial_path)?;
 
             // Run the script that makes the version 0 explicit
-            let query_update0 = std::fs::read_to_string(local_path).map_err(|_| Error::Default)?;
-            conn.query_drop(&query_update0)?;
+            let query_migrate0 = std::fs::read_to_string(local_path).map_err(|_| Error::Default)?;
+            conn.query_drop(&query_migrate0)?;
         }
 
         // Case 3: Schema info exists or was set in case 2
         let query_version = "SELECT version FROM _info;";
         let mut current_version: u8 = conn.query_first::<u8, _>(query_version)?.unwrap();
 
-        // Do incremental upgrades
+        // Do incremental migrations
         while current_version < latest_version {
-            let partial_path = format!("sql/update_{}.sql", current_version + 1);
+            let partial_path = format!("sql/migrate_{}.sql", current_version + 1);
             let local_path = crate::common::fs::local_path(&partial_path)?;
 
-            // Apply the next update
-            let query_update = std::fs::read_to_string(local_path).map_err(|_| Error::Default)?;
-            conn.query_drop(query_update)?;
+            // Apply the next migration script
+            let query_migrate = std::fs::read_to_string(local_path).map_err(|_| Error::Default)?;
+            conn.query_drop(query_migrate)?;
             current_version += 1;
         }
     }

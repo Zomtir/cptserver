@@ -28,7 +28,7 @@ fn rocket() -> _ {
         panic!("Database connection failed")
     };
 
-    if db::update_db().is_err() {
+    if db::migrate_db().is_err() {
         panic!("Database update failed")
     };
 
