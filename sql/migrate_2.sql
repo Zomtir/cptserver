@@ -7,3 +7,6 @@ ALTER TABLE `users` CHANGE `nickname` `nickname` VARCHAR(40) CHARACTER SET utf8m
 -- Add missing default values to organisation rights
 ALTER TABLE `teams` CHANGE `right_organisation_read` `right_organisation_read` TINYINT(1) NOT NULL DEFAULT '0';
 ALTER TABLE `teams` CHANGE `right_organisation_write` `right_organisation_write` TINYINT(1) NOT NULL DEFAULT '0';
+
+-- Change license number from INT to VARCHAR
+ALTER TABLE `licenses` CHANGE `number` `number` VARCHAR(20) NOT NULL;
