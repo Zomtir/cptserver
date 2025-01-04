@@ -10,3 +10,6 @@ ALTER TABLE `teams` CHANGE `right_organisation_write` `right_organisation_write`
 
 -- Change license number from INT to VARCHAR
 ALTER TABLE `licenses` CHANGE `number` `number` VARCHAR(20) NOT NULL;
+
+-- Add file_url to licenses
+ALTER TABLE `licenses` ADD `file_url` VARCHAR(50) NULL DEFAULT NULL AFTER `expiration`;

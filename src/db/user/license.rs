@@ -9,8 +9,8 @@ pub fn user_license_main_create(user_id: u64, license: &License) -> Result<(), E
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(
-        "INSERT INTO licenses (number, name, expiration)
-        VALUES (:number, :name, :expiration);",
+        "INSERT INTO licenses (number, name, expiration, file_url)
+        VALUES (:number, :name, :expiration, :file_url);",
     )?;
 
     let params = params! {
@@ -18,6 +18,7 @@ pub fn user_license_main_create(user_id: u64, license: &License) -> Result<(), E
         "number" => &license.number,
         "name" => &license.name,
         "expiration" => &license.expiration,
+        "file_url" => &license.file_url,
     };
 
     conn.exec_drop(&stmt, &params)?;
@@ -31,6 +32,7 @@ pub fn user_license_main_create(user_id: u64, license: &License) -> Result<(), E
     let params_user = params! {
         "user_id" => &user_id,
         "license_id" => &conn.last_insert_id(),
+        "file_url" => &license.file_url,
     };
 
     conn.exec_drop(&stmt_user, &params_user)?;
@@ -42,8 +44,8 @@ pub fn user_license_extra_create(user_id: u64, license: &License) -> Result<(), 
     let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(
-        "INSERT INTO licenses (number, name, expiration)
-        VALUES (:number, :name, :expiration);",
+        "INSERT INTO licenses (number, name, expiration, file_url)
+        VALUES (:number, :name, :expiration, :file_url);",
     )?;
 
     let params = params! {
@@ -64,6 +66,7 @@ pub fn user_license_extra_create(user_id: u64, license: &License) -> Result<(), 
     let params_user = params! {
         "user_id" => &user_id,
         "license_id" => &conn.last_insert_id(),
+        "file_url" => &license.file_url,
     };
 
     conn.exec_drop(&stmt_user, &params_user)?;
@@ -79,7 +82,8 @@ pub fn user_license_main_edit(user_id: u64, license: &License) -> Result<(), Err
         SET
             licenses.number = :number,
             licenses.name = :name,
-            licenses.expiration = :expiration
+            licenses.expiration = :expiration,
+            licenses.file_url = :file_url
         WHERE user_id = :user_id;",
     )?;
 
@@ -88,6 +92,7 @@ pub fn user_license_main_edit(user_id: u64, license: &License) -> Result<(), Err
         "number" => &license.number,
         "name" => &license.name,
         "expiration" => &license.expiration,
+        "file_url" => &license.file_url,
     };
 
     conn.exec_drop(&stmt, &params)?;
@@ -102,7 +107,8 @@ pub fn user_license_extra_edit(user_id: u64, license: &License) -> Result<(), Er
         SET
             licenses.number = :number,
             licenses.name = :name,
-            licenses.expiration = :expiration
+            licenses.expiration = :expiration,
+            licenses.file_url = :file_url
         WHERE users.user_id = :user_id;",
     )?;
 
@@ -111,6 +117,7 @@ pub fn user_license_extra_edit(user_id: u64, license: &License) -> Result<(), Er
         "number" => &license.number,
         "name" => &license.name,
         "expiration" => &license.expiration,
+        "file_url" => &license.file_url,
     };
 
     conn.exec_drop(&stmt, &params)?;

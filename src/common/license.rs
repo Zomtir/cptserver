@@ -6,4 +6,5 @@ pub struct License {
     pub number: String,
     pub name: String,
     pub expiration: chrono::NaiveDate,
+    pub file_url: Option<String>,
 }

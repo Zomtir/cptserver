@@ -53,10 +53,12 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
             lm.number AS license_main_number,
             lm.name AS license_main_name,
             lm.expiration AS license_main_expiration,
+            lm.file_url AS license_main_file_url,
             le.id AS license_extra_id,
             le.number AS license_extra_number,
             le.name AS license_extra_name,
             le.expiration AS license_extra_expiration,
+            le.file_url AS license_extra_file_url,
             note
         FROM users
         LEFT JOIN bank_accounts ba ON users.bank_account = ba.id
@@ -105,6 +107,7 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
                 number: row.take("license_main_number").unwrap(),
                 name: row.take("license_main_name").unwrap(),
                 expiration: row.take("license_main_expiration").unwrap(),
+                file_url: row.take("license_main_file_url").unwrap(),
             }),
         license_extra: row
             .take::<Option<u32>, &str>("license_extra_id")
@@ -114,6 +117,7 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
                 number: row.take("license_extra_number").unwrap(),
                 name: row.take("license_extra_name").unwrap(),
                 expiration: row.take("license_extra_expiration").unwrap(),
+                file_url: row.take("license_extra_file_url").unwrap(),
             }),
         note: row.take("note").unwrap(),
     };
