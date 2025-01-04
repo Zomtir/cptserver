@@ -2,7 +2,6 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Club, Item, ItemCategory, Possession, Stock, User};
-use crate::db::get_pool_conn;
 use crate::error::Error;
 
 fn sql_possession(mut row: mysql::Row) -> Possession {
@@ -32,12 +31,12 @@ fn sql_possession(mut row: mysql::Row) -> Possession {
 }
 
 pub fn possession_list(
+    conn: &mut PooledConn,
     user_id: Option<u64>,
     item_id: Option<u64>,
     owned: Option<bool>,
     club_id: Option<u32>,
 ) -> Result<Vec<Possession>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT up.possession_id,
             u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
@@ -72,8 +71,7 @@ pub fn possession_list(
     Ok(possessions)
 }
 
-pub fn possession_info(possession_id: u64) -> Result<Possession, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn possession_info(conn: &mut PooledConn, possession_id: u64) -> Result<Possession, Error> {
     let stmt = conn.prep(
         "SELECT up.possession_id,
             u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
@@ -98,8 +96,7 @@ pub fn possession_info(possession_id: u64) -> Result<Possession, Error> {
     Ok(sql_possession(row))
 }
 
-pub fn possession_ownership(possession_id: u64) -> Result<Option<Stock>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn possession_ownership(conn: &mut PooledConn, possession_id: u64) -> Result<Option<Stock>, Error> {
     let stmt = conn.prep(
         "SELECT cs.stock_id,
             c.club_id, c.club_key, c.name as club_name,
@@ -150,13 +147,13 @@ pub fn possession_ownership(possession_id: u64) -> Result<Option<Stock>, Error> 
 }
 
 pub fn possession_create(
+    conn: &mut PooledConn,
     user_id: u64,
     item_id: u64,
     acquisition_date: chrono::NaiveDate,
     owned: bool,
     stock_id: Option<u64>,
 ) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO user_possessions (user_id, item_id, acquisition_date, owned, stock_id)
         SELECT :user_id, :item_id, :acquisition_date, :owned, :stock_id;",
@@ -174,8 +171,12 @@ pub fn possession_create(
     Ok(())
 }
 
-pub fn possession_edit(possession_id: u64, possession: &Possession, stock_id: Option<u64>) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn possession_edit(
+    conn: &mut PooledConn,
+    possession_id: u64,
+    possession: &Possession,
+    stock_id: Option<u64>,
+) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE user_possessions
         SET
@@ -200,8 +201,7 @@ pub fn possession_edit(possession_id: u64, possession: &Possession, stock_id: Op
     Ok(())
 }
 
-pub fn possession_delete(possession_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn possession_delete(conn: &mut PooledConn, possession_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "DELETE up
         FROM user_possessions up

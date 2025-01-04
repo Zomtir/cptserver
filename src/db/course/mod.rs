@@ -7,11 +7,14 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Course, Event, Requirement, Skill, User};
-use crate::db::get_pool_conn;
 use crate::error::Error;
 
-pub fn course_list(mod_id: Option<u64>, active: Option<bool>, public: Option<bool>) -> Result<Vec<Course>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_list(
+    conn: &mut PooledConn,
+    mod_id: Option<u64>,
+    active: Option<bool>,
+    public: Option<bool>,
+) -> Result<Vec<Course>, Error> {
     let stmt = conn.prep(
         "SELECT c.course_id, c.course_key, c.title, c.active, c.public
         FROM courses c
@@ -40,8 +43,7 @@ pub fn course_list(mod_id: Option<u64>, active: Option<bool>, public: Option<boo
     Ok(courses)
 }
 
-pub fn course_available(user_id: u64) -> Result<Vec<Course>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_available(conn: &mut PooledConn, user_id: u64) -> Result<Vec<Course>, Error> {
     let stmt = conn.prep(
         "SELECT DISTINCT c.course_id, c.course_key, c.title, c.active, c.public
         FROM courses c
@@ -66,8 +68,7 @@ pub fn course_available(user_id: u64) -> Result<Vec<Course>, Error> {
     Ok(courses)
 }
 
-pub fn course_create(course: &Course) -> Result<u32, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_create(conn: &mut PooledConn, course: &Course) -> Result<u32, Error> {
     let stmt = conn.prep(
         "INSERT INTO courses (course_key, title, active, public)
         VALUES (:course_key, :title, :active, :public)",
@@ -84,8 +85,7 @@ pub fn course_create(course: &Course) -> Result<u32, Error> {
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn course_edit(course_id: u32, course: &Course) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_edit(conn: &mut PooledConn, course_id: u32, course: &Course) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE courses SET
             course_key = :course_key,
@@ -108,8 +108,7 @@ pub fn course_edit(course_id: u32, course: &Course) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn course_delete(course_id: u32) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_delete(conn: &mut PooledConn, course_id: u32) -> Result<(), Error> {
     let stmt = conn.prep(
         "DELETE c FROM courses c
         WHERE c.course_id = :course_id",
@@ -126,8 +125,7 @@ pub fn course_delete(course_id: u32) -> Result<(), Error> {
 
 /* REQUIREMENTS */
 
-pub fn course_requirement_list(course_id: u32) -> Result<Vec<Requirement>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_requirement_list(conn: &mut PooledConn, course_id: u32) -> Result<Vec<Requirement>, Error> {
     let stmt = conn.prep(
         "SELECT r.requirement_id,
             c.course_id, c.course_key, c.title, c.active, c.public,
@@ -178,8 +176,7 @@ pub fn course_requirement_list(course_id: u32) -> Result<Vec<Requirement>, Error
     Ok(reqs)
 }
 
-pub fn course_requirement_add(course_id: u32, skill_id: u32, rank: u32) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_requirement_add(conn: &mut PooledConn, course_id: u32, skill_id: u32, rank: u32) -> Result<(), Error> {
     let stmt = conn.prep(
         "INSERT INTO course_requirements (course_id, skill_id, rank)
         SELECT :course_id, :skill_id, :rank;",
@@ -194,8 +191,7 @@ pub fn course_requirement_add(course_id: u32, skill_id: u32, rank: u32) -> Resul
     Ok(())
 }
 
-pub fn course_requirement_remove(requirement_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_requirement_remove(conn: &mut PooledConn, requirement_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "DELETE r FROM course_requirements r
         WHERE r.requirement_id = :requirement_id;",
@@ -210,8 +206,7 @@ pub fn course_requirement_remove(requirement_id: u64) -> Result<(), Error> {
 
 /* CLUB RELATED */
 
-pub fn course_club_info(course_id: u64) -> Result<Option<u32>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_club_info(conn: &mut PooledConn, course_id: u64) -> Result<Option<u32>, Error> {
     let stmt = conn.prep(
         "SELECT club_id
         FROM courses
@@ -227,9 +222,7 @@ pub fn course_club_info(course_id: u64) -> Result<Option<u32>, Error> {
     }
 }
 
-pub fn course_club_edit(course_id: u64, club_id: Option<u32>) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
-
+pub fn course_club_edit(conn: &mut PooledConn, course_id: u64, club_id: Option<u32>) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE courses
         SET club_id = :club_id
@@ -247,8 +240,7 @@ pub fn course_club_edit(course_id: u64, club_id: Option<u32>) -> Result<(), Erro
 
 /* STATISTICS */
 
-pub fn course_statistic_class(course_id: u32) -> Result<Vec<(Event, u64, u64, u64)>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_statistic_class(conn: &mut PooledConn, course_id: u32) -> Result<Vec<(Event, u64, u64, u64)>, Error> {
     let stmt = conn.prep(
         "SELECT 
             events.event_id,
@@ -290,8 +282,7 @@ pub fn course_statistic_class(course_id: u32) -> Result<Vec<(Event, u64, u64, u6
     Ok(stats)
 }
 
-pub fn course_statistic_leader(course_id: u32) -> Result<Vec<(User, u64)>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_statistic_leader(conn: &mut PooledConn, course_id: u32) -> Result<Vec<(User, u64)>, Error> {
     let stmt = conn.prep(
         "SELECT
             u.user_id,
@@ -324,8 +315,7 @@ pub fn course_statistic_leader(course_id: u32) -> Result<Vec<(User, u64)>, Error
     Ok(stats)
 }
 
-pub fn course_statistic_leader1(course_id: u32, leader_id: u64) -> Result<Vec<Event>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_statistic_leader1(conn: &mut PooledConn, course_id: u32, leader_id: u64) -> Result<Vec<Event>, Error> {
     let stmt = conn.prep(
         "SELECT
             events.event_id,
@@ -358,8 +348,7 @@ pub fn course_statistic_leader1(course_id: u32, leader_id: u64) -> Result<Vec<Ev
     Ok(stats)
 }
 
-pub fn course_statistic_supporter(course_id: u32) -> Result<Vec<(User, u64)>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_statistic_supporter(conn: &mut PooledConn, course_id: u32) -> Result<Vec<(User, u64)>, Error> {
     let stmt = conn.prep(
         "SELECT
             u.user_id,
@@ -392,8 +381,11 @@ pub fn course_statistic_supporter(course_id: u32) -> Result<Vec<(User, u64)>, Er
     Ok(stats)
 }
 
-pub fn course_statistic_supporter1(course_id: u32, supporter_id: u64) -> Result<Vec<Event>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_statistic_supporter1(
+    conn: &mut PooledConn,
+    course_id: u32,
+    supporter_id: u64,
+) -> Result<Vec<Event>, Error> {
     let stmt = conn.prep(
         "SELECT
             events.event_id,
@@ -426,8 +418,7 @@ pub fn course_statistic_supporter1(course_id: u32, supporter_id: u64) -> Result<
     Ok(stats)
 }
 
-pub fn course_statistic_participant(course_id: u32) -> Result<Vec<(User, u64)>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_statistic_participant(conn: &mut PooledConn, course_id: u32) -> Result<Vec<(User, u64)>, Error> {
     let stmt = conn.prep(
         "SELECT
             u.user_id,
@@ -460,8 +451,11 @@ pub fn course_statistic_participant(course_id: u32) -> Result<Vec<(User, u64)>, 
     Ok(stats)
 }
 
-pub fn course_statistic_participant1(course_id: u32, participant_id: u64) -> Result<Vec<Event>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_statistic_participant1(
+    conn: &mut PooledConn,
+    course_id: u32,
+    participant_id: u64,
+) -> Result<Vec<Event>, Error> {
     let stmt = conn.prep(
         "SELECT
             events.event_id,

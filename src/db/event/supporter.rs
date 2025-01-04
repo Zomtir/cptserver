@@ -2,13 +2,11 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Confirmation, User};
-use crate::db::get_pool_conn;
 use crate::error::Error;
 
 /* REGISTRATIONS */
 
-pub fn event_supporter_registration_list(event_id: u64) -> Result<Vec<User>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_supporter_registration_list(conn: &mut PooledConn, event_id: u64) -> Result<Vec<User>, Error> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
         FROM event_supporter_registrations
@@ -26,8 +24,11 @@ pub fn event_supporter_registration_list(event_id: u64) -> Result<Vec<User>, Err
     Ok(users)
 }
 
-pub fn event_supporter_registration_info(event_id: u64, user_id: u64) -> Result<Confirmation, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_supporter_registration_info(
+    conn: &mut PooledConn,
+    event_id: u64,
+    user_id: u64,
+) -> Result<Confirmation, Error> {
     let stmt = conn.prep(
         "SELECT r.status
         FROM event_supporter_registrations r
@@ -47,8 +48,12 @@ pub fn event_supporter_registration_info(event_id: u64, user_id: u64) -> Result<
     }
 }
 
-pub fn event_supporter_registration_edit(event_id: u64, user_id: u64, status: Confirmation) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_supporter_registration_edit(
+    conn: &mut PooledConn,
+    event_id: u64,
+    user_id: u64,
+    status: Confirmation,
+) -> Result<(), Error> {
     let stmt = conn.prep(
         "INSERT INTO event_supporter_registrations (event_id, user_id, status)
         VALUES (:event_id, :user_id, :status)
@@ -64,8 +69,7 @@ pub fn event_supporter_registration_edit(event_id: u64, user_id: u64, status: Co
     Ok(())
 }
 
-pub fn event_supporter_registration_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_supporter_registration_remove(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "DELETE FROM event_supporter_registrations
         WHERE event_id = :event_id AND user_id = :user_id;",
@@ -82,8 +86,7 @@ pub fn event_supporter_registration_remove(event_id: u64, user_id: u64) -> Resul
 
 /* FILTER */
 
-pub fn event_supporter_filter_list(event_id: u64) -> Result<Vec<(User, bool)>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_supporter_filter_list(conn: &mut PooledConn, event_id: u64) -> Result<Vec<(User, bool)>, Error> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname, ef.access
         FROM event_supporter_filters ef
@@ -104,8 +107,12 @@ pub fn event_supporter_filter_list(event_id: u64) -> Result<Vec<(User, bool)>, E
     Ok(filters)
 }
 
-pub fn event_supporter_filter_edit(event_id: u64, user_id: u64, access: bool) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_supporter_filter_edit(
+    conn: &mut PooledConn,
+    event_id: u64,
+    user_id: u64,
+    access: bool,
+) -> Result<(), Error> {
     let stmt = conn.prep(
         "INSERT INTO event_supporter_filters (event_id, user_id, access)
         VALUES (:event_id, :user_id, :access)
@@ -121,8 +128,7 @@ pub fn event_supporter_filter_edit(event_id: u64, user_id: u64, access: bool) ->
     Ok(())
 }
 
-pub fn event_supporter_filter_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_supporter_filter_remove(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "DELETE FROM event_supporter_filters
         WHERE event_id = :event_id AND user_id = :user_id;",
@@ -139,9 +145,7 @@ pub fn event_supporter_filter_remove(event_id: u64, user_id: u64) -> Result<(), 
 
 /* PRESENCE */
 
-pub fn event_supporter_presence_pool(event_id: u64, access: bool) -> Result<Vec<User>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
-
+pub fn event_supporter_presence_pool(conn: &mut PooledConn, event_id: u64, access: bool) -> Result<Vec<User>, Error> {
     let stmt = conn.prep(
         "SELECT users.user_id, users.user_key, users.firstname, users.lastname, users.nickname
         FROM users
@@ -179,8 +183,7 @@ pub fn event_supporter_presence_pool(event_id: u64, access: bool) -> Result<Vec<
     Ok(users)
 }
 
-pub fn event_supporter_presence_list(event_id: u64) -> Result<Vec<User>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_supporter_presence_list(conn: &mut PooledConn, event_id: u64) -> Result<Vec<User>, Error> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
         FROM event_supporter_presences ep
@@ -198,8 +201,7 @@ pub fn event_supporter_presence_list(event_id: u64) -> Result<Vec<User>, Error> 
     Ok(users)
 }
 
-pub fn event_supporter_presence_true(event_id: u64, user_id: u64) -> Result<bool, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_supporter_presence_true(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<bool, Error> {
     let stmt = conn.prep(
         "SELECT COUNT(1)
         FROM event_supporter_presences ep
@@ -218,8 +220,7 @@ pub fn event_supporter_presence_true(event_id: u64, user_id: u64) -> Result<bool
     }
 }
 
-pub fn event_supporter_presence_add(event_id: u64, user_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_supporter_presence_add(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "INSERT INTO event_supporter_presences (event_id, user_id)
         VALUES (:event_id, :user_id);",
@@ -233,8 +234,7 @@ pub fn event_supporter_presence_add(event_id: u64, user_id: u64) -> Result<(), E
     Ok(())
 }
 
-pub fn event_supporter_presence_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_supporter_presence_remove(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "DELETE FROM event_supporter_presences
         WHERE event_id = :event_id AND user_id = :user_id;",

@@ -14,31 +14,36 @@ pub fn status() -> Status {
 
 #[rocket::get("/anon/location_list")]
 pub fn location_list() -> Result<Json<Vec<Location>>, Error> {
-    let locations = crate::db::location::location_list()?;
+    let conn = &mut crate::utils::db::get_db_conn()?;
+    let locations = crate::db::location::location_list(conn)?;
     Ok(Json(locations))
 }
 
 #[rocket::get("/anon/organisation_list")]
 pub fn organisation_list() -> Result<Json<Vec<Organisation>>, Error> {
-    let organisations = crate::db::organisation::organisation_list()?;
+    let conn = &mut crate::utils::db::get_db_conn()?;
+    let organisations = crate::db::organisation::organisation_list(conn)?;
     Ok(Json(organisations))
 }
 
 #[rocket::get("/anon/skill_list")]
 pub fn skill_list() -> Result<Json<Vec<Skill>>, Error> {
-    let skills = crate::db::skill::skill_list()?;
+    let conn = &mut crate::utils::db::get_db_conn()?;
+    let skills = crate::db::skill::skill_list(conn)?;
     Ok(Json(skills))
 }
 
 #[rocket::get("/anon/club_list")]
 pub fn club_list() -> Result<Json<Vec<Club>>, Error> {
-    let clubs = crate::db::club::club_list()?;
+    let conn = &mut crate::utils::db::get_db_conn()?;
+    let clubs = crate::db::club::club_list(conn)?;
     Ok(Json(clubs))
 }
 
 #[rocket::get("/anon/club_image?<club_id>")]
 pub fn club_image(club_id: u32) -> Result<Vec<u8>, Error> {
-    let club = crate::db::club::club_info(club_id)?;
+    let conn = &mut crate::utils::db::get_db_conn()?;
+    let club = crate::db::club::club_info(conn, club_id)?;
 
     let image_url = match club.image_url {
         None => "resources/club_banner_placeholder.png".to_string(),
@@ -51,13 +56,15 @@ pub fn club_image(club_id: u32) -> Result<Vec<u8>, Error> {
 
 #[rocket::get("/anon/course_list")]
 pub fn course_list() -> Result<Json<Vec<Course>>, Error> {
-    let courses = crate::db::course::course_list(None, Some(true), Some(true))?;
+    let conn = &mut crate::utils::db::get_db_conn()?;
+    let courses = crate::db::course::course_list(conn, None, Some(true), Some(true))?;
     Ok(Json(courses))
 }
 
 #[rocket::get("/user_salt?<user_key>")]
 pub fn user_salt(user_key: String) -> Result<String, Error> {
-    let salt = crate::db::user::user_salt_value(&user_key);
+    let conn = &mut crate::utils::db::get_db_conn()?;
+    let salt = crate::db::user::user_salt_value(conn, &user_key);
 
     // If the user does not exist, just return a random salt to prevent data scraping
     match salt {

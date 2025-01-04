@@ -2,15 +2,14 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Club, Term, User};
-use crate::db::get_pool_conn;
 use crate::error::Error;
 
 pub fn term_list(
+    conn: &mut PooledConn,
     club_id: Option<u32>,
     user_id: Option<u32>,
     point_in_time: Option<chrono::NaiveDate>,
 ) -> Result<Vec<Term>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT t.term_id,
             u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
@@ -43,8 +42,7 @@ pub fn term_list(
     Ok(terms)
 }
 
-pub fn term_create(term: &Term) -> Result<u32, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn term_create(conn: &mut PooledConn, term: &Term) -> Result<u32, Error> {
     let stmt = conn.prep(
         "INSERT INTO terms (user_id, club_id, term_begin, term_end)
         VALUES (:user_id, :club_id, :begin, :end)",
@@ -61,8 +59,7 @@ pub fn term_create(term: &Term) -> Result<u32, Error> {
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn term_edit(term_id: i64, term: &Term) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn term_edit(conn: &mut PooledConn, term_id: i64, term: &Term) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE terms SET
             user_id  = :user_id,
@@ -84,8 +81,7 @@ pub fn term_edit(term_id: i64, term: &Term) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn term_delete(term_id: i64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn term_delete(conn: &mut PooledConn, term_id: i64) -> Result<(), Error> {
     let stmt = conn.prep("DELETE t FROM terms t WHERE t.term_id = :term_id")?;
 
     let params = params! {

@@ -2,15 +2,13 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Right, Team};
-use crate::db::get_pool_conn;
 use crate::error::Error;
 
 /*
  * METHODS
  */
 
-pub fn team_list() -> Result<Vec<Team>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn team_list(conn: &mut PooledConn) -> Result<Vec<Team>, Error> {
     let stmt = conn.prep(
         "SELECT
             team_id,
@@ -77,9 +75,7 @@ pub fn team_list() -> Result<Vec<Team>, Error> {
     Ok(teams)
 }
 
-pub fn team_create(team: &Team) -> Result<u32, Error> {
-    let mut conn: PooledConn = get_pool_conn();
-
+pub fn team_create(conn: &mut PooledConn, team: &Team) -> Result<u32, Error> {
     let stmt = conn.prep(
         "INSERT INTO teams (
             team_key,
@@ -102,8 +98,7 @@ pub fn team_create(team: &Team) -> Result<u32, Error> {
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn team_edit(team_id: &u32, team: &Team) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn team_edit(conn: &mut PooledConn, team_id: &u32, team: &Team) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE teams SET
             team_key = :team_key,
@@ -123,8 +118,7 @@ pub fn team_edit(team_id: &u32, team: &Team) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn team_right_edit(team_id: &u32, right: &Right) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn team_right_edit(conn: &mut PooledConn, team_id: &u32, right: &Right) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE teams SET
             right_club_write = :right_club_write,
@@ -174,8 +168,7 @@ pub fn team_right_edit(team_id: &u32, right: &Right) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn team_delete(team_id: &u32) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn team_delete(conn: &mut PooledConn, team_id: &u32) -> Result<(), Error> {
     let stmt = conn.prep("DELETE t FROM teams t WHERE t.team_id = :team_id")?;
     let params = params! {"team_id" => team_id};
 

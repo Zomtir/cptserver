@@ -2,12 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::License;
-use crate::db::get_pool_conn;
 use crate::error::Error;
 
-pub fn user_license_main_create(user_id: u64, license: &License) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
-
+pub fn user_license_main_create(conn: &mut PooledConn, user_id: u64, license: &License) -> Result<(), Error> {
     let stmt = conn.prep(
         "INSERT INTO licenses (number, name, expiration, file_url)
         VALUES (:number, :name, :expiration, :file_url);",
@@ -40,9 +37,7 @@ pub fn user_license_main_create(user_id: u64, license: &License) -> Result<(), E
     Ok(())
 }
 
-pub fn user_license_extra_create(user_id: u64, license: &License) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
-
+pub fn user_license_extra_create(conn: &mut PooledConn, user_id: u64, license: &License) -> Result<(), Error> {
     let stmt = conn.prep(
         "INSERT INTO licenses (number, name, expiration, file_url)
         VALUES (:number, :name, :expiration, :file_url);",
@@ -74,8 +69,7 @@ pub fn user_license_extra_create(user_id: u64, license: &License) -> Result<(), 
     Ok(())
 }
 
-pub fn user_license_main_edit(user_id: u64, license: &License) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn user_license_main_edit(conn: &mut PooledConn, user_id: u64, license: &License) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE licenses
         JOIN users ON users.license_main = licenses.id
@@ -99,8 +93,7 @@ pub fn user_license_main_edit(user_id: u64, license: &License) -> Result<(), Err
     Ok(())
 }
 
-pub fn user_license_extra_edit(user_id: u64, license: &License) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn user_license_extra_edit(conn: &mut PooledConn, user_id: u64, license: &License) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE licenses
         JOIN users ON users.license_extra = licenses.id
@@ -124,8 +117,7 @@ pub fn user_license_extra_edit(user_id: u64, license: &License) -> Result<(), Er
     Ok(())
 }
 
-pub fn user_license_main_delete(user_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn user_license_main_delete(conn: &mut PooledConn, user_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "DELETE licenses FROM licenses
         JOIN users ON users.license_main = licenses.id
@@ -140,8 +132,7 @@ pub fn user_license_main_delete(user_id: u64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn user_license_extra_delete(user_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn user_license_extra_delete(conn: &mut PooledConn, user_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "DELETE licenses FROM licenses
         JOIN users ON users.license_extra = licenses.id

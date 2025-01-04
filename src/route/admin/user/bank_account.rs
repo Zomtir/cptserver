@@ -16,11 +16,12 @@ pub fn user_bank_account_create(
     user_id: u64,
     bank_account: Json<BankAccount>,
 ) -> Result<(), Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_user_write {
         return Err(Error::RightUserMissing);
     };
 
-    crate::db::user::user_bank_account_create(user_id, &bank_account)?;
+    crate::db::user::user_bank_account_create(conn, user_id, &bank_account)?;
 
     Ok(())
 }
@@ -35,21 +36,23 @@ pub fn user_bank_account_edit(
     user_id: u64,
     bank_account: Json<BankAccount>,
 ) -> Result<(), Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_user_write {
         return Err(Error::RightUserMissing);
     };
 
-    crate::db::user::user_bank_account_edit(user_id, &bank_account)?;
+    crate::db::user::user_bank_account_edit(conn, user_id, &bank_account)?;
 
     Ok(())
 }
 
 #[rocket::head("/admin/user_bank_account_delete?<user_id>")]
 pub fn user_bank_account_delete(session: UserSession, user_id: u64) -> Result<(), Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_user_write {
         return Err(Error::RightUserMissing);
     };
 
-    crate::db::user::user_bank_account_delete(user_id)?;
+    crate::db::user::user_bank_account_delete(conn, user_id)?;
     Ok(())
 }

@@ -2,11 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{BankAccount, License, User};
-use crate::db::get_pool_conn;
 use crate::error::Error;
 
-pub fn user_list(active: Option<bool>) -> Result<Vec<User>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn user_list(conn: &mut PooledConn, active: Option<bool>) -> Result<Vec<User>, Error> {
     let stmt = conn.prep(
         "SELECT user_id, user_key, firstname, lastname, nickname
         FROM users
@@ -25,8 +23,7 @@ pub fn user_list(active: Option<bool>) -> Result<Vec<User>, Error> {
     Ok(users)
 }
 
-pub fn user_info(user_id: u64) -> Result<User, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn user_info(conn: &mut PooledConn, user_id: u64) -> Result<User, Error> {
     let stmt = conn.prep(
         "SELECT
             users.user_id,
@@ -125,15 +122,13 @@ pub fn user_info(user_id: u64) -> Result<User, Error> {
     Ok(user)
 }
 
-pub fn user_create(user: &mut User) -> Result<u64, Error> {
+pub fn user_create(conn: &mut PooledConn, user: &mut User) -> Result<u64, Error> {
     user.key = match crate::common::check_user_key(&user.key) {
         Err(_) => Some(crate::common::random_string(6)),
         Ok(key) => Some(key),
     };
 
     user.email = crate::common::check_user_email(&user.email).ok();
-
-    let mut conn: PooledConn = get_pool_conn();
 
     let stmt = conn.prep(
         "INSERT INTO users (user_key, pwd, pepper, salt, enabled, active, firstname, lastname, nickname,
@@ -168,14 +163,13 @@ pub fn user_create(user: &mut User) -> Result<u64, Error> {
 
     conn.exec_drop(&stmt, &params)?;
 
-    Ok(conn.last_insert_id() as u64)
+    Ok(conn.last_insert_id())
 }
 
-pub fn user_edit(user_id: u64, user: &mut User) -> Result<(), Error> {
+pub fn user_edit(conn: &mut PooledConn, user_id: u64, user: &mut User) -> Result<(), Error> {
     crate::common::check_user_key(&user.key)?;
     user.email = crate::common::check_user_email(&user.email).ok();
 
-    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE users SET
         user_key = ?,
@@ -211,8 +205,8 @@ pub fn user_edit(user_id: u64, user: &mut User) -> Result<(), Error> {
         user.birth_location.clone().into(),
         user.nationality.clone().into(),
         user.gender.clone().into(),
-        user.height.clone().into(),
-        user.weight.clone().into(),
+        user.height.into(),
+        user.weight.into(),
         user.note.clone().into(),
         user_id.into(),
     ];
@@ -221,7 +215,7 @@ pub fn user_edit(user_id: u64, user: &mut User) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn user_password_edit(user_id: u64, password: &str, salt: &str) -> Result<(), Error> {
+pub fn user_password_edit(conn: &mut PooledConn, user_id: u64, password: &str, salt: &str) -> Result<(), Error> {
     let bpassword: Vec<u8> = match crate::common::decode_hash256(password) {
         Some(bpassword) => bpassword,
         None => return Err(Error::UserPasswordInvalid),
@@ -235,7 +229,6 @@ pub fn user_password_edit(user_id: u64, password: &str, salt: &str) -> Result<()
     let bpepper: Vec<u8> = crate::common::random_bytes(16);
     let shapassword: Vec<u8> = crate::common::hash_sha256(&bpassword, &bpepper);
 
-    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep("UPDATE users SET pwd = :pwd, pepper = :pepper, salt = :salt WHERE user_id = :user_id")?;
     let params = params! {
         "user_id" => &user_id,
@@ -248,8 +241,7 @@ pub fn user_password_edit(user_id: u64, password: &str, salt: &str) -> Result<()
     Ok(())
 }
 
-pub fn user_delete(user_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn user_delete(conn: &mut PooledConn, user_id: u64) -> Result<(), Error> {
     let stmt = conn.prep("DELETE u FROM users u WHERE u.user_id = :user_id")?;
     let params = params! {
         "user_id" => user_id,
@@ -259,8 +251,7 @@ pub fn user_delete(user_id: u64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn user_created_true(user_key: &str) -> Result<bool, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn user_created_true(conn: &mut PooledConn, user_key: &str) -> Result<bool, Error> {
     let stmt = conn.prep("SELECT COUNT(1) FROM users WHERE user_key = :user_key")?;
     let params = params! { "user_key" => user_key };
     let count: Option<i32> = conn.exec_first(&stmt, &params)?;
@@ -268,8 +259,7 @@ pub fn user_created_true(user_key: &str) -> Result<bool, Error> {
     Ok(count.unwrap() == 1)
 }
 
-pub fn user_salt_value(user_key: &str) -> Result<Vec<u8>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn user_salt_value(conn: &mut PooledConn, user_key: &str) -> Result<Vec<u8>, Error> {
     let stmt = conn.prep("SELECT salt FROM users WHERE user_key = :user_key")?;
     let params = params! {
         "user_key" => &user_key

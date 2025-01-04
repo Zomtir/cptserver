@@ -9,6 +9,7 @@ pub enum Error {
 
     DatabaseURL,
     DatabaseConnection,
+    DatabasePool,
     DatabaseError,
     RegexError,
     TimeError,
@@ -78,6 +79,7 @@ impl Error {
 
             Error::DatabaseURL => "DATABASE_URL",
             Error::DatabaseConnection => "DATABASE_CONNECTION",
+            Error::DatabasePool => "DATABASE_POOL",
             Error::DatabaseError => "DATABASE_ERROR",
             Error::RegexError => "REGEX_ERROR",
             Error::TimeError => "TIME_ERROR",
@@ -148,6 +150,7 @@ impl std::fmt::Display for Error {
 
             Error::DatabaseURL => write!(f, "Database URL error"),
             Error::DatabaseConnection => write!(f, "Database connection error"),
+            Error::DatabasePool => write!(f, "Database pool error"),
             Error::DatabaseError => write!(f, "Database error"),
             Error::RegexError => write!(f, "Regex error"),
             Error::TimeError => write!(f, "Time error"),

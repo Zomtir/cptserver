@@ -10,11 +10,12 @@ pub fn affiliation_list(
     user_id: Option<u64>,
     organisation_id: Option<u64>,
 ) -> Result<Json<Vec<Affiliation>>, Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_organisation_read {
         return Err(Error::RightOrganisationMissing);
     };
 
-    let affiliation = crate::db::organisation::affiliation_list(user_id, organisation_id)?;
+    let affiliation = crate::db::organisation::affiliation_list(conn, user_id, organisation_id)?;
     Ok(Json(affiliation))
 }
 
@@ -24,21 +25,23 @@ pub fn affiliation_info(
     user_id: u64,
     organisation_id: u64,
 ) -> Result<Json<Option<Affiliation>>, Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_organisation_read {
         return Err(Error::RightOrganisationMissing);
     };
 
-    let affiliation = crate::db::organisation::affiliation_info(user_id, organisation_id)?;
+    let affiliation = crate::db::organisation::affiliation_info(conn, user_id, organisation_id)?;
     Ok(Json(affiliation))
 }
 
 #[rocket::head("/admin/affiliation_create?<user_id>&<organisation_id>")]
 pub fn affiliation_create(session: UserSession, user_id: u64, organisation_id: u64) -> Result<(), Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_organisation_write {
         return Err(Error::RightOrganisationMissing);
     };
 
-    crate::db::organisation::affiliation_create(user_id, organisation_id)?;
+    crate::db::organisation::affiliation_create(conn, user_id, organisation_id)?;
     Ok(())
 }
 
@@ -53,20 +56,22 @@ pub fn affiliation_edit(
     organisation_id: u64,
     affiliation: Json<Affiliation>,
 ) -> Result<(), Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_organisation_write {
         return Err(Error::RightOrganisationMissing);
     };
 
-    crate::db::organisation::affiliation_edit(user_id, organisation_id, &affiliation)?;
+    crate::db::organisation::affiliation_edit(conn, user_id, organisation_id, &affiliation)?;
     Ok(())
 }
 
 #[rocket::head("/admin/affiliation_delete?<user_id>&<organisation_id>")]
 pub fn affiliation_delete(session: UserSession, user_id: u64, organisation_id: u64) -> Result<(), Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_organisation_write {
         return Err(Error::RightOrganisationMissing);
     };
 
-    crate::db::organisation::affiliation_delete(user_id, organisation_id)?;
+    crate::db::organisation::affiliation_delete(conn, user_id, organisation_id)?;
     Ok(())
 }

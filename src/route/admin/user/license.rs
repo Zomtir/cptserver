@@ -12,11 +12,12 @@ use crate::session::UserSession;
     data = "<license>"
 )]
 pub fn user_license_main_create(session: UserSession, user_id: u64, license: Json<License>) -> Result<(), Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_user_write {
         return Err(Error::RightUserMissing);
     };
 
-    crate::db::user::user_license_main_create(user_id, &license)?;
+    crate::db::user::user_license_main_create(conn, user_id, &license)?;
 
     Ok(())
 }
@@ -27,11 +28,12 @@ pub fn user_license_main_create(session: UserSession, user_id: u64, license: Jso
     data = "<license>"
 )]
 pub fn user_license_extra_create(session: UserSession, user_id: u64, license: Json<License>) -> Result<(), Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_user_write {
         return Err(Error::RightUserMissing);
     };
 
-    crate::db::user::user_license_extra_create(user_id, &license)?;
+    crate::db::user::user_license_extra_create(conn, user_id, &license)?;
 
     Ok(())
 }
@@ -42,11 +44,12 @@ pub fn user_license_extra_create(session: UserSession, user_id: u64, license: Js
     data = "<license>"
 )]
 pub fn user_license_main_edit(session: UserSession, user_id: u64, license: Json<License>) -> Result<(), Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_user_write {
         return Err(Error::RightUserMissing);
     };
 
-    crate::db::user::user_license_main_edit(user_id, &license)?;
+    crate::db::user::user_license_main_edit(conn, user_id, &license)?;
 
     Ok(())
 }
@@ -57,31 +60,34 @@ pub fn user_license_main_edit(session: UserSession, user_id: u64, license: Json<
     data = "<license>"
 )]
 pub fn user_license_extra_edit(session: UserSession, user_id: u64, license: Json<License>) -> Result<(), Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_user_write {
         return Err(Error::RightUserMissing);
     };
 
-    crate::db::user::user_license_extra_edit(user_id, &license)?;
+    crate::db::user::user_license_extra_edit(conn, user_id, &license)?;
 
     Ok(())
 }
 
 #[rocket::head("/admin/user_license_main_delete?<user_id>")]
 pub fn user_license_main_delete(session: UserSession, user_id: u64) -> Result<(), Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_user_write {
         return Err(Error::RightUserMissing);
     };
 
-    crate::db::user::user_license_main_delete(user_id)?;
+    crate::db::user::user_license_main_delete(conn, user_id)?;
     Ok(())
 }
 
 #[rocket::head("/admin/user_license_extra_delete?<user_id>")]
 pub fn user_license_extra_delete(session: UserSession, user_id: u64) -> Result<(), Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_user_write {
         return Err(Error::RightUserMissing);
     };
 
-    crate::db::user::user_license_extra_delete(user_id)?;
+    crate::db::user::user_license_extra_delete(conn, user_id)?;
     Ok(())
 }

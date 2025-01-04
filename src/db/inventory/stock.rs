@@ -2,11 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Club, Item, ItemCategory, Stock};
-use crate::db::get_pool_conn;
 use crate::error::Error;
 
-pub fn stock_list(club_id: Option<u32>, item_id: Option<u32>) -> Result<Vec<Stock>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn stock_list(conn: &mut PooledConn, club_id: Option<u32>, item_id: Option<u32>) -> Result<Vec<Stock>, Error> {
     let stmt = conn.prep(
         "SELECT
             cs.stock_id,
@@ -59,8 +57,7 @@ pub fn stock_list(club_id: Option<u32>, item_id: Option<u32>) -> Result<Vec<Stoc
     Ok(stocks)
 }
 
-pub fn stock_info(stock_id: u64) -> Result<Stock, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn stock_info(conn: &mut PooledConn, stock_id: u64) -> Result<Stock, Error> {
     let stmt = conn.prep(
         "SELECT
             cs.stock_id,
@@ -109,8 +106,13 @@ pub fn stock_info(stock_id: u64) -> Result<Stock, Error> {
     Ok(stock)
 }
 
-pub fn stock_create(club_id: u64, item_id: u64, storage: &String, owned: u32) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn stock_create(
+    conn: &mut PooledConn,
+    club_id: u64,
+    item_id: u64,
+    storage: &String,
+    owned: u32,
+) -> Result<(), Error> {
     let stmt = conn.prep(
         "INSERT INTO club_stocks (club_id, item_id, storage, owned, loaned)
         SELECT :club_id, :item_id, :storage, :owned, :loaned;",
@@ -129,8 +131,13 @@ pub fn stock_create(club_id: u64, item_id: u64, storage: &String, owned: u32) ->
     Ok(())
 }
 
-pub fn stock_edit(stock_id: u64, storage: &String, owned: u32, loaned: u32) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn stock_edit(
+    conn: &mut PooledConn,
+    stock_id: u64,
+    storage: &String,
+    owned: u32,
+    loaned: u32,
+) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE club_stocks
         SET
@@ -151,8 +158,7 @@ pub fn stock_edit(stock_id: u64, storage: &String, owned: u32, loaned: u32) -> R
     Ok(())
 }
 
-pub fn stock_delete(stock_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn stock_delete(conn: &mut PooledConn, stock_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "DELETE cs FROM club_stocks cs
         WHERE cs.stock_id = :stock_id;",

@@ -2,11 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::User;
-use crate::db::get_pool_conn;
 use crate::error::Error;
 
-pub fn team_member_list(team_id: u32) -> Result<Vec<User>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn team_member_list(conn: &mut PooledConn, team_id: u32) -> Result<Vec<User>, Error> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
         FROM users u
@@ -25,8 +23,7 @@ pub fn team_member_list(team_id: u32) -> Result<Vec<User>, Error> {
     Ok(members)
 }
 
-pub fn team_member_add(team_id: &u32, user_id: &u32) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn team_member_add(conn: &mut PooledConn, team_id: &u32, user_id: &u32) -> Result<(), Error> {
     let stmt = conn.prep("INSERT INTO team_members (team_id, user_id) SELECT :team_id, :user_id")?;
     let params = params! {
         "team_id" => &team_id,
@@ -37,8 +34,7 @@ pub fn team_member_add(team_id: &u32, user_id: &u32) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn team_member_remove(team_id: &u32, user_id: &u32) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn team_member_remove(conn: &mut PooledConn, team_id: &u32, user_id: &u32) -> Result<(), Error> {
     let stmt = conn.prep("DELETE FROM team_members WHERE team_id = :team_id AND user_id = :user_id")?;
     let params = params! {
         "team_id" => &team_id,

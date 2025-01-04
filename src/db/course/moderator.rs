@@ -2,11 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::User;
-use crate::db::get_pool_conn;
 use crate::error::Error;
 
-pub fn course_moderator_list(course_id: u32) -> Result<Vec<User>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_moderator_list(conn: &mut PooledConn, course_id: u32) -> Result<Vec<User>, Error> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
         FROM users u
@@ -25,8 +23,7 @@ pub fn course_moderator_list(course_id: u32) -> Result<Vec<User>, Error> {
     Ok(members)
 }
 
-pub fn course_moderator_true(course_id: u32, user_id: u64) -> Result<bool, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_moderator_true(conn: &mut PooledConn, course_id: u32, user_id: u64) -> Result<bool, Error> {
     let stmt = conn.prep(
         "SELECT COUNT(1)
         FROM course_moderators
@@ -44,8 +41,7 @@ pub fn course_moderator_true(course_id: u32, user_id: u64) -> Result<bool, Error
     }
 }
 
-pub fn course_moderator_add(course_id: u32, user_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_moderator_add(conn: &mut PooledConn, course_id: u32, user_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "INSERT INTO course_moderators (course_id, user_id)
                           SELECT :course_id, :user_id",
@@ -59,8 +55,7 @@ pub fn course_moderator_add(course_id: u32, user_id: u64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn course_moderator_remove(course_id: u32, user_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn course_moderator_remove(conn: &mut PooledConn, course_id: u32, user_id: u64) -> Result<(), Error> {
     let stmt = conn
         .prep(
             "DELETE e FROM course_moderators e

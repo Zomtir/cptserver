@@ -4,6 +4,10 @@ version = "1.1.0"
 authors = ["Moritz Oberhauser <moritz.oberhauser@gmail.com>"]
 edition = "2021"
 
+[lib]
+name = "cptserver"
+path = "src/lib.rs"
+
 [dependencies]
 mysql = "^25.0"
 mysql_common = {version = "^0.32.2", features = ["chrono", "frunk"]}

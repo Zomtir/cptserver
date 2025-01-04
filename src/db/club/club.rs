@@ -2,11 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::Club;
-use crate::db::get_pool_conn;
 use crate::error::Error;
 
-pub fn club_list() -> Result<Vec<Club>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn club_list(conn: &mut PooledConn) -> Result<Vec<Club>, Error> {
     let stmt = conn.prep(
         "SELECT club_id, club_key, name
         FROM clubs;",
@@ -20,8 +18,7 @@ pub fn club_list() -> Result<Vec<Club>, Error> {
     Ok(entries)
 }
 
-pub fn club_info(club_id: u32) -> Result<Club, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn club_info(conn: &mut PooledConn, club_id: u32) -> Result<Club, Error> {
     let stmt = conn.prep(
         "SELECT club_id, club_key, name, description, disciplines, image_url, chairman
         FROM clubs
@@ -43,18 +40,17 @@ pub fn club_info(club_id: u32) -> Result<Club, Error> {
     };
 
     let mut entries = conn.exec_map(&stmt, &params, &map)?;
-    if entries.len() < 1 {
+    if entries.is_empty() {
         return Err(Error::ClubMissing);
     }
     Ok(entries.remove(0))
 }
 
-pub fn club_create(club: &Club) -> Result<u32, Error> {
+pub fn club_create(conn: &mut PooledConn, club: &Club) -> Result<u32, Error> {
     if let Some(image_url) = &club.image_url {
         crate::common::fs::validate_path(image_url)?;
     }
 
-    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO clubs (club_key, name, description, disciplines, image_url, chairman)
         VALUES (:club_key, :name, :description, :disciplines, :image_url, :chairman)",
@@ -74,12 +70,11 @@ pub fn club_create(club: &Club) -> Result<u32, Error> {
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn club_edit(club_id: u32, club: &Club) -> Result<(), Error> {
+pub fn club_edit(conn: &mut PooledConn, club_id: u32, club: &Club) -> Result<(), Error> {
     if let Some(image_url) = &club.image_url {
         crate::common::fs::validate_path(image_url)?;
     }
 
-    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "UPDATE clubs SET
             club_key = :club_key,
@@ -105,8 +100,7 @@ pub fn club_edit(club_id: u32, club: &Club) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn club_delete(club_id: u32) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn club_delete(conn: &mut PooledConn, club_id: u32) -> Result<(), Error> {
     let stmt = conn.prep("DELETE c FROM clubs c WHERE c.club_id = :club_id")?;
 
     let params = params! {

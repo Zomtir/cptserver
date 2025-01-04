@@ -2,11 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::User;
-use crate::db::get_pool_conn;
 use crate::error::Error;
 
-pub fn event_owner_list(event_id: u64) -> Result<Vec<User>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_owner_list(conn: &mut PooledConn, event_id: u64) -> Result<Vec<User>, Error> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
         FROM event_owners
@@ -24,9 +22,7 @@ pub fn event_owner_list(event_id: u64) -> Result<Vec<User>, Error> {
     Ok(users)
 }
 
-pub fn event_owner_add(event_id: u64, user_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
-
+pub fn event_owner_add(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "INSERT INTO event_owners (event_id, user_id)
         VALUES (:event_id, :user_id)",
@@ -40,8 +36,7 @@ pub fn event_owner_add(event_id: u64, user_id: u64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn event_owner_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_owner_remove(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "DELETE FROM event_owners
         WHERE event_id = :event_id AND user_id = :user_id",
@@ -56,8 +51,7 @@ pub fn event_owner_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn event_owner_true(event_id: u64, user_id: u64) -> Result<bool, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_owner_true(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<bool, Error> {
     let stmt = conn.prep(
         "SELECT COUNT(1)
         FROM event_owners

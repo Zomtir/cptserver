@@ -4,6 +4,7 @@ pub mod course;
 pub mod event;
 pub mod inventory;
 pub mod location;
+pub mod login;
 pub mod organisation;
 pub mod skill;
 pub mod team;
@@ -11,25 +12,23 @@ pub mod user;
 
 use crate::error::Error;
 use mysql::prelude::Queryable;
-use mysql::{Pool, PooledConn};
-use std::sync::OnceLock;
-
-static POOL: OnceLock<Pool> = OnceLock::new();
+use mysql::PooledConn;
 
 static SCHEME_VERSION: u8 = 1;
 
-pub fn connect_db() -> Result<(), Error> {
-    let db_url = crate::config::DB_URL();
+pub fn get_version(conn: &mut PooledConn) -> Result<u8, Error> {
+    let query_version = "SELECT version FROM _info;";
+    let version: u8 = conn.query_first::<u8, _>(query_version)?.unwrap();
+    Ok(version)
+}
 
-    let pool = mysql::Pool::new(mysql::Opts::from_url(&db_url)?)?;
-    let _ = POOL.set(pool);
-
+pub fn set_version(conn: &mut PooledConn, version: u8) -> Result<(), Error> {
+    let query_version = format!("INSERT INTO _info (version) VALUES ({});", version);
+    conn.query_drop(&query_version)?;
     Ok(())
 }
 
-pub fn migrate_db() -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
-
+pub fn migrate_scheme(conn: &mut PooledConn) -> Result<(), Error> {
     let latest_version: u8 = SCHEME_VERSION;
 
     // Check if the database has tables
@@ -46,8 +45,7 @@ pub fn migrate_db() -> Result<(), Error> {
         conn.query_drop(&query_schema)?;
 
         // Insert the latest version number
-        let query_version = format!("INSERT INTO _info (version) VALUES ({});", latest_version);
-        conn.query_drop(&query_version)?;
+        set_version(conn, latest_version)?;
     } else {
         // Check if schema info exists
         let query_info = "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '_info';";
@@ -56,7 +54,7 @@ pub fn migrate_db() -> Result<(), Error> {
         // Case 2: Schema info is missing which is taken as indicator of schema version 0
         if !has_info {
             let partial_path = "sql/migrate_0.sql";
-            let local_path = crate::common::fs::local_path(&partial_path)?;
+            let local_path = crate::common::fs::local_path(partial_path)?;
 
             // Run the script that makes the version 0 explicit
             let query_migrate0 = std::fs::read_to_string(local_path).map_err(|_| Error::Default)?;
@@ -64,8 +62,7 @@ pub fn migrate_db() -> Result<(), Error> {
         }
 
         // Case 3: Schema info exists or was set in case 2
-        let query_version = "SELECT version FROM _info;";
-        let mut current_version: u8 = conn.query_first::<u8, _>(query_version)?.unwrap();
+        let mut current_version: u8 = get_version(conn)?;
 
         // Do incremental migrations
         while current_version < latest_version {
@@ -82,31 +79,22 @@ pub fn migrate_db() -> Result<(), Error> {
     Ok(())
 }
 
-pub fn get_pool_conn() -> PooledConn {
-    match POOL.get() {
-        None => panic!("No pool available to establish a database connection"),
-        Some(pool) => match pool.get_conn() {
-            Err(..) => panic!("Pool did not hand out a database connection"),
-            Ok(conn) => conn,
-        },
-    }
-}
-
 /// Helper function to debug SQL queries
 ///
 /// ```
-/// let query = "INSERT INTO events (event_key, pwd, title, location_id, begin, end, status, public, scrutable, note, course_id)
-/// SELECT :event_key, :pwd, :title, :location_id, :begin, :end, :status, :public, :scrutable, :note, :course_id;";
-/// crate::db::print_sql(&query, &params);
+/// use mysql::params;
+/// let query = "INSERT INTO spells (name, damage, mana, level) VALUES (:name, :damage, :mana, :level);";
+/// let params = params! { "name" => "Fireball", "damage" => 12, "mana" => 5, "level" => 3 };
+/// assert_eq!(cptserver::db::prep_sql(&query, &params).unwrap(), "INSERT INTO spells (name, damage, mana, level) VALUES ('Fireball', 12, 5, 3);".to_string());
 /// ```
 #[allow(dead_code)]
-pub fn print_sql(query: &str, params: &mysql::Params) {
+pub fn prep_sql(query: &str, params: &mysql::Params) -> Result<String, Error> {
     let pnp = mysql_common::named_params::ParsedNamedParams::parse(query.as_bytes()).unwrap();
     let (real_query, real_params) = (pnp.query(), pnp.params());
 
     let replacement_map = match params {
         mysql::Params::Named(map) => map,
-        _ => return,
+        _ => return Err(Error::Default),
     };
 
     let input_string = String::from_utf8(real_query.to_vec()).unwrap();
@@ -124,5 +112,5 @@ pub fn print_sql(query: &str, params: &mysql::Params) {
         }
     }
 
-    println!("{}", output_string);
+    Ok(output_string)
 }

@@ -95,7 +95,7 @@ pub fn check_user_key(key: &Option<String>) -> Result<String, Error> {
     Ok(text.into())
 }
 
-pub fn validate_user_key(text: &String) -> Result<(), Error> {
+pub fn validate_user_key(text: &str) -> Result<(), Error> {
     if text.len() < 2 || text.len() > 20 {
         return Err(Error::UserKeyInvalid);
     };

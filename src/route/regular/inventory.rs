@@ -10,13 +10,15 @@ pub fn possession_list(
     owned: Option<WebBool>,
     club_id: Option<u32>,
 ) -> Result<Json<Vec<Possession>>, Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
     let possessions =
-        crate::db::inventory::possession_list(Some(session.user.id), None, owned.map(|b| b.to_bool()), club_id)?;
+        crate::db::inventory::possession_list(conn, Some(session.user.id), None, owned.map(|b| b.to_bool()), club_id)?;
     Ok(Json(possessions))
 }
 
 #[rocket::get("/regular/itemcat_list")]
 pub fn itemcat_list(_session: UserSession) -> Result<Json<Vec<ItemCategory>>, Error> {
-    let itemcats = crate::db::inventory::itemcat_list()?;
+    let conn = &mut crate::utils::db::get_db_conn()?;
+    let itemcats = crate::db::inventory::itemcat_list(conn)?;
     Ok(Json(itemcats))
 }

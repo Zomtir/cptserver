@@ -2,11 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::Team;
-use crate::db::get_pool_conn;
 use crate::error::Error;
 
-pub fn sieve_list(course_id: u32) -> Result<Vec<(Team, bool)>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn sieve_list(conn: &mut PooledConn, course_id: u32) -> Result<Vec<(Team, bool)>, Error> {
     let stmt = conn.prep(
         "SELECT t.team_id, t.team_key, t.name, t.description, cs.access
         FROM course_leader_sieves cs
@@ -33,8 +31,7 @@ pub fn sieve_list(course_id: u32) -> Result<Vec<(Team, bool)>, Error> {
     Ok(teams)
 }
 
-pub fn sieve_edit(course_id: u32, team_id: u64, access: bool) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn sieve_edit(conn: &mut PooledConn, course_id: u32, team_id: u64, access: bool) -> Result<(), Error> {
     let stmt = conn.prep(
         "INSERT INTO course_leader_sieves (course_id, team_id, access)
         VALUES (:course_id, :team_id, :access)
@@ -50,8 +47,7 @@ pub fn sieve_edit(course_id: u32, team_id: u64, access: bool) -> Result<(), Erro
     Ok(())
 }
 
-pub fn sieve_remove(course_id: u32, team_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn sieve_remove(conn: &mut PooledConn, course_id: u32, team_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "DELETE FROM course_leader_sieves
         WHERE course_id = :course_id AND team_id = :team_id;",

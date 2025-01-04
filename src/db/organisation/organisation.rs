@@ -2,11 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::Organisation;
-use crate::db::get_pool_conn;
 use crate::error::Error;
 
-pub fn organisation_list() -> Result<Vec<Organisation>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn organisation_list(conn: &mut PooledConn) -> Result<Vec<Organisation>, Error> {
     let stmt = conn.prep(
         "SELECT organisation_id, abbreviation, name
         FROM organisations;",
@@ -24,8 +22,7 @@ pub fn organisation_list() -> Result<Vec<Organisation>, Error> {
     Ok(terms)
 }
 
-pub fn organisation_create(organisation: &Organisation) -> Result<u32, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn organisation_create(conn: &mut PooledConn, organisation: &Organisation) -> Result<u32, Error> {
     let stmt = conn.prep(
         "INSERT INTO organisations (abbreviation, name)
         VALUES (:abbreviation, :name)",
@@ -41,8 +38,11 @@ pub fn organisation_create(organisation: &Organisation) -> Result<u32, Error> {
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn organisation_edit(organisation_id: u32, organisation: &Organisation) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn organisation_edit(
+    conn: &mut PooledConn,
+    organisation_id: u32,
+    organisation: &Organisation,
+) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE organisations SET
             abbreviation = :abbreviation,
@@ -60,8 +60,7 @@ pub fn organisation_edit(organisation_id: u32, organisation: &Organisation) -> R
     Ok(())
 }
 
-pub fn organisation_delete(organisation_id: u32) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn organisation_delete(conn: &mut PooledConn, organisation_id: u32) -> Result<(), Error> {
     let stmt = conn.prep("DELETE s FROM organisations s WHERE s.organisation_id = :organisation_id")?;
 
     let params = params! {

@@ -2,11 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::ItemCategory;
-use crate::db::get_pool_conn;
 use crate::error::Error;
 
-pub fn itemcat_list() -> Result<Vec<ItemCategory>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn itemcat_list(conn: &mut PooledConn) -> Result<Vec<ItemCategory>, Error> {
     let stmt = conn.prep(
         "SELECT ic.category_id, ic.name
         FROM item_categories ic;",
@@ -23,8 +21,7 @@ pub fn itemcat_list() -> Result<Vec<ItemCategory>, Error> {
     Ok(itemcats)
 }
 
-pub fn itemcat_create(category: &ItemCategory) -> Result<u32, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn itemcat_create(conn: &mut PooledConn, category: &ItemCategory) -> Result<u32, Error> {
     let stmt = conn.prep(
         "INSERT INTO item_categories (name)
         SELECT :category_name;",
@@ -39,8 +36,7 @@ pub fn itemcat_create(category: &ItemCategory) -> Result<u32, Error> {
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn itemcat_edit(category_id: u64, category: &ItemCategory) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn itemcat_edit(conn: &mut PooledConn, category_id: u64, category: &ItemCategory) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE item_categories
         SET name = :category_name
@@ -56,8 +52,7 @@ pub fn itemcat_edit(category_id: u64, category: &ItemCategory) -> Result<(), Err
     Ok(())
 }
 
-pub fn itemcat_delete(category_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn itemcat_delete(conn: &mut PooledConn, category_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "DELETE ic
         FROM item_categories ic

@@ -2,7 +2,6 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Affiliation, Organisation, User};
-use crate::db::get_pool_conn;
 use crate::error::Error;
 
 pub fn sql_affiliation(mut row: mysql::Row) -> Affiliation {
@@ -31,8 +30,11 @@ pub fn sql_affiliation(mut row: mysql::Row) -> Affiliation {
     }
 }
 
-pub fn affiliation_list(user_id: Option<u64>, organisation_id: Option<u64>) -> Result<Vec<Affiliation>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn affiliation_list(
+    conn: &mut PooledConn,
+    user_id: Option<u64>,
+    organisation_id: Option<u64>,
+) -> Result<Vec<Affiliation>, Error> {
     let stmt = conn.prep(
         "SELECT
             u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
@@ -66,8 +68,11 @@ pub fn affiliation_list(user_id: Option<u64>, organisation_id: Option<u64>) -> R
     Ok(affiliations)
 }
 
-pub fn affiliation_info(user_id: u64, organisation_id: u64) -> Result<Option<Affiliation>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn affiliation_info(
+    conn: &mut PooledConn,
+    user_id: u64,
+    organisation_id: u64,
+) -> Result<Option<Affiliation>, Error> {
     let stmt = conn.prep(
         "SELECT
             u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
@@ -95,8 +100,7 @@ pub fn affiliation_info(user_id: u64, organisation_id: u64) -> Result<Option<Aff
     }
 }
 
-pub fn affiliation_create(user_id: u64, organisation_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn affiliation_create(conn: &mut PooledConn, user_id: u64, organisation_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "INSERT INTO organisation_affiliations (user_id, organisation_id)
         SELECT :user_id, :organisation_id;",
@@ -111,8 +115,12 @@ pub fn affiliation_create(user_id: u64, organisation_id: u64) -> Result<(), Erro
     Ok(())
 }
 
-pub fn affiliation_edit(user_id: u64, organisation_id: u64, affiliation: &Affiliation) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn affiliation_edit(
+    conn: &mut PooledConn,
+    user_id: u64,
+    organisation_id: u64,
+    affiliation: &Affiliation,
+) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE organisation_affiliations SET
         member_identifier = :member_identifier,
@@ -135,8 +143,7 @@ pub fn affiliation_edit(user_id: u64, organisation_id: u64, affiliation: &Affili
     Ok(())
 }
 
-pub fn affiliation_delete(user_id: u64, organisation_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn affiliation_delete(conn: &mut PooledConn, user_id: u64, organisation_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "DELETE FROM organisation_affiliations
         WHERE user_id = :user_id AND organisation_id = :organisation_id;",

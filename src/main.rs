@@ -6,14 +6,13 @@ use std::collections::HashSet;
 
 extern crate mysql_common;
 
+mod common;
 mod config;
 mod db;
-
-mod common;
 mod error;
-mod session;
-
 mod route;
+mod session;
+mod utils;
 
 #[rocket::get("/")]
 fn index() -> &'static str {
@@ -24,18 +23,23 @@ fn index() -> &'static str {
 fn rocket() -> _ {
     config::readConfig();
 
-    if db::connect_db().is_err() {
-        panic!("Database connection failed")
+    if utils::db::init_db_pool().is_err() {
+        panic!("Database pool initialization failed")
     };
 
-    if db::migrate_db().is_err() {
+    let mut conn = match utils::db::get_db_conn() {
+        Ok(conn) => conn,
+        Err(_) => panic!("Database connection failed"),
+    };
+
+    if db::migrate_scheme(&mut conn).is_err() {
         panic!("Database update failed")
     };
 
     // Promote an admin user, if demanded by the config, and make him session admin
     if let Some(admin) = crate::config::ADMIN_USER() {
         // Create the user, if not existing
-        let elevate: bool = match crate::db::user::user_created_true(&admin) {
+        let elevate: bool = match crate::db::user::user_created_true(&mut conn, admin) {
             // Database query failed, do not elevate
             Err(_) => false,
             // User is missing, create him
@@ -48,7 +52,7 @@ fn rocket() -> _ {
                     None,
                 );
                 // Elevate unless database query failed
-                crate::db::user::user_create(&mut user).is_ok()
+                crate::db::user::user_create(&mut conn, &mut user).is_ok()
             }
             // User is existing, elevate him
             Ok(true) => true,

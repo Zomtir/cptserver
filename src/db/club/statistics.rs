@@ -2,13 +2,16 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Affiliation, Event, User};
-use crate::db::get_pool_conn;
 use crate::error::Error;
 
 /* HOUSEKEEPING */
 
-pub fn club_team_comparison(club_id: u32, team_id: u32, point_in_time: chrono::NaiveDate) -> Result<Vec<User>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn club_team_comparison(
+    conn: &mut PooledConn,
+    club_id: u32,
+    team_id: u32,
+    point_in_time: chrono::NaiveDate,
+) -> Result<Vec<User>, Error> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
         FROM users u
@@ -40,11 +43,11 @@ pub fn club_team_comparison(club_id: u32, team_id: u32, point_in_time: chrono::N
 // TODO I think the clause "WHERE :point_in_time BETWEEN et.effective_begin AND et.effective_end"
 // disregards other terms and should be removed
 pub fn club_member_leaderboard(
+    conn: &mut PooledConn,
     club_id: u32,
     active: Option<bool>,
     point_in_time: chrono::NaiveDate,
 ) -> Result<Vec<(User, u32)>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "WITH effective_terms AS (
             SELECT t.user_id,
@@ -81,12 +84,12 @@ pub fn club_member_leaderboard(
 }
 
 pub fn club_member_organisation(
+    conn: &mut PooledConn,
     club_id: u32,
     organisation_id: u64,
     active: Option<bool>,
     point_in_time: chrono::NaiveDate,
 ) -> Result<Vec<Affiliation>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "WITH effective_terms AS (
             SELECT t.user_id,
@@ -126,12 +129,12 @@ pub fn club_member_organisation(
 }
 
 pub fn club_statistic_user_leader(
+    conn: &mut PooledConn,
     club_id: u32,
     leader_id: u64,
     time_window_begin: chrono::NaiveDateTime,
     time_window_end: chrono::NaiveDateTime,
 ) -> Result<Vec<Event>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
             events.event_id,
@@ -171,12 +174,12 @@ pub fn club_statistic_user_leader(
 }
 
 pub fn club_statistic_user_participant(
+    conn: &mut PooledConn,
     club_id: u32,
     participant_id: u64,
     time_window_begin: chrono::NaiveDateTime,
     time_window_end: chrono::NaiveDateTime,
 ) -> Result<Vec<Event>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
             events.event_id,
@@ -216,12 +219,12 @@ pub fn club_statistic_user_participant(
 }
 
 pub fn club_statistic_user_supporter(
+    conn: &mut PooledConn,
     club_id: u32,
     supporter_id: u64,
     time_window_begin: chrono::NaiveDateTime,
     time_window_end: chrono::NaiveDateTime,
 ) -> Result<Vec<Event>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT
             events.event_id,

@@ -2,9 +2,7 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Acceptance, Affiliation, Event, Location, Occurrence, User};
-use crate::db::get_pool_conn;
 use crate::error::Error;
-use crate::session::Credential;
 
 pub mod leader;
 pub mod owner;
@@ -15,8 +13,7 @@ pub mod supporter;
  * METHODS
  */
 
-pub fn event_info(event_id: u64) -> Result<Event, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_info(conn: &mut PooledConn, event_id: u64) -> Result<Event, Error> {
     let stmt = conn.prep(
         "SELECT event_id, event_key, e.title,
             l.location_id, l.location_key, l.name AS location_name, l.description AS location_description,
@@ -55,29 +52,8 @@ pub fn event_info(event_id: u64) -> Result<Event, Error> {
     Ok(event)
 }
 
-pub fn event_credential(event_id: u64) -> Result<Credential, Error> {
-    let mut conn: PooledConn = get_pool_conn();
-    let stmt = conn.prep(
-        "SELECT e.event_key, e.pwd
-        FROM events e
-        WHERE event_id = :event_id;",
-    )?;
-    let params = params! {
-        "event_id" => event_id,
-    };
-
-    let map = |(key, pwd)| Credential {
-        login: key,
-        password: pwd,
-        salt: "".to_string(),
-    };
-
-    let mut credits = conn.exec_map(&stmt, &params, &map)?;
-
-    Ok(credits.remove(0))
-}
-
 pub fn event_list(
+    conn: &mut PooledConn,
     begin: Option<chrono::NaiveDateTime>,
     end: Option<chrono::NaiveDateTime>,
     location_id: Option<u64>,
@@ -87,20 +63,6 @@ pub fn event_list(
     course_id: Option<u32>,
     owner_id: Option<u64>,
 ) -> Result<Vec<Event>, Error> {
-    // If there is a search window, make sure it is somewhat correct
-    if let (Some(begin), Some(end)) = (begin, end) {
-        let delta = end.signed_duration_since(begin);
-
-        if delta < crate::config::EVENT_SEARCH_WINDOW_MIN() || delta > crate::config::EVENT_SEARCH_WINDOW_MAX() {
-            return Err(Error::EventSearchLimit);
-        }
-
-        if begin < crate::config::EVENT_SEARCH_DATE_MIN() || end > crate::config::EVENT_SEARCH_DATE_MAX() {
-            return Err(Error::EventSearchLimit);
-        }
-    }
-
-    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT e.event_id, e.event_key, e.title,
             l.location_id, l.location_key, l.name AS location_name, l.description AS location_description,
@@ -158,12 +120,16 @@ pub fn event_list(
     Ok(events)
 }
 
-pub fn event_create(event: &Event, acceptance: &Acceptance, course_id: Option<u32>) -> Result<u64, Error> {
+pub fn event_create(
+    conn: &mut PooledConn,
+    event: &Event,
+    acceptance: &Acceptance,
+    course_id: Option<u32>,
+) -> Result<u64, Error> {
     if event.key.len() < 3 || event.key.len() > 12 {
         return Err(Error::EventKeyInvalid);
     }
 
-    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "INSERT INTO events (event_key, pwd, title, begin, end, location_id, occurrence, acceptance, public, scrutable, note, course_id)
         SELECT :event_key, :pwd, :title, :begin, :end, :location_id, :occurrence, :acceptance, :public, :scrutable, :note, :course_id",
@@ -186,11 +152,10 @@ pub fn event_create(event: &Event, acceptance: &Acceptance, course_id: Option<u3
 
     conn.exec_drop(&stmt, &params)?;
 
-    Ok(conn.last_insert_id() as u64)
+    Ok(conn.last_insert_id())
 }
 
-pub fn event_edit(event_id: u64, event: &Event) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_edit(conn: &mut PooledConn, event_id: u64, event: &Event) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE events
         SET
@@ -223,8 +188,7 @@ pub fn event_edit(event_id: u64, event: &Event) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn event_acceptance_edit(event_id: u64, acceptance: &Acceptance) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_acceptance_edit(conn: &mut PooledConn, event_id: u64, acceptance: &Acceptance) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE events SET
         acceptance = :acceptance
@@ -239,11 +203,7 @@ pub fn event_acceptance_edit(event_id: u64, acceptance: &Acceptance) -> Result<(
     Ok(())
 }
 
-pub fn event_password_edit(event_id: u64, password: String) -> Result<(), Error> {
-    let password = crate::common::validate_clear_password(password)?;
-
-    let mut conn: PooledConn = get_pool_conn();
-
+pub fn event_password_edit(conn: &mut PooledConn, event_id: u64, password: String) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE events SET pwd = :pwd
         WHERE event_id = :event_id",
@@ -258,8 +218,7 @@ pub fn event_password_edit(event_id: u64, password: String) -> Result<(), Error>
     Ok(())
 }
 
-pub fn event_note_edit(event_id: u64, note: &String) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_note_edit(conn: &mut PooledConn, event_id: u64, note: &String) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE events
         SET note = :note
@@ -275,8 +234,7 @@ pub fn event_note_edit(event_id: u64, note: &String) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn event_delete(event_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_delete(conn: &mut PooledConn, event_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "DELETE s
         FROM events s
@@ -291,12 +249,7 @@ pub fn event_delete(event_id: u64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn event_free_true(event: &Event) -> Result<bool, Error> {
-    if !crate::common::is_event_valid(event) {
-        return Ok(false);
-    };
-
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_free_true(conn: &mut PooledConn, event: &Event) -> Result<bool, Error> {
     let stmt = conn.prep(
         "SELECT COUNT(1)
         FROM events
@@ -320,8 +273,7 @@ pub fn event_free_true(event: &Event) -> Result<bool, Error> {
 
 /* COURSE RELATED */
 
-pub fn event_course_info(event_id: u64) -> Result<Option<u32>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_course_info(conn: &mut PooledConn, event_id: u64) -> Result<Option<u32>, Error> {
     let stmt = conn.prep(
         "SELECT course_id
         FROM events
@@ -337,9 +289,7 @@ pub fn event_course_info(event_id: u64) -> Result<Option<u32>, Error> {
     }
 }
 
-pub fn event_course_edit(event_id: u64, course_id: Option<u32>) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
-
+pub fn event_course_edit(conn: &mut PooledConn, event_id: u64, course_id: Option<u32>) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE events
         SET course_id = :course_id
@@ -357,8 +307,7 @@ pub fn event_course_edit(event_id: u64, course_id: Option<u32>) -> Result<(), Er
 
 /* MODERATOR RELATED */
 
-pub fn event_moderator_true(event_id: u64, user_id: u64) -> Result<bool, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_moderator_true(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<bool, Error> {
     let stmt = conn.prep(
         "SELECT COUNT(1)
         FROM events e
@@ -380,8 +329,7 @@ pub fn event_moderator_true(event_id: u64, user_id: u64) -> Result<bool, Error> 
 
 /* BOOKMARKS */
 
-pub fn event_bookmark_true(event_id: u64, user_id: u64) -> Result<bool, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_bookmark_true(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<bool, Error> {
     let stmt = conn.prep(
         "SELECT COUNT(1)
         FROM event_bookmarks b
@@ -400,8 +348,7 @@ pub fn event_bookmark_true(event_id: u64, user_id: u64) -> Result<bool, Error> {
     }
 }
 
-pub fn event_bookmark_add(event_id: u64, user_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_bookmark_add(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "INSERT INTO event_bookmarks (event_id, user_id)
         VALUES (:event_id, :user_id);",
@@ -415,8 +362,7 @@ pub fn event_bookmark_add(event_id: u64, user_id: u64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn event_bookmark_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_bookmark_remove(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<(), Error> {
     let stmt = conn.prep(
         "DELETE FROM event_bookmarks
         WHERE event_id = :event_id AND user_id = :user_id;",
@@ -434,12 +380,12 @@ pub fn event_bookmark_remove(event_id: u64, user_id: u64) -> Result<(), Error> {
 /* STATISTICS */
 
 pub fn event_statistic_packlist(
+    conn: &mut PooledConn,
     event_id: u64,
     category1: Option<u32>,
     category2: Option<u32>,
     category3: Option<u32>,
 ) -> Result<Vec<(User, u32, u32, u32)>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
             COUNT(CASE WHEN i.category_id = :category1 THEN 1 END) AS count1,
@@ -471,8 +417,7 @@ pub fn event_statistic_packlist(
     Ok(stats)
 }
 
-pub fn event_statistic_division(event_id: u64) -> Result<Vec<User>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_statistic_division(conn: &mut PooledConn, event_id: u64) -> Result<Vec<User>, Error> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname, u.birth_date, u.gender, u.height, u.weight
         FROM event_participant_presences ep
@@ -495,8 +440,11 @@ pub fn event_statistic_division(event_id: u64) -> Result<Vec<User>, Error> {
     Ok(list)
 }
 
-pub fn event_statistic_organisation(event_id: u64, organisation_id: u64) -> Result<Vec<Affiliation>, Error> {
-    let mut conn: PooledConn = get_pool_conn();
+pub fn event_statistic_organisation(
+    conn: &mut PooledConn,
+    event_id: u64,
+    organisation_id: u64,
+) -> Result<Vec<Affiliation>, Error> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
             o.organisation_id, o.abbreviation AS organisation_abbreviation, o.name AS organisation_name,
