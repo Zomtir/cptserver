@@ -1,3 +1,21 @@
+## Release v1.2.0 (12th Jan 2025)
+
+- feat: Split lib and package functionality to enable integration testing
+    - refactor: Hand over conn rather than self-serve
+    - refactor: Move CONFIG out of common, db and error
+    - refactor: Move non-db logic from db to utils
+    - feat: Internal cptserver library src/lib.rs
+    - feat: Static config for a test database
+    - feat: Initial integration test for database connection
+    - fix: Reworked non-functional unit test at print_sql/prep_sql
+- feat: Added file_url to licenses
+- feat: Changed license number from u8 to String
+- feat: Increased nickname length from 20 to 40
+- refactor: Renamed db updates to db migrations
+- fix: Missing default values of organisation rights
+- chore: DB status and release package folder
+- chore: Update DB schema to v2
+
 ## Release v1.1.0 (21st Dec 2024)
 
 - feat: Added user bank accounts
