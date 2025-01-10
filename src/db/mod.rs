@@ -14,7 +14,7 @@ use crate::error::Error;
 use mysql::prelude::Queryable;
 use mysql::PooledConn;
 
-static SCHEME_VERSION: u8 = 1;
+static SCHEME_VERSION: u8 = 2;
 
 pub fn get_version(conn: &mut PooledConn) -> Result<u8, Error> {
     let query_version = "SELECT version FROM _info;";

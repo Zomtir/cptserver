@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8001
--- Generation Time: Dec 17, 2024 at 09:18 AM
+-- Generation Time: Jan 10, 2025 at 08:02 AM
 -- Server version: 10.11.8-MariaDB-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -331,9 +331,10 @@ CREATE TABLE `item_categories` (
 
 CREATE TABLE `licenses` (
   `id` mediumint(9) NOT NULL,
-  `number` int(11) NOT NULL,
+  `number` varchar(20) NOT NULL,
   `name` varchar(50) NOT NULL,
-  `expiration` date NOT NULL
+  `expiration` date NOT NULL,
+  `file_url` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -414,7 +415,7 @@ CREATE TABLE `teams` (
   `right_location_write` tinyint(1) NOT NULL DEFAULT 0,
   `right_location_read` tinyint(1) NOT NULL DEFAULT 0,
   `right_organisation_write` tinyint(1) NOT NULL,
-  `right_organisation_read` tinyint(1) NOT NULL,
+  `right_organisation_read` tinyint(1) NOT NULL DEFAULT 0,
   `right_team_write` tinyint(1) NOT NULL DEFAULT 0,
   `right_team_read` tinyint(1) NOT NULL DEFAULT 0,
   `right_user_write` tinyint(1) NOT NULL DEFAULT 0,
@@ -462,7 +463,7 @@ CREATE TABLE `users` (
   `active` tinyint(1) NOT NULL DEFAULT 1,
   `firstname` varchar(20) NOT NULL,
   `lastname` varchar(20) NOT NULL,
-  `nickname` varchar(20) DEFAULT NULL,
+  `nickname` varchar(40) DEFAULT NULL,
   `address` varchar(60) DEFAULT NULL,
   `email` varchar(40) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
