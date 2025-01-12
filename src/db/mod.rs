@@ -40,6 +40,8 @@ pub fn migrate_scheme(conn: &mut PooledConn) -> Result<(), Error> {
         let partial_path = format!("sql/schema_{}.sql", latest_version);
         let local_path = crate::common::fs::local_path(&partial_path)?;
 
+        println!("DB: Fresh setup to version {}", latest_version);
+
         // Apply the schema
         let query_schema = std::fs::read_to_string(local_path).map_err(|_| Error::Default)?;
         conn.query_drop(&query_schema)?;
@@ -64,6 +66,7 @@ pub fn migrate_scheme(conn: &mut PooledConn) -> Result<(), Error> {
         // Case 3: Schema info exists or was set in case 2
         let mut current_version: u8 = get_version(conn)?;
 
+        println!("DB: Migration from version {} to {}", current_version, latest_version);
         // Do incremental migrations
         while current_version < latest_version {
             let partial_path = format!("sql/migrate_{}.sql", current_version + 1);
