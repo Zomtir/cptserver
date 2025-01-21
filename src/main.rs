@@ -316,6 +316,7 @@ fn rocket() -> _ {
                 route::admin::skill::skill_edit,
                 route::admin::skill::skill_delete,
                 route::admin::team::team_list,
+                route::admin::team::team_info,
                 route::admin::team::team_create,
                 route::admin::team::team_edit,
                 route::admin::team::team_right_edit,

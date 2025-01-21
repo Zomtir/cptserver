@@ -14,6 +14,36 @@ pub fn team_list(conn: &mut PooledConn) -> Result<Vec<Team>, Error> {
             team_id,
             team_key,
             name,
+            description        
+        FROM teams;",
+    )?;
+
+    let params = params::Params::Empty;
+
+    let rows: Vec<mysql::Row> = conn.exec(&stmt, &params)?;
+
+    let mut teams: Vec<Team> = Vec::new();
+
+    for mut row in rows {
+        let team = Team {
+            id: row.take("team_id").unwrap(),
+            key: row.take("team_key").unwrap(),
+            name: row.take("name").unwrap(),
+            description: row.take("description").unwrap(),
+            right: None,
+        };
+        teams.push(team);
+    }
+
+    Ok(teams)
+}
+
+pub fn team_info(conn: &mut PooledConn, team_id: &u32) -> Result<Team, Error> {
+    let stmt = conn.prep(
+        "SELECT
+            team_id,
+            team_key,
+            name,
             description,
             right_club_write,
             right_club_read,
@@ -33,46 +63,47 @@ pub fn team_list(conn: &mut PooledConn) -> Result<Vec<Team>, Error> {
             right_team_read,
             right_user_write,
             right_user_read            
-        FROM teams",
+        FROM teams
+        WHERE team_id = :team_id;",
     )?;
 
-    let params = params::Params::Empty;
+    let params = params! {
+        "team_id" => team_id,
+    };
 
-    let rows: Vec<mysql::Row> = conn.exec(&stmt, &params)?;
+    let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
+        None => return Err(Error::TeamMissing),
+        Some(row) => row,
+    };
 
-    let mut teams: Vec<Team> = Vec::new();
+    let team = Team {
+        id: row.take("team_id").unwrap(),
+        key: row.take("team_key").unwrap(),
+        name: row.take("name").unwrap(),
+        description: row.take("description").unwrap(),
+        right: Some(Right {
+            right_club_write: row.take("right_club_write").unwrap(),
+            right_club_read: row.take("right_club_read").unwrap(),
+            right_competence_write: row.take("right_competence_write").unwrap(),
+            right_competence_read: row.take("right_competence_read").unwrap(),
+            right_course_write: row.take("right_course_write").unwrap(),
+            right_course_read: row.take("right_course_read").unwrap(),
+            right_event_write: row.take("right_event_write").unwrap(),
+            right_event_read: row.take("right_event_read").unwrap(),
+            right_inventory_write: row.take("right_inventory_write").unwrap(),
+            right_inventory_read: row.take("right_inventory_read").unwrap(),
+            right_location_write: row.take("right_location_write").unwrap(),
+            right_location_read: row.take("right_location_read").unwrap(),
+            right_organisation_write: row.take("right_organisation_write").unwrap(),
+            right_organisation_read: row.take("right_organisation_read").unwrap(),
+            right_team_write: row.take("right_team_write").unwrap(),
+            right_team_read: row.take("right_team_read").unwrap(),
+            right_user_write: row.take("right_user_write").unwrap(),
+            right_user_read: row.take("right_user_read").unwrap(),
+        }),
+    };
 
-    for mut row in rows {
-        let team = Team {
-            id: row.take("team_id").unwrap(),
-            key: row.take("team_key").unwrap(),
-            name: row.take("name").unwrap(),
-            description: row.take("description").unwrap(),
-            right: Some(Right {
-                right_club_write: row.take("right_club_write").unwrap(),
-                right_club_read: row.take("right_club_read").unwrap(),
-                right_competence_write: row.take("right_competence_write").unwrap(),
-                right_competence_read: row.take("right_competence_read").unwrap(),
-                right_course_write: row.take("right_course_write").unwrap(),
-                right_course_read: row.take("right_course_read").unwrap(),
-                right_event_write: row.take("right_event_write").unwrap(),
-                right_event_read: row.take("right_event_read").unwrap(),
-                right_inventory_write: row.take("right_inventory_write").unwrap(),
-                right_inventory_read: row.take("right_inventory_read").unwrap(),
-                right_location_write: row.take("right_location_write").unwrap(),
-                right_location_read: row.take("right_location_read").unwrap(),
-                right_organisation_write: row.take("right_organisation_write").unwrap(),
-                right_organisation_read: row.take("right_organisation_read").unwrap(),
-                right_team_write: row.take("right_team_write").unwrap(),
-                right_team_read: row.take("right_team_read").unwrap(),
-                right_user_write: row.take("right_user_write").unwrap(),
-                right_user_read: row.take("right_user_read").unwrap(),
-            }),
-        };
-        teams.push(team);
-    }
-
-    Ok(teams)
+    Ok(team)
 }
 
 pub fn team_create(conn: &mut PooledConn, team: &Team) -> Result<u32, Error> {

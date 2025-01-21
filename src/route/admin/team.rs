@@ -17,6 +17,17 @@ pub fn team_list(session: UserSession) -> Result<Json<Vec<Team>>, Error> {
     Ok(Json(teams))
 }
 
+#[rocket::get("/admin/team_info?<team_id>")]
+pub fn team_info(session: UserSession, team_id: u32) -> Result<Json<Team>, Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
+    if !session.right.right_team_read {
+        return Err(Error::RightTeamMissing);
+    };
+
+    let team = crate::db::team::team_info(conn, &team_id)?;
+    Ok(Json(team))
+}
+
 #[rocket::post("/admin/team_create", format = "application/json", data = "<team>")]
 pub fn team_create(session: UserSession, team: Json<Team>) -> Result<String, Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;

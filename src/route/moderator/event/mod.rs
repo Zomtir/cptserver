@@ -31,7 +31,7 @@ pub fn event_create(session: UserSession, course_id: u32, mut event: Json<Event>
 #[rocket::post("/mod/event_edit?<event_id>", format = "application/json", data = "<event>")]
 pub fn event_edit(session: UserSession, event_id: u64, mut event: Json<Event>) -> Result<(), Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !crate::db::event::event_moderator_true(conn, event_id, session.user.id)?{
+    if !crate::db::event::event_moderator_true(conn, event_id, session.user.id)? {
         return Err(Error::CourseModeratorPermission);
     };
 
@@ -44,7 +44,7 @@ pub fn event_edit(session: UserSession, event_id: u64, mut event: Json<Event>) -
 #[rocket::post("/mod/event_edit_password?<event_id>", format = "text/plain", data = "<password>")]
 pub fn event_edit_password(session: UserSession, event_id: u64, password: String) -> Result<(), Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !crate::db::event::event_moderator_true(conn, event_id, session.user.id)?{
+    if !crate::db::event::event_moderator_true(conn, event_id, session.user.id)? {
         return Err(Error::CourseModeratorPermission);
     };
 
@@ -56,7 +56,7 @@ pub fn event_edit_password(session: UserSession, event_id: u64, password: String
 #[rocket::head("/mod/event_delete?<event_id>")]
 pub fn event_delete(session: UserSession, event_id: u64) -> Result<(), Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !crate::db::event::event_moderator_true(conn, event_id, session.user.id)?{
+    if !crate::db::event::event_moderator_true(conn, event_id, session.user.id)? {
         return Err(Error::CourseModeratorPermission);
     };
 
