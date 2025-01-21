@@ -9,17 +9,7 @@ pub enum Gender {
 }
 
 impl Gender {
-    pub fn from_str(s: &str) -> Option<Self> {
-        match s {
-            "MALE" => Some(Gender::Male),
-            "FEMALE" => Some(Gender::Female),
-            "OTHER" => Some(Gender::Other),
-            "NULL" => Some(Gender::Null),
-            _ => None,
-        }
-    }
-
-    pub fn to_str(&self) -> &str {
+    pub fn as_str(&self) -> &str {
         match self {
             Gender::Male => "MALE",
             Gender::Female => "NEUTRAL",
@@ -29,11 +19,29 @@ impl Gender {
     }
 }
 
+impl std::fmt::Display for Gender {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl Gender {
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "MALE" => Some(Gender::Male),
+            "FEMALE" => Some(Gender::Female),
+            "OTHER" => Some(Gender::Other),
+            "NULL" => Some(Gender::Null),
+            _ => None,
+        }
+    }
+}
+
 impl core::convert::From<Gender> for mysql_common::Value {
     fn from(s: Gender) -> Self {
         match s {
             Gender::Null => mysql_common::Value::NULL,
-            s => mysql_common::Value::Bytes(s.to_str().to_string().into_bytes()),
+            s => mysql_common::Value::Bytes(s.to_string().into_bytes()),
         }
     }
 }

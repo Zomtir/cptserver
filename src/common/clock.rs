@@ -8,6 +8,7 @@ use rocket::form::{self, DataField, FromFormField, ValueField};
 pub struct WebDate(pub chrono::NaiveDate);
 
 #[allow(dead_code)]
+#[allow(clippy::needless_lifetimes)]
 impl<'r> WebDate {
     fn from_str(s: &str) -> form::Result<'r, Self> {
         match chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d") {
@@ -37,6 +38,7 @@ impl<'r> FromFormField<'r> for WebDate {
 pub struct WebDateTime(pub chrono::NaiveDateTime);
 
 #[allow(dead_code)]
+#[allow(clippy::needless_lifetimes)]
 impl<'r> WebDateTime {
     fn from_str(s: &str) -> form::Result<'r, Self> {
         match chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d-%H-%M") {

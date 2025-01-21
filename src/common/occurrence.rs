@@ -8,6 +8,22 @@ pub enum Occurrence {
 }
 
 impl Occurrence {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Occurrence::Occurring => "OCCURRING",
+            Occurrence::Canceled => "CANCELED",
+            Occurrence::Voided => "VOIDED",
+        }
+    }
+}
+
+impl std::fmt::Display for Occurrence {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl Occurrence {
     pub fn from_str(s: &str) -> Option<Self> {
         match s {
             "OCCURRING" => Some(Occurrence::Occurring),
@@ -16,23 +32,11 @@ impl Occurrence {
             _ => None,
         }
     }
-
-    pub fn to_str(&self) -> &str {
-        match self {
-            Occurrence::Occurring => "OCCURRING",
-            Occurrence::Canceled => "CANCELED",
-            Occurrence::Voided => "VOIDED",
-        }
-    }
-
-    pub fn to_string(&self) -> String {
-        self.to_str().to_string()
-    }
 }
 
 impl core::convert::From<Occurrence> for mysql_common::Value {
-    fn from(s: Occurrence) -> Self {
-        mysql_common::Value::Bytes(s.to_str().to_string().into_bytes())
+    fn from(v: Occurrence) -> Self {
+        mysql_common::Value::Bytes(v.to_string().into_bytes())
     }
 }
 

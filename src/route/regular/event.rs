@@ -163,7 +163,7 @@ pub fn event_leader_registration_info(session: UserSession, event_id: u64) -> Re
     // TODO check if you can lead (requirement)
 
     let status = crate::db::event::leader::event_leader_registration_info(conn, event_id, session.user.id)?;
-    Ok(status.to_str().to_string())
+    Ok(status.to_string())
 }
 
 #[rocket::head("/regular/event_leader_registration_edit?<event_id>&<status>")]
@@ -186,7 +186,7 @@ pub fn event_supporter_registration_info(session: UserSession, event_id: u64) ->
     // TODO check if you can support (requirement)
 
     let status = crate::db::event::supporter::event_supporter_registration_info(conn, event_id, session.user.id)?;
-    Ok(status.to_str().to_string())
+    Ok(status.to_string())
 }
 
 #[rocket::head("/regular/event_supporter_registration_edit?<event_id>&<status>")]
@@ -213,7 +213,7 @@ pub fn event_participant_registration_info(session: UserSession, event_id: u64) 
     // TODO check if you can register (requirement)
 
     let status = crate::db::event::participant::event_participant_registration_info(conn, event_id, session.user.id)?;
-    Ok(status.to_str().to_string())
+    Ok(status.to_string())
 }
 
 #[rocket::head("/regular/event_participant_registration_edit?<event_id>&<status>")]

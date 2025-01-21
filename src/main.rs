@@ -1,4 +1,4 @@
-//#![feature(try_blocks)]
+#![allow(clippy::too_many_arguments)]
 
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 

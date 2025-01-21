@@ -76,7 +76,7 @@ pub fn readConfig() {
     let mut server_conf: ServerConfig = confy::load_path(confpath).unwrap();
 
     if let Some(ref admin) = server_conf.cpt_admin {
-        if crate::common::validate_user_key(&admin).is_err() {
+        if crate::common::validate_user_key(admin).is_err() {
             server_conf.cpt_admin = None;
         }
     }

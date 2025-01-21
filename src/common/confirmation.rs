@@ -9,17 +9,7 @@ pub enum Confirmation {
 }
 
 impl Confirmation {
-    pub fn from_str(s: &str) -> Option<Self> {
-        match s {
-            "POSITIVE" => Some(Confirmation::Positive),
-            "NEUTRAL" => Some(Confirmation::Neutral),
-            "NEGATIVE" => Some(Confirmation::Negative),
-            "NULL" => Some(Confirmation::Null),
-            _ => None,
-        }
-    }
-
-    pub fn to_str(&self) -> &str {
+    pub fn as_str(&self) -> &str {
         match self {
             Confirmation::Positive => "POSITIVE",
             Confirmation::Neutral => "NEUTRAL",
@@ -29,11 +19,29 @@ impl Confirmation {
     }
 }
 
+impl std::fmt::Display for Confirmation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl Confirmation {
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "POSITIVE" => Some(Confirmation::Positive),
+            "NEUTRAL" => Some(Confirmation::Neutral),
+            "NEGATIVE" => Some(Confirmation::Negative),
+            "NULL" => Some(Confirmation::Null),
+            _ => None,
+        }
+    }
+}
+
 impl core::convert::From<Confirmation> for mysql_common::Value {
     fn from(s: Confirmation) -> Self {
         match s {
             Confirmation::Null => mysql_common::Value::NULL,
-            s => mysql_common::Value::Bytes(s.to_str().to_string().into_bytes()),
+            s => mysql_common::Value::Bytes(s.to_string().into_bytes()),
         }
     }
 }
