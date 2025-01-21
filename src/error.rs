@@ -6,6 +6,7 @@ use rocket::response::{self, Responder, Response};
 #[derive(Debug)]
 pub enum Error {
     Default,
+    Parsing,
 
     DatabaseURL,
     DatabaseConnection,
@@ -78,6 +79,7 @@ impl Error {
     fn kind(&self) -> String {
         let kind = match self {
             Error::Default => "DEFAULT",
+            Error::Parsing => "PARSING",
 
             Error::DatabaseURL => "DATABASE_URL",
             Error::DatabaseConnection => "DATABASE_CONNECTION",
@@ -151,6 +153,7 @@ impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Error::Default => write!(f, "Default error"),
+            Error::Parsing => write!(f, "Parsing error"),
 
             Error::DatabaseURL => write!(f, "Database URL error"),
             Error::DatabaseConnection => write!(f, "Database connection error"),

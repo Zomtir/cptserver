@@ -43,7 +43,7 @@ pub fn event_supporter_registration_info(
     let row = conn.exec_first::<String, _, _>(&stmt, &params)?;
 
     match row {
-        Some(status) => Ok(Confirmation::from_str(&status).unwrap()),
+        Some(status) => Ok(status.parse()?),
         None => Ok(Confirmation::Null),
     }
 }

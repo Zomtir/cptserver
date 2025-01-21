@@ -1,4 +1,7 @@
 use rocket::form::{self, FromFormField, ValueField};
+use rocket::form::error::{Errors, ErrorKind};
+
+pub use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Confirmation {
@@ -25,14 +28,16 @@ impl std::fmt::Display for Confirmation {
     }
 }
 
-impl Confirmation {
-    pub fn from_str(s: &str) -> Option<Self> {
+impl std::str::FromStr for Confirmation {
+    type Err = crate::error::Error;
+
+    fn from_str<'r>(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "POSITIVE" => Some(Confirmation::Positive),
-            "NEUTRAL" => Some(Confirmation::Neutral),
-            "NEGATIVE" => Some(Confirmation::Negative),
-            "NULL" => Some(Confirmation::Null),
-            _ => None,
+            "POSITIVE" => Ok(Confirmation::Positive),
+            "NEUTRAL" => Ok(Confirmation::Neutral),
+            "NEGATIVE" => Ok(Confirmation::Negative),
+            "NULL" => Ok(Confirmation::Null),
+            _ => Err(crate::error::Error::Parsing),
         }
     }
 }
@@ -49,9 +54,6 @@ impl core::convert::From<Confirmation> for mysql_common::Value {
 #[rocket::async_trait]
 impl<'r> FromFormField<'r> for Confirmation {
     fn from_value(field: ValueField<'r>) -> form::Result<'r, Self> {
-        match Confirmation::from_str(field.value) {
-            Some(confirmation) => Ok(confirmation),
-            None => Err(form::Errors::default()),
-        }
+        Confirmation::from_str(field.value).map_err(|_| Errors::from(ErrorKind::Missing))
     }
 }

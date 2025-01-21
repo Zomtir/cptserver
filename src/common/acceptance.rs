@@ -1,4 +1,7 @@
 use rocket::form::{self, DataField, FromFormField, ValueField};
+use rocket::form::error::{Errors, ErrorKind};
+
+pub use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Acceptance {
@@ -25,14 +28,16 @@ impl std::fmt::Display for Acceptance {
     }
 }
 
-impl Acceptance {
-    pub fn from_str(s: &str) -> Option<Self> {
+impl std::str::FromStr for Acceptance {
+    type Err = crate::error::Error;
+
+    fn from_str<'r>(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "DRAFT" => Some(Acceptance::Draft),
-            "PENDING" => Some(Acceptance::Pending),
-            "ACCEPTED" => Some(Acceptance::Accepted),
-            "REJECTED" => Some(Acceptance::Rejected),
-            _ => None,
+            "DRAFT" => Ok(Acceptance::Draft),
+            "PENDING" => Ok(Acceptance::Pending),
+            "ACCEPTED" => Ok(Acceptance::Accepted),
+            "REJECTED" => Ok(Acceptance::Rejected),
+            _ => Err(crate::error::Error::Parsing),
         }
     }
 }
@@ -46,18 +51,11 @@ impl core::convert::From<Acceptance> for mysql_common::Value {
 #[rocket::async_trait]
 impl<'r> FromFormField<'r> for Acceptance {
     fn from_value(field: ValueField<'r>) -> form::Result<'r, Self> {
-        match Acceptance::from_str(field.value) {
-            None => Err(form::Errors::default()),
-            Some(event_status) => Ok(event_status),
-        }
+        Acceptance::from_str(field.value).map_err(|_| Errors::from(ErrorKind::Missing))
     }
 
     async fn from_data(field: DataField<'r, '_>) -> form::Result<'r, Self> {
         let web_string: String = crate::common::parse_field(field).await?;
-
-        match Acceptance::from_str(&web_string) {
-            None => return Err(form::Errors::default()),
-            Some(event_status) => return Ok(event_status),
-        }
+        Acceptance::from_str(&web_string).map_err(|_| Errors::from(ErrorKind::Missing))
     }
 }

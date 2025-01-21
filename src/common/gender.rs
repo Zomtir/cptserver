@@ -1,4 +1,7 @@
 use rocket::form::{self, FromFormField, ValueField};
+use rocket::form::error::{Errors, ErrorKind};
+
+pub use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Gender {
@@ -25,14 +28,16 @@ impl std::fmt::Display for Gender {
     }
 }
 
-impl Gender {
-    pub fn from_str(s: &str) -> Option<Self> {
+impl std::str::FromStr for Gender {
+    type Err = crate::error::Error;
+
+    fn from_str<'r>(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "MALE" => Some(Gender::Male),
-            "FEMALE" => Some(Gender::Female),
-            "OTHER" => Some(Gender::Other),
-            "NULL" => Some(Gender::Null),
-            _ => None,
+            "MALE" => Ok(Gender::Male),
+            "FEMALE" => Ok(Gender::Female),
+            "OTHER" => Ok(Gender::Other),
+            "NULL" => Ok(Gender::Null),
+            _ => Err(crate::error::Error::Parsing),
         }
     }
 }
@@ -49,9 +54,6 @@ impl core::convert::From<Gender> for mysql_common::Value {
 #[rocket::async_trait]
 impl<'r> FromFormField<'r> for Gender {
     fn from_value(field: ValueField<'r>) -> form::Result<'r, Self> {
-        match Gender::from_str(field.value) {
-            Some(confirmation) => Ok(confirmation),
-            None => Err(form::Errors::default()),
-        }
+        Gender::from_str(field.value).map_err(|_| Errors::from(ErrorKind::Missing))
     }
 }
