@@ -1,5 +1,5 @@
+use rocket::form::error::{ErrorKind, Errors};
 use rocket::form::{self, FromFormField, ValueField};
-use rocket::form::error::{Errors, ErrorKind};
 
 pub use std::str::FromStr;
 

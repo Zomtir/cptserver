@@ -79,6 +79,18 @@ impl User {
             note: None,
         }
     }
+
+    pub fn from_row(row: &mut mysql::Row) -> Option<User> {
+        row.take::<Option<u64>, &str>("user_id").unwrap().map(|user_id| {
+            User::from_info(
+                user_id,
+                row.take("user_key").unwrap(),
+                row.take("user_firstname").unwrap(),
+                row.take("user_lastname").unwrap(),
+                row.take("user_nickname").unwrap(),
+            )
+        })
+    }
 }
 
 /*

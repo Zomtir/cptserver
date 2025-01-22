@@ -342,7 +342,7 @@ pub fn course_statistic_leader1(conn: &mut PooledConn, course_id: u32, leader_id
         "leader_id" => &leader_id,
     };
 
-    let map = Event::sqlmap();
+    let map = Event::sql_map();
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
@@ -412,7 +412,7 @@ pub fn course_statistic_supporter1(
         "supporter_id" => &supporter_id,
     };
 
-    let map = Event::sqlmap();
+    let map = Event::sql_map();
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
@@ -482,7 +482,7 @@ pub fn course_statistic_participant1(
         "participant_id" => &participant_id,
     };
 
-    let map = Event::sqlmap();
+    let map = Event::sql_map();
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)

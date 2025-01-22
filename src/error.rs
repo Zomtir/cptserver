@@ -53,6 +53,8 @@ pub enum Error {
 
     TeamMissing,
 
+    OrganisationMissing,
+
     InventoryStockInvalid,
     InventoryStockLimit,
     InventoryStockConflict,
@@ -125,6 +127,8 @@ impl Error {
             Error::ClubMissing => "CLUB_MISSING",
 
             Error::TeamMissing => "TEAM_MISSING",
+
+            Error::OrganisationMissing => "ORGANISATION_MISSING",
 
             Error::InventoryStockInvalid => "INVENTORY_STOCK_INVALID",
             Error::InventoryStockLimit => "INVENTORY_STOCK_LIMIT",
@@ -199,6 +203,8 @@ impl std::fmt::Display for Error {
             Error::ClubMissing => write!(f, "Club is missing"),
 
             Error::TeamMissing => write!(f, "Team is missing"),
+
+            Error::OrganisationMissing => write!(f, "Organisation is missing"),
 
             Error::InventoryStockInvalid => write!(f, "Current inventory stock is invalid"),
             Error::InventoryStockLimit => write!(f, "Inventory stock limit was reached"),

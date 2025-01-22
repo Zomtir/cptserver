@@ -419,8 +419,14 @@ pub fn event_statistic_packlist(
 
 pub fn event_statistic_division(conn: &mut PooledConn, event_id: u64) -> Result<Vec<User>, Error> {
     let stmt = conn.prep(
-        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname, u.birth_date, u.gender, u.height, u.weight
+        "SELECT
+            u.user_id, u.user_key, u.firstname, u.lastname, u.nickname, u.birth_date, u.gender, u.height, u.weight,
+            o.organisation_id, o.abbreviation AS organisation_abbreviation, o.name AS organisation_name,
+            oa.member_identifier, oa.permission_solo_date, oa.permission_team_date, oa.residency_move_date
         FROM event_participant_presences ep
+        JOIN users u ON ep.user_id = u.user_id
+        LEFT JOIN organisation_affiliations oa ON oa.user_id = u.user_id AND oa.organisation_id = :organisation_id
+        LEFT JOIN organisations o ON o.organisation_id = oa.organisation_id
         JOIN users u ON ep.user_id = u.user_id
         WHERE ep.event_id = :event_id;",
     )?;
@@ -446,7 +452,7 @@ pub fn event_statistic_organisation(
     organisation_id: u64,
 ) -> Result<Vec<Affiliation>, Error> {
     let stmt = conn.prep(
-        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
+        "SELECT u.user_id, u.user_key, u.firstname AS user_firstname, u.lastname AS user_lastname, u.nickname AS user_nickname,
             o.organisation_id, o.abbreviation AS organisation_abbreviation, o.name AS organisation_name,
             oa.member_identifier, oa.permission_solo_date, oa.permission_team_date, oa.residency_move_date
         FROM event_participant_presences ep
@@ -464,8 +470,8 @@ pub fn event_statistic_organisation(
 
     let mut affiliations: Vec<Affiliation> = Vec::new();
 
-    for row in rows {
-        affiliations.push(crate::db::organisation::sql_affiliation(row));
+    for mut row in rows {
+        affiliations.push(Affiliation::from_row(&mut row));
     }
 
     Ok(affiliations)

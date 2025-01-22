@@ -12,14 +12,30 @@ pub fn organisation_list(conn: &mut PooledConn) -> Result<Vec<Organisation>, Err
 
     let params = params::Params::Empty;
 
-    let map = |(organisation_id, abbreviation, name)| Organisation {
-        id: organisation_id,
-        abbreviation,
-        name,
+    let map = Organisation::sql_map();
+
+    let orgs = conn.exec_map(&stmt, &params, &map)?;
+    Ok(orgs)
+}
+
+pub fn organisation_info(conn: &mut PooledConn, organisation_id: u32) -> Result<Organisation, Error> {
+    let stmt = conn.prep(
+        "SELECT organisation_id, abbreviation, name
+        FROM organisations
+        WHERE organisation_id = :organisation_id;",
+    )?;
+
+    let params = params! {
+        "organisation_id" => &organisation_id,
     };
 
-    let terms = conn.exec_map(&stmt, &params, &map)?;
-    Ok(terms)
+    let map = Organisation::sql_map();
+
+    let mut orgs = conn.exec_map(&stmt, &params, &map)?;
+    if orgs.is_empty() {
+        return Err(Error::OrganisationMissing);
+    }
+    Ok(orgs.remove(0))
 }
 
 pub fn organisation_create(conn: &mut PooledConn, organisation: &Organisation) -> Result<u32, Error> {

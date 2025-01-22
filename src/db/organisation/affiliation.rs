@@ -1,43 +1,17 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Affiliation, Organisation, User};
+use crate::common::Affiliation;
 use crate::error::Error;
-
-pub fn sql_affiliation(mut row: mysql::Row) -> Affiliation {
-    Affiliation {
-        user: row.take::<Option<u64>, &str>("user_id").unwrap().map(|user_id| {
-            User::from_info(
-                user_id,
-                row.take("user_key").unwrap(),
-                row.take("firstname").unwrap(),
-                row.take("lastname").unwrap(),
-                row.take("nickname").unwrap(),
-            )
-        }),
-        organisation: row
-            .take::<Option<u64>, &str>("organisation_id")
-            .unwrap()
-            .map(|organisation_id| Organisation {
-                id: organisation_id,
-                abbreviation: row.take("organisation_abbreviation").unwrap(),
-                name: row.take("organisation_name").unwrap(),
-            }),
-        member_identifier: row.take("member_identifier").unwrap(),
-        permission_solo_date: row.take("permission_solo_date").unwrap(),
-        permission_team_date: row.take("permission_team_date").unwrap(),
-        residency_move_date: row.take("residency_move_date").unwrap(),
-    }
-}
 
 pub fn affiliation_list(
     conn: &mut PooledConn,
     user_id: Option<u64>,
-    organisation_id: Option<u64>,
+    organisation_id: Option<u32>,
 ) -> Result<Vec<Affiliation>, Error> {
     let stmt = conn.prep(
         "SELECT
-            u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
+            u.user_id, u.user_key, u.firstname AS user_firstname, u.lastname AS user_firstname, u.nickname AS user_nickname,
             o.organisation_id,
             o.abbreviation as organisation_abbreviation,
             o.name as organisation_name,
@@ -61,8 +35,8 @@ pub fn affiliation_list(
 
     let mut affiliations: Vec<Affiliation> = Vec::new();
 
-    for row in rows {
-        affiliations.push(crate::db::organisation::sql_affiliation(row));
+    for mut row in rows {
+        affiliations.push(Affiliation::from_row(&mut row));
     }
 
     Ok(affiliations)
@@ -71,11 +45,11 @@ pub fn affiliation_list(
 pub fn affiliation_info(
     conn: &mut PooledConn,
     user_id: u64,
-    organisation_id: u64,
+    organisation_id: u32,
 ) -> Result<Option<Affiliation>, Error> {
     let stmt = conn.prep(
         "SELECT
-            u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
+            u.user_id, u.user_key, u.firstname AS user_firstname, u.lastname AS user_lastname, u.nickname AS user_nickname,
             o.organisation_id,
             o.abbreviation as organisation_abbreviation,
             o.name as organisation_name,
@@ -94,13 +68,15 @@ pub fn affiliation_info(
         "organisation_id" => &organisation_id,
     };
 
-    match conn.exec_first(&stmt, &params)? {
+    let row = conn.exec_first(&stmt, &params)?;
+
+    match row {
         None => Ok(None),
-        Some(row) => Ok(Some(sql_affiliation(row))),
+        Some(mut row) => Ok(Some(Affiliation::from_row(&mut row))),
     }
 }
 
-pub fn affiliation_create(conn: &mut PooledConn, user_id: u64, organisation_id: u64) -> Result<(), Error> {
+pub fn affiliation_create(conn: &mut PooledConn, user_id: u64, organisation_id: u32) -> Result<(), Error> {
     let stmt = conn.prep(
         "INSERT INTO organisation_affiliations (user_id, organisation_id)
         SELECT :user_id, :organisation_id;",
@@ -118,7 +94,7 @@ pub fn affiliation_create(conn: &mut PooledConn, user_id: u64, organisation_id: 
 pub fn affiliation_edit(
     conn: &mut PooledConn,
     user_id: u64,
-    organisation_id: u64,
+    organisation_id: u32,
     affiliation: &Affiliation,
 ) -> Result<(), Error> {
     let stmt = conn.prep(
@@ -143,7 +119,7 @@ pub fn affiliation_edit(
     Ok(())
 }
 
-pub fn affiliation_delete(conn: &mut PooledConn, user_id: u64, organisation_id: u64) -> Result<(), Error> {
+pub fn affiliation_delete(conn: &mut PooledConn, user_id: u64, organisation_id: u32) -> Result<(), Error> {
     let stmt = conn.prep(
         "DELETE FROM organisation_affiliations
         WHERE user_id = :user_id AND organisation_id = :organisation_id;",

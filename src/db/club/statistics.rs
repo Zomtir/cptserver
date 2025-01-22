@@ -98,7 +98,7 @@ pub fn club_member_organisation(
             FROM terms t
             WHERE t.club_id = :club_id
         )
-        SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
+        SELECT u.user_id, u.user_key, u.firstname AS user_firstname, u.lastname AS user_lastname, u.nickname AS user_nickname,
             o.organisation_id, o.abbreviation AS organisation_abbreviation, o.name AS organisation_name,
             oa.member_identifier, oa.permission_solo_date, oa.permission_team_date, oa.residency_move_date
         FROM effective_terms et
@@ -121,8 +121,8 @@ pub fn club_member_organisation(
 
     let mut affiliations: Vec<Affiliation> = Vec::new();
 
-    for row in rows {
-        affiliations.push(crate::db::organisation::sql_affiliation(row));
+    for mut row in rows {
+        affiliations.push(Affiliation::from_row(&mut row));
     }
 
     Ok(affiliations)
@@ -167,7 +167,7 @@ pub fn club_statistic_user_leader(
         "time_window_end" => &time_window_end,
     };
 
-    let map = Event::sqlmap();
+    let map = Event::sql_map();
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
@@ -212,7 +212,7 @@ pub fn club_statistic_user_participant(
         "time_window_end" => &time_window_end,
     };
 
-    let map = Event::sqlmap();
+    let map = Event::sql_map();
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)
@@ -257,7 +257,7 @@ pub fn club_statistic_user_supporter(
         "time_window_end" => &time_window_end,
     };
 
-    let map = Event::sqlmap();
+    let map = Event::sql_map();
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)

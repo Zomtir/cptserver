@@ -58,7 +58,7 @@ impl Event {
         }
     }
 
-    pub fn sqlmap() -> impl Fn(
+    pub fn sql_map() -> impl Fn(
         (
             u64,
             String,

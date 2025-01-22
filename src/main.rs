@@ -282,6 +282,7 @@ fn rocket() -> _ {
                 route::admin::location::location_edit,
                 route::admin::location::location_delete,
                 route::admin::organisation::organisation_list,
+                route::admin::organisation::organisation_info,
                 route::admin::organisation::organisation_create,
                 route::admin::organisation::organisation_edit,
                 route::admin::organisation::organisation_delete,

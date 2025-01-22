@@ -3,6 +3,7 @@ use rocket::form::{self, DataField, FromFormField, ValueField};
 
 // Common module
 mod acceptance;
+mod affiliation;
 mod bank_account;
 mod clock;
 mod club;
@@ -23,6 +24,7 @@ mod user;
 
 // Re-export
 pub use acceptance::*;
+pub use affiliation::*;
 pub use bank_account::*;
 pub use clock::*;
 pub use club::*;
