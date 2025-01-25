@@ -417,35 +417,6 @@ pub fn event_statistic_packlist(
     Ok(stats)
 }
 
-pub fn event_statistic_division(conn: &mut PooledConn, event_id: u64) -> Result<Vec<User>, Error> {
-    let stmt = conn.prep(
-        "SELECT
-            u.user_id, u.user_key, u.firstname, u.lastname, u.nickname, u.birth_date, u.gender, u.height, u.weight,
-            o.organisation_id, o.abbreviation AS organisation_abbreviation, o.name AS organisation_name,
-            oa.member_identifier, oa.permission_solo_date, oa.permission_team_date, oa.residency_move_date
-        FROM event_participant_presences ep
-        JOIN users u ON ep.user_id = u.user_id
-        LEFT JOIN organisation_affiliations oa ON oa.user_id = u.user_id AND oa.organisation_id = :organisation_id
-        LEFT JOIN organisations o ON o.organisation_id = oa.organisation_id
-        JOIN users u ON ep.user_id = u.user_id
-        WHERE ep.event_id = :event_id;",
-    )?;
-    let params = params! {
-        "event_id" => event_id,
-    };
-    let map = |(user_id, user_key, firstname, lastname, nickname, birth_date, gender, height, weight)| {
-        let mut user = User::from_info(user_id, user_key, firstname, lastname, nickname);
-        user.birth_date = birth_date;
-        user.gender = gender;
-        user.height = height;
-        user.weight = weight;
-        user
-    };
-
-    let list = conn.exec_map(&stmt, &params, &map)?;
-    Ok(list)
-}
-
 pub fn event_statistic_organisation(
     conn: &mut PooledConn,
     event_id: u64,
@@ -453,6 +424,7 @@ pub fn event_statistic_organisation(
 ) -> Result<Vec<Affiliation>, Error> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname AS user_firstname, u.lastname AS user_lastname, u.nickname AS user_nickname,
+            u.birth_date AS user_birth_date, u.gender AS user_gender, u.height AS user_height, u.weight AS user_weight,
             o.organisation_id, o.abbreviation AS organisation_abbreviation, o.name AS organisation_name,
             oa.member_identifier, oa.permission_solo_date, oa.permission_team_date, oa.residency_move_date
         FROM event_participant_presences ep

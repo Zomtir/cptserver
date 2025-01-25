@@ -81,14 +81,29 @@ impl User {
     }
 
     pub fn from_row(row: &mut mysql::Row) -> Option<User> {
-        row.take::<Option<u64>, &str>("user_id").unwrap().map(|user_id| {
-            User::from_info(
-                user_id,
-                row.take("user_key").unwrap(),
-                row.take("user_firstname").unwrap(),
-                row.take("user_lastname").unwrap(),
-                row.take("user_nickname").unwrap(),
-            )
+        row.take::<Option<u64>, &str>("user_id").flatten().map(|user_id| {
+            User {
+                id: user_id,
+                key: row.take("user_key").unwrap(),
+                firstname: row.take("user_firstname").unwrap(),
+                lastname: row.take("user_lastname").unwrap(),
+                nickname: row.take("user_nickname").unwrap(),
+                enabled: row.take("user_enabled").flatten(),
+                active: row.take("user_active").flatten(),
+                address: row.take("user_address").flatten(),
+                email: row.take("user_email").flatten(),
+                phone: row.take("user_phone").flatten(),
+                birth_date: row.take("user_birth_date").flatten(),
+                birth_location: row.take("user_birth_location").flatten(),
+                nationality: row.take("user_nationality").flatten(),
+                gender: row.take("user_gender").flatten(),
+                height: row.take("user_height").flatten(),
+                weight: row.take("user_weight").flatten(),
+                bank_account: None,
+                license_main: None,
+                license_extra: None,
+                note: row.take("user_note").flatten(),
+            }
         })
     }
 }

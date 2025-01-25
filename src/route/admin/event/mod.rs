@@ -219,17 +219,6 @@ pub fn statistic_packlist(
     Ok(Json(stats))
 }
 
-#[rocket::get("/admin/event_statistic_division?<event_id>")]
-pub fn statistic_division(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>, Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_event_read {
-        return Err(Error::RightEventMissing);
-    };
-
-    let stats = crate::db::event::event_statistic_division(conn, event_id)?;
-    Ok(Json(stats))
-}
-
 #[rocket::get("/admin/event_statistic_organisation?<event_id>&<organisation_id>")]
 pub fn statistic_organisation(
     session: UserSession,
