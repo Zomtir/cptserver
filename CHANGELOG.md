@@ -1,3 +1,15 @@
+## Release v1.3.0 (29th Jan 2025)
+
+- feat: Affiliation and organisation restructure
+    - Split affiliation and organisation class files
+    - Added a few from_row and sql_map functions to classes
+    - Added organisation_info
+- feat: Outsource team rights into team_info
+- refactor: Merge user data into statistic_organisation
+- refactor: Implement FromStr for enums
+- refactor: Handled a bunch of clippy warnings
+- test: Added the first integration test
+
 ## Release v1.2.0 (12th Jan 2025)
 
 - feat: Split lib and package functionality to enable integration testing

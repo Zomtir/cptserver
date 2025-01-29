@@ -64,11 +64,6 @@ Adapt the Cargo.toml file.
 version = "1.1.1"
 ```
 
-Adapt the release.sh script
-```
-RELEASE_VERSION="1.1.1"
-```
-
 Update the database scheme version to version `X` in src/db/mod.rs if neccessary, whereas `X` is the next increment from the previous one.
 
 ```
