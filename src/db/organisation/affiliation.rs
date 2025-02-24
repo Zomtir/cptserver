@@ -11,7 +11,10 @@ pub fn affiliation_list(
 ) -> Result<Vec<Affiliation>, Error> {
     let stmt = conn.prep(
         "SELECT
-            u.user_id, u.user_key, u.firstname AS user_firstname, u.lastname AS user_firstname, u.nickname AS user_nickname,
+            u.user_id, u.user_key,
+            u.firstname AS user_firstname,
+            u.lastname AS user_lastname,
+            u.nickname AS user_nickname,
             o.organisation_id,
             o.abbreviation as organisation_abbreviation,
             o.name as organisation_name,
