@@ -20,7 +20,7 @@ pub fn club_list(conn: &mut PooledConn) -> Result<Vec<Club>, Error> {
 
 pub fn club_info(conn: &mut PooledConn, club_id: u32) -> Result<Club, Error> {
     let stmt = conn.prep(
-        "SELECT club_id, club_key, name, description, disciplines, image_url, chairman
+        "SELECT club_id, club_key, name, description, disciplines, image_url, banner_url, chairman
         FROM clubs
         WHERE club_id = :club_id;",
     )?;
@@ -29,13 +29,14 @@ pub fn club_info(conn: &mut PooledConn, club_id: u32) -> Result<Club, Error> {
         "club_id" => &club_id,
     };
 
-    let map = |(club_id, club_key, club_name, description, disciplines, image_url, chairman)| Club {
+    let map = |(club_id, club_key, club_name, description, disciplines, image_url, banner_url, chairman)| Club {
         id: club_id,
         key: club_key,
         name: club_name,
         description,
         disciplines,
         image_url,
+        banner_url,
         chairman,
     };
 
@@ -50,10 +51,13 @@ pub fn club_create(conn: &mut PooledConn, club: &Club) -> Result<u32, Error> {
     if let Some(image_url) = &club.image_url {
         crate::common::fs::validate_path(image_url)?;
     }
+    if let Some(banner_url) = &club.banner_url {
+        crate::common::fs::validate_path(banner_url)?;
+    }
 
     let stmt = conn.prep(
-        "INSERT INTO clubs (club_key, name, description, disciplines, image_url, chairman)
-        VALUES (:club_key, :name, :description, :disciplines, :image_url, :chairman)",
+        "INSERT INTO clubs (club_key, name, description, disciplines, image_url, banner_url, chairman)
+        VALUES (:club_key, :name, :description, :disciplines, :image_url, :banner_url, :chairman)",
     )?;
 
     let params = params! {
@@ -62,6 +66,7 @@ pub fn club_create(conn: &mut PooledConn, club: &Club) -> Result<u32, Error> {
         "description" => &club.description,
         "disciplines" => &club.disciplines,
         "image_url" => &club.image_url,
+        "banner_url" => &club.banner_url,
         "chairman" => &club.chairman,
     };
 
@@ -74,6 +79,9 @@ pub fn club_edit(conn: &mut PooledConn, club_id: u32, club: &Club) -> Result<(),
     if let Some(image_url) = &club.image_url {
         crate::common::fs::validate_path(image_url)?;
     }
+    if let Some(banner_url) = &club.banner_url {
+        crate::common::fs::validate_path(banner_url)?;
+    }
 
     let stmt = conn.prep(
         "UPDATE clubs SET
@@ -82,6 +90,7 @@ pub fn club_edit(conn: &mut PooledConn, club_id: u32, club: &Club) -> Result<(),
             description = :description,
             disciplines = :disciplines,
             image_url = :image_url,
+            banner_url = :banner_url,
             chairman = :chairman
         WHERE club_id = :club_id",
     )?;
@@ -93,6 +102,7 @@ pub fn club_edit(conn: &mut PooledConn, club_id: u32, club: &Club) -> Result<(),
         "description" => &club.description,
         "disciplines" => &club.disciplines,
         "image_url" => &club.image_url,
+        "banner_url" => &club.banner_url,
         "chairman" => &club.chairman,
     };
 

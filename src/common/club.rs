@@ -13,6 +13,8 @@ pub struct Club {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub image_url: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub banner_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub chairman: Option<String>,
 }
 
@@ -25,6 +27,7 @@ impl Club {
             description: None,
             disciplines: None,
             image_url: None,
+            banner_url: None,
             chairman: None,
         }
     }

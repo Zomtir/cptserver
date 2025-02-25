@@ -102,6 +102,7 @@ fn rocket() -> _ {
                 route::anon::skill_list,
                 route::anon::club_list,
                 route::anon::club_image,
+                route::anon::club_banner,
                 route::anon::course_list,
                 route::anon::user_salt,
                 route::login::user_login,

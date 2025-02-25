@@ -46,11 +46,25 @@ pub fn club_image(club_id: u32) -> Result<Vec<u8>, Error> {
     let club = crate::db::club::club_info(conn, club_id)?;
 
     let image_url = match club.image_url {
-        None => "resources/club_banner_placeholder.png".to_string(),
+        None => "resources/club_image_placeholder.png".to_string(),
         Some(url) => format!("data/clubs/{}", url),
     };
 
     let local_path = crate::common::fs::local_path(&image_url)?;
+    std::fs::read(local_path).map_err(|_| Error::Default)
+}
+
+#[rocket::get("/anon/club_banner?<club_id>")]
+pub fn club_banner(club_id: u32) -> Result<Vec<u8>, Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
+    let club = crate::db::club::club_info(conn, club_id)?;
+
+    let banner_url = match club.banner_url {
+        None => "resources/club_banner_placeholder.png".to_string(),
+        Some(url) => format!("data/clubs/{}", url),
+    };
+
+    let local_path = crate::common::fs::local_path(&banner_url)?;
     std::fs::read(local_path).map_err(|_| Error::Default)
 }
 
