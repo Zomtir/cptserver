@@ -42,6 +42,7 @@ pub fn user_info(conn: &mut PooledConn, user_id: u64) -> Result<User, Error> {
             gender,
             height,
             weight,
+            image_url,
             ba.id AS ba_id,
             ba.iban AS ba_iban,
             ba.bic AS ba_bic,
@@ -90,6 +91,7 @@ pub fn user_info(conn: &mut PooledConn, user_id: u64) -> Result<User, Error> {
         gender: row.take("gender").unwrap(),
         height: row.take("height").unwrap(),
         weight: row.take("weight").unwrap(),
+        image_url: row.take("image_url").unwrap(),
         bank_account: row.take::<Option<u32>, &str>("ba_id").unwrap().map(|id| BankAccount {
             id,
             iban: row.take("ba_iban").unwrap(),
@@ -132,10 +134,10 @@ pub fn user_create(conn: &mut PooledConn, user: &mut User) -> Result<u64, Error>
 
     let stmt = conn.prep(
         "INSERT INTO users (user_key, pwd, pepper, salt, enabled, active, firstname, lastname, nickname,
-        address, email, phone, birth_date, birth_location, nationality, gender, height, weight,
+        address, email, phone, birth_date, birth_location, nationality, gender, height, weight, image_url,
         note)
     VALUES (:user_key, :pwd, :pepper, :salt, :enabled, :active, :firstname, :lastname, :nickname,
-        :address, :email, :phone, :birth_date, :birth_location, :nationality, :gender, :height, :weight,
+        :address, :email, :phone, :birth_date, :birth_location, :nationality, :gender, :height, :weight, :image_url,
         :note);",
     )?;
 
@@ -158,6 +160,7 @@ pub fn user_create(conn: &mut PooledConn, user: &mut User) -> Result<u64, Error>
         "gender" => &user.gender,
         "height" => &user.height,
         "weight" => &user.weight,
+        "image_url" => &user.image_url,
         "note" => &user.note,
     };
 
@@ -187,6 +190,7 @@ pub fn user_edit(conn: &mut PooledConn, user_id: u64, user: &mut User) -> Result
         gender = ?,
         height = ?,
         weight = ?,
+        image_url = ?,
         note = ?
         WHERE user_id = ?;",
     )?;
@@ -207,6 +211,7 @@ pub fn user_edit(conn: &mut PooledConn, user_id: u64, user: &mut User) -> Result
         user.gender.clone().into(),
         user.height.into(),
         user.weight.into(),
+        user.image_url.clone().into(),
         user.note.clone().into(),
         user_id.into(),
     ];

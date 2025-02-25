@@ -41,6 +41,8 @@ pub struct User {
     pub height: Option<u16>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub weight: Option<u16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub image_url: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bank_account: Option<BankAccount>,
@@ -73,6 +75,7 @@ impl User {
             gender: None,
             height: None,
             weight: None,
+            image_url: None,
             bank_account: None,
             license_main: None,
             license_extra: None,
@@ -99,6 +102,7 @@ impl User {
                 gender: row.take("user_gender").flatten(),
                 height: row.take("user_height").flatten(),
                 weight: row.take("user_weight").flatten(),
+                image_url: row.take("user_image_url").flatten(),
                 bank_account: None,
                 license_main: None,
                 license_extra: None,
