@@ -86,6 +86,10 @@ pub fn course_create(conn: &mut PooledConn, course: &Course) -> Result<u32, Erro
 }
 
 pub fn course_edit(conn: &mut PooledConn, course_id: u32, course: &Course) -> Result<(), Error> {
+    if course.key.is_empty() {
+        return Err(Error::CourseKeyInvalid);
+    }
+
     let stmt = conn.prep(
         "UPDATE courses SET
             course_key = :course_key,

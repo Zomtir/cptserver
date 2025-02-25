@@ -156,6 +156,10 @@ pub fn event_create(
 }
 
 pub fn event_edit(conn: &mut PooledConn, event_id: u64, event: &Event) -> Result<(), Error> {
+    if event.key.is_empty() {
+        return Err(Error::EventKeyInvalid);
+    }
+
     let stmt = conn.prep(
         "UPDATE events
         SET
