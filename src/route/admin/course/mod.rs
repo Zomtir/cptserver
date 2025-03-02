@@ -1,7 +1,5 @@
-pub mod leader;
+pub mod attendance;
 pub mod moderator;
-pub mod participant;
-pub mod supporter;
 
 use rocket::serde::json::Json;
 
@@ -142,7 +140,7 @@ pub fn course_club_edit(session: UserSession, course_id: u64, club_id: Option<u3
 pub fn course_statistic_class(
     session: UserSession,
     course_id: u32,
-) -> Result<Json<Vec<(Event, u64, u64, u64)>>, Error> {
+) -> Result<Json<Vec<(Event, u64, u64, u64, u64)>>, Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
@@ -152,80 +150,33 @@ pub fn course_statistic_class(
     Ok(Json(stats))
 }
 
-#[rocket::get("/admin/course_statistic_leader?<course_id>")]
-pub fn course_statistic_leader(session: UserSession, course_id: u32) -> Result<Json<Vec<(User, u64)>>, Error> {
+#[rocket::get("/admin/course_statistic_attendance?<course_id>&<role>")]
+pub fn course_statistic_attendance(
+    session: UserSession,
+    course_id: u32,
+    role: String,
+) -> Result<Json<Vec<(User, u64)>>, Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
 
-    let stats = crate::db::course::course_statistic_leader(conn, course_id)?;
+    let stats = crate::db::course::course_statistic_attendance(conn, course_id, role)?;
     Ok(Json(stats))
 }
 
-#[rocket::get("/admin/course_statistic_leader1?<course_id>&<leader_id>")]
-pub fn course_statistic_leader1(
+#[rocket::get("/admin/course_statistic_attendance1?<course_id>&<user_id>&<role>")]
+pub fn course_statistic_attendance1(
     session: UserSession,
     course_id: u32,
-    leader_id: u64,
+    user_id: u64,
+    role: String,
 ) -> Result<Json<Vec<Event>>, Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_course_read {
         return Err(Error::RightCourseMissing);
     };
 
-    let stats = crate::db::course::course_statistic_leader1(conn, course_id, leader_id)?;
-    Ok(Json(stats))
-}
-
-#[rocket::get("/admin/course_statistic_supporter?<course_id>")]
-pub fn course_statistic_supporter(session: UserSession, course_id: u32) -> Result<Json<Vec<(User, u64)>>, Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_course_read {
-        return Err(Error::RightCourseMissing);
-    };
-
-    let stats = crate::db::course::course_statistic_supporter(conn, course_id)?;
-    Ok(Json(stats))
-}
-
-#[rocket::get("/admin/course_statistic_supporter1?<course_id>&<supporter_id>")]
-pub fn course_statistic_supporter1(
-    session: UserSession,
-    course_id: u32,
-    supporter_id: u64,
-) -> Result<Json<Vec<Event>>, Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_course_read {
-        return Err(Error::RightCourseMissing);
-    };
-
-    let stats = crate::db::course::course_statistic_supporter1(conn, course_id, supporter_id)?;
-    Ok(Json(stats))
-}
-
-#[rocket::get("/admin/course_statistic_participant?<course_id>")]
-pub fn course_statistic_participant(session: UserSession, course_id: u32) -> Result<Json<Vec<(User, u64)>>, Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_course_read {
-        return Err(Error::RightCourseMissing);
-    };
-
-    let stats = crate::db::course::course_statistic_participant(conn, course_id)?;
-    Ok(Json(stats))
-}
-
-#[rocket::get("/admin/course_statistic_participant1?<course_id>&<participant_id>")]
-pub fn course_statistic_participant1(
-    session: UserSession,
-    course_id: u32,
-    participant_id: u64,
-) -> Result<Json<Vec<Event>>, Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_course_read {
-        return Err(Error::RightCourseMissing);
-    };
-
-    let stats = crate::db::course::course_statistic_participant1(conn, course_id, participant_id)?;
+    let stats = crate::db::course::course_statistic_attendance1(conn, course_id, user_id, role)?;
     Ok(Json(stats))
 }

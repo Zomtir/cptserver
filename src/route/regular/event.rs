@@ -55,84 +55,31 @@ pub fn event_owner_true(session: UserSession, event_id: u64) -> Result<Json<bool
     Ok(Json(condition))
 }
 
-#[rocket::get("/regular/event_leader_presence_true?<event_id>")]
-pub fn event_leader_presence_true(session: UserSession, event_id: u64) -> Result<Json<bool>, Error> {
+#[rocket::get("/regular/event_attendance_presence_true?<event_id>&<role>")]
+pub fn event_attendance_presence_true(session: UserSession, event_id: u64, role: String) -> Result<Json<bool>, Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    let condition = crate::db::event::leader::event_leader_presence_true(conn, event_id, session.user.id)?;
+    let condition =
+        crate::db::event::attendance::event_attendance_presence_true(conn, event_id, session.user.id, &role)?;
     Ok(Json(condition))
 }
 
-#[rocket::head("/regular/event_leader_presence_add?<event_id>")]
-pub fn event_leader_presence_add(session: UserSession, event_id: u64) -> Result<(), Error> {
+#[rocket::head("/regular/event_attendance_presence_add?<event_id>&<role>")]
+pub fn event_attendance_presence_add(session: UserSession, event_id: u64, role: String) -> Result<(), Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    let pool = crate::db::event::leader::event_leader_presence_pool(conn, event_id, true)?;
+    let pool = crate::db::event::attendance::event_attendance_presence_pool(conn, event_id, &role, true)?;
 
     if !pool.iter().any(|user| user.id == session.user.id) {
         return Err(Error::EventPresenceForbidden);
     }
 
-    crate::db::event::leader::event_leader_presence_add(conn, event_id, session.user.id)?;
+    crate::db::event::attendance::event_attendance_presence_add(conn, event_id, session.user.id, &role)?;
     Ok(())
 }
 
-#[rocket::head("/regular/event_leader_presence_remove?<event_id>")]
-pub fn event_leader_presence_remove(session: UserSession, event_id: u64) -> Result<(), Error> {
+#[rocket::head("/regular/event_attendance_presence_remove?<event_id>&<role>")]
+pub fn event_attendance_presence_remove(session: UserSession, event_id: u64, role: String) -> Result<(), Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    crate::db::event::leader::event_leader_presence_remove(conn, event_id, session.user.id)?;
-    Ok(())
-}
-
-#[rocket::get("/regular/event_supporter_presence_true?<event_id>")]
-pub fn event_supporter_presence_true(session: UserSession, event_id: u64) -> Result<Json<bool>, Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    let condition = crate::db::event::supporter::event_supporter_presence_true(conn, event_id, session.user.id)?;
-    Ok(Json(condition))
-}
-
-#[rocket::head("/regular/event_supporter_presence_add?<event_id>")]
-pub fn event_supporter_presence_add(session: UserSession, event_id: u64) -> Result<(), Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    let pool = crate::db::event::supporter::event_supporter_presence_pool(conn, event_id, true)?;
-
-    if !pool.iter().any(|user| user.id == session.user.id) {
-        return Err(Error::EventPresenceForbidden);
-    }
-
-    crate::db::event::supporter::event_supporter_presence_add(conn, event_id, session.user.id)?;
-    Ok(())
-}
-
-#[rocket::head("/regular/event_supporter_presence_remove?<event_id>")]
-pub fn event_supporter_presence_remove(session: UserSession, event_id: u64) -> Result<(), Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    crate::db::event::supporter::event_supporter_presence_remove(conn, event_id, session.user.id)?;
-    Ok(())
-}
-
-#[rocket::get("/regular/event_participant_presence_true?<event_id>")]
-pub fn event_participant_presence_true(session: UserSession, event_id: u64) -> Result<Json<bool>, Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    let condition = crate::db::event::participant::event_participant_presence_true(conn, event_id, session.user.id)?;
-    Ok(Json(condition))
-}
-
-#[rocket::head("/regular/event_participant_presence_add?<event_id>")]
-pub fn event_participant_presence_add(session: UserSession, event_id: u64) -> Result<(), Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    let pool = crate::db::event::participant::event_participant_presence_pool(conn, event_id, true)?;
-
-    if !pool.iter().any(|user| user.id == session.user.id) {
-        return Err(Error::EventPresenceForbidden);
-    }
-
-    crate::db::event::participant::event_participant_presence_add(conn, event_id, session.user.id)?;
-    Ok(())
-}
-
-#[rocket::head("/regular/event_participant_presence_remove?<event_id>")]
-pub fn event_participant_presence_remove(session: UserSession, event_id: u64) -> Result<(), Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    crate::db::event::participant::event_participant_presence_remove(conn, event_id, session.user.id)?;
+    crate::db::event::attendance::event_attendance_presence_remove(conn, event_id, session.user.id, &role)?;
     Ok(())
 }
 
@@ -157,69 +104,21 @@ pub fn event_bookmark_edit(session: UserSession, event_id: u64, bookmark: bool) 
     Ok(())
 }
 
-#[rocket::get("/regular/event_leader_registration_info?<event_id>")]
-pub fn event_leader_registration_info(session: UserSession, event_id: u64) -> Result<String, Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    // TODO check if you can lead (requirement)
-
-    let status = crate::db::event::leader::event_leader_registration_info(conn, event_id, session.user.id)?;
-    Ok(status.to_string())
-}
-
-#[rocket::head("/regular/event_leader_registration_edit?<event_id>&<status>")]
-pub fn event_leader_registration_edit(session: UserSession, event_id: u64, status: Confirmation) -> Result<(), Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    // TODO check if you can lead (requirement)
-
-    match status {
-        Confirmation::Null => {
-            crate::db::event::leader::event_leader_registration_remove(conn, event_id, session.user.id)?
-        }
-        _ => crate::db::event::leader::event_leader_registration_edit(conn, event_id, session.user.id, status)?,
-    }
-    Ok(())
-}
-
-#[rocket::get("/regular/event_supporter_registration_info?<event_id>")]
-pub fn event_supporter_registration_info(session: UserSession, event_id: u64) -> Result<String, Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    // TODO check if you can support (requirement)
-
-    let status = crate::db::event::supporter::event_supporter_registration_info(conn, event_id, session.user.id)?;
-    Ok(status.to_string())
-}
-
-#[rocket::head("/regular/event_supporter_registration_edit?<event_id>&<status>")]
-pub fn event_supporter_registration_edit(
-    session: UserSession,
-    event_id: u64,
-    status: Confirmation,
-) -> Result<(), Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    // TODO check if you can support (requirement)
-
-    match status {
-        Confirmation::Null => {
-            crate::db::event::supporter::event_supporter_registration_remove(conn, event_id, session.user.id)?
-        }
-        _ => crate::db::event::supporter::event_supporter_registration_edit(conn, event_id, session.user.id, status)?,
-    }
-    Ok(())
-}
-
-#[rocket::get("/regular/event_participant_registration_info?<event_id>")]
-pub fn event_participant_registration_info(session: UserSession, event_id: u64) -> Result<String, Error> {
+#[rocket::get("/regular/event_attendance_registration_info?<event_id>&<role>")]
+pub fn event_attendance_registration_info(session: UserSession, event_id: u64, role: String) -> Result<String, Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     // TODO check if you can register (requirement)
 
-    let status = crate::db::event::participant::event_participant_registration_info(conn, event_id, session.user.id)?;
+    let status =
+        crate::db::event::attendance::event_attendance_registration_info(conn, event_id, session.user.id, role)?;
     Ok(status.to_string())
 }
 
-#[rocket::head("/regular/event_participant_registration_edit?<event_id>&<status>")]
-pub fn event_participant_registration_edit(
+#[rocket::head("/regular/event_attendance_registration_edit?<event_id>&<role>&<status>")]
+pub fn event_attendance_registration_edit(
     session: UserSession,
     event_id: u64,
+    role: String,
     status: Confirmation,
 ) -> Result<(), Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
@@ -227,11 +126,15 @@ pub fn event_participant_registration_edit(
 
     match status {
         Confirmation::Null => {
-            crate::db::event::participant::event_participant_registration_remove(conn, event_id, session.user.id)?
+            crate::db::event::attendance::event_attendance_registration_remove(conn, event_id, session.user.id, role)?
         }
-        _ => {
-            crate::db::event::participant::event_participant_registration_edit(conn, event_id, session.user.id, status)?
-        }
+        _ => crate::db::event::attendance::event_attendance_registration_edit(
+            conn,
+            event_id,
+            session.user.id,
+            role,
+            status,
+        )?,
     }
     Ok(())
 }

@@ -1,7 +1,5 @@
-pub mod leader;
+pub mod attendance;
 pub mod moderator;
-pub mod participant;
-pub mod supporter;
 
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
@@ -244,7 +242,10 @@ pub fn course_club_edit(conn: &mut PooledConn, course_id: u64, club_id: Option<u
 
 /* STATISTICS */
 
-pub fn course_statistic_class(conn: &mut PooledConn, course_id: u32) -> Result<Vec<(Event, u64, u64, u64)>, Error> {
+pub fn course_statistic_class(
+    conn: &mut PooledConn,
+    course_id: u32,
+) -> Result<Vec<(Event, u64, u64, u64, u64)>, Error> {
     let stmt = conn.prep(
         "SELECT 
             events.event_id,
@@ -252,17 +253,14 @@ pub fn course_statistic_class(conn: &mut PooledConn, course_id: u32) -> Result<V
             events.title,
             events.begin,
             events.end,
-            COUNT(DISTINCT event_leader_presences.user_id) AS leader_count,
-            COUNT(DISTINCT event_supporter_presences.user_id) AS supporter_count,
-            COUNT(DISTINCT event_participant_presences.user_id) AS participant_count
+            COUNT(DISTINCT CASE WHEN role = 'LEADER' THEN user_id END) AS leader_count,
+            COUNT(DISTINCT CASE WHEN role = 'SUPPORTER' THEN user_id END) AS supporter_count,
+            COUNT(DISTINCT CASE WHEN role = 'LEADER' THEN user_id END) AS participant_count,
+            COUNT(DISTINCT CASE WHEN role = 'SPECTATOR' THEN user_id END) AS spectator_count
         FROM
             events
         LEFT JOIN
-            event_participant_presences ON events.event_id = event_participant_presences.event_id
-        LEFT JOIN
-            event_supporter_presences ON events.event_id = event_supporter_presences.event_id
-        LEFT JOIN
-            event_leader_presences ON events.event_id = event_leader_presences.event_id
+            event_attendance_presences ON events.event_id = event_attendance_presences.event_id
         WHERE
             events.course_id = :course_id
         GROUP BY
@@ -273,12 +271,23 @@ pub fn course_statistic_class(conn: &mut PooledConn, course_id: u32) -> Result<V
         "course_id" => &course_id,
     };
 
-    let map = |(event_id, event_key, title, begin, end, leader_count, supporter_count, participant_count)| {
+    let map = |(
+        event_id,
+        event_key,
+        title,
+        begin,
+        end,
+        leader_count,
+        supporter_count,
+        participant_count,
+        spectator_count,
+    )| {
         (
             Event::from_info(event_id, event_key, title, begin, end, None),
             leader_count,
             supporter_count,
             participant_count,
+            spectator_count,
         )
     };
 
@@ -286,109 +295,49 @@ pub fn course_statistic_class(conn: &mut PooledConn, course_id: u32) -> Result<V
     Ok(stats)
 }
 
-pub fn course_statistic_leader(conn: &mut PooledConn, course_id: u32) -> Result<Vec<(User, u64)>, Error> {
-    let stmt = conn.prep(
-        "SELECT
-            u.user_id,
-            u.user_key,
-            u.firstname,
-            u.lastname,
-            u.nickname,
-            COUNT(p.event_id)
-        FROM
-            users u
-        JOIN
-            event_leader_presences p ON u.user_id = p.user_id
-        JOIN
-            events ON p.event_id = events.event_id
-        WHERE
-            events.course_id = :course_id
-        GROUP BY
-            u.user_id;",
-    )?;
-
-    let params = params! {
-        "course_id" => &course_id,
-    };
-
-    let map = |(user_id, user_key, firstname, lastname, nickname, count)| {
-        (User::from_info(user_id, user_key, firstname, lastname, nickname), count)
-    };
-
-    let stats = conn.exec_map(&stmt, &params, &map)?;
-    Ok(stats)
-}
-
-pub fn course_statistic_leader1(conn: &mut PooledConn, course_id: u32, leader_id: u64) -> Result<Vec<Event>, Error> {
-    let stmt = conn.prep(
-        "SELECT
-            events.event_id,
-            events.event_key,
-            events.title,
-            events.begin,
-            events.end,
-            locations.location_id,
-            locations.location_key,
-            locations.name AS location_name,
-            locations.description AS location_description
-        FROM
-            events
-        JOIN
-            locations ON locations.location_id = events.location_id
-        JOIN
-            event_leader_presences p ON events.event_id = p.event_id
-        WHERE
-            events.course_id = :course_id AND p.user_id = :leader_id;",
-    )?;
-
-    let params = params! {
-        "course_id" => &course_id,
-        "leader_id" => &leader_id,
-    };
-
-    let map = Event::sql_map();
-
-    let stats = conn.exec_map(&stmt, &params, &map)?;
-    Ok(stats)
-}
-
-pub fn course_statistic_supporter(conn: &mut PooledConn, course_id: u32) -> Result<Vec<(User, u64)>, Error> {
-    let stmt = conn.prep(
-        "SELECT
-            u.user_id,
-            u.user_key,
-            u.firstname,
-            u.lastname,
-            u.nickname,
-            COUNT(p.event_id)
-        FROM
-            users u
-        JOIN
-            event_supporter_presences p ON u.user_id = p.user_id
-        JOIN
-            events ON p.event_id = events.event_id
-        WHERE
-            events.course_id = :course_id
-        GROUP BY
-            u.user_id;",
-    )?;
-
-    let params = params! {
-        "course_id" => &course_id,
-    };
-
-    let map = |(user_id, user_key, firstname, lastname, nickname, count)| {
-        (User::from_info(user_id, user_key, firstname, lastname, nickname), count)
-    };
-
-    let stats = conn.exec_map(&stmt, &params, &map)?;
-    Ok(stats)
-}
-
-pub fn course_statistic_supporter1(
+pub fn course_statistic_attendance(
     conn: &mut PooledConn,
     course_id: u32,
-    supporter_id: u64,
+    role: String,
+) -> Result<Vec<(User, u64)>, Error> {
+    let stmt = conn.prep(
+        "SELECT
+            u.user_id,
+            u.user_key,
+            u.firstname,
+            u.lastname,
+            u.nickname,
+            COUNT(p.event_id)
+        FROM
+            users u
+        JOIN
+            event_attendance_presences p ON u.user_id = p.user_id
+        JOIN
+            events ON p.event_id = events.event_id
+        WHERE
+            events.course_id = :course_id AND p.role = :role
+        GROUP BY
+            u.user_id;",
+    )?;
+
+    let params = params! {
+        "course_id" => &course_id,
+        "role" => &role,
+    };
+
+    let map = |(user_id, user_key, firstname, lastname, nickname, count)| {
+        (User::from_info(user_id, user_key, firstname, lastname, nickname), count)
+    };
+
+    let stats = conn.exec_map(&stmt, &params, &map)?;
+    Ok(stats)
+}
+
+pub fn course_statistic_attendance1(
+    conn: &mut PooledConn,
+    course_id: u32,
+    user_id: u64,
+    role: String,
 ) -> Result<Vec<Event>, Error> {
     let stmt = conn.prep(
         "SELECT
@@ -406,84 +355,15 @@ pub fn course_statistic_supporter1(
         JOIN
             locations ON locations.location_id = events.location_id
         JOIN
-            event_supporter_presences p ON events.event_id = p.event_id
+            event_attendance_presences p ON events.event_id = p.event_id
         WHERE
-            events.course_id = :course_id AND p.user_id = :supporter_id;",
+            events.course_id = :course_id AND p.user_id = :user_id AND role = :role;",
     )?;
 
     let params = params! {
         "course_id" => &course_id,
-        "supporter_id" => &supporter_id,
-    };
-
-    let map = Event::sql_map();
-
-    let stats = conn.exec_map(&stmt, &params, &map)?;
-    Ok(stats)
-}
-
-pub fn course_statistic_participant(conn: &mut PooledConn, course_id: u32) -> Result<Vec<(User, u64)>, Error> {
-    let stmt = conn.prep(
-        "SELECT
-            u.user_id,
-            u.user_key,
-            u.firstname,
-            u.lastname,
-            u.nickname,
-            COUNT(p.event_id)
-        FROM
-            users u
-        JOIN
-            event_participant_presences p ON u.user_id = p.user_id
-        JOIN
-            events ON p.event_id = events.event_id
-        WHERE
-            events.course_id = :course_id
-        GROUP BY
-            u.user_id;",
-    )?;
-
-    let params = params! {
-        "course_id" => &course_id,
-    };
-
-    let map = |(user_id, user_key, firstname, lastname, nickname, count)| {
-        (User::from_info(user_id, user_key, firstname, lastname, nickname), count)
-    };
-
-    let stats = conn.exec_map(&stmt, &params, &map)?;
-    Ok(stats)
-}
-
-pub fn course_statistic_participant1(
-    conn: &mut PooledConn,
-    course_id: u32,
-    participant_id: u64,
-) -> Result<Vec<Event>, Error> {
-    let stmt = conn.prep(
-        "SELECT
-            events.event_id,
-            events.event_key,
-            events.title,
-            events.begin,
-            events.end,
-            locations.location_id,
-            locations.location_key,
-            locations.name AS location_name,
-            locations.description AS location_description
-        FROM
-            events
-        JOIN
-            locations ON locations.location_id = events.location_id
-        JOIN
-            event_participant_presences p ON events.event_id = p.event_id
-        WHERE
-            events.course_id = :course_id AND p.user_id = :participant_id;",
-    )?;
-
-    let params = params! {
-        "course_id" => &course_id,
-        "participant_id" => &participant_id,
+        "user_id" => &user_id,
+        "role" => &role,
     };
 
     let map = Event::sql_map();

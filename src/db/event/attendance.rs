@@ -6,15 +6,21 @@ use crate::error::Error;
 
 /* REGISTRATIONS */
 
-pub fn event_supporter_registration_list(conn: &mut PooledConn, event_id: u64) -> Result<Vec<User>, Error> {
+pub fn event_attendance_registration_list(
+    conn: &mut PooledConn,
+    event_id: u64,
+    role: String,
+) -> Result<Vec<User>, Error> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
-        FROM event_supporter_registrations
-        JOIN users u ON u.user_id = event_supporter_registrations.user_id
-        WHERE event_id = :event_id;",
+        FROM event_attendance_registrations
+        JOIN users u ON u.user_id = event_attendance_registrations.user_id
+        WHERE event_id = :event_id
+        AND role = :role;",
     )?;
     let params = params! {
         "event_id" => event_id,
+        "role" => role,
     };
     let map = |(user_id, user_key, firstname, lastname, nickname)| {
         User::from_info(user_id, user_key, firstname, lastname, nickname)
@@ -24,20 +30,22 @@ pub fn event_supporter_registration_list(conn: &mut PooledConn, event_id: u64) -
     Ok(users)
 }
 
-pub fn event_supporter_registration_info(
+pub fn event_attendance_registration_info(
     conn: &mut PooledConn,
     event_id: u64,
     user_id: u64,
+    role: String,
 ) -> Result<Confirmation, Error> {
     let stmt = conn.prep(
         "SELECT r.status
-        FROM event_supporter_registrations r
-        WHERE r.event_id = :event_id AND r.user_id = :user_id;",
+        FROM event_attendance_registrations r
+        WHERE r.event_id = :event_id AND r.user_id = :user_id AND r.role = :role;",
     )?;
 
     let params = params! {
         "event_id" => event_id,
         "user_id" => user_id,
+        "role" => role,
     };
 
     let row = conn.exec_first::<String, _, _>(&stmt, &params)?;
@@ -48,20 +56,22 @@ pub fn event_supporter_registration_info(
     }
 }
 
-pub fn event_supporter_registration_edit(
+pub fn event_attendance_registration_edit(
     conn: &mut PooledConn,
     event_id: u64,
     user_id: u64,
+    role: String,
     status: Confirmation,
 ) -> Result<(), Error> {
     let stmt = conn.prep(
-        "INSERT INTO event_supporter_registrations (event_id, user_id, status)
-        VALUES (:event_id, :user_id, :status)
+        "INSERT INTO event_attendance_registrations (event_id, user_id, role, status)
+        VALUES (:event_id, :user_id, :role, :status)
         ON DUPLICATE KEY UPDATE status = :status;",
     )?;
     let params = params! {
         "event_id" => &event_id,
         "user_id" => &user_id,
+        "role" => &role,
         "status" => &status,
     };
 
@@ -69,15 +79,21 @@ pub fn event_supporter_registration_edit(
     Ok(())
 }
 
-pub fn event_supporter_registration_remove(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<(), Error> {
+pub fn event_attendance_registration_remove(
+    conn: &mut PooledConn,
+    event_id: u64,
+    user_id: u64,
+    role: String,
+) -> Result<(), Error> {
     let stmt = conn.prep(
-        "DELETE FROM event_supporter_registrations
-        WHERE event_id = :event_id AND user_id = :user_id;",
+        "DELETE FROM event_attendance_registrations
+        WHERE event_id = :event_id AND user_id = :user_id AND role = :role;",
     )?;
 
     let params = params! {
         "event_id" => &event_id,
         "user_id" => &user_id,
+        "role" => &role,
     };
 
     conn.exec_drop(&stmt, &params)?;
@@ -86,15 +102,20 @@ pub fn event_supporter_registration_remove(conn: &mut PooledConn, event_id: u64,
 
 /* FILTER */
 
-pub fn event_supporter_filter_list(conn: &mut PooledConn, event_id: u64) -> Result<Vec<(User, bool)>, Error> {
+pub fn event_attendance_filter_list(
+    conn: &mut PooledConn,
+    event_id: u64,
+    role: String,
+) -> Result<Vec<(User, bool)>, Error> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname, ef.access
-        FROM event_supporter_filters ef
+        FROM event_attendance_filters ef
         JOIN users u ON u.user_id = ef.user_id
-        WHERE event_id = :event_id;",
+        WHERE event_id = :event_id AND role = :role;",
     )?;
     let params = params! {
         "event_id" => event_id,
+        "role" => role,
     };
     let map = |(user_id, user_key, firstname, lastname, nickname, access)| {
         (
@@ -107,20 +128,22 @@ pub fn event_supporter_filter_list(conn: &mut PooledConn, event_id: u64) -> Resu
     Ok(filters)
 }
 
-pub fn event_supporter_filter_edit(
+pub fn event_attendance_filter_edit(
     conn: &mut PooledConn,
     event_id: u64,
     user_id: u64,
+    role: String,
     access: bool,
 ) -> Result<(), Error> {
     let stmt = conn.prep(
-        "INSERT INTO event_supporter_filters (event_id, user_id, access)
-        VALUES (:event_id, :user_id, :access)
+        "INSERT INTO event_attendance_filters (event_id, user_id, role, access)
+        VALUES (:event_id, :user_id, :role, :access)
         ON DUPLICATE KEY UPDATE access = :access;",
     )?;
     let params = params! {
         "event_id" => &event_id,
         "user_id" => &user_id,
+        "role" => role,
         "access" => &access,
     };
 
@@ -128,15 +151,21 @@ pub fn event_supporter_filter_edit(
     Ok(())
 }
 
-pub fn event_supporter_filter_remove(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<(), Error> {
+pub fn event_attendance_filter_remove(
+    conn: &mut PooledConn,
+    event_id: u64,
+    user_id: u64,
+    role: String,
+) -> Result<(), Error> {
     let stmt = conn.prep(
-        "DELETE FROM event_supporter_filters
-        WHERE event_id = :event_id AND user_id = :user_id;",
+        "DELETE FROM event_attendance_filters
+        WHERE event_id = :event_id AND user_id = :user_id AND role = :role;",
     )?;
 
     let params = params! {
         "event_id" => &event_id,
         "user_id" => &user_id,
+        "role" => &role,
     };
 
     conn.exec_drop(&stmt, &params)?;
@@ -145,27 +174,32 @@ pub fn event_supporter_filter_remove(conn: &mut PooledConn, event_id: u64, user_
 
 /* PRESENCE */
 
-pub fn event_supporter_presence_pool(conn: &mut PooledConn, event_id: u64, access: bool) -> Result<Vec<User>, Error> {
+pub fn event_attendance_presence_pool(
+    conn: &mut PooledConn,
+    event_id: u64,
+    role: &String,
+    access: bool,
+) -> Result<Vec<User>, Error> {
     let stmt = conn.prep(
         "SELECT users.user_id, users.user_key, users.firstname, users.lastname, users.nickname
         FROM users
         INNER JOIN (
             SELECT er.user_id, NULL sieves_access, NULL AS filters_access, TRUE AS registration_access
-            FROM event_supporter_registrations as er
-            WHERE er.event_id = :event_id
+            FROM event_attendance_registrations as er
+            WHERE er.event_id = :event_id AND er.role = :role
             AND (er.status = 'POSITIVE' OR er.status = 'NEUTRAL')
             UNION ALL
             SELECT tm.user_id, MIN(sieves.access) AS sieves_access, NULL AS filters_access, NULL AS registration_access
-            FROM course_supporter_sieves as sieves
+            FROM course_attendance_sieves as sieves
             JOIN teams ON teams.team_id = sieves.team_id
             JOIN team_members tm ON teams.team_id = tm.team_id
             JOIN events ON events.course_id = sieves.course_id
-            WHERE events.event_id = :event_id
+            WHERE events.event_id = :event_id AND sieves.role = :role
 			GROUP BY tm.user_id
             UNION ALL
             SELECT filters.user_id, NULL AS sieves_access, filters.access AS filters_access, NULL AS registration_access
-            FROM event_supporter_filters as filters
-            WHERE filters.event_id = :event_id
+            FROM event_attendance_filters as filters
+            WHERE filters.event_id = :event_id AND filters.role = :role
         ) AS pool ON pool.user_id = users.user_id
         GROUP BY user_id
         HAVING COALESCE(MAX(filters_access), MAX(sieves_access), MAX(registration_access)) = :access;",
@@ -173,6 +207,7 @@ pub fn event_supporter_presence_pool(conn: &mut PooledConn, event_id: u64, acces
 
     let params = params! {
         "event_id" => event_id,
+        "role" => role,
         "access" => access,
     };
     let map = |(user_id, user_key, firstname, lastname, nickname)| {
@@ -183,15 +218,16 @@ pub fn event_supporter_presence_pool(conn: &mut PooledConn, event_id: u64, acces
     Ok(users)
 }
 
-pub fn event_supporter_presence_list(conn: &mut PooledConn, event_id: u64) -> Result<Vec<User>, Error> {
+pub fn event_attendance_presence_list(conn: &mut PooledConn, event_id: u64, role: &String) -> Result<Vec<User>, Error> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
-        FROM event_supporter_presences ep
+        FROM event_attendance_presences ep
         JOIN users u ON u.user_id = ep.user_id
-        WHERE event_id = :event_id;",
+        WHERE event_id = :event_id AND :role = role;",
     )?;
     let params = params! {
         "event_id" => event_id,
+        "role" => role,
     };
     let map = |(user_id, user_key, firstname, lastname, nickname)| {
         User::from_info(user_id, user_key, firstname, lastname, nickname)
@@ -201,16 +237,22 @@ pub fn event_supporter_presence_list(conn: &mut PooledConn, event_id: u64) -> Re
     Ok(users)
 }
 
-pub fn event_supporter_presence_true(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<bool, Error> {
+pub fn event_attendance_presence_true(
+    conn: &mut PooledConn,
+    event_id: u64,
+    user_id: u64,
+    role: &String,
+) -> Result<bool, Error> {
     let stmt = conn.prep(
         "SELECT COUNT(1)
-        FROM event_supporter_presences ep
-        WHERE ep.event_id = :event_id AND ep.user_id = :user_id;",
+        FROM event_attendance_presences ep
+        WHERE ep.event_id = :event_id AND ep.user_id = :user_id AND role = :role;",
     )?;
 
     let params = params! {
         "event_id" => event_id,
         "user_id" => user_id,
+        "role" => role,
     };
 
     match conn.exec_first::<u32, _, _>(&stmt, &params)? {
@@ -220,29 +262,41 @@ pub fn event_supporter_presence_true(conn: &mut PooledConn, event_id: u64, user_
     }
 }
 
-pub fn event_supporter_presence_add(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<(), Error> {
+pub fn event_attendance_presence_add(
+    conn: &mut PooledConn,
+    event_id: u64,
+    user_id: u64,
+    role: &String,
+) -> Result<(), Error> {
     let stmt = conn.prep(
-        "INSERT INTO event_supporter_presences (event_id, user_id)
-        VALUES (:event_id, :user_id);",
+        "INSERT INTO event_attendance_presences (event_id, user_id, role)
+        VALUES (:event_id, :user_id, :role);",
     )?;
     let params = params! {
         "event_id" => &event_id,
         "user_id" => &user_id,
+        "role" => role,
     };
 
     conn.exec_drop(&stmt, &params)?;
     Ok(())
 }
 
-pub fn event_supporter_presence_remove(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<(), Error> {
+pub fn event_attendance_presence_remove(
+    conn: &mut PooledConn,
+    event_id: u64,
+    user_id: u64,
+    role: &String,
+) -> Result<(), Error> {
     let stmt = conn.prep(
-        "DELETE FROM event_supporter_presences
-        WHERE event_id = :event_id AND user_id = :user_id;",
+        "DELETE FROM event_attendance_presences
+        WHERE event_id = :event_id AND user_id = :user_id AND role = :role;",
     )?;
 
     let params = params! {
         "event_id" => &event_id,
         "user_id" => &user_id,
+        "role" => role,
     };
 
     conn.exec_drop(&stmt, &params)?;

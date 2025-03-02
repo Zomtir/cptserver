@@ -17,95 +17,33 @@ pub fn event_note_edit(session: EventSession, note: String) -> Result<(), Error>
     Ok(())
 }
 
-#[rocket::get("/service/event_leader_presence_pool")]
-pub fn event_leader_presence_pool(session: EventSession) -> Result<Json<Vec<User>>, Error> {
+#[rocket::get("/service/event_attendance_presence_pool?<role>")]
+pub fn event_attendance_presence_pool(session: EventSession, role: String) -> Result<Json<Vec<User>>, Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    let users = crate::db::event::leader::event_leader_presence_pool(conn, session.event_id, true)?;
+    let users = crate::db::event::attendance::event_attendance_presence_pool(conn, session.event_id, &role, true)?;
     Ok(Json(users))
 }
 
-#[rocket::get("/service/event_leader_presence_list")]
-pub fn event_leader_presence_list(session: EventSession) -> Result<Json<Vec<User>>, Error> {
+#[rocket::get("/service/event_attendance_presence_list?<role>")]
+pub fn event_attendance_presence_list(session: EventSession, role: String) -> Result<Json<Vec<User>>, Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    let users = crate::db::event::leader::event_leader_presence_list(conn, session.event_id)?;
+    let users = crate::db::event::attendance::event_attendance_presence_list(conn, session.event_id, &role)?;
     Ok(Json(users))
 }
 
-#[rocket::head("/service/event_leader_presence_add?<user_id>")]
-pub fn event_leader_presence_add(user_id: u64, session: EventSession) -> Result<(), Error> {
+#[rocket::head("/service/event_attendance_presence_add?<user_id>&<role>")]
+pub fn event_attendance_presence_add(session: EventSession, user_id: u64, role: String) -> Result<(), Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    let pool = crate::db::event::leader::event_leader_presence_pool(conn, session.event_id, true)?;
+    let pool = crate::db::event::attendance::event_attendance_presence_pool(conn, session.event_id, &role, true)?;
 
     if !pool.iter().any(|user| user.id == user_id) {
         return Err(Error::EventPresenceForbidden);
     }
-    crate::db::event::leader::event_leader_presence_add(conn, session.event_id, user_id)
+    crate::db::event::attendance::event_attendance_presence_add(conn, session.event_id, user_id, &role)
 }
 
-#[rocket::head("/service/event_leader_presence_remove?<user_id>")]
-pub fn event_leader_presence_remove(user_id: u64, session: EventSession) -> Result<(), Error> {
+#[rocket::head("/service/event_attendance_presence_remove?<user_id>&<role>")]
+pub fn event_attendance_presence_remove(session: EventSession, user_id: u64, role: String) -> Result<(), Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    crate::db::event::leader::event_leader_presence_remove(conn, session.event_id, user_id)
-}
-
-#[rocket::get("/service/event_supporter_presence_pool")]
-pub fn event_supporter_presence_pool(session: EventSession) -> Result<Json<Vec<User>>, Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    let users = crate::db::event::supporter::event_supporter_presence_pool(conn, session.event_id, true)?;
-    Ok(Json(users))
-}
-
-#[rocket::get("/service/event_supporter_presence_list")]
-pub fn event_supporter_presence_list(session: EventSession) -> Result<Json<Vec<User>>, Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    let users = crate::db::event::supporter::event_supporter_presence_list(conn, session.event_id)?;
-    Ok(Json(users))
-}
-
-#[rocket::head("/service/event_supporter_presence_add?<user_id>")]
-pub fn event_supporter_presence_add(user_id: u64, session: EventSession) -> Result<(), Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    let pool = crate::db::event::supporter::event_supporter_presence_pool(conn, session.event_id, true)?;
-
-    if !pool.iter().any(|user| user.id == user_id) {
-        return Err(Error::EventPresenceForbidden);
-    }
-    crate::db::event::supporter::event_supporter_presence_add(conn, session.event_id, user_id)
-}
-
-#[rocket::head("/service/event_supporter_presence_remove?<user_id>")]
-pub fn event_supporter_presence_remove(user_id: u64, session: EventSession) -> Result<(), Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    crate::db::event::supporter::event_supporter_presence_remove(conn, session.event_id, user_id)
-}
-
-#[rocket::get("/service/event_participant_presence_pool")]
-pub fn event_participant_presence_pool(session: EventSession) -> Result<Json<Vec<User>>, Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    let users = crate::db::event::participant::event_participant_presence_pool(conn, session.event_id, true)?;
-    Ok(Json(users))
-}
-
-#[rocket::get("/service/event_participant_presence_list")]
-pub fn event_participant_presence_list(session: EventSession) -> Result<Json<Vec<User>>, Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    let users = crate::db::event::participant::event_participant_presence_list(conn, session.event_id)?;
-    Ok(Json(users))
-}
-
-#[rocket::head("/service/event_participant_presence_add?<user_id>")]
-pub fn event_participant_presence_add(user_id: u64, session: EventSession) -> Result<(), Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    let pool = crate::db::event::participant::event_participant_presence_pool(conn, session.event_id, true)?;
-
-    if !pool.iter().any(|user| user.id == user_id) {
-        return Err(Error::EventPresenceForbidden);
-    }
-    crate::db::event::participant::event_participant_presence_add(conn, session.event_id, user_id)
-}
-
-#[rocket::head("/service/event_participant_presence_remove?<user_id>")]
-pub fn event_participant_presence_remove(user_id: u64, session: EventSession) -> Result<(), Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    crate::db::event::participant::event_participant_presence_remove(conn, session.event_id, user_id)
+    crate::db::event::attendance::event_attendance_presence_remove(conn, session.event_id, user_id, &role)
 }

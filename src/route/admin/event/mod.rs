@@ -1,7 +1,5 @@
-pub mod leader;
+pub mod attendance;
 pub mod owner;
-pub mod participant;
-pub mod supporter;
 
 use rocket::serde::json::Json;
 

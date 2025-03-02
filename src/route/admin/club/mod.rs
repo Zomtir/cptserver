@@ -123,11 +123,12 @@ pub fn statistic_organisation(
     Ok(Json(list))
 }
 
-#[rocket::get("/admin/club_statistic_user_leader?<club_id>&<leader_id>&<time_window_begin>&<time_window_end>")]
-pub fn club_statistic_user_leader(
+#[rocket::get("/admin/club_statistic_attendance?<club_id>&<user_id>&<role>&<time_window_begin>&<time_window_end>")]
+pub fn statistic_attendance(
     session: UserSession,
     club_id: u32,
-    leader_id: u64,
+    user_id: u64,
+    role: String,
     time_window_begin: WebDateTime,
     time_window_end: WebDateTime,
 ) -> Result<Json<Vec<Event>>, Error> {
@@ -136,58 +137,11 @@ pub fn club_statistic_user_leader(
         return Err(Error::RightClubMissing);
     };
 
-    let stats = crate::db::club::club_statistic_user_leader(
+    let stats = crate::db::club::club_user_attendance(
         conn,
         club_id,
-        leader_id,
-        time_window_begin.to_naive(),
-        time_window_end.to_naive(),
-    )?;
-    Ok(Json(stats))
-}
-
-#[rocket::get(
-    "/admin/club_statistic_user_participant?<club_id>&<participant_id>&<time_window_begin>&<time_window_end>"
-)]
-pub fn club_statistic_user_participant(
-    session: UserSession,
-    club_id: u32,
-    participant_id: u64,
-    time_window_begin: WebDateTime,
-    time_window_end: WebDateTime,
-) -> Result<Json<Vec<Event>>, Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_club_read {
-        return Err(Error::RightClubMissing);
-    };
-
-    let stats = crate::db::club::club_statistic_user_participant(
-        conn,
-        club_id,
-        participant_id,
-        time_window_begin.to_naive(),
-        time_window_end.to_naive(),
-    )?;
-    Ok(Json(stats))
-}
-
-#[rocket::get("/admin/club_statistic_user_supporter?<club_id>&<supporter_id>&<time_window_begin>&<time_window_end>")]
-pub fn club_statistic_user_supporter(
-    session: UserSession,
-    club_id: u32,
-    supporter_id: u64,
-    time_window_begin: WebDateTime,
-    time_window_end: WebDateTime,
-) -> Result<Json<Vec<Event>>, Error> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_club_read {
-        return Err(Error::RightClubMissing);
-    };
-
-    let stats = crate::db::club::club_statistic_user_supporter(
-        conn,
-        club_id,
-        supporter_id,
+        user_id,
+        role,
         time_window_begin.to_naive(),
         time_window_end.to_naive(),
     )?;

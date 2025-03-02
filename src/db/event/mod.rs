@@ -4,10 +4,8 @@ use mysql::{params, PooledConn};
 use crate::common::{Acceptance, Affiliation, Event, Location, Occurrence, User};
 use crate::error::Error;
 
-pub mod leader;
+pub mod attendance;
 pub mod owner;
-pub mod participant;
-pub mod supporter;
 
 /*
  * METHODS
