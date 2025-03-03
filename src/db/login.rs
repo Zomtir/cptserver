@@ -4,7 +4,7 @@ use mysql::{params, PooledConn};
 use crate::common::{Right, User};
 use crate::error::Error;
 
-pub fn user_login(conn: &mut PooledConn, user_key: &String) -> Result<(User, Vec<u8>, Vec<u8>), Error> {
+pub fn user_login(conn: &mut PooledConn, user_key: &str) -> Result<(User, Vec<u8>, Vec<u8>), Error> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.pwd, u.pepper, u.enabled, u.firstname, u.lastname, u.nickname
         FROM users u
@@ -115,7 +115,7 @@ pub fn event_credential(conn: &mut PooledConn, event_id: u64) -> Result<(String,
     Ok((event_key, event_pwd))
 }
 
-pub fn event_login(conn: &mut PooledConn, event_key: &String) -> Result<(u64, String), Error> {
+pub fn event_login(conn: &mut PooledConn, event_key: &str) -> Result<(u64, String), Error> {
     let stmt = conn.prep(
         "SELECT event_id, pwd
         FROM events WHERE event_key = :event_key",
@@ -136,7 +136,7 @@ pub fn event_login(conn: &mut PooledConn, event_key: &String) -> Result<(u64, St
 
 pub fn course_current_event(
     conn: &mut PooledConn,
-    course_key: &String,
+    course_key: &str,
     date_min: &chrono::NaiveDateTime,
     date_max: &chrono::NaiveDateTime,
 ) -> Result<(String, String), Error> {
@@ -166,7 +166,7 @@ pub fn course_current_event(
 
 pub fn location_current_event(
     conn: &mut PooledConn,
-    location_key: &String,
+    location_key: &str,
     date_min: &chrono::NaiveDateTime,
     date_max: &chrono::NaiveDateTime,
 ) -> Result<(String, String), Error> {

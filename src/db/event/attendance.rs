@@ -177,7 +177,7 @@ pub fn event_attendance_filter_remove(
 pub fn event_attendance_presence_pool(
     conn: &mut PooledConn,
     event_id: u64,
-    role: &String,
+    role: &str,
     access: bool,
 ) -> Result<Vec<User>, Error> {
     let stmt = conn.prep(
@@ -218,7 +218,7 @@ pub fn event_attendance_presence_pool(
     Ok(users)
 }
 
-pub fn event_attendance_presence_list(conn: &mut PooledConn, event_id: u64, role: &String) -> Result<Vec<User>, Error> {
+pub fn event_attendance_presence_list(conn: &mut PooledConn, event_id: u64, role: &str) -> Result<Vec<User>, Error> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
         FROM event_attendance_presences ep
@@ -241,7 +241,7 @@ pub fn event_attendance_presence_true(
     conn: &mut PooledConn,
     event_id: u64,
     user_id: u64,
-    role: &String,
+    role: &str,
 ) -> Result<bool, Error> {
     let stmt = conn.prep(
         "SELECT COUNT(1)
@@ -266,7 +266,7 @@ pub fn event_attendance_presence_add(
     conn: &mut PooledConn,
     event_id: u64,
     user_id: u64,
-    role: &String,
+    role: &str,
 ) -> Result<(), Error> {
     let stmt = conn.prep(
         "INSERT INTO event_attendance_presences (event_id, user_id, role)
@@ -286,7 +286,7 @@ pub fn event_attendance_presence_remove(
     conn: &mut PooledConn,
     event_id: u64,
     user_id: u64,
-    role: &String,
+    role: &str,
 ) -> Result<(), Error> {
     let stmt = conn.prep(
         "DELETE FROM event_attendance_presences

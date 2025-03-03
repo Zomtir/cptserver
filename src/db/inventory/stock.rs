@@ -106,13 +106,7 @@ pub fn stock_info(conn: &mut PooledConn, stock_id: u64) -> Result<Stock, Error> 
     Ok(stock)
 }
 
-pub fn stock_create(
-    conn: &mut PooledConn,
-    club_id: u64,
-    item_id: u64,
-    storage: &String,
-    owned: u32,
-) -> Result<(), Error> {
+pub fn stock_create(conn: &mut PooledConn, club_id: u64, item_id: u64, storage: &str, owned: u32) -> Result<(), Error> {
     let stmt = conn.prep(
         "INSERT INTO club_stocks (club_id, item_id, storage, owned, loaned)
         SELECT :club_id, :item_id, :storage, :owned, :loaned;",
@@ -131,13 +125,7 @@ pub fn stock_create(
     Ok(())
 }
 
-pub fn stock_edit(
-    conn: &mut PooledConn,
-    stock_id: u64,
-    storage: &String,
-    owned: u32,
-    loaned: u32,
-) -> Result<(), Error> {
+pub fn stock_edit(conn: &mut PooledConn, stock_id: u64, storage: &str, owned: u32, loaned: u32) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE club_stocks
         SET

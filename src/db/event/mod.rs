@@ -220,7 +220,7 @@ pub fn event_password_edit(conn: &mut PooledConn, event_id: u64, password: Strin
     Ok(())
 }
 
-pub fn event_note_edit(conn: &mut PooledConn, event_id: u64, note: &String) -> Result<(), Error> {
+pub fn event_note_edit(conn: &mut PooledConn, event_id: u64, note: &str) -> Result<(), Error> {
     let stmt = conn.prep(
         "UPDATE events
         SET note = :note

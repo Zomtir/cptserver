@@ -48,7 +48,7 @@ pub fn hash_sha256(meal: &[u8], pepper: &[u8]) -> Vec<u8> {
     digested_meal.to_vec()
 }
 
-pub fn hash128_string(meal: &String) -> Vec<u8> {
+pub fn hash128_string(meal: &str) -> Vec<u8> {
     let digested_meal = Sha256::digest(meal.as_bytes());
 
     digested_meal[..=15].to_vec()
