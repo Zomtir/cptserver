@@ -1,6 +1,8 @@
 use rand::Rng;
 use sha2::{Digest, Sha256};
 
+use crate::error::Error;
+
 pub fn random_bytes(size: usize) -> Vec<u8> {
     rand::thread_rng()
         .sample_iter(rand::distributions::Standard)
@@ -16,25 +18,25 @@ pub fn random_string(size: usize) -> String {
         .collect()
 }
 
-pub fn decode_hash256(hash: &str) -> Option<Vec<u8>> {
+pub fn decode_hash256(hash: &str) -> Result<Vec<u8>, Error> {
     match &hash.len() {
         // Sha256 is 64 chars long
         64 => match hex::decode(hash) {
-            Ok(bytes) => Some(bytes),
-            _ => None,
+            Ok(bytes) => Ok(bytes),
+            _ => Err(Error::Default),
         },
-        _ => None,
+        _ => Err(Error::Default),
     }
 }
 
-pub fn decode_hash128(hash: &str) -> Option<Vec<u8>> {
+pub fn decode_hash128(hash: &str) -> Result<Vec<u8>, Error> {
     match &hash.len() {
         // 128 bits are 32 chars long
         32 => match hex::decode(hash) {
-            Ok(bytes) => Some(bytes),
-            _ => None,
+            Ok(bytes) => Ok(bytes),
+            _ => Err(Error::Default),
         },
-        _ => None,
+        _ => Err(Error::Default),
     }
 }
 

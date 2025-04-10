@@ -1,7 +1,7 @@
 #![allow(clippy::too_many_arguments)]
 
+use mysql::PooledConn;
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
-
 use std::collections::HashSet;
 
 extern crate mysql_common;
@@ -17,6 +17,30 @@ mod utils;
 #[rocket::get("/")]
 fn index() -> &'static str {
     "Welcome to the CPT server."
+}
+
+fn promote_user_to_admin(conn: &mut PooledConn) -> Result<(), error::Error> {
+    // Check if an admin user is configured
+    let admin_key = match crate::config::ADMIN_USER() {
+        Some(key) => key,
+        None => return Ok(()),
+    };
+
+    // If admin user is missing, create him
+    if crate::db::user::user_created_true(conn, admin_key)?.is_none() {
+        let mut user = crate::common::User::from_info(
+            0,
+            admin_key.clone(),
+            "Placeholder".to_string(),
+            "Placeholder".to_string(),
+            None,
+        );
+        crate::db::user::user_create(conn, &mut user)?;
+    }
+
+    // Elevate the user to admin
+    *crate::session::ADMINSESSION.lock().unwrap() = Some(admin_key.clone());
+    Ok(())
 }
 
 #[rocket::launch]
@@ -36,32 +60,9 @@ fn rocket() -> _ {
         panic!("Database update failed")
     };
 
-    // Promote an admin user, if demanded by the config, and make him session admin
-    if let Some(admin) = crate::config::ADMIN_USER() {
-        // Create the user, if not existing
-        let elevate: bool = match crate::db::user::user_created_true(&mut conn, admin) {
-            // Database query failed, do not elevate
-            Err(_) => false,
-            // User is missing, create him
-            Ok(false) => {
-                let mut user = crate::common::User::from_info(
-                    0,
-                    admin.clone(),
-                    "Placeholder".to_string(),
-                    "Placeholder".to_string(),
-                    None,
-                );
-                // Elevate unless database query failed
-                crate::db::user::user_create(&mut conn, &mut user).is_ok()
-            }
-            // User is existing, elevate him
-            Ok(true) => true,
-        };
-
-        if elevate {
-            *crate::session::ADMINSESSION.lock().unwrap() = Some(admin.clone())
-        };
-    }
+    if promote_user_to_admin(&mut conn).is_err() {
+        panic!("Admin elevation failed")
+    };
 
     let rocket_config = crate::config::ROCKET_CONFIG();
 
@@ -113,8 +114,11 @@ fn rocket() -> _ {
                 route::admin::user::user_detailed,
                 route::admin::user::user_create,
                 route::admin::user::user_edit,
-                route::admin::user::user_edit_password,
                 route::admin::user::user_delete,
+                route::admin::user::user_password_info,
+                route::admin::user::user_password_create,
+                route::admin::user::user_password_edit,
+                route::admin::user::user_password_delete,
                 route::admin::user::user_bank_account_create,
                 route::admin::user::user_bank_account_edit,
                 route::admin::user::user_bank_account_delete,
@@ -126,7 +130,8 @@ fn rocket() -> _ {
                 route::admin::user::user_license_extra_delete,
                 route::regular::user::user_info,
                 route::regular::user::user_right,
-                route::regular::user::user_password,
+                route::regular::user::user_password_info,
+                route::regular::user::user_password_set,
                 route::regular::user::user_list,
                 route::admin::club::club_list,
                 route::admin::club::club_info,

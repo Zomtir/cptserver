@@ -3,9 +3,9 @@ pub mod owner;
 
 use rocket::serde::json::Json;
 
-use crate::common::{Acceptance, Affiliation, Event, Occurrence, User, WebBool, WebDateTime};
+use crate::common::{Acceptance, Affiliation, Credential, Event, Occurrence, User, WebBool, WebDateTime};
 use crate::error::Error;
-use crate::session::{Credential, UserSession};
+use crate::session::UserSession;
 
 #[rocket::get(
     "/admin/event_list?<begin>&<end>&<location_id>&<occurrence>&<acceptance>&<course_true>&<course_id>&<owner_id>"
@@ -64,9 +64,11 @@ pub fn event_credential(session: UserSession, event_id: u64) -> Result<Json<Cred
     let (event_key, event_pwd) = crate::db::login::event_credential(conn, event_id)?;
 
     Ok(Json(Credential {
-        login: event_key,
-        password: event_pwd,
-        salt: "".to_string(),
+        id: None,
+        login: Some(event_key),
+        password: Some(event_pwd),
+        salt: None,
+        since: None,
     }))
 }
 

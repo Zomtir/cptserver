@@ -4,22 +4,29 @@ use mysql::{params, PooledConn};
 use crate::common::{Right, User};
 use crate::error::Error;
 
-pub fn user_login(conn: &mut PooledConn, user_key: &str) -> Result<(User, Vec<u8>, Vec<u8>), Error> {
+pub fn user_login(conn: &mut PooledConn, user_key: &str, salted_hash: &Vec<u8>) -> Result<User, Error> {
     let stmt = conn.prep(
-        "SELECT u.user_id, u.user_key, u.pwd, u.pepper, u.enabled, u.firstname, u.lastname, u.nickname
+        "SELECT u.user_id, u.user_key, uc.sp_hash, uc.pepper, uc.salt, u.enabled, u.firstname, u.lastname, u.nickname
         FROM users u
+        LEFT JOIN user_credentials uc ON uc.credential_id = u.credential
         WHERE u.user_key = :user_key;",
     )?;
     let params = params! {
         "user_key" => user_key,
     };
 
+    // User is missing
     let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
         None => return Err(Error::UserMissing),
         Some(row) => row,
     };
 
-    let mut user: User = User::from_info(
+    // User is disabled
+    if !row.take::<bool, &str>("enabled").unwrap() {
+        return Err(Error::UserDisabled);
+    }
+
+    let user: User = User::from_info(
         row.take("user_id").unwrap(),
         row.take("user_key").unwrap(),
         row.take("firstname").unwrap(),
@@ -27,11 +34,29 @@ pub fn user_login(conn: &mut PooledConn, user_key: &str) -> Result<(User, Vec<u8
         row.take("nickname").unwrap(),
     );
 
-    user.enabled = row.take("enabled").unwrap();
-    let user_pwd: Vec<u8> = row.take("pwd").unwrap();
-    let user_pepper: Vec<u8> = row.take("pepper").unwrap();
+    // User has no password configured
+    let (pepper, salt): (Vec<u8>, Vec<u8>) = match (row.take("pepper").unwrap(), row.take("salt").unwrap()) {
+        (Some(pepper), Some(salt)) => (pepper, salt),
+        _ => return Err(Error::UserPasswordMissing),
+    };
+    let peppered_hash: Vec<u8> = crate::common::hash_sha256(&salted_hash, &pepper);
 
-    Ok((user, user_pwd, user_pepper))
+    println!(
+        "User {} login attempt with salted hash {} (salt {}) resulting in peppered hash {} (pepper {})",
+        user_key,
+        hex::encode(&salted_hash),
+        hex::encode(&salt),
+        hex::encode(&peppered_hash),
+        hex::encode(&pepper)
+    );
+
+    let peppered_hash_db: Vec<u8> = row.take("sp_hash").unwrap();
+
+    if peppered_hash != peppered_hash_db {
+        return Err(Error::UserLoginFail);
+    };
+
+    Ok(user)
 }
 
 pub fn user_right(conn: &mut PooledConn, user_id: u64) -> Result<Right, Error> {

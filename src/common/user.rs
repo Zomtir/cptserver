@@ -1,4 +1,4 @@
-use crate::common::{BankAccount, License};
+use crate::common::{BankAccount, Credential, License};
 use crate::error::Error;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -19,6 +19,8 @@ pub struct User {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub enabled: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential: Option<Credential>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub active: Option<bool>,
 
@@ -62,6 +64,7 @@ impl User {
             id,
             key: Some(key),
             enabled: None,
+            credential: None,
             active: None,
             firstname,
             lastname,
@@ -91,6 +94,7 @@ impl User {
             lastname: row.take("user_lastname").unwrap(),
             nickname: row.take("user_nickname").unwrap(),
             enabled: row.take("user_enabled").flatten(),
+            credential: None,
             active: row.take("user_active").flatten(),
             address: row.take("user_address").flatten(),
             email: row.take("user_email").flatten(),

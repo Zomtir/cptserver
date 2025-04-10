@@ -75,12 +75,12 @@ pub fn course_list() -> Result<Json<Vec<Course>>, Error> {
     Ok(Json(courses))
 }
 
-#[rocket::get("/user_salt?<user_key>")]
+#[rocket::get("/anon/user_salt?<user_key>")]
 pub fn user_salt(user_key: String) -> Result<String, Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    let salt = crate::db::user::user_salt_value(conn, &user_key);
+    let salt = crate::db::user::user_key_salt_value(conn, &user_key);
 
-    // If the user does not exist, just return a random salt to prevent data scraping
+    // If the user does not exist, just return a "random" salt to prevent data scraping
     match salt {
         Err(_) => Ok(hex::encode(crate::common::hash128_string(&user_key))),
         Ok(salt) => Ok(hex::encode(salt)),

@@ -1,8 +1,8 @@
 use rocket::serde::json::Json;
 
-use crate::common::{Right, User};
+use crate::common::{Credential, Right, User};
 use crate::error::Error;
-use crate::session::{Credential, UserSession};
+use crate::session::UserSession;
 
 /*
  * ROUTES
@@ -20,10 +20,27 @@ pub fn user_right(session: UserSession) -> Json<Right> {
     Json(session.right)
 }
 
-#[rocket::post("/regular/user_password", format = "application/json", data = "<credit>")]
-pub fn user_password(session: UserSession, credit: Json<Credential>) -> Result<(), Error> {
+#[rocket::get("/regular/user_password_info")]
+pub fn user_password_info(session: UserSession) -> Result<Json<Credential>, Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    crate::db::user::user_password_edit(conn, session.user.id, &credit.password, &credit.salt)?;
+    let credit = match crate::db::user::user_password_info(conn, session.user.id)? {
+        None => return Err(Error::UserPasswordMissing),
+        Some(cr) => cr,
+    };
+
+    Ok(Json(credit))
+}
+
+#[rocket::post("/regular/user_password_edit", format = "application/json", data = "<credit>")]
+pub fn user_password_set(session: UserSession, credit: Json<Credential>) -> Result<(), Error> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
+
+    let (hash, salt) = match (&credit.password, &credit.salt) {
+        (Some(p), Some(s)) => (p, s),
+        _ => return Err(Error::UserPasswordInvalid),
+    };
+
+    crate::db::user::user_password_edit(conn, session.user.id, hash, salt)?;
     Ok(())
 }
 

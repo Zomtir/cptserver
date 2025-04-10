@@ -11,7 +11,6 @@ pub fn user_license_main_create(conn: &mut PooledConn, user_id: u64, license: &L
     )?;
 
     let params = params! {
-        "user_id" => &user_id,
         "number" => &license.number,
         "name" => &license.name,
         "expiration" => &license.expiration,
@@ -19,6 +18,7 @@ pub fn user_license_main_create(conn: &mut PooledConn, user_id: u64, license: &L
     };
 
     conn.exec_drop(&stmt, &params)?;
+    let license_id = conn.last_insert_id();
 
     let stmt_user = conn.prep(
         "UPDATE users
@@ -28,8 +28,7 @@ pub fn user_license_main_create(conn: &mut PooledConn, user_id: u64, license: &L
 
     let params_user = params! {
         "user_id" => &user_id,
-        "license_id" => &conn.last_insert_id(),
-        "file_url" => &license.file_url,
+        "license_id" => &license_id,
     };
 
     conn.exec_drop(&stmt_user, &params_user)?;
@@ -44,13 +43,14 @@ pub fn user_license_extra_create(conn: &mut PooledConn, user_id: u64, license: &
     )?;
 
     let params = params! {
-        "user_id" => &user_id,
         "number" => &license.number,
         "name" => &license.name,
         "expiration" => &license.expiration,
+        "file_url" => &license.file_url,
     };
 
     conn.exec_drop(&stmt, &params)?;
+    let license_id = conn.last_insert_id();
 
     let stmt_user = conn.prep(
         "UPDATE users
@@ -60,8 +60,7 @@ pub fn user_license_extra_create(conn: &mut PooledConn, user_id: u64, license: &
 
     let params_user = params! {
         "user_id" => &user_id,
-        "license_id" => &conn.last_insert_id(),
-        "file_url" => &license.file_url,
+        "license_id" => &license_id,
     };
 
     conn.exec_drop(&stmt_user, &params_user)?;

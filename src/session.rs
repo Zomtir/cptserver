@@ -2,7 +2,6 @@ extern crate lazy_static;
 
 use rocket::outcome::Outcome::Success;
 use rocket::request::{FromRequest, Outcome, Request};
-use serde::{Deserialize, Serialize};
 
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -19,13 +18,6 @@ lazy_static::lazy_static! {
 /*
  * STRUCTS
  */
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Credential {
-    pub login: String,
-    pub password: String,
-    pub salt: String,
-}
 
 #[derive(Debug, Clone)]
 pub struct UserSession {

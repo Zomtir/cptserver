@@ -1,45 +1,37 @@
 use rocket::serde::json::Json;
 
-use crate::common::Right;
+use crate::common::{Credential, Right};
 use crate::error::Error;
-use crate::session::{Credential, EventSession, UserSession, ADMINSESSION, EVENTSESSIONS, USERSESSIONS};
+use crate::session::{EventSession, UserSession, ADMINSESSION, EVENTSESSIONS, USERSESSIONS};
 
 #[rocket::post("/user_login", format = "application/json", data = "<credit>")]
 pub fn user_login(credit: Json<Credential>) -> Result<String, Error> {
     let conn = &mut crate::utils::db::get_db_conn()?;
 
-    let (user, user_pwd, user_pepper) = crate::db::login::user_login(conn, &credit.login.to_string())?;
+    let user_key: &str = match &credit.login {
+        Some(key) => key,
+        None => return Err(Error::UserKeyMissing),
+    };
 
-    if user.key == *ADMINSESSION.lock().unwrap() {
+    // If the user is a preconfigured admin, return him an admin session
+    if ADMINSESSION.lock().unwrap().as_deref() == Some(user_key) {
+        let user_id = match crate::db::user::user_created_true(conn, user_key)? {
+            Some(id) => id,
+            None => return Err(Error::UserMissing),
+        };
+        let user = crate::db::user::user_info(conn, user_id)?;
         let adminsession = UserSession::admin(&user);
         let token = crate::common::random_string(30);
         USERSESSIONS.lock().unwrap().insert(token.clone(), adminsession);
         return Ok(token);
     }
 
-    // For now let the client know if the user is disabled.
-    // Otherwise return `Error::UserMissing` in the future.
-    if !user.enabled.unwrap() {
-        return Err(Error::UserDisabled);
-    }
-
-    let bpassword: Vec<u8> = match crate::common::decode_hash256(&credit.password) {
-        Some(bpassword) => bpassword,
-        None => return Err(Error::UserPasswordInvalid),
+    let user_hash: Vec<u8> = match &credit.password {
+        Some(hash_string) => crate::common::decode_hash256(hash_string)?,
+        None => return Err(Error::UserPasswordMissing),
     };
 
-    let user_shapwd: Vec<u8> = crate::common::hash_sha256(&bpassword, &user_pepper);
-
-    println!(
-        "User {} login attempt with hash {}",
-        credit.login,
-        hex::encode(user_shapwd.clone())
-    );
-
-    if user_pwd != user_shapwd {
-        return Err(Error::UserLoginFail);
-    };
-
+    let user = crate::db::login::user_login(conn, user_key, &user_hash)?;
     let session_token: String = crate::common::random_string(30);
     let session_expiry = chrono::Utc::now() + crate::config::SESSION_DURATION();
 
@@ -57,11 +49,33 @@ pub fn user_login(credit: Json<Credential>) -> Result<String, Error> {
 
 #[rocket::post("/event_login", format = "application/json", data = "<credit>")]
 pub fn event_login(credit: Json<Credential>) -> Result<String, Error> {
-    println!("Event {} login attempt with password {}", credit.login, credit.password);
-
     let conn = &mut crate::utils::db::get_db_conn()?;
-    let (event_id, event_pwd) = crate::db::login::event_login(conn, &credit.login.to_string())?;
-    if event_pwd != credit.password {
+
+    let event_key = match &credit.login {
+        None => return Err(Error::EventKeyMissing),
+        Some(key) => {
+            if key.is_empty() {
+                return Err(Error::EventKeyInvalid);
+            }
+            key
+        }
+    };
+
+    let event_pwd = match &credit.password {
+        None => return Err(Error::EventPasswordMissing),
+        Some(pwd) => {
+            if pwd.is_empty() {
+                return Err(Error::EventPasswordInvalid);
+            }
+            pwd
+        }
+    };
+
+    println!("Event {} login attempt with password {}", event_key, event_pwd);
+
+    let (event_id, event_pwd_check) = crate::db::login::event_login(conn, event_key)?;
+
+    if *event_pwd != event_pwd_check {
         return Err(Error::EventLoginFail);
     };
 
@@ -87,9 +101,11 @@ pub fn course_login(course_key: String) -> Result<String, Error> {
     let (event_key, event_pwd) = crate::db::login::course_current_event(conn, &course_key, &begin, &end)?;
 
     let credentials = Credential {
-        login: event_key,
-        password: event_pwd,
-        salt: "".into(),
+        id: None,
+        login: Some(event_key),
+        password: Some(event_pwd),
+        salt: None,
+        since: None,
     };
 
     event_login(Json(credentials))
@@ -103,9 +119,11 @@ pub fn location_login(location_key: String) -> Result<String, Error> {
     let (event_key, event_pwd) = crate::db::login::location_current_event(conn, &location_key, &begin, &end)?;
 
     let credentials = Credential {
-        login: event_key,
-        password: event_pwd,
-        salt: "".into(),
+        id: None,
+        login: Some(event_key),
+        password: Some(event_pwd),
+        salt: None,
+        since: None,
     };
 
     event_login(Json(credentials))

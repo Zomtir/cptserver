@@ -1,7 +1,7 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{BankAccount, License, User};
+use crate::common::{BankAccount, Credential, License, User};
 use crate::error::Error;
 
 pub fn user_list(conn: &mut PooledConn, active: Option<bool>) -> Result<Vec<User>, Error> {
@@ -26,9 +26,46 @@ pub fn user_list(conn: &mut PooledConn, active: Option<bool>) -> Result<Vec<User
 pub fn user_info(conn: &mut PooledConn, user_id: u64) -> Result<User, Error> {
     let stmt = conn.prep(
         "SELECT
+            user_id,
+            user_key,
+            enabled,
+            active,
+            firstname,
+            lastname,
+            nickname
+        FROM users
+        WHERE user_id = :user_id;",
+    )?;
+
+    let params = params! {
+        "user_id" => &user_id,
+    };
+
+    let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
+        None => return Err(Error::UserMissing),
+        Some(row) => row,
+    };
+
+    let user = User::from_info(
+        row.take("user_id").unwrap(),
+        row.take("user_key").unwrap(),
+        row.take("firstname").unwrap(),
+        row.take("lastname").unwrap(),
+        row.take("nickname").unwrap(),
+    );
+
+    Ok(user)
+}
+
+pub fn user_detailed(conn: &mut PooledConn, user_id: u64) -> Result<User, Error> {
+    let stmt = conn.prep(
+        "SELECT
             users.user_id,
             user_key,
             enabled,
+            cr.credential_id AS credential_id,
+            cr.salt AS credential_salt,
+            cr.since AS credential_since,
             active,
             firstname,
             lastname,
@@ -59,6 +96,7 @@ pub fn user_info(conn: &mut PooledConn, user_id: u64) -> Result<User, Error> {
             le.file_url AS license_extra_file_url,
             note
         FROM users
+        LEFT JOIN user_credentials cr ON users.credential = cr.credential_id
         LEFT JOIN bank_accounts ba ON users.bank_account = ba.id
         LEFT JOIN licenses lm ON users.license_main = lm.id
         LEFT JOIN licenses le ON users.license_extra = le.id
@@ -78,6 +116,16 @@ pub fn user_info(conn: &mut PooledConn, user_id: u64) -> Result<User, Error> {
         id: row.take("user_id").unwrap(),
         key: row.take("user_key").unwrap(),
         enabled: row.take("enabled").unwrap(),
+        credential: row
+            .take::<Option<u32>, &str>("credential_id")
+            .unwrap()
+            .map(|id| Credential {
+                id: Some(id),
+                login: None,
+                password: None,
+                salt: row.take("credential_salt").map(|s: Vec<u8>| hex::encode(s)),
+                since: row.take("credential_since").unwrap(),
+            }),
         active: row.take("active").unwrap(),
         firstname: row.take("firstname").unwrap(),
         lastname: row.take("lastname").unwrap(),
@@ -133,19 +181,16 @@ pub fn user_create(conn: &mut PooledConn, user: &mut User) -> Result<u64, Error>
     user.email = crate::common::check_user_email(&user.email).ok();
 
     let stmt = conn.prep(
-        "INSERT INTO users (user_key, pwd, pepper, salt, enabled, active, firstname, lastname, nickname,
+        "INSERT INTO users (user_key, enabled, active, firstname, lastname, nickname,
         address, email, phone, birth_date, birth_location, nationality, gender, height, weight, image_url,
         note)
-    VALUES (:user_key, :pwd, :pepper, :salt, :enabled, :active, :firstname, :lastname, :nickname,
+    VALUES (:user_key, :enabled, :active, :firstname, :lastname, :nickname,
         :address, :email, :phone, :birth_date, :birth_location, :nationality, :gender, :height, :weight, :image_url,
         :note);",
     )?;
 
     let params = params! {
         "user_key" => &user.key,
-        "pwd" => crate::common::random_string(10),
-        "pepper" => crate::common::random_bytes(16),
-        "salt" => crate::common::random_bytes(16),
         "enabled" => user.enabled.unwrap_or(false),
         "active" => user.active.unwrap_or(true),
         "firstname" => &user.firstname,
@@ -220,34 +265,8 @@ pub fn user_edit(conn: &mut PooledConn, user_id: u64, user: &mut User) -> Result
     Ok(())
 }
 
-pub fn user_password_edit(conn: &mut PooledConn, user_id: u64, password: &str, salt: &str) -> Result<(), Error> {
-    let bpassword: Vec<u8> = match crate::common::decode_hash256(password) {
-        Some(bpassword) => bpassword,
-        None => return Err(Error::UserPasswordInvalid),
-    };
-
-    let bsalt: Vec<u8> = match crate::common::decode_hash128(salt) {
-        Some(bsalt) => bsalt,
-        None => return Err(Error::UserPasswordInvalid),
-    };
-
-    let bpepper: Vec<u8> = crate::common::random_bytes(16);
-    let shapassword: Vec<u8> = crate::common::hash_sha256(&bpassword, &bpepper);
-
-    let stmt = conn.prep("UPDATE users SET pwd = :pwd, pepper = :pepper, salt = :salt WHERE user_id = :user_id")?;
-    let params = params! {
-        "user_id" => &user_id,
-        "pwd" => &shapassword,
-        "pepper" => &bpepper,
-        "salt" => &bsalt,
-    };
-
-    conn.exec_drop(&stmt, &params)?;
-    Ok(())
-}
-
 pub fn user_delete(conn: &mut PooledConn, user_id: u64) -> Result<(), Error> {
-    let stmt = conn.prep("DELETE u FROM users u WHERE u.user_id = :user_id")?;
+    let stmt = conn.prep("DELETE u FROM users u WHERE u.user_id = :user_id;")?;
     let params = params! {
         "user_id" => user_id,
     };
@@ -256,21 +275,155 @@ pub fn user_delete(conn: &mut PooledConn, user_id: u64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn user_created_true(conn: &mut PooledConn, user_key: &str) -> Result<bool, Error> {
-    let stmt = conn.prep("SELECT COUNT(1) FROM users WHERE user_key = :user_key")?;
+pub fn user_created_true(conn: &mut PooledConn, user_key: &str) -> Result<Option<u64>, Error> {
+    let stmt = conn.prep("SELECT user_id FROM users WHERE user_key = :user_key;")?;
     let params = params! { "user_key" => user_key };
-    let count: Option<i32> = conn.exec_first(&stmt, &params)?;
+    let user_id: Option<u64> = conn.exec_first(&stmt, &params)?;
 
-    Ok(count.unwrap() == 1)
+    Ok(user_id)
 }
 
-pub fn user_salt_value(conn: &mut PooledConn, user_key: &str) -> Result<Vec<u8>, Error> {
-    let stmt = conn.prep("SELECT salt FROM users WHERE user_key = :user_key")?;
+pub fn user_password_info(conn: &mut PooledConn, user_id: u64) -> Result<Option<Credential>, Error> {
+    let stmt = conn.prep(
+        "SELECT uc.credential_id, uc.salt, uc.since
+        FROM user_credentials uc 
+        JOIN users u ON u.credential = uc.credential_id
+        WHERE u.user_id = :user_id;",
+    )?;
+
+    let params = params! {
+        "user_id" => &user_id,
+    };
+
+    let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
+        None => return Ok(None),
+        Some(row) => row,
+    };
+
+    let creditial = Credential {
+        id: row.take("credential_id").unwrap(),
+        login: None,
+        password: None,
+        salt: row.take("salt").map(|s: Vec<u8>| hex::encode(s)),
+        since: row.take("since").unwrap(),
+    };
+
+    Ok(Some(creditial))
+}
+
+pub fn user_password_create(
+    conn: &mut PooledConn,
+    user_id: u64,
+    hash_string: &str,
+    salt_string: &str,
+) -> Result<(), Error> {
+    if user_password_info(conn, user_id)?.is_some() {
+        return Err(Error::Default); // TODO Error::Existing
+    }
+
+    let salt: Vec<u8> = crate::common::decode_hash128(salt_string)?;
+    let salted_hash: Vec<u8> = crate::common::decode_hash256(hash_string)?;
+
+    let pepper: Vec<u8> = crate::common::random_bytes(16);
+    let peppered_hash: Vec<u8> = crate::common::hash_sha256(&salted_hash, &pepper);
+
+    let stmt_uc = conn.prep(
+        "INSERT INTO user_credentials (salt, pepper, sp_hash)
+        VALUES(:salt, :pepper, :sp_hash);",
+    )?;
+
+    let params_uc = params! {
+        "salt" => &salt,
+        "pepper" => &pepper,
+        "sp_hash" => &peppered_hash,
+    };
+
+    conn.exec_drop(&stmt_uc, &params_uc)?;
+    let credential_id = conn.last_insert_id();
+
+    let stmt_user = conn.prep(
+        "UPDATE users
+        SET credential = :credential_id
+        WHERE user_id = :user_id;",
+    )?;
+
+    let params_user = params! {
+        "user_id" => &user_id,
+        "credential_id" => &credential_id,
+    };
+
+    conn.exec_drop(&stmt_user, &params_user)?;
+
+    Ok(())
+}
+
+pub fn user_password_edit(
+    conn: &mut PooledConn,
+    user_id: u64,
+    hash_string: &str,
+    salt_string: &str,
+) -> Result<(), Error> {
+    let user_credential = match user_password_info(conn, user_id)? {
+        None => return Err(Error::Default), // TODO Error::Missing
+        Some(credential) => credential,
+    };
+
+    let salt: Vec<u8> = crate::common::decode_hash128(salt_string)?;
+    let salted_hash: Vec<u8> = crate::common::decode_hash256(hash_string)?;
+
+    let pepper: Vec<u8> = crate::common::random_bytes(16);
+    let peppered_hash: Vec<u8> = crate::common::hash_sha256(&salted_hash, &pepper);
+
+    let stmt = conn.prep(
+        "UPDATE user_credentials
+        SET salt = :salt, pepper = :pepper, sp_hash = :sp_hash
+        WHERE credential_id = :credential_id;",
+    )?;
+    let params = params! {
+        "credential_id" => &user_credential.id,
+        "salt" => &salt,
+        "pepper" => &pepper,
+        "sp_hash" => &peppered_hash,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+    Ok(())
+}
+
+pub fn user_password_delete(conn: &mut PooledConn, user_id: u64) -> Result<(), Error> {
+    let user_credential = match user_password_info(conn, user_id)? {
+        None => return Err(Error::Default), // TODO Error::Missing
+        Some(credential) => credential,
+    };
+
+    let stmt = conn.prep(
+        "DELETE uc
+        FROM user_credentials uc
+        WHERE uc.credential_id = :credential_id;",
+    )?;
+
+    let params = params! {
+        "credential_id" => &user_credential.id,
+    };
+
+    conn.exec_drop(&stmt, &params)?;
+
+    // The users.credential is automatically deleted from the users table due to cascading on delete is null
+
+    Ok(())
+}
+
+pub fn user_key_salt_value(conn: &mut PooledConn, user_key: &str) -> Result<Vec<u8>, Error> {
+    let stmt = conn.prep(
+        "SELECT uc.salt
+        FROM users u
+        JOIN user_credentials uc ON uc.credential_id = u.credential
+        WHERE user_key = :user_key;",
+    )?;
     let params = params! {
         "user_key" => &user_key
     };
 
-    // If the user does not exist, just return a random salt to prevent data scraping
     match conn.exec_first::<Vec<u8>, _, _>(&stmt, &params)? {
         None => Err(Error::UserMissing),
         Some(salt) => Ok(salt),

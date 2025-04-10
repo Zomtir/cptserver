@@ -110,3 +110,22 @@ INSERT INTO event_attendance_registrations (`event_id`,`user_id`,`role`, `status
 INSERT INTO event_attendance_registrations (`event_id`,`user_id`,`role`, `status`) SELECT `event_id`,`user_id`,`role`, `status` FROM event_supporter_registrations;
 
 DROP TABLE `event_participant_registrations`, `event_leader_registrations`, `event_supporter_registrations`;
+
+-- Split user credentials
+CREATE TABLE `user_credentials` (
+    `credential_id` mediumint(9) NOT NULL AUTO_INCREMENT,
+    `salt` binary(16) NOT NULL,
+    `pepper` binary(16) NOT NULL,
+    `sp_hash` binary(32) NOT NULL,
+    `since` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `user_id` mediumint(9) NOT NULL,
+    PRIMARY KEY (`credential_id`),
+    UNIQUE KEY `KEY` (`user_id`)
+);
+
+INSERT INTO user_credentials (`sp_hash`,`pepper`,`salt`,`user_id`) SELECT `pwd`,`pepper`,`salt`,`user_id` FROM users;
+ALTER TABLE `users` ADD `credential` MEDIUMINT NULL AFTER `enabled`;
+ALTER TABLE `users` ADD CONSTRAINT `users_ibfk_4` FOREIGN KEY (`credential`) REFERENCES `user_credentials`(`credential_id`) ON DELETE SET NULL ON UPDATE CASCADE; 
+UPDATE `users` u JOIN `user_credentials` uc ON u.`user_id` = uc.`user_id` SET u.`credential` = uc.`credential_id`;
+ALTER TABLE `user_credentials` DROP `user_id`;
+ALTER TABLE `users` DROP `pwd`, DROP `pepper`, DROP `salt`;

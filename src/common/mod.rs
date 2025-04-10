@@ -9,6 +9,7 @@ mod clock;
 mod club;
 mod confirmation;
 mod course;
+mod credential;
 mod event;
 pub mod fs;
 mod gender;
@@ -30,6 +31,7 @@ pub use clock::*;
 pub use club::*;
 pub use confirmation::*;
 pub use course::*;
+pub use credential::*;
 pub use event::*;
 #[allow(unused_imports)]
 pub use gender::*;
