@@ -1,12 +1,12 @@
 use cptserver;
-use cptserver::error::Error;
+use cptserver::error::ErrorKind;
 
 use cptserver::common::{Affiliation, Organisation, User};
 
 mod common;
 
 #[test]
-fn affiliation() -> Result<(), Error> {
+fn affiliation() -> Result<(), ErrorKind> {
     let conn = &mut common::get_dbt_conn()?;
 
     let mut user = User::from_info(0, "key".into(), "first".into(), "last".into(), None);

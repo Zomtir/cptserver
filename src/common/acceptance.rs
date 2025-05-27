@@ -29,7 +29,7 @@ impl std::fmt::Display for Acceptance {
 }
 
 impl std::str::FromStr for Acceptance {
-    type Err = crate::error::Error;
+    type Err = crate::error::ErrorKind;
 
     fn from_str<'r>(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -37,7 +37,7 @@ impl std::str::FromStr for Acceptance {
             "PENDING" => Ok(Acceptance::Pending),
             "ACCEPTED" => Ok(Acceptance::Accepted),
             "REJECTED" => Ok(Acceptance::Rejected),
-            _ => Err(crate::error::Error::Parsing),
+            _ => Err(crate::error::ErrorKind::Parsing),
         }
     }
 }

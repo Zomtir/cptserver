@@ -1,13 +1,13 @@
 use rocket::serde::json::Json;
 
 use crate::common::Term;
-use crate::error::Error;
+use crate::error::{ErrorKind, Result};
 use crate::session::UserSession;
 
 #[rocket::get("/admin/term_list?<club_id>&<user_id>")]
-pub fn term_list(session: UserSession, club_id: Option<u32>, user_id: Option<u32>) -> Result<Json<Vec<Term>>, Error> {
+pub fn term_list(session: UserSession, club_id: Option<u32>, user_id: Option<u32>) -> Result<Json<Vec<Term>>> {
     if !session.right.right_club_read {
-        return Err(Error::RightClubMissing);
+        return Err(ErrorKind::RightClubMissing);
     };
 
     let conn = &mut crate::utils::db::get_db_conn()?;
@@ -16,9 +16,9 @@ pub fn term_list(session: UserSession, club_id: Option<u32>, user_id: Option<u32
 }
 
 #[rocket::post("/admin/term_create", format = "application/json", data = "<term>")]
-pub fn term_create(session: UserSession, term: Json<Term>) -> Result<String, Error> {
+pub fn term_create(session: UserSession, term: Json<Term>) -> Result<String> {
     if !session.right.right_club_write {
-        return Err(Error::RightClubMissing);
+        return Err(ErrorKind::RightClubMissing);
     };
 
     let conn = &mut crate::utils::db::get_db_conn()?;
@@ -27,9 +27,9 @@ pub fn term_create(session: UserSession, term: Json<Term>) -> Result<String, Err
 }
 
 #[rocket::post("/admin/term_edit?<term_id>", format = "application/json", data = "<term>")]
-pub fn term_edit(session: UserSession, term_id: i64, term: Json<Term>) -> Result<(), Error> {
+pub fn term_edit(session: UserSession, term_id: i64, term: Json<Term>) -> Result<()> {
     if !session.right.right_club_write {
-        return Err(Error::RightClubMissing);
+        return Err(ErrorKind::RightClubMissing);
     };
 
     let conn = &mut crate::utils::db::get_db_conn()?;
@@ -38,9 +38,9 @@ pub fn term_edit(session: UserSession, term_id: i64, term: Json<Term>) -> Result
 }
 
 #[rocket::head("/admin/term_delete?<term_id>")]
-pub fn term_delete(session: UserSession, term_id: i64) -> Result<(), Error> {
+pub fn term_delete(session: UserSession, term_id: i64) -> Result<()> {
     if !session.right.right_club_write {
-        return Err(Error::RightClubMissing);
+        return Err(ErrorKind::RightClubMissing);
     };
 
     let conn = &mut crate::utils::db::get_db_conn()?;

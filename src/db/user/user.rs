@@ -2,9 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{BankAccount, Credential, License, User};
-use crate::error::Error;
+use crate::error::{ErrorKind, Result};
 
-pub fn user_list(conn: &mut PooledConn, active: Option<bool>) -> Result<Vec<User>, Error> {
+pub fn user_list(conn: &mut PooledConn, active: Option<bool>) -> Result<Vec<User>> {
     let stmt = conn.prep(
         "SELECT user_id, user_key, firstname, lastname, nickname
         FROM users
@@ -23,7 +23,7 @@ pub fn user_list(conn: &mut PooledConn, active: Option<bool>) -> Result<Vec<User
     Ok(users)
 }
 
-pub fn user_info(conn: &mut PooledConn, user_id: u64) -> Result<User, Error> {
+pub fn user_info(conn: &mut PooledConn, user_id: u64) -> Result<User> {
     let stmt = conn.prep(
         "SELECT
             user_id,
@@ -42,7 +42,7 @@ pub fn user_info(conn: &mut PooledConn, user_id: u64) -> Result<User, Error> {
     };
 
     let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
-        None => return Err(Error::UserMissing),
+        None => return Err(ErrorKind::UserMissing),
         Some(row) => row,
     };
 
@@ -57,7 +57,7 @@ pub fn user_info(conn: &mut PooledConn, user_id: u64) -> Result<User, Error> {
     Ok(user)
 }
 
-pub fn user_detailed(conn: &mut PooledConn, user_id: u64) -> Result<User, Error> {
+pub fn user_detailed(conn: &mut PooledConn, user_id: u64) -> Result<User> {
     let stmt = conn.prep(
         "SELECT
             users.user_id,
@@ -108,7 +108,7 @@ pub fn user_detailed(conn: &mut PooledConn, user_id: u64) -> Result<User, Error>
     };
 
     let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
-        None => return Err(Error::UserMissing),
+        None => return Err(ErrorKind::UserMissing),
         Some(row) => row,
     };
 
@@ -172,7 +172,7 @@ pub fn user_detailed(conn: &mut PooledConn, user_id: u64) -> Result<User, Error>
     Ok(user)
 }
 
-pub fn user_create(conn: &mut PooledConn, user: &mut User) -> Result<u64, Error> {
+pub fn user_create(conn: &mut PooledConn, user: &mut User) -> Result<u64> {
     user.key = match crate::common::check_user_key(&user.key) {
         Err(_) => Some(crate::common::random_string(6)),
         Ok(key) => Some(key),
@@ -214,7 +214,7 @@ pub fn user_create(conn: &mut PooledConn, user: &mut User) -> Result<u64, Error>
     Ok(conn.last_insert_id())
 }
 
-pub fn user_edit(conn: &mut PooledConn, user_id: u64, user: &mut User) -> Result<(), Error> {
+pub fn user_edit(conn: &mut PooledConn, user_id: u64, user: &mut User) -> Result<()> {
     crate::common::check_user_key(&user.key)?;
     user.email = crate::common::check_user_email(&user.email).ok();
 
@@ -265,7 +265,7 @@ pub fn user_edit(conn: &mut PooledConn, user_id: u64, user: &mut User) -> Result
     Ok(())
 }
 
-pub fn user_delete(conn: &mut PooledConn, user_id: u64) -> Result<(), Error> {
+pub fn user_delete(conn: &mut PooledConn, user_id: u64) -> Result<()> {
     let stmt = conn.prep("DELETE u FROM users u WHERE u.user_id = :user_id;")?;
     let params = params! {
         "user_id" => user_id,
@@ -275,7 +275,7 @@ pub fn user_delete(conn: &mut PooledConn, user_id: u64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn user_created_true(conn: &mut PooledConn, user_key: &str) -> Result<Option<u64>, Error> {
+pub fn user_created_true(conn: &mut PooledConn, user_key: &str) -> Result<Option<u64>> {
     let stmt = conn.prep("SELECT user_id FROM users WHERE user_key = :user_key;")?;
     let params = params! { "user_key" => user_key };
     let user_id: Option<u64> = conn.exec_first(&stmt, &params)?;
@@ -283,7 +283,7 @@ pub fn user_created_true(conn: &mut PooledConn, user_key: &str) -> Result<Option
     Ok(user_id)
 }
 
-pub fn user_password_info(conn: &mut PooledConn, user_id: u64) -> Result<Option<Credential>, Error> {
+pub fn user_password_info(conn: &mut PooledConn, user_id: u64) -> Result<Option<Credential>> {
     let stmt = conn.prep(
         "SELECT uc.credential_id, uc.salt, uc.since
         FROM user_credentials uc 
@@ -311,14 +311,9 @@ pub fn user_password_info(conn: &mut PooledConn, user_id: u64) -> Result<Option<
     Ok(Some(creditial))
 }
 
-pub fn user_password_create(
-    conn: &mut PooledConn,
-    user_id: u64,
-    hash_string: &str,
-    salt_string: &str,
-) -> Result<(), Error> {
+pub fn user_password_create(conn: &mut PooledConn, user_id: u64, hash_string: &str, salt_string: &str) -> Result<()> {
     if user_password_info(conn, user_id)?.is_some() {
-        return Err(Error::Default); // TODO Error::Existing
+        return Err(ErrorKind::AlreadyExists)?;
     }
 
     let salt: Vec<u8> = crate::common::decode_hash128(salt_string)?;
@@ -357,14 +352,9 @@ pub fn user_password_create(
     Ok(())
 }
 
-pub fn user_password_edit(
-    conn: &mut PooledConn,
-    user_id: u64,
-    hash_string: &str,
-    salt_string: &str,
-) -> Result<(), Error> {
+pub fn user_password_edit(conn: &mut PooledConn, user_id: u64, hash_string: &str, salt_string: &str) -> Result<()> {
     let user_credential = match user_password_info(conn, user_id)? {
-        None => return Err(Error::Default), // TODO Error::Missing
+        None => return Err(ErrorKind::Missing),
         Some(credential) => credential,
     };
 
@@ -390,9 +380,9 @@ pub fn user_password_edit(
     Ok(())
 }
 
-pub fn user_password_delete(conn: &mut PooledConn, user_id: u64) -> Result<(), Error> {
+pub fn user_password_delete(conn: &mut PooledConn, user_id: u64) -> Result<()> {
     let user_credential = match user_password_info(conn, user_id)? {
-        None => return Err(Error::Default), // TODO Error::Missing
+        None => return Err(ErrorKind::Missing),
         Some(credential) => credential,
     };
 
@@ -413,7 +403,7 @@ pub fn user_password_delete(conn: &mut PooledConn, user_id: u64) -> Result<(), E
     Ok(())
 }
 
-pub fn user_key_salt_value(conn: &mut PooledConn, user_key: &str) -> Result<Vec<u8>, Error> {
+pub fn user_key_salt_value(conn: &mut PooledConn, user_key: &str) -> Result<Vec<u8>> {
     let stmt = conn.prep(
         "SELECT uc.salt
         FROM users u
@@ -425,7 +415,7 @@ pub fn user_key_salt_value(conn: &mut PooledConn, user_key: &str) -> Result<Vec<
     };
 
     match conn.exec_first::<Vec<u8>, _, _>(&stmt, &params)? {
-        None => Err(Error::UserMissing),
+        None => Err(ErrorKind::UserMissing),
         Some(salt) => Ok(salt),
     }
 }

@@ -1,14 +1,14 @@
 use rocket::serde::json::Json;
 
 use crate::common::Location;
-use crate::error::Error;
+use crate::error::{ErrorKind, Result};
 use crate::session::UserSession;
 
 #[rocket::get("/admin/location_list")]
-pub fn location_list(session: UserSession) -> Result<Json<Vec<Location>>, Error> {
+pub fn location_list(session: UserSession) -> Result<Json<Vec<Location>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_location_read {
-        return Err(Error::RightLocationMissing);
+        return Err(ErrorKind::RightLocationMissing);
     };
 
     let locations = crate::db::location::location_list(conn)?;
@@ -16,10 +16,10 @@ pub fn location_list(session: UserSession) -> Result<Json<Vec<Location>>, Error>
 }
 
 #[rocket::post("/admin/location_create", format = "application/json", data = "<location>")]
-pub fn location_create(session: UserSession, location: Json<Location>) -> Result<String, Error> {
+pub fn location_create(session: UserSession, location: Json<Location>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_location_write {
-        return Err(Error::RightLocationMissing);
+        return Err(ErrorKind::RightLocationMissing);
     };
 
     let id = crate::db::location::location_create(conn, &location)?;
@@ -31,10 +31,10 @@ pub fn location_create(session: UserSession, location: Json<Location>) -> Result
     format = "application/json",
     data = "<location>"
 )]
-pub fn location_edit(session: UserSession, location_id: u32, location: Json<Location>) -> Result<(), Error> {
+pub fn location_edit(session: UserSession, location_id: u32, location: Json<Location>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_location_write {
-        return Err(Error::RightLocationMissing);
+        return Err(ErrorKind::RightLocationMissing);
     };
 
     crate::db::location::location_edit(conn, location_id, &location)?;
@@ -42,10 +42,10 @@ pub fn location_edit(session: UserSession, location_id: u32, location: Json<Loca
 }
 
 #[rocket::head("/admin/location_delete?<location_id>")]
-pub fn location_delete(session: UserSession, location_id: u32) -> Result<(), Error> {
+pub fn location_delete(session: UserSession, location_id: u32) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_location_write {
-        return Err(Error::RightLocationMissing);
+        return Err(ErrorKind::RightLocationMissing);
     };
 
     crate::db::location::location_delete(conn, location_id)?;

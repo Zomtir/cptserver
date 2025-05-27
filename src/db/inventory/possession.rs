@@ -2,7 +2,7 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Club, Item, ItemCategory, Possession, Stock, User};
-use crate::error::Error;
+use crate::error::ErrorKind;
 
 fn sql_possession(mut row: mysql::Row) -> Possession {
     Possession {
@@ -36,7 +36,7 @@ pub fn possession_list(
     item_id: Option<u64>,
     owned: Option<bool>,
     club_id: Option<u32>,
-) -> Result<Vec<Possession>, Error> {
+) -> Result<Vec<Possession>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT up.possession_id,
             u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
@@ -71,7 +71,7 @@ pub fn possession_list(
     Ok(possessions)
 }
 
-pub fn possession_info(conn: &mut PooledConn, possession_id: u64) -> Result<Possession, Error> {
+pub fn possession_info(conn: &mut PooledConn, possession_id: u64) -> Result<Possession, ErrorKind> {
     let stmt = conn.prep(
         "SELECT up.possession_id,
             u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
@@ -89,14 +89,14 @@ pub fn possession_info(conn: &mut PooledConn, possession_id: u64) -> Result<Poss
     };
 
     let row: mysql::Row = match conn.exec_first(&stmt, &params)? {
-        None => return Err(Error::InventoryPossessionMissing),
+        None => return Err(ErrorKind::InventoryPossessionMissing),
         Some(row) => row,
     };
 
     Ok(sql_possession(row))
 }
 
-pub fn possession_ownership(conn: &mut PooledConn, possession_id: u64) -> Result<Option<Stock>, Error> {
+pub fn possession_ownership(conn: &mut PooledConn, possession_id: u64) -> Result<Option<Stock>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT cs.stock_id,
             c.club_id, c.club_key, c.name as club_name,
@@ -153,7 +153,7 @@ pub fn possession_create(
     acquisition_date: chrono::NaiveDate,
     owned: bool,
     stock_id: Option<u64>,
-) -> Result<(), Error> {
+) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "INSERT INTO user_possessions (user_id, item_id, acquisition_date, owned, stock_id)
         SELECT :user_id, :item_id, :acquisition_date, :owned, :stock_id;",
@@ -176,7 +176,7 @@ pub fn possession_edit(
     possession_id: u64,
     possession: &Possession,
     stock_id: Option<u64>,
-) -> Result<(), Error> {
+) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "UPDATE user_possessions
         SET
@@ -201,7 +201,7 @@ pub fn possession_edit(
     Ok(())
 }
 
-pub fn possession_delete(conn: &mut PooledConn, possession_id: u64) -> Result<(), Error> {
+pub fn possession_delete(conn: &mut PooledConn, possession_id: u64) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "DELETE up
         FROM user_possessions up

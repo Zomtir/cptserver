@@ -27,14 +27,14 @@ impl std::fmt::Display for Occurrence {
 }
 
 impl std::str::FromStr for Occurrence {
-    type Err = crate::error::Error;
+    type Err = crate::error::ErrorKind;
 
     fn from_str<'r>(s: &str) -> Result<Self, Self::Err> {
         match s {
             "OCCURRING" => Ok(Occurrence::Occurring),
             "CANCELED" => Ok(Occurrence::Canceled),
             "VOIDED" => Ok(Occurrence::Voided),
-            _ => Err(crate::error::Error::Parsing),
+            _ => Err(crate::error::ErrorKind::Parsing),
         }
     }
 }

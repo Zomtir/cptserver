@@ -29,7 +29,7 @@ impl std::fmt::Display for Gender {
 }
 
 impl std::str::FromStr for Gender {
-    type Err = crate::error::Error;
+    type Err = crate::error::ErrorKind;
 
     fn from_str<'r>(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -37,7 +37,7 @@ impl std::str::FromStr for Gender {
             "FEMALE" => Ok(Gender::Female),
             "OTHER" => Ok(Gender::Other),
             "NULL" => Ok(Gender::Null),
-            _ => Err(crate::error::Error::Parsing),
+            _ => Err(crate::error::ErrorKind::Parsing),
         }
     }
 }

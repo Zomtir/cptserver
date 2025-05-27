@@ -2,9 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::Organisation;
-use crate::error::Error;
+use crate::error::ErrorKind;
 
-pub fn organisation_list(conn: &mut PooledConn) -> Result<Vec<Organisation>, Error> {
+pub fn organisation_list(conn: &mut PooledConn) -> Result<Vec<Organisation>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT organisation_id, abbreviation, name
         FROM organisations;",
@@ -18,7 +18,7 @@ pub fn organisation_list(conn: &mut PooledConn) -> Result<Vec<Organisation>, Err
     Ok(orgs)
 }
 
-pub fn organisation_info(conn: &mut PooledConn, organisation_id: u32) -> Result<Organisation, Error> {
+pub fn organisation_info(conn: &mut PooledConn, organisation_id: u32) -> Result<Organisation, ErrorKind> {
     let stmt = conn.prep(
         "SELECT organisation_id, abbreviation, name
         FROM organisations
@@ -33,12 +33,12 @@ pub fn organisation_info(conn: &mut PooledConn, organisation_id: u32) -> Result<
 
     let mut orgs = conn.exec_map(&stmt, &params, &map)?;
     if orgs.is_empty() {
-        return Err(Error::OrganisationMissing);
+        return Err(ErrorKind::OrganisationMissing);
     }
     Ok(orgs.remove(0))
 }
 
-pub fn organisation_create(conn: &mut PooledConn, organisation: &Organisation) -> Result<u32, Error> {
+pub fn organisation_create(conn: &mut PooledConn, organisation: &Organisation) -> Result<u32, ErrorKind> {
     let stmt = conn.prep(
         "INSERT INTO organisations (abbreviation, name)
         VALUES (:abbreviation, :name)",
@@ -58,7 +58,7 @@ pub fn organisation_edit(
     conn: &mut PooledConn,
     organisation_id: u32,
     organisation: &Organisation,
-) -> Result<(), Error> {
+) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "UPDATE organisations SET
             abbreviation = :abbreviation,
@@ -76,7 +76,7 @@ pub fn organisation_edit(
     Ok(())
 }
 
-pub fn organisation_delete(conn: &mut PooledConn, organisation_id: u32) -> Result<(), Error> {
+pub fn organisation_delete(conn: &mut PooledConn, organisation_id: u32) -> Result<(), ErrorKind> {
     let stmt = conn.prep("DELETE s FROM organisations s WHERE s.organisation_id = :organisation_id")?;
 
     let params = params! {

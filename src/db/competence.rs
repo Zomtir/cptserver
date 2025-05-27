@@ -2,7 +2,7 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Competence, Skill, User};
-use crate::error::Error;
+use crate::error::ErrorKind;
 
 pub fn competence_list(
     conn: &mut PooledConn,
@@ -10,7 +10,7 @@ pub fn competence_list(
     skill_id: Option<u64>,
     rank_min: i16,
     rank_max: i16,
-) -> Result<Vec<Competence>, Error> {
+) -> Result<Vec<Competence>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT uc.competence_id,
             u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
@@ -69,7 +69,7 @@ pub fn competence_list(
     Ok(competences)
 }
 
-pub fn competence_create(conn: &mut PooledConn, competence: &Competence) -> Result<u32, Error> {
+pub fn competence_create(conn: &mut PooledConn, competence: &Competence) -> Result<u32, ErrorKind> {
     let stmt = conn.prep(
         "INSERT INTO user_competences (user_id, skill_id, `rank`, date, judge_id)
         SELECT :user_id, :skill_id, :rank, :date, :judge_id",
@@ -87,7 +87,7 @@ pub fn competence_create(conn: &mut PooledConn, competence: &Competence) -> Resu
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn competence_edit(conn: &mut PooledConn, competence_id: u64, competence: &Competence) -> Result<(), Error> {
+pub fn competence_edit(conn: &mut PooledConn, competence_id: u64, competence: &Competence) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "UPDATE user_competences
         SET
@@ -112,7 +112,7 @@ pub fn competence_edit(conn: &mut PooledConn, competence_id: u64, competence: &C
     Ok(())
 }
 
-pub fn competence_delete(conn: &mut PooledConn, competence_id: u64) -> Result<(), Error> {
+pub fn competence_delete(conn: &mut PooledConn, competence_id: u64) -> Result<(), ErrorKind> {
     let stmt = conn.prep("DELETE uc FROM user_competences uc WHERE uc.competence_id = :competence_id")?;
 
     let params = params! {
@@ -123,7 +123,7 @@ pub fn competence_delete(conn: &mut PooledConn, competence_id: u64) -> Result<()
     Ok(())
 }
 
-pub fn competence_summary(conn: &mut PooledConn, user_id: u64) -> Result<Vec<(Skill, i16)>, Error> {
+pub fn competence_summary(conn: &mut PooledConn, user_id: u64) -> Result<Vec<(Skill, i16)>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT s.skill_id, s.skill_key, s.title, s.min, s.max, MAX(uc.rank)
         FROM user_competences uc

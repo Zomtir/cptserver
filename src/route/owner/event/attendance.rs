@@ -1,13 +1,13 @@
 use crate::common::User;
-use crate::error::Error;
+use crate::error::{ErrorKind, Result};
 use crate::session::UserSession;
 use rocket::serde::json::Json;
 
 #[rocket::get("/owner/event_attendance_registration_list?<event_id>&<role>")]
-pub fn registration_list(session: UserSession, event_id: u64, role: String) -> Result<Json<Vec<User>>, Error> {
+pub fn registration_list(session: UserSession, event_id: u64, role: String) -> Result<Json<Vec<User>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(Error::EventOwnerPermission);
+        return Err(ErrorKind::EventOwnerPermission);
     };
 
     let users = crate::db::event::attendance::event_attendance_registration_list(conn, event_id, role)?;
@@ -15,10 +15,10 @@ pub fn registration_list(session: UserSession, event_id: u64, role: String) -> R
 }
 
 #[rocket::get("/owner/event_attendance_filter_list?<event_id>&<role>")]
-pub fn filter_list(session: UserSession, event_id: u64, role: String) -> Result<Json<Vec<(User, bool)>>, Error> {
+pub fn filter_list(session: UserSession, event_id: u64, role: String) -> Result<Json<Vec<(User, bool)>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(Error::EventOwnerPermission);
+        return Err(ErrorKind::EventOwnerPermission);
     };
 
     let filters = crate::db::event::attendance::event_attendance_filter_list(conn, event_id, role)?;
@@ -26,10 +26,10 @@ pub fn filter_list(session: UserSession, event_id: u64, role: String) -> Result<
 }
 
 #[rocket::head("/owner/event_attendance_filter_edit?<event_id>&<user_id>&<role>&<access>")]
-pub fn filter_edit(session: UserSession, event_id: u64, user_id: u64, role: String, access: bool) -> Result<(), Error> {
+pub fn filter_edit(session: UserSession, event_id: u64, user_id: u64, role: String, access: bool) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(Error::EventOwnerPermission);
+        return Err(ErrorKind::EventOwnerPermission);
     };
 
     crate::db::event::attendance::event_attendance_filter_edit(conn, event_id, user_id, role, access)?;
@@ -37,10 +37,10 @@ pub fn filter_edit(session: UserSession, event_id: u64, user_id: u64, role: Stri
 }
 
 #[rocket::head("/owner/event_attendance_filter_remove?<event_id>&<user_id>&<role>")]
-pub fn filter_remove(session: UserSession, event_id: u64, user_id: u64, role: String) -> Result<(), Error> {
+pub fn filter_remove(session: UserSession, event_id: u64, user_id: u64, role: String) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(Error::EventOwnerPermission);
+        return Err(ErrorKind::EventOwnerPermission);
     };
 
     crate::db::event::attendance::event_attendance_filter_remove(conn, event_id, user_id, role)?;
@@ -48,10 +48,10 @@ pub fn filter_remove(session: UserSession, event_id: u64, user_id: u64, role: St
 }
 
 #[rocket::get("/owner/event_attendance_presence_pool?<event_id>&<role>")]
-pub fn presence_pool(session: UserSession, event_id: u64, role: String) -> Result<Json<Vec<User>>, Error> {
+pub fn presence_pool(session: UserSession, event_id: u64, role: String) -> Result<Json<Vec<User>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(Error::EventOwnerPermission);
+        return Err(ErrorKind::EventOwnerPermission);
     };
 
     let users = crate::db::event::attendance::event_attendance_presence_pool(conn, event_id, &role, true)?;
@@ -59,10 +59,10 @@ pub fn presence_pool(session: UserSession, event_id: u64, role: String) -> Resul
 }
 
 #[rocket::get("/owner/event_attendance_presence_list?<event_id>&<role>")]
-pub fn presence_list(session: UserSession, event_id: u64, role: String) -> Result<Json<Vec<User>>, Error> {
+pub fn presence_list(session: UserSession, event_id: u64, role: String) -> Result<Json<Vec<User>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(Error::EventOwnerPermission);
+        return Err(ErrorKind::EventOwnerPermission);
     };
 
     let users = crate::db::event::attendance::event_attendance_presence_list(conn, event_id, &role)?;
@@ -70,16 +70,16 @@ pub fn presence_list(session: UserSession, event_id: u64, role: String) -> Resul
 }
 
 #[rocket::head("/owner/event_attendance_presence_add?<event_id>&<user_id>&<role>")]
-pub fn presence_add(session: UserSession, event_id: u64, user_id: u64, role: String) -> Result<(), Error> {
+pub fn presence_add(session: UserSession, event_id: u64, user_id: u64, role: String) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(Error::EventOwnerPermission);
+        return Err(ErrorKind::EventOwnerPermission);
     };
 
     let pool = crate::db::event::attendance::event_attendance_presence_pool(conn, event_id, &role, true)?;
 
     if !pool.iter().any(|user| user.id == user_id) {
-        return Err(Error::EventPresenceForbidden);
+        return Err(ErrorKind::EventPresenceForbidden);
     }
 
     crate::db::event::attendance::event_attendance_presence_add(conn, event_id, user_id, &role)?;
@@ -87,10 +87,10 @@ pub fn presence_add(session: UserSession, event_id: u64, user_id: u64, role: Str
 }
 
 #[rocket::head("/owner/event_attendance_presence_remove?<event_id>&<user_id>&<role>")]
-pub fn presence_remove(session: UserSession, event_id: u64, user_id: u64, role: String) -> Result<(), Error> {
+pub fn presence_remove(session: UserSession, event_id: u64, user_id: u64, role: String) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(Error::EventOwnerPermission);
+        return Err(ErrorKind::EventOwnerPermission);
     };
 
     crate::db::event::attendance::event_attendance_presence_remove(conn, event_id, user_id, &role)?;

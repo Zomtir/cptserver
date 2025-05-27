@@ -4,7 +4,7 @@ pub mod moderator;
 use rocket::serde::json::Json;
 
 use crate::common::{Acceptance, Course, Event, Requirement, User, WebBool};
-use crate::error::Error;
+use crate::error::{ErrorKind, Result};
 use crate::session::UserSession;
 
 #[rocket::get("/admin/course_list?<mod_id>&<active>&<public>")]
@@ -13,10 +13,10 @@ pub fn course_list(
     mod_id: Option<u64>,
     active: Option<WebBool>,
     public: Option<WebBool>,
-) -> Result<Json<Vec<Course>>, Error> {
+) -> Result<Json<Vec<Course>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_course_read {
-        return Err(Error::RightCourseMissing);
+        return Err(ErrorKind::RightCourseMissing);
     };
 
     let courses =
@@ -25,10 +25,10 @@ pub fn course_list(
 }
 
 #[rocket::post("/admin/course_create", format = "application/json", data = "<course>")]
-pub fn course_create(session: UserSession, course: Json<Course>) -> Result<String, Error> {
+pub fn course_create(session: UserSession, course: Json<Course>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_course_write {
-        return Err(Error::RightCourseMissing);
+        return Err(ErrorKind::RightCourseMissing);
     };
 
     let id = crate::db::course::course_create(conn, &course)?;
@@ -36,10 +36,10 @@ pub fn course_create(session: UserSession, course: Json<Course>) -> Result<Strin
 }
 
 #[rocket::post("/admin/course_edit?<course_id>", format = "application/json", data = "<course>")]
-pub fn course_edit(session: UserSession, course_id: u32, course: Json<Course>) -> Result<(), Error> {
+pub fn course_edit(session: UserSession, course_id: u32, course: Json<Course>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_course_write {
-        return Err(Error::RightCourseMissing);
+        return Err(ErrorKind::RightCourseMissing);
     };
 
     crate::db::course::course_edit(conn, course_id, &course)?;
@@ -47,10 +47,10 @@ pub fn course_edit(session: UserSession, course_id: u32, course: Json<Course>) -
 }
 
 #[rocket::head("/admin/course_delete?<course_id>")]
-pub fn course_delete(session: UserSession, course_id: u32) -> Result<(), Error> {
+pub fn course_delete(session: UserSession, course_id: u32) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_course_write {
-        return Err(Error::RightCourseMissing);
+        return Err(ErrorKind::RightCourseMissing);
     };
 
     crate::db::course::course_delete(conn, course_id)?;
@@ -58,10 +58,10 @@ pub fn course_delete(session: UserSession, course_id: u32) -> Result<(), Error> 
 }
 
 #[rocket::get("/admin/course_event_list?<course_id>")]
-pub fn course_event_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Event>>, Error> {
+pub fn course_event_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Event>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_course_read {
-        return Err(Error::RightCourseMissing);
+        return Err(ErrorKind::RightCourseMissing);
     };
 
     let events = crate::db::event::event_list(
@@ -79,10 +79,10 @@ pub fn course_event_list(session: UserSession, course_id: u32) -> Result<Json<Ve
 }
 
 #[rocket::get("/admin/course_requirement_list?<course_id>")]
-pub fn course_requirement_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Requirement>>, Error> {
+pub fn course_requirement_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Requirement>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_course_read {
-        return Err(Error::RightCourseMissing);
+        return Err(ErrorKind::RightCourseMissing);
     };
 
     let reqs = crate::db::course::course_requirement_list(conn, course_id)?;
@@ -90,10 +90,10 @@ pub fn course_requirement_list(session: UserSession, course_id: u32) -> Result<J
 }
 
 #[rocket::head("/admin/course_requirement_add?<course_id>&<skill_id>&<rank>")]
-pub fn course_requirement_add(session: UserSession, course_id: u32, skill_id: u32, rank: u32) -> Result<(), Error> {
+pub fn course_requirement_add(session: UserSession, course_id: u32, skill_id: u32, rank: u32) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_course_write {
-        return Err(Error::RightCourseMissing);
+        return Err(ErrorKind::RightCourseMissing);
     };
 
     crate::db::course::course_requirement_add(conn, course_id, skill_id, rank)?;
@@ -101,10 +101,10 @@ pub fn course_requirement_add(session: UserSession, course_id: u32, skill_id: u3
 }
 
 #[rocket::head("/admin/course_requirement_remove?<requirement_id>")]
-pub fn course_requirement_remove(session: UserSession, requirement_id: u64) -> Result<(), Error> {
+pub fn course_requirement_remove(session: UserSession, requirement_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_course_write {
-        return Err(Error::RightCourseMissing);
+        return Err(ErrorKind::RightCourseMissing);
     };
 
     crate::db::course::course_requirement_remove(conn, requirement_id)?;
@@ -112,10 +112,10 @@ pub fn course_requirement_remove(session: UserSession, requirement_id: u64) -> R
 }
 
 #[rocket::get("/admin/course_club_info?<course_id>")]
-pub fn course_club_info(session: UserSession, course_id: u64) -> Result<Json<Option<u32>>, Error> {
+pub fn course_club_info(session: UserSession, course_id: u64) -> Result<Json<Option<u32>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_course_read {
-        return Err(Error::RightCourseMissing);
+        return Err(ErrorKind::RightCourseMissing);
     };
 
     let club_id = crate::db::course::course_club_info(conn, course_id)?;
@@ -123,13 +123,13 @@ pub fn course_club_info(session: UserSession, course_id: u64) -> Result<Json<Opt
 }
 
 #[rocket::head("/admin/course_club_edit?<course_id>&<club_id>")]
-pub fn course_club_edit(session: UserSession, course_id: u64, club_id: Option<u32>) -> Result<(), Error> {
+pub fn course_club_edit(session: UserSession, course_id: u64, club_id: Option<u32>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_course_write {
-        return Err(Error::RightCourseMissing);
+        return Err(ErrorKind::RightCourseMissing);
     };
     if !session.right.right_club_write {
-        return Err(Error::RightClubMissing);
+        return Err(ErrorKind::RightClubMissing);
     };
 
     crate::db::course::course_club_edit(conn, course_id, club_id)?;
@@ -137,13 +137,10 @@ pub fn course_club_edit(session: UserSession, course_id: u64, club_id: Option<u3
 }
 
 #[rocket::get("/admin/course_statistic_class?<course_id>")]
-pub fn course_statistic_class(
-    session: UserSession,
-    course_id: u32,
-) -> Result<Json<Vec<(Event, u64, u64, u64, u64)>>, Error> {
+pub fn course_statistic_class(session: UserSession, course_id: u32) -> Result<Json<Vec<(Event, u64, u64, u64, u64)>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_course_read {
-        return Err(Error::RightCourseMissing);
+        return Err(ErrorKind::RightCourseMissing);
     };
 
     let stats = crate::db::course::course_statistic_class(conn, course_id)?;
@@ -155,10 +152,10 @@ pub fn course_statistic_attendance(
     session: UserSession,
     course_id: u32,
     role: String,
-) -> Result<Json<Vec<(User, u64)>>, Error> {
+) -> Result<Json<Vec<(User, u64)>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_course_read {
-        return Err(Error::RightCourseMissing);
+        return Err(ErrorKind::RightCourseMissing);
     };
 
     let stats = crate::db::course::course_statistic_attendance(conn, course_id, role)?;
@@ -171,10 +168,10 @@ pub fn course_statistic_attendance1(
     course_id: u32,
     user_id: u64,
     role: String,
-) -> Result<Json<Vec<Event>>, Error> {
+) -> Result<Json<Vec<Event>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_course_read {
-        return Err(Error::RightCourseMissing);
+        return Err(ErrorKind::RightCourseMissing);
     };
 
     let stats = crate::db::course::course_statistic_attendance1(conn, course_id, user_id, role)?;

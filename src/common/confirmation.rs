@@ -29,7 +29,7 @@ impl std::fmt::Display for Confirmation {
 }
 
 impl std::str::FromStr for Confirmation {
-    type Err = crate::error::Error;
+    type Err = crate::error::ErrorKind;
 
     fn from_str<'r>(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -37,7 +37,7 @@ impl std::str::FromStr for Confirmation {
             "NEUTRAL" => Ok(Confirmation::Neutral),
             "NEGATIVE" => Ok(Confirmation::Negative),
             "NULL" => Ok(Confirmation::Null),
-            _ => Err(crate::error::Error::Parsing),
+            _ => Err(crate::error::ErrorKind::Parsing),
         }
     }
 }

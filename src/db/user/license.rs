@@ -2,9 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::License;
-use crate::error::Error;
+use crate::error::ErrorKind;
 
-pub fn user_license_main_create(conn: &mut PooledConn, user_id: u64, license: &License) -> Result<(), Error> {
+pub fn user_license_main_create(conn: &mut PooledConn, user_id: u64, license: &License) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "INSERT INTO licenses (number, name, expiration, file_url)
         VALUES (:number, :name, :expiration, :file_url);",
@@ -36,7 +36,7 @@ pub fn user_license_main_create(conn: &mut PooledConn, user_id: u64, license: &L
     Ok(())
 }
 
-pub fn user_license_extra_create(conn: &mut PooledConn, user_id: u64, license: &License) -> Result<(), Error> {
+pub fn user_license_extra_create(conn: &mut PooledConn, user_id: u64, license: &License) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "INSERT INTO licenses (number, name, expiration, file_url)
         VALUES (:number, :name, :expiration, :file_url);",
@@ -68,7 +68,7 @@ pub fn user_license_extra_create(conn: &mut PooledConn, user_id: u64, license: &
     Ok(())
 }
 
-pub fn user_license_main_edit(conn: &mut PooledConn, user_id: u64, license: &License) -> Result<(), Error> {
+pub fn user_license_main_edit(conn: &mut PooledConn, user_id: u64, license: &License) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "UPDATE licenses
         JOIN users ON users.license_main = licenses.id
@@ -92,7 +92,7 @@ pub fn user_license_main_edit(conn: &mut PooledConn, user_id: u64, license: &Lic
     Ok(())
 }
 
-pub fn user_license_extra_edit(conn: &mut PooledConn, user_id: u64, license: &License) -> Result<(), Error> {
+pub fn user_license_extra_edit(conn: &mut PooledConn, user_id: u64, license: &License) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "UPDATE licenses
         JOIN users ON users.license_extra = licenses.id
@@ -116,7 +116,7 @@ pub fn user_license_extra_edit(conn: &mut PooledConn, user_id: u64, license: &Li
     Ok(())
 }
 
-pub fn user_license_main_delete(conn: &mut PooledConn, user_id: u64) -> Result<(), Error> {
+pub fn user_license_main_delete(conn: &mut PooledConn, user_id: u64) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "DELETE licenses FROM licenses
         JOIN users ON users.license_main = licenses.id
@@ -131,7 +131,7 @@ pub fn user_license_main_delete(conn: &mut PooledConn, user_id: u64) -> Result<(
     Ok(())
 }
 
-pub fn user_license_extra_delete(conn: &mut PooledConn, user_id: u64) -> Result<(), Error> {
+pub fn user_license_extra_delete(conn: &mut PooledConn, user_id: u64) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "DELETE licenses FROM licenses
         JOIN users ON users.license_extra = licenses.id

@@ -1,13 +1,13 @@
 use crate::common::User;
-use crate::error::Error;
+use crate::error::{ErrorKind, Result};
 use crate::session::UserSession;
 use rocket::serde::json::Json;
 
 #[rocket::get("/owner/event_owner_list?<event_id>")]
-pub fn event_owner_list(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>, Error> {
+pub fn event_owner_list(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(Error::EventOwnerPermission);
+        return Err(ErrorKind::EventOwnerPermission);
     };
 
     let users = crate::db::event::owner::event_owner_list(conn, event_id)?;
@@ -15,10 +15,10 @@ pub fn event_owner_list(session: UserSession, event_id: u64) -> Result<Json<Vec<
 }
 
 #[rocket::head("/owner/event_owner_add?<event_id>&<user_id>")]
-pub fn event_owner_add(session: UserSession, event_id: u64, user_id: u64) -> Result<(), Error> {
+pub fn event_owner_add(session: UserSession, event_id: u64, user_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(Error::EventOwnerPermission);
+        return Err(ErrorKind::EventOwnerPermission);
     };
 
     crate::db::event::owner::event_owner_add(conn, event_id, user_id)?;
@@ -26,14 +26,14 @@ pub fn event_owner_add(session: UserSession, event_id: u64, user_id: u64) -> Res
 }
 
 #[rocket::head("/owner/event_owner_remove?<event_id>&<user_id>")]
-pub fn event_owner_remove(session: UserSession, event_id: u64, user_id: u64) -> Result<(), Error> {
+pub fn event_owner_remove(session: UserSession, event_id: u64, user_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(Error::EventOwnerPermission);
+        return Err(ErrorKind::EventOwnerPermission);
     };
 
     if user_id == session.user.id {
-        return Err(Error::EventOwnerProtection);
+        return Err(ErrorKind::EventOwnerProtection);
     };
 
     crate::db::event::owner::event_owner_remove(conn, event_id, user_id)?;

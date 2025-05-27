@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 
 use crate::common::{Right, User};
-use crate::error::Error;
+use crate::error::ErrorKind;
 
 lazy_static::lazy_static! {
     pub static ref ADMINSESSION: Mutex<Option<String>> = Mutex::new(None);
@@ -28,24 +28,24 @@ pub struct UserSession {
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for UserSession {
-    type Error = Error;
+    type Error = crate::error::ErrorKind;
 
-    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Error> {
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, crate::error::ErrorKind> {
         let head_token = match request.headers().get_one("Token") {
-            None => return Error::SessionTokenMissing.outcome(),
+            None => return ErrorKind::SessionTokenMissing.outcome(),
             Some(token) => token,
         };
 
         let session: UserSession = match USERSESSIONS.lock().unwrap().get(&head_token.to_string()).cloned() {
             None => {
-                return Error::SessionTokenInvalid.outcome();
+                return ErrorKind::SessionTokenInvalid.outcome();
             }
             Some(session) => session,
         };
 
         if session.expiry < chrono::Utc::now() {
             USERSESSIONS.lock().unwrap().remove(head_token);
-            return Error::SessionTokenExpired.outcome();
+            return ErrorKind::SessionTokenExpired.outcome();
         }
 
         Success(session)
@@ -90,28 +90,28 @@ pub struct EventSession {
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for EventSession {
-    type Error = Error;
+    type Error = crate::error::ErrorKind;
 
-    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Error> {
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, crate::error::ErrorKind> {
         let head_token = match request.headers().get_one("Token") {
-            None => return Error::SessionTokenMissing.outcome(),
+            None => return ErrorKind::SessionTokenMissing.outcome(),
             Some(token) => token,
         };
 
         let session: EventSession = match EVENTSESSIONS.lock().unwrap().get(&head_token.to_string()).cloned() {
             None => {
-                return Error::SessionTokenInvalid.outcome();
+                return ErrorKind::SessionTokenInvalid.outcome();
             }
             Some(session) => session,
         };
 
         if session.token != *head_token {
-            return Error::SessionTokenInvalid.outcome();
+            return ErrorKind::SessionTokenInvalid.outcome();
         }
 
         if session.expiry < chrono::Utc::now() {
             EVENTSESSIONS.lock().unwrap().remove(&session.token);
-            return Error::SessionTokenExpired.outcome();
+            return ErrorKind::SessionTokenExpired.outcome();
         }
 
         Success(session)

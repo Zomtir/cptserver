@@ -2,7 +2,7 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Affiliation, Event, User};
-use crate::error::Error;
+use crate::error::ErrorKind;
 
 /* HOUSEKEEPING */
 
@@ -11,7 +11,7 @@ pub fn club_team_comparison(
     club_id: u32,
     team_id: u32,
     point_in_time: chrono::NaiveDate,
-) -> Result<Vec<User>, Error> {
+) -> Result<Vec<User>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
         FROM users u
@@ -47,7 +47,7 @@ pub fn club_member_leaderboard(
     club_id: u32,
     active: Option<bool>,
     point_in_time: chrono::NaiveDate,
-) -> Result<Vec<(User, u32)>, Error> {
+) -> Result<Vec<(User, u32)>, ErrorKind> {
     let stmt = conn.prep(
         "WITH effective_terms AS (
             SELECT t.user_id,
@@ -89,7 +89,7 @@ pub fn club_member_organisation(
     organisation_id: u64,
     active: Option<bool>,
     point_in_time: chrono::NaiveDate,
-) -> Result<Vec<Affiliation>, Error> {
+) -> Result<Vec<Affiliation>, ErrorKind> {
     let stmt = conn.prep(
         "WITH effective_terms AS (
             SELECT t.user_id,
@@ -135,7 +135,7 @@ pub fn club_user_attendance(
     role: String,
     time_window_begin: chrono::NaiveDateTime,
     time_window_end: chrono::NaiveDateTime,
-) -> Result<Vec<Event>, Error> {
+) -> Result<Vec<Event>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT
             events.event_id,

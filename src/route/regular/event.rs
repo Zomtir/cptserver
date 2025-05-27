@@ -1,5 +1,5 @@
 use crate::common::{Acceptance, Confirmation, Event, Occurrence, WebBool, WebDateTime};
-use crate::error::Error;
+use crate::error::{ErrorKind, Result};
 use crate::session::UserSession;
 use rocket::serde::json::Json;
 
@@ -17,7 +17,7 @@ pub fn event_list(
     acceptance: Option<Acceptance>,
     course_true: Option<WebBool>,
     course_id: Option<u32>,
-) -> Result<Json<Vec<Event>>, Error> {
+) -> Result<Json<Vec<Event>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
 
     let begin = begin.map(|dt| dt.to_naive());
@@ -39,7 +39,7 @@ pub fn event_list(
 }
 
 #[rocket::post("/regular/event_create", format = "application/json", data = "<event>")]
-pub fn event_create(session: UserSession, mut event: Json<Event>) -> Result<String, Error> {
+pub fn event_create(session: UserSession, mut event: Json<Event>) -> Result<String> {
     crate::utils::event::validate_event_dates(&mut event)?;
     let conn = &mut crate::utils::db::get_db_conn()?;
 
@@ -49,14 +49,14 @@ pub fn event_create(session: UserSession, mut event: Json<Event>) -> Result<Stri
 }
 
 #[rocket::get("/regular/event_owner_true?<event_id>")]
-pub fn event_owner_true(session: UserSession, event_id: u64) -> Result<Json<bool>, Error> {
+pub fn event_owner_true(session: UserSession, event_id: u64) -> Result<Json<bool>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     let condition = crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)?;
     Ok(Json(condition))
 }
 
 #[rocket::get("/regular/event_attendance_presence_true?<event_id>&<role>")]
-pub fn event_attendance_presence_true(session: UserSession, event_id: u64, role: String) -> Result<Json<bool>, Error> {
+pub fn event_attendance_presence_true(session: UserSession, event_id: u64, role: String) -> Result<Json<bool>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     let condition =
         crate::db::event::attendance::event_attendance_presence_true(conn, event_id, session.user.id, &role)?;
@@ -64,12 +64,12 @@ pub fn event_attendance_presence_true(session: UserSession, event_id: u64, role:
 }
 
 #[rocket::head("/regular/event_attendance_presence_add?<event_id>&<role>")]
-pub fn event_attendance_presence_add(session: UserSession, event_id: u64, role: String) -> Result<(), Error> {
+pub fn event_attendance_presence_add(session: UserSession, event_id: u64, role: String) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     let pool = crate::db::event::attendance::event_attendance_presence_pool(conn, event_id, &role, true)?;
 
     if !pool.iter().any(|user| user.id == session.user.id) {
-        return Err(Error::EventPresenceForbidden);
+        return Err(ErrorKind::EventPresenceForbidden);
     }
 
     crate::db::event::attendance::event_attendance_presence_add(conn, event_id, session.user.id, &role)?;
@@ -77,14 +77,14 @@ pub fn event_attendance_presence_add(session: UserSession, event_id: u64, role: 
 }
 
 #[rocket::head("/regular/event_attendance_presence_remove?<event_id>&<role>")]
-pub fn event_attendance_presence_remove(session: UserSession, event_id: u64, role: String) -> Result<(), Error> {
+pub fn event_attendance_presence_remove(session: UserSession, event_id: u64, role: String) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::db::event::attendance::event_attendance_presence_remove(conn, event_id, session.user.id, &role)?;
     Ok(())
 }
 
 #[rocket::get("/regular/event_bookmark_true?<event_id>")]
-pub fn event_bookmark_true(session: UserSession, event_id: u64) -> Result<Json<bool>, Error> {
+pub fn event_bookmark_true(session: UserSession, event_id: u64) -> Result<Json<bool>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     // TODO check if you can participate
 
@@ -93,7 +93,7 @@ pub fn event_bookmark_true(session: UserSession, event_id: u64) -> Result<Json<b
 }
 
 #[rocket::head("/regular/event_bookmark_edit?<event_id>&<bookmark>")]
-pub fn event_bookmark_edit(session: UserSession, event_id: u64, bookmark: bool) -> Result<(), Error> {
+pub fn event_bookmark_edit(session: UserSession, event_id: u64, bookmark: bool) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     // TODO check if you can participate
 
@@ -105,7 +105,7 @@ pub fn event_bookmark_edit(session: UserSession, event_id: u64, bookmark: bool) 
 }
 
 #[rocket::get("/regular/event_attendance_registration_info?<event_id>&<role>")]
-pub fn event_attendance_registration_info(session: UserSession, event_id: u64, role: String) -> Result<String, Error> {
+pub fn event_attendance_registration_info(session: UserSession, event_id: u64, role: String) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     // TODO check if you can register (requirement)
 
@@ -120,7 +120,7 @@ pub fn event_attendance_registration_edit(
     event_id: u64,
     role: String,
     status: Confirmation,
-) -> Result<(), Error> {
+) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     // TODO check if you can register (requirement)
 

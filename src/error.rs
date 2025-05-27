@@ -3,270 +3,198 @@ use rocket::request::{Outcome, Request};
 use rocket::response::{self, Responder, Response};
 
 #[allow(dead_code)]
-#[derive(Debug)]
-pub enum Error {
+#[derive(thiserror::Error, Debug)]
+pub enum ErrorKind {
+    #[error("Default error")]
     Default,
+    #[error("Parsing error")]
     Parsing,
 
+    #[error("Object already exists")]
+    AlreadyExists,
+    #[error("Object is missing")]
+    Missing,
+
+    #[error("Database URL error")]
     DatabaseURL,
+    #[error("Database connection error")]
     DatabaseConnection,
+    #[error("Database pool error")]
     DatabasePool,
+    #[error("Database error")]
     DatabaseError,
+    #[error("Regex error")]
     RegexError,
+    #[error("Time error")]
     TimeError,
 
+    #[error("Session token missing")]
     SessionTokenMissing,
+    #[error("Session token not valid")]
     SessionTokenInvalid,
+    #[error("Session token expired")]
     SessionTokenExpired,
 
+    #[error("User is missing")]
     UserMissing,
+    #[error("User is disabled")]
     UserDisabled,
+    #[error("User login failed")]
     UserLoginFail,
+    #[error("User key is missing")]
     UserKeyMissing,
+    #[error("User key has an invalid format")]
     UserKeyInvalid,
+    #[error("User password is missing")]
     UserPasswordMissing,
+    #[error("User password has an invalid format")]
     UserPasswordInvalid,
+    #[error("User email is missing")]
     UserEmailMissing,
+    #[error("User email has an invalid format")]
     UserEmailInvalid,
 
+    #[error("Event is missing")]
     EventMissing,
+    #[error("Event search has invalid criterias")]
     EventSearchLimit,
+    #[error("Event owner is missing")]
     EventOwnerMissing,
+    #[error("The user is not event owner")]
     EventOwnerPermission,
+    #[error("Event owner is missing")]
     EventOwnerProtection,
+    #[error("Event presence is missing")]
     EventPresenceForbidden,
+    #[error("Event course is missing")]
     EventCourseMissing,
+    #[error("Event login failed")]
     EventLoginFail,
+    #[error("Event key is missing")]
     EventKeyMissing,
+    #[error("Event key has an invalid format")]
     EventKeyInvalid,
+    #[error("Event password is missing")]
     EventPasswordMissing,
+    #[error("Event password has an invalid format")]
     EventPasswordInvalid,
+    #[error("Event time window has invalid boundaries")]
     EventWindowInvalid,
+    #[error("Event time window conflicts with others")]
     EventWindowConflict,
+    #[error("Event status has an invalid format")]
     EventStatusInvalid,
+    #[error("Event status is conflicting")]
     EventStatusConflict,
 
+    #[error("Course is missing")]
     CourseMissing,
+
+    #[error("Course moderator is missing")]
     CourseModeratorMissing,
+    #[error("The user has insufficient course moderator permissions")]
     CourseModeratorPermission,
+    #[error("Course login failed")]
     CourseLoginFail,
+    #[error("Course key has an invalid format")]
     CourseKeyInvalid,
 
+    #[error("Club is missing")]
     ClubMissing,
 
+    #[error("Team is missing")]
     TeamMissing,
 
+    #[error("Organisation is missing")]
     OrganisationMissing,
 
+    #[error("Inventory stock is invalid")]
     InventoryStockInvalid,
+    #[error("Inventory stock limit was reached")]
     InventoryStockLimit,
+    #[error("Action does conflict with current stock values")]
     InventoryStockConflict,
+    #[error("Inventory stock is missing")]
     InventoryStockMissing,
+    #[error("Inventory possession is missing")]
     InventoryPossessionMissing,
+    #[error("Inventory loaning has internal conflicts")]
     InventoryLoanConflict,
+    #[error("Inventory transfer has internal conflicts")]
     InventoryTransferConflict,
 
+    #[error("Conflicting permissions")]
     RightConflict,
+    #[error("Club permissions are missing")]
     RightClubMissing,
+    #[error("Competence permissions are missing")]
     RightCompetenceMissing,
+    #[error("Course permissions are missing")]
     RightCourseMissing,
+    #[error("Event permissions are missing")]
     RightEventMissing,
+    #[error("Inventory permissions are missing")]
     RightInventoryMissing,
+    #[error("Location permissions are missing")]
     RightLocationMissing,
+    #[error("Organisation permissions are missing")]
     RightOrganisationMissing,
+    #[error("Team permissions are missing")]
     RightTeamMissing,
+    #[error("User permissions are missing")]
     RightUserMissing,
 }
 
-impl std::error::Error for Error {}
-
-impl Error {
-    fn kind(&self) -> String {
-        let kind = match self {
-            Error::Default => "DEFAULT",
-            Error::Parsing => "PARSING",
-
-            Error::DatabaseURL => "DATABASE_URL",
-            Error::DatabaseConnection => "DATABASE_CONNECTION",
-            Error::DatabasePool => "DATABASE_POOL",
-            Error::DatabaseError => "DATABASE_ERROR",
-            Error::RegexError => "REGEX_ERROR",
-            Error::TimeError => "TIME_ERROR",
-
-            Error::SessionTokenMissing => "SESSION_TOKEN_MISSING",
-            Error::SessionTokenInvalid => "SESSION_TOKEN_INVALID",
-            Error::SessionTokenExpired => "SESSION_TOKEN_EXPIRED",
-
-            Error::UserMissing => "USER_MISSING",
-            Error::UserDisabled => "USER_DISABLED",
-            Error::UserLoginFail => "USER_LOGIN_FAIL",
-            Error::UserKeyMissing => "USER_KEY_MISSING",
-            Error::UserKeyInvalid => "USER_KEY_INVALID",
-            Error::UserPasswordMissing => "USER_PASSWORD_MISSING",
-            Error::UserPasswordInvalid => "USER_PASSWORD_INVALID",
-            Error::UserEmailMissing => "USER_EMAIL_MISSING",
-            Error::UserEmailInvalid => "USER_EMAIL_INVALID",
-
-            Error::EventMissing => "SLOT_MISSING",
-            Error::EventSearchLimit => "SLOT_SEARCH_LIMIT",
-            Error::EventOwnerMissing => "SLOT_OWNER_MISSING",
-            Error::EventOwnerPermission => "SLOT_OWNER_PERMISSION",
-            Error::EventOwnerProtection => "SLOT_OWNER_PROTECTION",
-            Error::EventPresenceForbidden => "SLOT_PRESENCE_FORBIDDEN",
-            Error::EventCourseMissing => "SLOT_COURSE_MISSING",
-            Error::EventLoginFail => "SLOT_LOGIN_FAIL",
-            Error::EventKeyMissing => "SLOT_KEY_MISSING",
-            Error::EventKeyInvalid => "SLOT_KEY_INVALID",
-            Error::EventPasswordMissing => "SLOT_PASSWORD_MISSING",
-            Error::EventPasswordInvalid => "SLOT_PASSWORD_INVALID",
-            Error::EventWindowInvalid => "SLOT_WINDOW_INVALID",
-            Error::EventWindowConflict => "SLOT_WINDOW_CONFLICT",
-            Error::EventStatusInvalid => "SLOT_STATUS_INVALID",
-            Error::EventStatusConflict => "SLOT_STATUS_CONFLICT",
-
-            Error::CourseMissing => "COURSE_MISSING",
-            Error::CourseModeratorMissing => "COURSE_MODERATOR_MISSING",
-            Error::CourseModeratorPermission => "COURSE_MODERATOR_PERMISSION",
-            Error::CourseLoginFail => "COURSE_LOGIN_FAIL",
-            Error::CourseKeyInvalid => "COURSE_KEY_INVALID",
-
-            Error::ClubMissing => "CLUB_MISSING",
-
-            Error::TeamMissing => "TEAM_MISSING",
-
-            Error::OrganisationMissing => "ORGANISATION_MISSING",
-
-            Error::InventoryStockInvalid => "INVENTORY_STOCK_INVALID",
-            Error::InventoryStockLimit => "INVENTORY_STOCK_LIMIT",
-            Error::InventoryStockConflict => "INVENTORY_STOCK_CONFLICT",
-            Error::InventoryStockMissing => "INVENTORY_STOCK_MISSING",
-            Error::InventoryPossessionMissing => "INVENTORY_POSSESSION_MISSING",
-            Error::InventoryLoanConflict => "INVENTORY_LOAN_CONFLICT",
-            Error::InventoryTransferConflict => "INVENTORY_TRANSFER_CONFLICT",
-
-            Error::RightConflict => "RIGHT_CONFLICT",
-            Error::RightClubMissing => "RIGHT_TERM_MISSING",
-            Error::RightCompetenceMissing => "RIGHT_COMPETENCE_MISSING",
-            Error::RightCourseMissing => "RIGHT_COURSE_MISSING",
-            Error::RightEventMissing => "RIGHT_EVENT_MISSING",
-            Error::RightInventoryMissing => "RIGHT_INVENTORY_MISSING",
-            Error::RightLocationMissing => "RIGHT_LOCATION_MISSING",
-            Error::RightOrganisationMissing => "RIGHT_ORGANISATION_MISSING",
-            Error::RightTeamMissing => "RIGHT_TEAM_MISSING",
-            Error::RightUserMissing => "RIGHT_USER_MISSING",
-        };
-        kind.into()
-    }
-}
-
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            Error::Default => write!(f, "Default error"),
-            Error::Parsing => write!(f, "Parsing error"),
-
-            Error::DatabaseURL => write!(f, "Database URL error"),
-            Error::DatabaseConnection => write!(f, "Database connection error"),
-            Error::DatabasePool => write!(f, "Database pool error"),
-            Error::DatabaseError => write!(f, "Database error"),
-            Error::RegexError => write!(f, "Regex error"),
-            Error::TimeError => write!(f, "Time error"),
-
-            Error::SessionTokenMissing => write!(f, "Session token missing"),
-            Error::SessionTokenInvalid => write!(f, "Session token not valid"),
-            Error::SessionTokenExpired => write!(f, "Session token expired"),
-
-            Error::UserMissing => write!(f, "User is missing"),
-            Error::UserDisabled => write!(f, "User is disabled"),
-            Error::UserLoginFail => write!(f, "User login failed"),
-            Error::UserKeyMissing => write!(f, "User key is missing"),
-            Error::UserKeyInvalid => write!(f, "User key has an invalid format"),
-            Error::UserPasswordMissing => write!(f, "User password is missing"),
-            Error::UserPasswordInvalid => write!(f, "User password has an invalid format"),
-            Error::UserEmailMissing => write!(f, "User email is missing"),
-            Error::UserEmailInvalid => write!(f, "User email has an invalid format"),
-
-            Error::EventMissing => write!(f, "Event is missing"),
-            Error::EventSearchLimit => write!(f, "Event search has invalid criterias"),
-            Error::EventOwnerMissing => write!(f, "Event owner is missing"),
-            Error::EventOwnerPermission => write!(f, "The user is not event owner"),
-            Error::EventOwnerProtection => write!(f, "A user cannot remove oneself as event owner"),
-            Error::EventPresenceForbidden => write!(f, "The user is not part of the presence pool"),
-            Error::EventCourseMissing => write!(f, "Slow course is missing"),
-            Error::EventLoginFail => write!(f, "Event login failed"),
-            Error::EventKeyMissing => write!(f, "Slot key is missing"),
-            Error::EventKeyInvalid => write!(f, "Slot key has an invalid format"),
-            Error::EventPasswordMissing => write!(f, "Slot password is missing"),
-            Error::EventPasswordInvalid => write!(f, "Event password has an invalid format"),
-            Error::EventWindowInvalid => write!(f, "Event time windows have invalid boundaries"),
-            Error::EventWindowConflict => write!(f, "Event time window conflicts with others"),
-            Error::EventStatusInvalid => write!(f, "Event status has an invalid format"),
-            Error::EventStatusConflict => write!(f, "Event status is conflicting"),
-
-            Error::CourseMissing => write!(f, "Course is missing"),
-            Error::CourseModeratorMissing => write!(f, "Course moderator is missing"),
-            Error::CourseModeratorPermission => write!(f, "The user has insufficient course moderator permissions"),
-            Error::CourseLoginFail => write!(f, "Course login failed"),
-            Error::CourseKeyInvalid => write!(f, "Course key has an invalid format"),
-
-            Error::ClubMissing => write!(f, "Club is missing"),
-
-            Error::TeamMissing => write!(f, "Team is missing"),
-
-            Error::OrganisationMissing => write!(f, "Organisation is missing"),
-
-            Error::InventoryStockInvalid => write!(f, "Current inventory stock is invalid"),
-            Error::InventoryStockLimit => write!(f, "Inventory stock limit was reached"),
-            Error::InventoryStockConflict => write!(f, "Action does conflict with current stock values"),
-            Error::InventoryStockMissing => write!(f, "Inventory stock is missing"),
-            Error::InventoryPossessionMissing => write!(f, "Inventory possession is missing"),
-            Error::InventoryLoanConflict => write!(f, "Inventory loaning has internal conflicts"),
-            Error::InventoryTransferConflict => write!(f, "Inventory transfer has internal conflicts"),
-
-            Error::RightConflict => write!(f, "Conflicting right permissions"),
-            Error::RightClubMissing => write!(f, "Club permissions are missing"),
-            Error::RightCompetenceMissing => write!(f, "Competence permissions are missing"),
-            Error::RightCourseMissing => write!(f, "Course permissions are missing"),
-            Error::RightEventMissing => write!(f, "Event permissions are missing"),
-            Error::RightInventoryMissing => write!(f, "Inventory permissions are missing"),
-            Error::RightLocationMissing => write!(f, "Location permissions are missing"),
-            Error::RightOrganisationMissing => write!(f, "Organisation permissions are missing"),
-            Error::RightTeamMissing => write!(f, "Team permissions are missing"),
-            Error::RightUserMissing => write!(f, "User permissions are missing"),
-        }
-    }
-}
-
-impl From<mysql::UrlError> for Error {
+impl From<mysql::UrlError> for ErrorKind {
     fn from(_: mysql::UrlError) -> Self {
-        Error::DatabaseURL
+        ErrorKind::DatabaseURL
     }
 }
 
-impl From<mysql::Error> for Error {
+impl From<mysql::Error> for ErrorKind {
     fn from(_: mysql::Error) -> Self {
-        Error::DatabaseError
+        ErrorKind::DatabaseError
     }
 }
 
-impl From<chrono::RoundingError> for Error {
+impl From<chrono::RoundingError> for ErrorKind {
     fn from(_: chrono::RoundingError) -> Self {
-        Error::TimeError
+        ErrorKind::TimeError
     }
 }
 
-impl<'r> Responder<'r, 'static> for Error {
+impl<'r> Responder<'r, 'static> for ErrorKind {
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
         Response::build()
             .status(Status::BadRequest)
-            .raw_header("error-uri", self.kind())
+            .raw_header("error-uri", format!("{:?}", self))
             .raw_header("error-msg", self.to_string())
             .ok()
     }
 }
 
-impl Error {
-    pub fn outcome<T>(self) -> Outcome<T, Error> {
+impl ErrorKind {
+    pub fn outcome<T>(self) -> Outcome<T, ErrorKind> {
         rocket::outcome::Outcome::Error((Status::BadRequest, self))
+    }
+}
+
+pub type Result<T = ()> = std::result::Result<T, ErrorKind>;
+
+#[derive(Debug)]
+pub struct Error(pub anyhow::Error);
+
+impl<E> From<E> for Error
+where
+    E: Into<anyhow::Error>,
+{
+    fn from(error: E) -> Self {
+        Error(error.into())
+    }
+}
+
+impl<'r> Responder<'r, 'static> for Error {
+    fn respond_to(self, request: &Request<'_>) -> response::Result<'static> {
+        response::Debug(self.0).respond_to(request)
     }
 }

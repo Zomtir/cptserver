@@ -2,7 +2,7 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Acceptance, Affiliation, Event, Location, Occurrence, User};
-use crate::error::Error;
+use crate::error::ErrorKind;
 
 pub mod attendance;
 pub mod owner;
@@ -11,7 +11,7 @@ pub mod owner;
  * METHODS
  */
 
-pub fn event_info(conn: &mut PooledConn, event_id: u64) -> Result<Event, Error> {
+pub fn event_info(conn: &mut PooledConn, event_id: u64) -> Result<Event, ErrorKind> {
     let stmt = conn.prep(
         "SELECT event_id, event_key, e.title,
             l.location_id, l.location_key, l.name AS location_name, l.description AS location_description,
@@ -24,7 +24,7 @@ pub fn event_info(conn: &mut PooledConn, event_id: u64) -> Result<Event, Error> 
         "event_id" => event_id,
     };
 
-    let mut row: mysql::Row = conn.exec_first(&stmt, &params)?.ok_or(Error::EventMissing)?;
+    let mut row: mysql::Row = conn.exec_first(&stmt, &params)?.ok_or(ErrorKind::EventMissing)?;
 
     let event = Event {
         id: row.take("event_id").unwrap(),
@@ -60,7 +60,7 @@ pub fn event_list(
     course_true: Option<bool>,
     course_id: Option<u32>,
     owner_id: Option<u64>,
-) -> Result<Vec<Event>, Error> {
+) -> Result<Vec<Event>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT e.event_id, e.event_key, e.title,
             l.location_id, l.location_key, l.name AS location_name, l.description AS location_description,
@@ -123,9 +123,9 @@ pub fn event_create(
     event: &Event,
     acceptance: &Acceptance,
     course_id: Option<u32>,
-) -> Result<u64, Error> {
+) -> Result<u64, ErrorKind> {
     if event.key.len() < 3 || event.key.len() > 12 {
-        return Err(Error::EventKeyInvalid);
+        return Err(ErrorKind::EventKeyInvalid);
     }
 
     let stmt = conn.prep(
@@ -153,9 +153,9 @@ pub fn event_create(
     Ok(conn.last_insert_id())
 }
 
-pub fn event_edit(conn: &mut PooledConn, event_id: u64, event: &Event) -> Result<(), Error> {
+pub fn event_edit(conn: &mut PooledConn, event_id: u64, event: &Event) -> Result<(), ErrorKind> {
     if event.key.is_empty() {
-        return Err(Error::EventKeyInvalid);
+        return Err(ErrorKind::EventKeyInvalid);
     }
 
     let stmt = conn.prep(
@@ -190,7 +190,7 @@ pub fn event_edit(conn: &mut PooledConn, event_id: u64, event: &Event) -> Result
     Ok(())
 }
 
-pub fn event_acceptance_edit(conn: &mut PooledConn, event_id: u64, acceptance: &Acceptance) -> Result<(), Error> {
+pub fn event_acceptance_edit(conn: &mut PooledConn, event_id: u64, acceptance: &Acceptance) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "UPDATE events SET
         acceptance = :acceptance
@@ -205,7 +205,7 @@ pub fn event_acceptance_edit(conn: &mut PooledConn, event_id: u64, acceptance: &
     Ok(())
 }
 
-pub fn event_password_edit(conn: &mut PooledConn, event_id: u64, password: String) -> Result<(), Error> {
+pub fn event_password_edit(conn: &mut PooledConn, event_id: u64, password: String) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "UPDATE events SET pwd = :pwd
         WHERE event_id = :event_id",
@@ -220,7 +220,7 @@ pub fn event_password_edit(conn: &mut PooledConn, event_id: u64, password: Strin
     Ok(())
 }
 
-pub fn event_note_edit(conn: &mut PooledConn, event_id: u64, note: &str) -> Result<(), Error> {
+pub fn event_note_edit(conn: &mut PooledConn, event_id: u64, note: &str) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "UPDATE events
         SET note = :note
@@ -236,7 +236,7 @@ pub fn event_note_edit(conn: &mut PooledConn, event_id: u64, note: &str) -> Resu
     Ok(())
 }
 
-pub fn event_delete(conn: &mut PooledConn, event_id: u64) -> Result<(), Error> {
+pub fn event_delete(conn: &mut PooledConn, event_id: u64) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "DELETE s
         FROM events s
@@ -251,7 +251,7 @@ pub fn event_delete(conn: &mut PooledConn, event_id: u64) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn event_free_true(conn: &mut PooledConn, event: &Event) -> Result<bool, Error> {
+pub fn event_free_true(conn: &mut PooledConn, event: &Event) -> Result<bool, ErrorKind> {
     let stmt = conn.prep(
         "SELECT COUNT(1)
         FROM events
@@ -268,14 +268,14 @@ pub fn event_free_true(conn: &mut PooledConn, event: &Event) -> Result<bool, Err
 
     let count = conn.exec_first::<u64, _, _>(&stmt, &params)?;
     match count {
-        None => Err(Error::DatabaseError),
+        None => Err(ErrorKind::DatabaseError),
         Some(count) => Ok(count == 0),
     }
 }
 
 /* COURSE RELATED */
 
-pub fn event_course_info(conn: &mut PooledConn, event_id: u64) -> Result<Option<u32>, Error> {
+pub fn event_course_info(conn: &mut PooledConn, event_id: u64) -> Result<Option<u32>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT course_id
         FROM events
@@ -286,12 +286,12 @@ pub fn event_course_info(conn: &mut PooledConn, event_id: u64) -> Result<Option<
     };
 
     match conn.exec_first::<Option<u32>, _, _>(&stmt, &params)? {
-        None => Err(Error::EventMissing),
+        None => Err(ErrorKind::EventMissing),
         Some(course_id) => Ok(course_id),
     }
 }
 
-pub fn event_course_edit(conn: &mut PooledConn, event_id: u64, course_id: Option<u32>) -> Result<(), Error> {
+pub fn event_course_edit(conn: &mut PooledConn, event_id: u64, course_id: Option<u32>) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "UPDATE events
         SET course_id = :course_id
@@ -309,7 +309,7 @@ pub fn event_course_edit(conn: &mut PooledConn, event_id: u64, course_id: Option
 
 /* MODERATOR RELATED */
 
-pub fn event_moderator_true(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<bool, Error> {
+pub fn event_moderator_true(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<bool, ErrorKind> {
     let stmt = conn.prep(
         "SELECT COUNT(1)
         FROM events e
@@ -325,13 +325,13 @@ pub fn event_moderator_true(conn: &mut PooledConn, event_id: u64, user_id: u64) 
     match conn.exec_first::<u32, _, _>(&stmt, &params)? {
         Some(0) => Ok(false),
         Some(1) => Ok(true),
-        _ => Err(Error::DatabaseError),
+        _ => Err(ErrorKind::DatabaseError),
     }
 }
 
 /* BOOKMARKS */
 
-pub fn event_bookmark_true(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<bool, Error> {
+pub fn event_bookmark_true(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<bool, ErrorKind> {
     let stmt = conn.prep(
         "SELECT COUNT(1)
         FROM event_bookmarks b
@@ -346,11 +346,11 @@ pub fn event_bookmark_true(conn: &mut PooledConn, event_id: u64, user_id: u64) -
     match conn.exec_first::<u32, _, _>(&stmt, &params)? {
         Some(0) => Ok(false),
         Some(1) => Ok(true),
-        _ => Err(Error::DatabaseError),
+        _ => Err(ErrorKind::DatabaseError),
     }
 }
 
-pub fn event_bookmark_add(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<(), Error> {
+pub fn event_bookmark_add(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "INSERT INTO event_bookmarks (event_id, user_id)
         VALUES (:event_id, :user_id);",
@@ -364,7 +364,7 @@ pub fn event_bookmark_add(conn: &mut PooledConn, event_id: u64, user_id: u64) ->
     Ok(())
 }
 
-pub fn event_bookmark_remove(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<(), Error> {
+pub fn event_bookmark_remove(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "DELETE FROM event_bookmarks
         WHERE event_id = :event_id AND user_id = :user_id;",
@@ -387,7 +387,7 @@ pub fn event_statistic_packlist(
     category1: Option<u32>,
     category2: Option<u32>,
     category3: Option<u32>,
-) -> Result<Vec<(User, u32, u32, u32)>, Error> {
+) -> Result<Vec<(User, u32, u32, u32)>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
             COUNT(CASE WHEN i.category_id = :category1 THEN 1 END) AS count1,
@@ -423,7 +423,7 @@ pub fn event_statistic_organisation(
     conn: &mut PooledConn,
     event_id: u64,
     organisation_id: u64,
-) -> Result<Vec<Affiliation>, Error> {
+) -> Result<Vec<Affiliation>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname AS user_firstname, u.lastname AS user_lastname, u.nickname AS user_nickname,
             u.birth_date AS user_birth_date, u.gender AS user_gender, u.height AS user_height, u.weight AS user_weight,

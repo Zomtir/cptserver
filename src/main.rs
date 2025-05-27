@@ -19,7 +19,7 @@ fn index() -> &'static str {
     "Welcome to the CPT server."
 }
 
-fn promote_user_to_admin(conn: &mut PooledConn) -> Result<(), error::Error> {
+fn promote_user_to_admin(conn: &mut PooledConn) -> anyhow::Result<()> {
     // Check if an admin user is configured
     let admin_key = match crate::config::ADMIN_USER() {
         Some(key) => key,

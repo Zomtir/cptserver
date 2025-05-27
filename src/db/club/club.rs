@@ -2,9 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::Club;
-use crate::error::Error;
+use crate::error::ErrorKind;
 
-pub fn club_list(conn: &mut PooledConn) -> Result<Vec<Club>, Error> {
+pub fn club_list(conn: &mut PooledConn) -> Result<Vec<Club>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT club_id, club_key, name
         FROM clubs;",
@@ -18,7 +18,7 @@ pub fn club_list(conn: &mut PooledConn) -> Result<Vec<Club>, Error> {
     Ok(entries)
 }
 
-pub fn club_info(conn: &mut PooledConn, club_id: u32) -> Result<Club, Error> {
+pub fn club_info(conn: &mut PooledConn, club_id: u32) -> Result<Club, ErrorKind> {
     let stmt = conn.prep(
         "SELECT club_id, club_key, name, description, disciplines, image_url, banner_url, chairman
         FROM clubs
@@ -42,12 +42,12 @@ pub fn club_info(conn: &mut PooledConn, club_id: u32) -> Result<Club, Error> {
 
     let mut entries = conn.exec_map(&stmt, &params, &map)?;
     if entries.is_empty() {
-        return Err(Error::ClubMissing);
+        return Err(ErrorKind::ClubMissing);
     }
     Ok(entries.remove(0))
 }
 
-pub fn club_create(conn: &mut PooledConn, club: &Club) -> Result<u32, Error> {
+pub fn club_create(conn: &mut PooledConn, club: &Club) -> Result<u32, ErrorKind> {
     if let Some(image_url) = &club.image_url {
         crate::common::fs::validate_path(image_url)?;
     }
@@ -75,7 +75,7 @@ pub fn club_create(conn: &mut PooledConn, club: &Club) -> Result<u32, Error> {
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn club_edit(conn: &mut PooledConn, club_id: u32, club: &Club) -> Result<(), Error> {
+pub fn club_edit(conn: &mut PooledConn, club_id: u32, club: &Club) -> Result<(), ErrorKind> {
     if let Some(image_url) = &club.image_url {
         crate::common::fs::validate_path(image_url)?;
     }
@@ -110,7 +110,7 @@ pub fn club_edit(conn: &mut PooledConn, club_id: u32, club: &Club) -> Result<(),
     Ok(())
 }
 
-pub fn club_delete(conn: &mut PooledConn, club_id: u32) -> Result<(), Error> {
+pub fn club_delete(conn: &mut PooledConn, club_id: u32) -> Result<(), ErrorKind> {
     let stmt = conn.prep("DELETE c FROM clubs c WHERE c.club_id = :club_id")?;
 
     let params = params! {

@@ -5,14 +5,14 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Course, Event, Requirement, Skill, User};
-use crate::error::Error;
+use crate::error::ErrorKind;
 
 pub fn course_list(
     conn: &mut PooledConn,
     mod_id: Option<u64>,
     active: Option<bool>,
     public: Option<bool>,
-) -> Result<Vec<Course>, Error> {
+) -> Result<Vec<Course>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT c.course_id, c.course_key, c.title, c.active, c.public
         FROM courses c
@@ -41,7 +41,7 @@ pub fn course_list(
     Ok(courses)
 }
 
-pub fn course_available(conn: &mut PooledConn, user_id: u64) -> Result<Vec<Course>, Error> {
+pub fn course_available(conn: &mut PooledConn, user_id: u64) -> Result<Vec<Course>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT DISTINCT c.course_id, c.course_key, c.title, c.active, c.public
         FROM courses c
@@ -66,7 +66,7 @@ pub fn course_available(conn: &mut PooledConn, user_id: u64) -> Result<Vec<Cours
     Ok(courses)
 }
 
-pub fn course_create(conn: &mut PooledConn, course: &Course) -> Result<u32, Error> {
+pub fn course_create(conn: &mut PooledConn, course: &Course) -> Result<u32, ErrorKind> {
     let stmt = conn.prep(
         "INSERT INTO courses (course_key, title, active, public)
         VALUES (:course_key, :title, :active, :public)",
@@ -83,9 +83,9 @@ pub fn course_create(conn: &mut PooledConn, course: &Course) -> Result<u32, Erro
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn course_edit(conn: &mut PooledConn, course_id: u32, course: &Course) -> Result<(), Error> {
+pub fn course_edit(conn: &mut PooledConn, course_id: u32, course: &Course) -> Result<(), ErrorKind> {
     if course.key.is_empty() {
-        return Err(Error::CourseKeyInvalid);
+        return Err(ErrorKind::CourseKeyInvalid);
     }
 
     let stmt = conn.prep(
@@ -110,7 +110,7 @@ pub fn course_edit(conn: &mut PooledConn, course_id: u32, course: &Course) -> Re
     Ok(())
 }
 
-pub fn course_delete(conn: &mut PooledConn, course_id: u32) -> Result<(), Error> {
+pub fn course_delete(conn: &mut PooledConn, course_id: u32) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "DELETE c FROM courses c
         WHERE c.course_id = :course_id",
@@ -127,7 +127,7 @@ pub fn course_delete(conn: &mut PooledConn, course_id: u32) -> Result<(), Error>
 
 /* REQUIREMENTS */
 
-pub fn course_requirement_list(conn: &mut PooledConn, course_id: u32) -> Result<Vec<Requirement>, Error> {
+pub fn course_requirement_list(conn: &mut PooledConn, course_id: u32) -> Result<Vec<Requirement>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT r.requirement_id,
             c.course_id, c.course_key, c.title, c.active, c.public,
@@ -178,7 +178,12 @@ pub fn course_requirement_list(conn: &mut PooledConn, course_id: u32) -> Result<
     Ok(reqs)
 }
 
-pub fn course_requirement_add(conn: &mut PooledConn, course_id: u32, skill_id: u32, rank: u32) -> Result<(), Error> {
+pub fn course_requirement_add(
+    conn: &mut PooledConn,
+    course_id: u32,
+    skill_id: u32,
+    rank: u32,
+) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "INSERT INTO course_requirements (course_id, skill_id, rank)
         SELECT :course_id, :skill_id, :rank;",
@@ -193,7 +198,7 @@ pub fn course_requirement_add(conn: &mut PooledConn, course_id: u32, skill_id: u
     Ok(())
 }
 
-pub fn course_requirement_remove(conn: &mut PooledConn, requirement_id: u64) -> Result<(), Error> {
+pub fn course_requirement_remove(conn: &mut PooledConn, requirement_id: u64) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "DELETE r FROM course_requirements r
         WHERE r.requirement_id = :requirement_id;",
@@ -208,7 +213,7 @@ pub fn course_requirement_remove(conn: &mut PooledConn, requirement_id: u64) -> 
 
 /* CLUB RELATED */
 
-pub fn course_club_info(conn: &mut PooledConn, course_id: u64) -> Result<Option<u32>, Error> {
+pub fn course_club_info(conn: &mut PooledConn, course_id: u64) -> Result<Option<u32>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT club_id
         FROM courses
@@ -219,12 +224,12 @@ pub fn course_club_info(conn: &mut PooledConn, course_id: u64) -> Result<Option<
     };
 
     match conn.exec_first::<Option<u32>, _, _>(&stmt, &params)? {
-        None => Err(Error::CourseMissing),
+        None => Err(ErrorKind::CourseMissing),
         Some(club_id) => Ok(club_id),
     }
 }
 
-pub fn course_club_edit(conn: &mut PooledConn, course_id: u64, club_id: Option<u32>) -> Result<(), Error> {
+pub fn course_club_edit(conn: &mut PooledConn, course_id: u64, club_id: Option<u32>) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "UPDATE courses
         SET club_id = :club_id
@@ -245,7 +250,7 @@ pub fn course_club_edit(conn: &mut PooledConn, course_id: u64, club_id: Option<u
 pub fn course_statistic_class(
     conn: &mut PooledConn,
     course_id: u32,
-) -> Result<Vec<(Event, u64, u64, u64, u64)>, Error> {
+) -> Result<Vec<(Event, u64, u64, u64, u64)>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT 
             events.event_id,
@@ -299,7 +304,7 @@ pub fn course_statistic_attendance(
     conn: &mut PooledConn,
     course_id: u32,
     role: String,
-) -> Result<Vec<(User, u64)>, Error> {
+) -> Result<Vec<(User, u64)>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT
             u.user_id,
@@ -338,7 +343,7 @@ pub fn course_statistic_attendance1(
     course_id: u32,
     user_id: u64,
     role: String,
-) -> Result<Vec<Event>, Error> {
+) -> Result<Vec<Event>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT
             events.event_id,

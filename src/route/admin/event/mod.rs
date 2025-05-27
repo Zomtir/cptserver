@@ -4,7 +4,7 @@ pub mod owner;
 use rocket::serde::json::Json;
 
 use crate::common::{Acceptance, Affiliation, Credential, Event, Occurrence, User, WebBool, WebDateTime};
-use crate::error::Error;
+use crate::error::{ErrorKind, Result};
 use crate::session::UserSession;
 
 #[rocket::get(
@@ -20,10 +20,10 @@ pub fn event_list(
     course_true: Option<WebBool>,
     course_id: Option<u32>,
     owner_id: Option<u64>,
-) -> Result<Json<Vec<Event>>, Error> {
+) -> Result<Json<Vec<Event>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_event_read {
-        return Err(Error::RightEventMissing);
+        return Err(ErrorKind::RightEventMissing);
     };
 
     let begin = begin.map(|dt| dt.to_naive());
@@ -45,20 +45,20 @@ pub fn event_list(
 }
 
 #[rocket::get("/admin/event_info?<event_id>")]
-pub fn event_info(session: UserSession, event_id: u64) -> Result<Json<Event>, Error> {
+pub fn event_info(session: UserSession, event_id: u64) -> Result<Json<Event>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_event_read {
-        return Err(Error::RightEventMissing);
+        return Err(ErrorKind::RightEventMissing);
     };
 
     Ok(Json(crate::db::event::event_info(conn, event_id)?))
 }
 
 #[rocket::get("/admin/event_credential?<event_id>")]
-pub fn event_credential(session: UserSession, event_id: u64) -> Result<Json<Credential>, Error> {
+pub fn event_credential(session: UserSession, event_id: u64) -> Result<Json<Credential>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_event_read {
-        return Err(Error::RightEventMissing);
+        return Err(ErrorKind::RightEventMissing);
     };
 
     let (event_key, event_pwd) = crate::db::login::event_credential(conn, event_id)?;
@@ -73,14 +73,14 @@ pub fn event_credential(session: UserSession, event_id: u64) -> Result<Json<Cred
 }
 
 #[rocket::post("/admin/event_create?<course_id>", format = "application/json", data = "<event>")]
-pub fn event_create(session: UserSession, course_id: Option<u32>, mut event: Json<Event>) -> Result<String, Error> {
+pub fn event_create(session: UserSession, course_id: Option<u32>, mut event: Json<Event>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_event_write {
-        return Err(Error::RightEventMissing);
+        return Err(ErrorKind::RightEventMissing);
     };
 
     if course_id.is_some() && !session.right.right_course_write {
-        return Err(Error::RightCourseMissing);
+        return Err(ErrorKind::RightCourseMissing);
     };
 
     crate::utils::event::validate_event_dates(&mut event)?;
@@ -90,10 +90,10 @@ pub fn event_create(session: UserSession, course_id: Option<u32>, mut event: Jso
 }
 
 #[rocket::post("/admin/event_edit?<event_id>", format = "application/json", data = "<event>")]
-pub fn event_edit(session: UserSession, event_id: u64, mut event: Json<Event>) -> Result<(), Error> {
+pub fn event_edit(session: UserSession, event_id: u64, mut event: Json<Event>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_event_write {
-        return Err(Error::RightEventMissing);
+        return Err(ErrorKind::RightEventMissing);
     };
 
     crate::utils::event::validate_event_dates(&mut event)?;
@@ -103,10 +103,10 @@ pub fn event_edit(session: UserSession, event_id: u64, mut event: Json<Event>) -
 }
 
 #[rocket::post("/admin/event_password_edit?<event_id>", format = "text/plain", data = "<password>")]
-pub fn event_password_edit(session: UserSession, event_id: u64, password: String) -> Result<(), Error> {
+pub fn event_password_edit(session: UserSession, event_id: u64, password: String) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_event_write {
-        return Err(Error::RightEventMissing);
+        return Err(ErrorKind::RightEventMissing);
     };
 
     let password = crate::utils::event::validate_clear_password(password)?;
@@ -115,10 +115,10 @@ pub fn event_password_edit(session: UserSession, event_id: u64, password: String
 }
 
 #[rocket::get("/admin/event_course_info?<event_id>")]
-pub fn event_course_info(session: UserSession, event_id: u64) -> Result<Json<Option<u32>>, Error> {
+pub fn event_course_info(session: UserSession, event_id: u64) -> Result<Json<Option<u32>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_event_read {
-        return Err(Error::RightEventMissing);
+        return Err(ErrorKind::RightEventMissing);
     };
 
     let course_id = crate::db::event::event_course_info(conn, event_id)?;
@@ -126,13 +126,13 @@ pub fn event_course_info(session: UserSession, event_id: u64) -> Result<Json<Opt
 }
 
 #[rocket::head("/admin/event_course_edit?<event_id>&<course_id>")]
-pub fn event_course_edit(session: UserSession, event_id: u64, course_id: Option<u32>) -> Result<(), Error> {
+pub fn event_course_edit(session: UserSession, event_id: u64, course_id: Option<u32>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_event_write {
-        return Err(Error::RightEventMissing);
+        return Err(ErrorKind::RightEventMissing);
     };
     if !session.right.right_course_write {
-        return Err(Error::RightCourseMissing);
+        return Err(ErrorKind::RightCourseMissing);
     };
 
     crate::db::event::event_course_edit(conn, event_id, course_id)?;
@@ -140,10 +140,10 @@ pub fn event_course_edit(session: UserSession, event_id: u64, course_id: Option<
 }
 
 #[rocket::head("/admin/event_delete?<event_id>")]
-pub fn event_delete(session: UserSession, event_id: u64) -> Result<(), Error> {
+pub fn event_delete(session: UserSession, event_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_event_write {
-        return Err(Error::RightEventMissing);
+        return Err(ErrorKind::RightEventMissing);
     };
 
     crate::db::event::event_delete(conn, event_id)?;
@@ -151,10 +151,10 @@ pub fn event_delete(session: UserSession, event_id: u64) -> Result<(), Error> {
 }
 
 #[rocket::head("/admin/event_accept?<event_id>")]
-pub fn event_accept(session: UserSession, event_id: u64) -> Result<(), Error> {
+pub fn event_accept(session: UserSession, event_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_event_write {
-        return Err(Error::RightEventMissing);
+        return Err(ErrorKind::RightEventMissing);
     };
 
     // Perhaps lock the DB during checking and potentially accepting the request
@@ -162,7 +162,7 @@ pub fn event_accept(session: UserSession, event_id: u64) -> Result<(), Error> {
 
     // Check if the event is somewhat reasonable
     if !crate::utils::event::is_event_valid(&event) {
-        return Err(Error::EventWindowInvalid);
+        return Err(ErrorKind::EventWindowInvalid);
     }
 
     crate::db::event::event_acceptance_edit(conn, event.id, &Acceptance::Accepted)?;
@@ -170,10 +170,10 @@ pub fn event_accept(session: UserSession, event_id: u64) -> Result<(), Error> {
 }
 
 #[rocket::head("/admin/event_reject?<event_id>")]
-pub fn event_reject(session: UserSession, event_id: u64) -> Result<(), Error> {
+pub fn event_reject(session: UserSession, event_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_event_write {
-        return Err(Error::RightEventMissing);
+        return Err(ErrorKind::RightEventMissing);
     };
 
     crate::db::event::event_acceptance_edit(conn, event_id, &Acceptance::Rejected)?;
@@ -181,10 +181,10 @@ pub fn event_reject(session: UserSession, event_id: u64) -> Result<(), Error> {
 }
 
 #[rocket::head("/admin/event_suspend?<event_id>")]
-pub fn event_suspend(session: UserSession, event_id: u64) -> Result<(), Error> {
+pub fn event_suspend(session: UserSession, event_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_event_write {
-        return Err(Error::RightEventMissing);
+        return Err(ErrorKind::RightEventMissing);
     };
 
     crate::db::event::event_acceptance_edit(conn, event_id, &Acceptance::Pending)?;
@@ -192,10 +192,10 @@ pub fn event_suspend(session: UserSession, event_id: u64) -> Result<(), Error> {
 }
 
 #[rocket::head("/admin/event_withdraw?<event_id>")]
-pub fn event_withdraw(session: UserSession, event_id: u64) -> Result<(), Error> {
+pub fn event_withdraw(session: UserSession, event_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_event_write {
-        return Err(Error::RightEventMissing);
+        return Err(ErrorKind::RightEventMissing);
     };
 
     crate::db::event::event_acceptance_edit(conn, event_id, &Acceptance::Draft)?;
@@ -209,10 +209,10 @@ pub fn statistic_packlist(
     category1: Option<u32>,
     category2: Option<u32>,
     category3: Option<u32>,
-) -> Result<Json<Vec<(User, u32, u32, u32)>>, Error> {
+) -> Result<Json<Vec<(User, u32, u32, u32)>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_event_read {
-        return Err(Error::RightEventMissing);
+        return Err(ErrorKind::RightEventMissing);
     };
 
     let stats = crate::db::event::event_statistic_packlist(conn, event_id, category1, category2, category3)?;
@@ -224,10 +224,10 @@ pub fn statistic_organisation(
     session: UserSession,
     event_id: u64,
     organisation_id: u64,
-) -> Result<Json<Vec<Affiliation>>, Error> {
+) -> Result<Json<Vec<Affiliation>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_event_read {
-        return Err(Error::RightEventMissing);
+        return Err(ErrorKind::RightEventMissing);
     };
 
     let stats = crate::db::event::event_statistic_organisation(conn, event_id, organisation_id)?;

@@ -2,9 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::Skill;
-use crate::error::Error;
+use crate::error::ErrorKind;
 
-pub fn skill_list(conn: &mut PooledConn) -> Result<Vec<Skill>, Error> {
+pub fn skill_list(conn: &mut PooledConn) -> Result<Vec<Skill>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT skill_id, skill_key, title, min, max
         FROM skills;",
@@ -24,7 +24,7 @@ pub fn skill_list(conn: &mut PooledConn) -> Result<Vec<Skill>, Error> {
     Ok(terms)
 }
 
-pub fn skill_create(conn: &mut PooledConn, skill: &Skill) -> Result<u32, Error> {
+pub fn skill_create(conn: &mut PooledConn, skill: &Skill) -> Result<u32, ErrorKind> {
     let stmt = conn.prep(
         "INSERT INTO skills (skill_key, title, min, max)
         VALUES (:skill_key, :title, :min, :max)",
@@ -42,7 +42,7 @@ pub fn skill_create(conn: &mut PooledConn, skill: &Skill) -> Result<u32, Error> 
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn skill_edit(conn: &mut PooledConn, skill_id: u32, skill: &Skill) -> Result<(), Error> {
+pub fn skill_edit(conn: &mut PooledConn, skill_id: u32, skill: &Skill) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "UPDATE skills SET
             skill_key = :skill_key,
@@ -64,7 +64,7 @@ pub fn skill_edit(conn: &mut PooledConn, skill_id: u32, skill: &Skill) -> Result
     Ok(())
 }
 
-pub fn skill_delete(conn: &mut PooledConn, skill_id: u32) -> Result<(), Error> {
+pub fn skill_delete(conn: &mut PooledConn, skill_id: u32) -> Result<(), ErrorKind> {
     let stmt = conn.prep("DELETE s FROM skills s WHERE s.skill_id = :skill_id")?;
 
     let params = params! {

@@ -2,9 +2,13 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::BankAccount;
-use crate::error::Error;
+use crate::error::ErrorKind;
 
-pub fn user_bank_account_create(conn: &mut PooledConn, user_id: u64, bank_account: &BankAccount) -> Result<(), Error> {
+pub fn user_bank_account_create(
+    conn: &mut PooledConn,
+    user_id: u64,
+    bank_account: &BankAccount,
+) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "INSERT INTO bank_accounts (iban, bic, institute)
         VALUES (:iban, :bic, :institute);",
@@ -35,7 +39,11 @@ pub fn user_bank_account_create(conn: &mut PooledConn, user_id: u64, bank_accoun
     Ok(())
 }
 
-pub fn user_bank_account_edit(conn: &mut PooledConn, user_id: u64, bank_account: &BankAccount) -> Result<(), Error> {
+pub fn user_bank_account_edit(
+    conn: &mut PooledConn,
+    user_id: u64,
+    bank_account: &BankAccount,
+) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "UPDATE bank_accounts
         JOIN users ON users.bank_account = bank_accounts.id
@@ -57,7 +65,7 @@ pub fn user_bank_account_edit(conn: &mut PooledConn, user_id: u64, bank_account:
     Ok(())
 }
 
-pub fn user_bank_account_delete(conn: &mut PooledConn, user_id: u64) -> Result<(), Error> {
+pub fn user_bank_account_delete(conn: &mut PooledConn, user_id: u64) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "DELETE bank_accounts FROM bank_accounts
         JOIN users ON users.bank_account = bank_accounts.id

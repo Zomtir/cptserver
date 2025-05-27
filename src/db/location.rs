@@ -2,9 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::Location;
-use crate::error::Error;
+use crate::error::ErrorKind;
 
-pub fn location_list(conn: &mut PooledConn) -> Result<Vec<Location>, Error> {
+pub fn location_list(conn: &mut PooledConn) -> Result<Vec<Location>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT location_id, location_key, name, description
         FROM locations;",
@@ -23,7 +23,7 @@ pub fn location_list(conn: &mut PooledConn) -> Result<Vec<Location>, Error> {
     Ok(terms)
 }
 
-pub fn location_create(conn: &mut PooledConn, location: &Location) -> Result<u32, Error> {
+pub fn location_create(conn: &mut PooledConn, location: &Location) -> Result<u32, ErrorKind> {
     let stmt = conn.prep(
         "INSERT INTO locations (location_key, name, description)
         VALUES (:location_key, :name, :description)",
@@ -40,7 +40,7 @@ pub fn location_create(conn: &mut PooledConn, location: &Location) -> Result<u32
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn location_edit(conn: &mut PooledConn, location_id: u32, location: &Location) -> Result<(), Error> {
+pub fn location_edit(conn: &mut PooledConn, location_id: u32, location: &Location) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
         "UPDATE locations SET
             location_key = :location_key,
@@ -60,7 +60,7 @@ pub fn location_edit(conn: &mut PooledConn, location_id: u32, location: &Locatio
     Ok(())
 }
 
-pub fn location_delete(conn: &mut PooledConn, location_id: u32) -> Result<(), Error> {
+pub fn location_delete(conn: &mut PooledConn, location_id: u32) -> Result<(), ErrorKind> {
     let stmt = conn.prep("DELETE s FROM locations s WHERE s.location_id = :location_id")?;
 
     let params = params! {

@@ -1,5 +1,5 @@
 use crate::common::{BankAccount, Credential, License};
-use crate::error::Error;
+use crate::error::ErrorKind;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
@@ -118,9 +118,9 @@ impl User {
  * METHODS
  */
 
-pub fn check_user_key(key: &Option<String>) -> Result<String, Error> {
+pub fn check_user_key(key: &Option<String>) -> Result<String, ErrorKind> {
     let text = match key {
-        None => return Err(Error::UserKeyMissing),
+        None => return Err(ErrorKind::UserKeyMissing),
         Some(text) => text,
     };
 
@@ -128,21 +128,21 @@ pub fn check_user_key(key: &Option<String>) -> Result<String, Error> {
     Ok(text.into())
 }
 
-pub fn validate_user_key(text: &str) -> Result<(), Error> {
+pub fn validate_user_key(text: &str) -> Result<(), ErrorKind> {
     if text.len() < 2 || text.len() > 20 {
-        return Err(Error::UserKeyInvalid);
+        return Err(ErrorKind::UserKeyInvalid);
     };
 
     if !text.chars().all(|c| c.is_alphanumeric()) {
-        return Err(Error::UserKeyInvalid);
+        return Err(ErrorKind::UserKeyInvalid);
     }
 
     Ok(())
 }
 
-pub fn check_user_email(email: &Option<String>) -> Result<String, Error> {
+pub fn check_user_email(email: &Option<String>) -> Result<String, ErrorKind> {
     let text = match email {
-        None => return Err(Error::UserEmailMissing),
+        None => return Err(ErrorKind::UserEmailMissing),
         Some(text) => text,
     };
 
@@ -150,11 +150,11 @@ pub fn check_user_email(email: &Option<String>) -> Result<String, Error> {
     Ok(text.into())
 }
 
-pub fn validate_user_email(text: &str) -> Result<(), Error> {
+pub fn validate_user_email(text: &str) -> Result<(), ErrorKind> {
     match Regex::new(r"^([a-z0-9._\-]([a-z0-9._\-+]*)?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})") {
-        Err(..) => Err(Error::RegexError),
+        Err(..) => Err(ErrorKind::RegexError),
         Ok(regex) => match regex.is_match(text) {
-            false => Err(Error::UserEmailInvalid),
+            false => Err(ErrorKind::UserEmailInvalid),
             true => Ok(()),
         },
     }
