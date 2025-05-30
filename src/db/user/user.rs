@@ -323,8 +323,8 @@ pub fn user_password_create(conn: &mut PooledConn, user_id: u64, hash_string: &s
     let peppered_hash: Vec<u8> = crate::common::hash_sha256(&salted_hash, &pepper);
 
     let stmt_uc = conn.prep(
-        "INSERT INTO user_credentials (salt, pepper, sp_hash)
-        VALUES(:salt, :pepper, :sp_hash);",
+        "INSERT INTO user_credentials (salt, pepper, sp_hash, since)
+        VALUES(:salt, :pepper, :sp_hash, UTC_TIMESTAMP());",
     )?;
 
     let params_uc = params! {
@@ -366,7 +366,7 @@ pub fn user_password_edit(conn: &mut PooledConn, user_id: u64, hash_string: &str
 
     let stmt = conn.prep(
         "UPDATE user_credentials
-        SET salt = :salt, pepper = :pepper, sp_hash = :sp_hash
+        SET salt = :salt, pepper = :pepper, sp_hash = :sp_hash, since = UTC_TIMESTAMP()
         WHERE credential_id = :credential_id;",
     )?;
     let params = params! {
