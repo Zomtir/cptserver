@@ -14,7 +14,7 @@ use crate::error::ErrorKind;
 use mysql::prelude::Queryable;
 use mysql::PooledConn;
 
-static SCHEME_VERSION: u8 = 2;
+static SCHEME_VERSION: u8 = 3;
 
 pub fn get_version(conn: &mut PooledConn) -> Result<u8, ErrorKind> {
     let query_version = "SELECT version FROM _info;";
@@ -28,18 +28,17 @@ pub fn set_version(conn: &mut PooledConn, version: u8) -> Result<(), ErrorKind> 
     Ok(())
 }
 
-pub fn migrate_scheme(conn: &mut PooledConn) -> Result<(), ErrorKind> {
+pub fn migrate_scheme(conn: &mut PooledConn, db_name: &str) -> Result<(), ErrorKind> {
     let latest_version: u8 = SCHEME_VERSION;
 
     // Check if the database has tables
-    let query_empty = "SELECT COUNT(*) FROM information_schema.tables WHERE TABLE_TYPE = 'BASE TABLE';";
+    let query_empty = format! {"SELECT COUNT(*) FROM information_schema.tables WHERE TABLE_SCHEMA = '{}';", db_name};
     let is_empty: bool = conn.query_first::<u8, _>(query_empty)?.unwrap() < 1;
 
     // Case 1: The database is empty and we do a fresh install
     if is_empty {
         let partial_path = format!("sql/schema_{}.sql", latest_version);
-        let local_path = crate::common::fs::local_path(&partial_path)?;
-
+        let local_path = crate::common::fs::local_path(&partial_path);
         println!("DB: Fresh setup to version {}", latest_version);
 
         // Apply the schema
@@ -50,13 +49,13 @@ pub fn migrate_scheme(conn: &mut PooledConn) -> Result<(), ErrorKind> {
         set_version(conn, latest_version)?;
     } else {
         // Check if schema info exists
-        let query_info = "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '_info';";
+        let query_info = format! {"SELECT COUNT(*) FROM information_schema.tables WHERE TABLE_SCHEMA = '{}' AND TABLE_NAME = '_info';", db_name};
         let has_info: bool = conn.query_first::<u8, _>(query_info)?.unwrap() > 0;
 
         // Case 2: Schema info is missing which is taken as indicator of schema version 0
         if !has_info {
             let partial_path = "sql/migrate_0.sql";
-            let local_path = crate::common::fs::local_path(partial_path)?;
+            let local_path = crate::common::fs::local_path(partial_path);
 
             // Run the script that makes the version 0 explicit
             let query_migrate0 = std::fs::read_to_string(local_path).map_err(|_| ErrorKind::Default)?;
@@ -70,7 +69,7 @@ pub fn migrate_scheme(conn: &mut PooledConn) -> Result<(), ErrorKind> {
         // Do incremental migrations
         while current_version < latest_version {
             let partial_path = format!("sql/migrate_{}.sql", current_version + 1);
-            let local_path = crate::common::fs::local_path(&partial_path)?;
+            let local_path = crate::common::fs::local_path(&partial_path);
 
             // Apply the next migration script
             let query_migrate = std::fs::read_to_string(local_path).map_err(|_| ErrorKind::Default)?;

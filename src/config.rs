@@ -62,18 +62,8 @@ impl Default for ServerConfig {
 }
 
 pub fn readConfig() {
-    let mut confdir: String = match std::env::var("CPTSERVER_CONFIG") {
-        Err(..) => ".".to_string(),
-        Ok(dir) => dir,
-    };
-
-    if confdir.is_empty() {
-        confdir = ".".to_string()
-    }
-
-    let confpath = format!("{}/{}", confdir, "cptserver.toml");
-
-    let mut server_conf: ServerConfig = confy::load_path(confpath).unwrap();
+    let path = crate::common::fs::local_path("cptserver.toml");
+    let mut server_conf: ServerConfig = confy::load_path(path).unwrap();
 
     if let Some(ref admin) = server_conf.cpt_admin {
         if crate::common::validate_user_key(admin).is_err() {
@@ -141,6 +131,10 @@ pub fn readConfig() {
 /*
  * GLOBAL CONFIG GETTERS
  */
+
+pub fn DB_NAME() -> String {
+    CONFIG.get().unwrap().db_database.to_string()
+}
 
 pub fn DB_URL() -> String {
     format!(

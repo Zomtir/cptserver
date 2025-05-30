@@ -50,7 +50,7 @@ pub fn club_image(club_id: u32) -> Result<Vec<u8>> {
         Some(url) => format!("data/clubs/{}", url),
     };
 
-    let local_path = crate::common::fs::local_path(&image_url)?;
+    let local_path = crate::common::fs::local_path(&image_url);
     std::fs::read(local_path).map_err(|_| ErrorKind::Default)
 }
 
@@ -64,7 +64,7 @@ pub fn club_banner(club_id: u32) -> Result<Vec<u8>> {
         Some(url) => format!("data/clubs/{}", url),
     };
 
-    let local_path = crate::common::fs::local_path(&banner_url)?;
+    let local_path = crate::common::fs::local_path(&banner_url);
     std::fs::read(local_path).map_err(|_| ErrorKind::Default)
 }
 

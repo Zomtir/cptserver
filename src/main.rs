@@ -56,7 +56,7 @@ fn rocket() -> _ {
         Err(_) => panic!("Database connection failed"),
     };
 
-    if db::migrate_scheme(&mut conn).is_err() {
+    if db::migrate_scheme(&mut conn, &crate::config::DB_NAME()).is_err() {
         panic!("Database update failed")
     };
 
