@@ -3,4 +3,3 @@
 /data
 *.code-workspace
 cptserver.toml
-/tests/common/config.rs

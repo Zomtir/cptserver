@@ -3,8 +3,8 @@ About
 
 This is the server application for providing an API for the cptclient. CPT stands for Course Participation Tracker.
 
-Preparations
-============
+Deployment
+==========
 
 The server requires a suitable SQL database. The easiest way to setup is to setup a MariaDB database. Adapt the names to your liking. The program installs and updates the schema automatically.
 
@@ -41,6 +41,23 @@ cargo clippy
 cargo build
 # Run the application
 cargo run
+```
+
+Testing
+=======
+
+If you want to `cargo test` the application, you have to adapt the `cpt_test_env.sh` in the project root directory beforehand. It has to contain the correct path to just mentioned directory to get a hold of uncompiled files. Also it contains your test database information.
+
+Either `source cpt_test_env.sh` to your current shell or put the content in your `~/.bashrc`.
+
+```
+export CPTSERVER_CONFIG=/home/user/development/cptserver
+
+export CPTDB_TEST_SERVER="localhost"
+export CPTDB_TEST_PORT=3306
+export CPTDB_TEST_DATABASE="cptdbt"
+export CPTDB_TEST_USER="cptdbt-user"
+export CPTDB_TEST_PASSWORD="cptdbt-password"
 ```
 
 Releases
