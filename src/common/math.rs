@@ -4,15 +4,15 @@ use sha2::{Digest, Sha256};
 use crate::error::ErrorKind;
 
 pub fn random_bytes(size: usize) -> Vec<u8> {
-    rand::thread_rng()
-        .sample_iter(rand::distributions::Standard)
+    rand::rng()
+        .sample_iter(rand::distr::StandardUniform)
         .take(size)
         .collect()
 }
 
 pub fn random_string(size: usize) -> String {
-    rand::thread_rng()
-        .sample_iter(&rand::distributions::Alphanumeric)
+    rand::rng()
+        .sample_iter(&rand::distr::Alphanumeric)
         .take(size)
         .map(char::from)
         .collect()
