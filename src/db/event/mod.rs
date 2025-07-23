@@ -393,11 +393,12 @@ pub fn event_statistic_packlist(
             COUNT(CASE WHEN i.category_id = :category1 THEN 1 END) AS count1,
             COUNT(CASE WHEN i.category_id = :category2 THEN 1 END) AS count2,
             COUNT(CASE WHEN i.category_id = :category3 THEN 1 END) AS count3
-        FROM event_participant_presences ep
+        FROM event_attendance_presences ep
         JOIN users u ON ep.user_id = u.user_id
         LEFT JOIN user_possessions up ON up.user_id = ep.user_id
         LEFT JOIN items i ON up.item_id = i.item_id
         WHERE ep.event_id = :event_id
+        AND ep.role = 'PARTICIPANT'
         GROUP BY u.user_id;",
     )?;
     let params = params! {
@@ -429,11 +430,12 @@ pub fn event_statistic_organisation(
             u.birth_date AS user_birth_date, u.gender AS user_gender, u.height AS user_height, u.weight AS user_weight,
             o.organisation_id, o.abbreviation AS organisation_abbreviation, o.name AS organisation_name,
             oa.member_identifier, oa.permission_solo_date, oa.permission_team_date, oa.residency_move_date
-        FROM event_participant_presences ep
+        FROM event_attendance_presences ep
         JOIN users u ON ep.user_id = u.user_id
         LEFT JOIN organisation_affiliations oa ON oa.user_id = u.user_id AND oa.organisation_id = :organisation_id
         LEFT JOIN organisations o ON o.organisation_id = oa.organisation_id
-        WHERE ep.event_id = :event_id;",
+        WHERE ep.event_id = :event_id
+        AND ep.role = 'PARTICIPANT';",
     )?;
     let params = params! {
         "event_id" => event_id,
