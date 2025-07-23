@@ -1,3 +1,25 @@
+## Release v1.4.0 (25th Jul 2025)
+
+- feat: Use advanced error features
+    - anyhow for backtrace options
+    - thiserror for a more condensed definition
+- feat: Merge participant, leader and supporter into attendence role
+- feat: Placeholder images
+- feat: Added club banners
+- feat: User image urls
+- feat: Deny empty course_key and event_key
+- feat: Return full course info for events
+- feat: Added event_moderator_true route
+- refactor: Split credentials from user
+- refactor: Use &str over &String
+- fix: Course class statistics reported incorrect participants
+- fix: Bind event statistics to participants
+- fix: Use UTC for db timestamps
+- fix: SQL col had incorrect user lastname
+- tests: Fixed local paths and added db test env variables
+- chore: Cargo updates
+- chore: Update DB schema from 2 to 3
+
 ## Release v1.3.0 (29th Jan 2025)
 
 - feat: Affiliation and organisation restructure
