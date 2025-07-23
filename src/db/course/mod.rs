@@ -260,7 +260,7 @@ pub fn course_statistic_class(
             events.end,
             COUNT(DISTINCT CASE WHEN role = 'LEADER' THEN user_id END) AS leader_count,
             COUNT(DISTINCT CASE WHEN role = 'SUPPORTER' THEN user_id END) AS supporter_count,
-            COUNT(DISTINCT CASE WHEN role = 'LEADER' THEN user_id END) AS participant_count,
+            COUNT(DISTINCT CASE WHEN role = 'PARTICIPANT' THEN user_id END) AS participant_count,
             COUNT(DISTINCT CASE WHEN role = 'SPECTATOR' THEN user_id END) AS spectator_count
         FROM
             events
