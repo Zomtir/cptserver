@@ -55,6 +55,13 @@ pub fn event_owner_true(session: UserSession, event_id: u64) -> Result<Json<bool
     Ok(Json(condition))
 }
 
+#[rocket::get("/regular/event_moderator_true?<event_id>")]
+pub fn event_moderator_true(session: UserSession, event_id: u64) -> Result<Json<bool>> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
+    let condition = crate::db::event::moderator::event_moderator_true(conn, event_id, session.user.id)?;
+    Ok(Json(condition))
+}
+
 #[rocket::get("/regular/event_attendance_presence_true?<event_id>&<role>")]
 pub fn event_attendance_presence_true(session: UserSession, event_id: u64, role: String) -> Result<Json<bool>> {
     let conn = &mut crate::utils::db::get_db_conn()?;

@@ -201,6 +201,7 @@ fn rocket() -> _ {
                 route::regular::event::event_list,
                 route::regular::event::event_create,
                 route::regular::event::event_owner_true,
+                route::regular::event::event_moderator_true,
                 route::regular::event::event_attendance_registration_info,
                 route::regular::event::event_attendance_registration_edit,
                 route::regular::event::event_attendance_presence_true,

@@ -6,6 +6,7 @@ use crate::error::ErrorKind;
 
 pub mod attendance;
 pub mod owner;
+pub mod moderator;
 
 /*
  * METHODS
