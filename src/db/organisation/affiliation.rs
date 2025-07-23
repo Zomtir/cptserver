@@ -72,11 +72,7 @@ pub fn affiliation_info(
     };
 
     let row = conn.exec_first(&stmt, &params)?;
-
-    match row {
-        None => Ok(None),
-        Some(mut row) => Ok(Some(Affiliation::from_row(&mut row))),
-    }
+    Ok(row.map(|mut row| Affiliation::from_row(&mut row)))
 }
 
 pub fn affiliation_create(conn: &mut PooledConn, user_id: u64, organisation_id: u32) -> Result<(), ErrorKind> {

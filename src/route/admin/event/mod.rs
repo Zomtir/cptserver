@@ -3,7 +3,7 @@ pub mod owner;
 
 use rocket::serde::json::Json;
 
-use crate::common::{Acceptance, Affiliation, Credential, Event, Occurrence, User, WebBool, WebDateTime};
+use crate::common::{Acceptance, Affiliation, Course, Credential, Event, Occurrence, User, WebBool, WebDateTime};
 use crate::error::{ErrorKind, Result};
 use crate::session::UserSession;
 
@@ -115,14 +115,14 @@ pub fn event_password_edit(session: UserSession, event_id: u64, password: String
 }
 
 #[rocket::get("/admin/event_course_info?<event_id>")]
-pub fn event_course_info(session: UserSession, event_id: u64) -> Result<Json<Option<u32>>> {
+pub fn event_course_info(session: UserSession, event_id: u64) -> Result<Json<Option<Course>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !session.right.right_event_read {
         return Err(ErrorKind::RightEventMissing);
     };
 
-    let course_id = crate::db::event::event_course_info(conn, event_id)?;
-    Ok(Json(course_id))
+    let course = crate::db::event::event_course_info(conn, event_id)?;
+    Ok(Json(course))
 }
 
 #[rocket::head("/admin/event_course_edit?<event_id>&<course_id>")]

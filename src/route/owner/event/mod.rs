@@ -1,7 +1,7 @@
 pub mod attendance;
 pub mod owner;
 
-use crate::common::{Acceptance, Event, Occurrence, WebDateTime};
+use crate::common::{Acceptance, Event, Occurrence, WebDateTime, Course};
 use crate::error::{ErrorKind, Result};
 use crate::session::UserSession;
 use rocket::serde::json::Json;
@@ -73,14 +73,14 @@ pub fn event_password_edit(session: UserSession, event_id: u64, password: String
 }
 
 #[rocket::get("/owner/event_course_info?<event_id>")]
-pub fn event_course_info(session: UserSession, event_id: u64) -> Result<Json<Option<u32>>> {
+pub fn event_course_info(session: UserSession, event_id: u64) -> Result<Json<Option<Course>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
         return Err(ErrorKind::EventOwnerPermission);
     };
 
-    let course_id = crate::db::event::event_course_info(conn, event_id)?;
-    Ok(Json(course_id))
+    let course = crate::db::event::event_course_info(conn, event_id)?;
+    Ok(Json(course))
 }
 
 #[rocket::head("/owner/event_course_edit?<event_id>&<course_id>")]
@@ -90,14 +90,14 @@ pub fn event_course_edit(session: UserSession, event_id: u64, course_id: Option<
         return Err(ErrorKind::EventOwnerPermission);
     };
 
-    if let Some(old_id) = crate::db::event::event_course_info(conn, event_id)? {
-        if !crate::db::course::moderator::course_moderator_true(conn, old_id, session.user.id)? {
+    if let Some(old_course) = crate::db::event::event_course_info(conn, event_id)? {
+        if !crate::db::course::moderator::course_moderator_true(conn, old_course.id, session.user.id)? {
             return Err(ErrorKind::CourseModeratorPermission);
         };
     };
 
-    if let Some(new_id) = course_id {
-        if !crate::db::course::moderator::course_moderator_true(conn, new_id, session.user.id)? {
+    if let Some(new_course_id) = course_id {
+        if !crate::db::course::moderator::course_moderator_true(conn, new_course_id, session.user.id)? {
             return Err(ErrorKind::CourseModeratorPermission);
         };
     };

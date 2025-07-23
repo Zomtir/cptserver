@@ -1,12 +1,12 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Acceptance, Affiliation, Event, Location, Occurrence, User};
+use crate::common::{Acceptance, Affiliation, Course, Event, Location, Occurrence, User};
 use crate::error::ErrorKind;
 
 pub mod attendance;
-pub mod owner;
 pub mod moderator;
+pub mod owner;
 
 /*
  * METHODS
@@ -276,20 +276,19 @@ pub fn event_free_true(conn: &mut PooledConn, event: &Event) -> Result<bool, Err
 
 /* COURSE RELATED */
 
-pub fn event_course_info(conn: &mut PooledConn, event_id: u64) -> Result<Option<u32>, ErrorKind> {
+pub fn event_course_info(conn: &mut PooledConn, event_id: u64) -> Result<Option<Course>, ErrorKind> {
     let stmt = conn.prep(
-        "SELECT course_id
-        FROM events
-        WHERE event_id = :event_id",
+        "SELECT c.course_id, c.course_key, c.title as course_title, c.active as course_active, c.public as course_public
+        FROM events e
+        JOIN courses c ON c.course_id = e.course_id
+        WHERE e.event_id = :event_id",
     )?;
     let params = params! {
         "event_id" => event_id,
     };
 
-    match conn.exec_first::<Option<u32>, _, _>(&stmt, &params)? {
-        None => Err(ErrorKind::EventMissing),
-        Some(course_id) => Ok(course_id),
-    }
+    let row = conn.exec_first(&stmt, &params)?;
+    Ok(row.and_then(|mut row| Course::from_row(&mut row)))
 }
 
 pub fn event_course_edit(conn: &mut PooledConn, event_id: u64, course_id: Option<u32>) -> Result<(), ErrorKind> {
