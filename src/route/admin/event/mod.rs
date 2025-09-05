@@ -3,7 +3,7 @@ pub mod owner;
 
 use rocket::serde::json::Json;
 
-use crate::common::{Acceptance, Affiliation, Course, Credential, Event, Occurrence, User, WebBool, WebDateTime};
+use crate::common::{Acceptance, Affiliation, Course, Credential, Event, Item, Occurrence, User, WebBool, WebDateTime};
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
 
@@ -174,18 +174,16 @@ pub fn event_withdraw(session: UserSession, event_id: u64) -> Result<()> {
     Ok(())
 }
 
-#[rocket::get("/admin/event_statistic_packlist?<event_id>&<category1>&<category2>&<category3>")]
+#[rocket::get("/admin/event_statistic_packlist?<event_id>&<skill_id>")]
 pub fn statistic_packlist(
     session: UserSession,
     event_id: u64,
-    category1: Option<u32>,
-    category2: Option<u32>,
-    category3: Option<u32>,
-) -> Result<Json<Vec<(User, u32, u32, u32)>>> {
+    skill_id: u32,
+) -> Result<Json<Vec<(User, Item, u32, u32, u32)>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_event_read)?;
 
-    let stats = crate::db::event::event_statistic_packlist(conn, event_id, category1, category2, category3)?;
+    let stats = crate::db::event::event_statistic_packlist(conn, event_id, skill_id)?;
     Ok(Json(stats))
 }
 

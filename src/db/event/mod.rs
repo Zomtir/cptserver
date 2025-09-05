@@ -1,7 +1,7 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Acceptance, Affiliation, Course, Event, Location, Occurrence, User};
+use crate::common::{Acceptance, Affiliation, Course, Event, Item, Location, Occurrence, User};
 use crate::error::{Error, ErrorKind, Result};
 
 pub mod attendance;
@@ -395,37 +395,68 @@ pub fn event_bookmark_remove(conn: &mut PooledConn, event_id: u64, user_id: u64)
 pub fn event_statistic_packlist(
     conn: &mut PooledConn,
     event_id: u64,
-    category1: Option<u32>,
-    category2: Option<u32>,
-    category3: Option<u32>,
-) -> Result<Vec<(User, u32, u32, u32)>> {
+    skill_id: u32,
+) -> Result<Vec<(User, Item, u32, u32, u32)>> {
     let stmt = conn.prep(
-        "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
-            COUNT(CASE WHEN i.category_id = :category1 THEN 1 END) AS count1,
-            COUNT(CASE WHEN i.category_id = :category2 THEN 1 END) AS count2,
-            COUNT(CASE WHEN i.category_id = :category3 THEN 1 END) AS count3
+        "
+        SELECT
+            u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
+            i.item_id, i.name AS item_name,
+            ue.count AS count_target,
+            COALESCE(up.count_current, 0) AS count_current
+
         FROM event_attendance_presences ep
-        JOIN users u ON ep.user_id = u.user_id
-        LEFT JOIN user_possessions up ON up.user_id = ep.user_id
-        LEFT JOIN items i ON up.item_id = i.item_id
+
+        JOIN user_equipment ue
+            ON ue.user_id = ep.user_id
+
+        JOIN users u
+            ON u.user_id = ep.user_id
+
+        LEFT JOIN items i
+            ON i.item_id = ue.item_id
+
+        LEFT JOIN (
+            SELECT
+                user_id,
+                item_id,
+                COUNT(*) AS count_current
+            FROM user_possessions
+            GROUP BY user_id, item_id
+        ) up
+            ON up.user_id = ue.user_id
+        AND up.item_id = ue.item_id
+
         WHERE ep.event_id = :event_id
         AND ep.role = 'PARTICIPANT'
-        GROUP BY u.user_id;",
+        AND ue.skill_id = :skill_id;",
     )?;
+
     let params = params! {
         "event_id" => event_id,
-        "category1" => category1,
-        "category2" => category2,
-        "category3" => category3,
+        "skill_id" => skill_id,
     };
-    let map = |(user_id, user_key, firstname, lastname, nickname, count1, count2, count3)| {
-        (
-            { User::from_info(user_id, user_key, firstname, lastname, nickname) },
-            count1,
-            count2,
-            count3,
-        )
-    };
+    let map =
+        |(user_id, user_key, firstname, lastname, nickname, item_id, item_name, count_required, count_owned): (
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            u32,
+            u32,
+        )| {
+            let count_needed: u32 = count_required.saturating_sub(count_owned);
+            (
+                { User::from_info(user_id, user_key, firstname, lastname, nickname) },
+                { Item::from_row(item_id, item_name, None, None).unwrap() },
+                count_required,
+                count_owned,
+                count_needed,
+            )
+        };
 
     let stats = conn.exec_map(&stmt, &params, &map)?;
     Ok(stats)

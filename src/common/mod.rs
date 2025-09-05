@@ -13,7 +13,7 @@ mod credential;
 mod discipline;
 mod event;
 mod gender;
-mod item;
+mod inventory;
 mod license;
 mod location;
 mod math;
@@ -36,7 +36,7 @@ pub use discipline::*;
 pub use event::*;
 #[allow(unused_imports)]
 pub use gender::*;
-pub use item::*;
+pub use inventory::*;
 pub use license::*;
 pub use location::*;
 pub use math::*;

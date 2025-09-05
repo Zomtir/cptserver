@@ -25,3 +25,9 @@ ALTER TABLE `course_moderators` DROP INDEX `user_id`;
 ALTER TABLE `course_bookmarks` DROP INDEX `REF_user`;
 ALTER TABLE `course_attendance_sieves` DROP INDEX `REF_team`;
 ALTER TABLE `event_owners` DROP INDEX `REF_user`;
+
+-- Create table that contains items required for each discipline by a user
+CREATE TABLE `user_equipment` (`equipment_id` INT NOT NULL AUTO_INCREMENT , `user_id` MEDIUMINT NOT NULL , `skill_id` SMALLINT NOT NULL , `item_id` INT NOT NULL , `count` INT NOT NULL , PRIMARY KEY (`equipment_id`));
+ALTER TABLE `user_equipment` ADD CONSTRAINT `user_equipment_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `user_equipment` ADD CONSTRAINT `user_equipment_ibfk_2` FOREIGN KEY (`skill_id`) REFERENCES `skills`(`skill_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `user_equipment` ADD CONSTRAINT `user_equipment_ibfk_3` FOREIGN KEY (`item_id`) REFERENCES `items`(`item_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
