@@ -7,7 +7,7 @@ use crate::error::ErrorKind;
 pub fn sieve_list(conn: &mut PooledConn, course_id: u32, role: String) -> Result<Vec<(Team, bool)>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT t.team_id, t.team_key, t.name, t.description, cs.access
-        FROM course_participant_sieves cs
+        FROM course_attendance_sieves cs
         LEFT JOIN teams t ON cs.team_id = t.team_id
         WHERE course_id = :course_id AND role = :role;",
     )?;
@@ -40,7 +40,7 @@ pub fn sieve_edit(
     access: bool,
 ) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
-        "INSERT INTO course_participant_sieves (course_id, team_id, role, access)
+        "INSERT INTO course_attendance_sieves (course_id, team_id, role, access)
         VALUES (:course_id, :team_id, :role, :access)
         ON DUPLICATE KEY UPDATE access = :access;",
     )?;
@@ -57,7 +57,7 @@ pub fn sieve_edit(
 
 pub fn sieve_remove(conn: &mut PooledConn, course_id: u32, team_id: u64, role: String) -> Result<(), ErrorKind> {
     let stmt = conn.prep(
-        "DELETE FROM course_participant_sieves
+        "DELETE FROM course_attendance_sieves
         WHERE course_id = :course_id AND team_id = :team_id AND role = :role;",
     )?;
 
