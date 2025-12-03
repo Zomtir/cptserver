@@ -22,6 +22,21 @@ pub fn competence_list(
     Ok(Json(competences))
 }
 
+#[rocket::get("/admin/competence_info?<competence_id>")]
+pub fn competence_info(session: UserSession, competence_id: Option<u64>) -> Result<Json<Competence>> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
+    if !session.right.right_competence_read {
+        return Err(ErrorKind::RightCompetenceMissing);
+    };
+
+    let competence = crate::db::competence::competence_info(conn, competence_id)?;
+
+    match competence {
+        None => Err(ErrorKind::Missing),
+        Some(c) => Ok(Json(c)),
+    }
+}
+
 #[rocket::post("/admin/competence_create", format = "application/json", data = "<competence>")]
 pub fn competence_create(session: UserSession, competence: Json<Competence>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;

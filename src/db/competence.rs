@@ -1,7 +1,7 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Competence, Skill, User};
+use crate::common::{Competence, Skill};
 use crate::error::ErrorKind;
 
 pub fn competence_list(
@@ -13,7 +13,7 @@ pub fn competence_list(
 ) -> Result<Vec<Competence>, ErrorKind> {
     let stmt = conn.prep(
         "SELECT uc.competence_id,
-            u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
+            u.user_id, u.user_key, u.firstname as user_firstname, u.lastname as user_lastname, u.nickname as user_nickname,
             s.skill_id, s.skill_key, s.title as skill_title, s.min as skill_min, s.max as skill_max,
             uc.rank, uc.date,
             j.user_id as judge_id, j.user_key as judge_key, j.firstname as judge_firstname, j.lastname as judge_lastname, j.nickname as judge_nickname
@@ -37,36 +37,33 @@ pub fn competence_list(
     let mut competences: Vec<Competence> = Vec::new();
 
     for mut row in rows {
-        let uc = Competence {
-            id: row.take("competence_id").unwrap(),
-            user: User::from_info(
-                row.take("user_id").unwrap(),
-                row.take("user_key").unwrap(),
-                row.take("firstname").unwrap(),
-                row.take("lastname").unwrap(),
-                row.take("nickname").unwrap(),
-            ),
-            skill: Skill {
-                id: row.take("skill_id").unwrap(),
-                key: row.take("skill_key").unwrap(),
-                title: row.take("skill_title").unwrap(),
-                min: row.take("skill_min").unwrap(),
-                max: row.take("skill_max").unwrap(),
-            },
-            rank: row.take("rank").unwrap(),
-            date: row.take("date").unwrap(),
-            judge: User::from_info(
-                row.take("judge_id").unwrap(),
-                row.take("judge_key").unwrap(),
-                row.take("judge_firstname").unwrap(),
-                row.take("judge_lastname").unwrap(),
-                row.take("judge_nickname").unwrap(),
-            ),
-        };
+        let uc = Competence::from_row(&mut row);
         competences.push(uc);
     }
 
     Ok(competences)
+}
+
+pub fn competence_info(conn: &mut PooledConn, competence_id: Option<u64>) -> Result<Option<Competence>, ErrorKind> {
+    let stmt = conn.prep(
+        "SELECT uc.competence_id,
+            u.user_id, u.user_key, u.firstname as user_firstname, u.lastname as user_lastname, u.nickname as user_nickname,
+            s.skill_id, s.skill_key, s.title as skill_title, s.min as skill_min, s.max as skill_max,
+            uc.rank, uc.date,
+            j.user_id as judge_id, j.user_key as judge_key, j.firstname as judge_firstname, j.lastname as judge_lastname, j.nickname as judge_nickname
+        FROM user_competences uc
+        JOIN skills s ON (uc.skill_id = s.skill_id)
+        JOIN users u ON (uc.user_id = u.user_id)
+        JOIN users j ON (uc.judge_id = j.user_id)
+        WHERE uc.competence_id = :competence_id;",
+    )?;
+
+    let params = params! {
+        "competence_id" => competence_id,
+    };
+
+    let row = conn.exec_first(&stmt, &params)?;
+    Ok(row.map(|mut r| Competence::from_row(&mut r)))
 }
 
 pub fn competence_create(conn: &mut PooledConn, competence: &Competence) -> Result<u32, ErrorKind> {

@@ -27,3 +27,34 @@ pub struct Competence {
     pub date: chrono::NaiveDate,
     pub judge: User,
 }
+
+impl Competence {
+    pub fn from_row(row: &mut mysql::Row) -> Competence {
+        Competence {
+            id: row.take("competence_id").unwrap(),
+            user: User::from_info(
+                row.take("user_id").unwrap(),
+                row.take("user_key").unwrap(),
+                row.take("user_firstname").unwrap(),
+                row.take("user_lastname").unwrap(),
+                row.take("user_nickname").unwrap(),
+            ),
+            skill: Skill {
+                id: row.take("skill_id").unwrap(),
+                key: row.take("skill_key").unwrap(),
+                title: row.take("skill_title").unwrap(),
+                min: row.take("skill_min").unwrap(),
+                max: row.take("skill_max").unwrap(),
+            },
+            rank: row.take("rank").unwrap(),
+            date: row.take("date").unwrap(),
+            judge: User::from_info(
+                row.take("judge_id").unwrap(),
+                row.take("judge_key").unwrap(),
+                row.take("judge_firstname").unwrap(),
+                row.take("judge_lastname").unwrap(),
+                row.take("judge_nickname").unwrap(),
+            ),
+        }
+    }
+}

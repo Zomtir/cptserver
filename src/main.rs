@@ -283,6 +283,7 @@ fn rocket() -> _ {
                 route::admin::club::term::term_edit,
                 route::admin::club::term::term_delete,
                 route::admin::competence::competence_list,
+                route::admin::competence::competence_info,
                 route::admin::competence::competence_create,
                 route::admin::competence::competence_edit,
                 route::admin::competence::competence_delete,

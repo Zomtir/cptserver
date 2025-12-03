@@ -1,7 +1,7 @@
 pub mod attendance;
 pub mod owner;
 
-use crate::common::{Acceptance, Event, Occurrence, WebDateTime, Course};
+use crate::common::{Acceptance, Course, Event, Occurrence, WebDateTime};
 use crate::error::{ErrorKind, Result};
 use crate::session::UserSession;
 use rocket::serde::json::Json;
