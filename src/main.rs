@@ -246,6 +246,7 @@ fn rocket() -> _ {
                 route::regular::inventory::possession_list,
                 route::regular::inventory::itemcat_list,
                 route::admin::inventory::item_list,
+                route::admin::inventory::item_info,
                 route::admin::inventory::item_create,
                 route::admin::inventory::item_edit,
                 route::admin::inventory::item_delete,

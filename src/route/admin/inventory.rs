@@ -17,6 +17,17 @@ pub fn item_list(session: UserSession, category_id: Option<u32>) -> Result<Json<
     Ok(Json(items))
 }
 
+#[rocket::get("/admin/item_info?<item_id>")]
+pub fn item_info(session: UserSession, item_id: u32) -> Result<Json<Item>> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
+    if !session.right.right_inventory_read {
+        return Err(ErrorKind::RightInventoryMissing);
+    };
+
+    let item = crate::db::inventory::item_info(conn, item_id)?;
+    Ok(Json(item))
+}
+
 #[rocket::post("/admin/item_create", format = "application/json", data = "<item>")]
 pub fn item_create(session: UserSession, item: Json<Item>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
