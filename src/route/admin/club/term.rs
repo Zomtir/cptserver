@@ -15,6 +15,17 @@ pub fn term_list(session: UserSession, club_id: Option<u32>, user_id: Option<u32
     Ok(Json(terms))
 }
 
+#[rocket::get("/admin/term_info?<term_id>")]
+pub fn term_info(session: UserSession, term_id: u32) -> Result<Json<Term>> {
+    if !session.right.right_club_read {
+        return Err(ErrorKind::RightClubMissing);
+    };
+
+    let conn = &mut crate::utils::db::get_db_conn()?;
+    let term = crate::db::club::term_info(conn, term_id)?;
+    Ok(Json(term))
+}
+
 #[rocket::post("/admin/term_create", format = "application/json", data = "<term>")]
 pub fn term_create(session: UserSession, term: Json<Term>) -> Result<String> {
     if !session.right.right_club_write {

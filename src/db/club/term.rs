@@ -1,8 +1,33 @@
+use chrono::NaiveDate;
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Club, Term, User};
 use crate::error::ErrorKind;
+
+fn row_map(
+    (term_id, user_id, user_key, firstname, lastname, nickname, club_id, club_key, club_name, begin, end): (
+        u64,
+        u64,
+        String,
+        String,
+        String,
+        Option<String>,
+        u64,
+        String,
+        String,
+        Option<NaiveDate>,
+        Option<NaiveDate>,
+    ),
+) -> Term {
+    Term {
+        id: term_id,
+        user: User::from_info(user_id, user_key, firstname, lastname, nickname),
+        club: Club::from_info(club_id, club_key, club_name),
+        begin,
+        end,
+    }
+}
 
 pub fn term_list(
     conn: &mut PooledConn,
@@ -29,17 +54,28 @@ pub fn term_list(
         "point_in_time" => point_in_time,
     };
 
-    let map =
-        |(term_id, user_id, user_key, firstname, lastname, nickname, club_id, club_key, club_name, begin, end)| Term {
-            id: term_id,
-            user: User::from_info(user_id, user_key, firstname, lastname, nickname),
-            club: Club::from_info(club_id, club_key, club_name),
-            begin,
-            end,
-        };
-
-    let terms = conn.exec_map(&stmt, &params, &map)?;
+    let terms = conn.exec_map(&stmt, &params, &row_map)?;
     Ok(terms)
+}
+
+pub fn term_info(conn: &mut PooledConn, term_id: u32) -> Result<Term, ErrorKind> {
+    let stmt = conn.prep(
+        "SELECT t.term_id,
+            u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
+            c.club_id, c.club_key, c.name,
+            t.term_begin, t.term_end
+        FROM terms t
+        JOIN users u ON (u.user_id = t.user_id)
+        JOIN clubs c ON (c.club_id = t.club_id)
+        WHERE :term_id = t.term_id;",
+    )?;
+
+    let params = params! {
+        "term_id" => term_id,
+    };
+
+    let row = conn.exec_first(&stmt, &params)?;
+    row.map(row_map).ok_or(ErrorKind::Missing)
 }
 
 pub fn term_create(conn: &mut PooledConn, term: &Term) -> Result<u32, ErrorKind> {

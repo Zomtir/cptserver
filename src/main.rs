@@ -279,6 +279,7 @@ fn rocket() -> _ {
                 route::admin::team::team_member_remove,
                 route::regular::team::team_list,
                 route::admin::club::term::term_list,
+                route::admin::club::term::term_info,
                 route::admin::club::term::term_create,
                 route::admin::club::term::term_edit,
                 route::admin::club::term::term_delete,
