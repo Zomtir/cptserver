@@ -1,3 +1,12 @@
+## Release v1.5.0 (14th Dec 2025)
+
+- feat: Added item_info route
+- feat: Added term_info route
+- feat: Added competence_info route
+- fix: Course attendance db call uses outdated table name #27
+- refactor: Removed dead anyhow code
+- chore: Cargo updates
+
 ## Release v1.4.0 (25th Jul 2025)
 
 - feat: Use advanced error features
