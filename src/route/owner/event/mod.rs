@@ -2,7 +2,7 @@ pub mod attendance;
 pub mod owner;
 
 use crate::common::{Acceptance, Course, Event, Occurrence, WebDateTime};
-use crate::error::{ErrorKind, Result};
+use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
 use rocket::serde::json::Json;
 
@@ -38,9 +38,7 @@ pub fn event_list(
 #[rocket::get("/owner/event_info?<event_id>")]
 pub fn event_info(session: UserSession, event_id: u64) -> Result<Json<Event>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(ErrorKind::EventOwnerPermission);
-    };
+    crate::permission::require_event_owner(conn, event_id, session.user.id)?;
 
     Ok(Json(crate::db::event::event_info(conn, event_id)?))
 }
@@ -49,9 +47,7 @@ pub fn event_info(session: UserSession, event_id: u64) -> Result<Json<Event>> {
 #[rocket::post("/owner/event_edit?<event_id>", format = "application/json", data = "<event>")]
 pub fn event_edit(session: UserSession, event_id: u64, mut event: Json<Event>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(ErrorKind::EventOwnerPermission);
-    };
+    crate::permission::require_event_owner(conn, event_id, session.user.id)?;
 
     crate::utils::event::validate_event_dates(&mut event)?;
 
@@ -63,9 +59,7 @@ pub fn event_edit(session: UserSession, event_id: u64, mut event: Json<Event>) -
 #[rocket::post("/owner/event_password_edit?<event_id>", format = "text/plain", data = "<password>")]
 pub fn event_password_edit(session: UserSession, event_id: u64, password: String) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(ErrorKind::EventOwnerPermission);
-    };
+    crate::permission::require_event_owner(conn, event_id, session.user.id)?;
 
     let password = crate::utils::event::validate_clear_password(password)?;
     crate::db::event::event_password_edit(conn, event_id, password)?;
@@ -75,9 +69,7 @@ pub fn event_password_edit(session: UserSession, event_id: u64, password: String
 #[rocket::get("/owner/event_course_info?<event_id>")]
 pub fn event_course_info(session: UserSession, event_id: u64) -> Result<Json<Option<Course>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(ErrorKind::EventOwnerPermission);
-    };
+    crate::permission::require_event_owner(conn, event_id, session.user.id)?;
 
     let course = crate::db::event::event_course_info(conn, event_id)?;
     Ok(Json(course))
@@ -86,20 +78,14 @@ pub fn event_course_info(session: UserSession, event_id: u64) -> Result<Json<Opt
 #[rocket::head("/owner/event_course_edit?<event_id>&<course_id>")]
 pub fn event_course_edit(session: UserSession, event_id: u64, course_id: Option<u32>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(ErrorKind::EventOwnerPermission);
-    };
+    crate::permission::require_event_owner(conn, event_id, session.user.id)?;
 
     if let Some(old_course) = crate::db::event::event_course_info(conn, event_id)? {
-        if !crate::db::course::moderator::course_moderator_true(conn, old_course.id, session.user.id)? {
-            return Err(ErrorKind::CourseModeratorPermission);
-        };
+        crate::permission::require_course_moderator(conn, old_course.id, session.user.id)?;
     };
 
     if let Some(new_course_id) = course_id {
-        if !crate::db::course::moderator::course_moderator_true(conn, new_course_id, session.user.id)? {
-            return Err(ErrorKind::CourseModeratorPermission);
-        };
+        crate::permission::require_course_moderator(conn, new_course_id, session.user.id)?;
     };
 
     crate::db::event::event_course_edit(conn, event_id, course_id)?;
@@ -109,15 +95,13 @@ pub fn event_course_edit(session: UserSession, event_id: u64, course_id: Option<
 #[rocket::head("/owner/event_submit?<event_id>")]
 pub fn event_submit(session: UserSession, event_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(ErrorKind::EventOwnerPermission);
-    };
+    crate::permission::require_event_owner(conn, event_id, session.user.id)?;
 
     let event: Event = crate::db::event::event_info(conn, event_id)?;
 
     // The check is here intentional to be able to return early although it is also checked during is_event_free
     if !crate::utils::event::is_event_valid(&event) {
-        return Err(ErrorKind::EventWindowInvalid);
+        return Err(Error::new(ErrorKind::Invalid, "Event contains invalid data"));
     }
 
     let is_free: bool = crate::db::event::event_free_true(conn, &event)?;
@@ -137,9 +121,7 @@ pub fn event_submit(session: UserSession, event_id: u64) -> Result<()> {
 #[rocket::head("/owner/event_withdraw?<event_id>")]
 pub fn event_withdraw(session: UserSession, event_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(ErrorKind::EventOwnerPermission);
-    };
+    crate::permission::require_event_owner(conn, event_id, session.user.id)?;
 
     crate::db::event::event_acceptance_edit(conn, event_id, &Acceptance::Draft)?;
     Ok(())
@@ -148,9 +130,7 @@ pub fn event_withdraw(session: UserSession, event_id: u64) -> Result<()> {
 #[rocket::head("/owner/event_delete?<event_id>")]
 pub fn event_delete(session: UserSession, event_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)? {
-        return Err(ErrorKind::EventOwnerPermission);
-    };
+    crate::permission::require_event_owner(conn, event_id, session.user.id)?;
 
     crate::db::event::event_delete(conn, event_id)?;
     Ok(())

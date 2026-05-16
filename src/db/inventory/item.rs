@@ -2,7 +2,7 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Item, ItemCategory};
-use crate::error::ErrorKind;
+use crate::error::{Error, ErrorKind, Result};
 
 fn row_map((item_id, item_name, category_id, category_name): (u64, String, Option<u64>, Option<String>)) -> Item {
     Item {
@@ -15,7 +15,7 @@ fn row_map((item_id, item_name, category_id, category_name): (u64, String, Optio
     }
 }
 
-pub fn item_list(conn: &mut PooledConn, category_id: Option<u32>) -> Result<Vec<Item>, ErrorKind> {
+pub fn item_list(conn: &mut PooledConn, category_id: Option<u32>) -> Result<Vec<Item>> {
     let stmt = conn.prep(
         "SELECT i.item_id, i.name as item_name, ic.category_id, ic.name as category_name
         FROM items i
@@ -31,7 +31,7 @@ pub fn item_list(conn: &mut PooledConn, category_id: Option<u32>) -> Result<Vec<
     Ok(items)
 }
 
-pub fn item_info(conn: &mut PooledConn, item_id: u32) -> Result<Item, ErrorKind> {
+pub fn item_info(conn: &mut PooledConn, item_id: u32) -> Result<Item> {
     let stmt = conn.prep(
         "SELECT i.item_id, i.name as item_name, ic.category_id, ic.name as category_name
         FROM items i
@@ -44,10 +44,10 @@ pub fn item_info(conn: &mut PooledConn, item_id: u32) -> Result<Item, ErrorKind>
     };
 
     let row = conn.exec_first(&stmt, &params)?;
-    row.map(row_map).ok_or(ErrorKind::Missing)
+    row.map(row_map).ok_or(Error::new(ErrorKind::Missing, "Item not found"))
 }
 
-pub fn item_create(conn: &mut PooledConn, item: &Item) -> Result<u32, ErrorKind> {
+pub fn item_create(conn: &mut PooledConn, item: &Item) -> Result<u32> {
     let stmt = conn.prep(
         "INSERT INTO items (name, category_id)
         SELECT :item_name, :category_id;",
@@ -63,7 +63,7 @@ pub fn item_create(conn: &mut PooledConn, item: &Item) -> Result<u32, ErrorKind>
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn item_edit(conn: &mut PooledConn, item_id: u64, item: &Item) -> Result<(), ErrorKind> {
+pub fn item_edit(conn: &mut PooledConn, item_id: u64, item: &Item) -> Result<()> {
     let stmt = conn.prep(
         "UPDATE items
         SET name = :item_name, category_id = :category_id
@@ -80,7 +80,7 @@ pub fn item_edit(conn: &mut PooledConn, item_id: u64, item: &Item) -> Result<(),
     Ok(())
 }
 
-pub fn item_delete(conn: &mut PooledConn, item_id: u64) -> Result<(), ErrorKind> {
+pub fn item_delete(conn: &mut PooledConn, item_id: u64) -> Result<()> {
     let stmt = conn.prep("DELETE i FROM items i WHERE i.item_id = :item_id;")?;
 
     let params = params! {

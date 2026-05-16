@@ -1,11 +1,11 @@
 use cptserver::db;
-use cptserver::error::ErrorKind;
+use cptserver::error::{Error, ErrorKind, Result};
 use mysql::{Pool, PooledConn};
 use std::sync::OnceLock;
 
 static DBTPOOL: OnceLock<Pool> = OnceLock::new();
 
-pub fn init_dbt_pool() -> Result<(), ErrorKind> {
+pub fn init_dbt_pool() -> Result<()> {
     let url = dbt_url();
     let pool = mysql::Pool::new(mysql::Opts::from_url(&url)?)?;
     let _ = DBTPOOL.set(pool);
@@ -13,7 +13,7 @@ pub fn init_dbt_pool() -> Result<(), ErrorKind> {
     Ok(())
 }
 
-pub fn get_dbt_conn() -> Result<PooledConn, ErrorKind> {
+pub fn get_dbt_conn() -> Result<PooledConn> {
     let pool = DBTPOOL
         .get()
         .or_else(|| {

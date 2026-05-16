@@ -10,6 +10,7 @@ mod common;
 mod config;
 mod db;
 mod error;
+mod permission;
 mod route;
 mod session;
 mod utils;

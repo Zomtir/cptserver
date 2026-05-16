@@ -2,9 +2,9 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Right, User};
-use crate::error::ErrorKind;
+use crate::error::{Error, ErrorKind, Result};
 
-pub fn user_login(conn: &mut PooledConn, user_key: &str, salted_hash: &Vec<u8>) -> Result<User, ErrorKind> {
+pub fn user_login(conn: &mut PooledConn, user_key: &str, salted_hash: &Vec<u8>) -> Result<User> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, uc.sp_hash, uc.pepper, uc.salt, u.enabled, u.firstname, u.lastname, u.nickname
         FROM users u
@@ -17,13 +17,13 @@ pub fn user_login(conn: &mut PooledConn, user_key: &str, salted_hash: &Vec<u8>) 
 
     // User is missing
     let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
-        None => return Err(ErrorKind::UserMissing),
+        None => return Err(Error::new(ErrorKind::Missing, "User not found")),
         Some(row) => row,
     };
 
     // User is disabled
     if !row.take::<bool, &str>("enabled").unwrap() {
-        return Err(ErrorKind::UserDisabled);
+        return Err(Error::new(ErrorKind::Disabled, "User is disabled"));
     }
 
     let user: User = User::from_info(
@@ -37,14 +37,14 @@ pub fn user_login(conn: &mut PooledConn, user_key: &str, salted_hash: &Vec<u8>) 
     // User has no password configured
     let (pepper, salt): (Vec<u8>, Vec<u8>) = match (row.take("pepper").unwrap(), row.take("salt").unwrap()) {
         (Some(pepper), Some(salt)) => (pepper, salt),
-        _ => return Err(ErrorKind::UserPasswordMissing),
+        _ => return Err(Error::new(ErrorKind::Missing, "User password is missing")),
     };
-    let peppered_hash: Vec<u8> = crate::common::hash_sha256(&salted_hash, &pepper);
+    let peppered_hash: Vec<u8> = crate::common::hash_sha256(salted_hash, &pepper);
 
     println!(
         "User {} login attempt with salted hash {} (salt {}) resulting in peppered hash {} (pepper {})",
         user_key,
-        hex::encode(&salted_hash),
+        hex::encode(salted_hash),
         hex::encode(&salt),
         hex::encode(&peppered_hash),
         hex::encode(&pepper)
@@ -53,13 +53,13 @@ pub fn user_login(conn: &mut PooledConn, user_key: &str, salted_hash: &Vec<u8>) 
     let peppered_hash_db: Vec<u8> = row.take("sp_hash").unwrap();
 
     if peppered_hash != peppered_hash_db {
-        return Err(ErrorKind::UserLoginFail);
+        return Err(Error::new(ErrorKind::Authentication, "Invalid credentials"));
     };
 
     Ok(user)
 }
 
-pub fn user_right(conn: &mut PooledConn, user_id: u64) -> Result<Right, ErrorKind> {
+pub fn user_right(conn: &mut PooledConn, user_id: u64) -> Result<Right> {
     let stmt = conn.prep(
         "SELECT
             COALESCE(MAX(right_club_write),0) AS right_club_write,
@@ -91,7 +91,7 @@ pub fn user_right(conn: &mut PooledConn, user_id: u64) -> Result<Right, ErrorKin
     };
 
     let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
-        None => return Err(ErrorKind::UserMissing),
+        None => return Err(Error::new(ErrorKind::Missing, "User not found")),
         Some(row) => row,
     };
 
@@ -119,7 +119,7 @@ pub fn user_right(conn: &mut PooledConn, user_id: u64) -> Result<Right, ErrorKin
     Ok(right)
 }
 
-pub fn event_credential(conn: &mut PooledConn, event_id: u64) -> Result<(String, String), ErrorKind> {
+pub fn event_credential(conn: &mut PooledConn, event_id: u64) -> Result<(String, String)> {
     let stmt = conn.prep(
         "SELECT event_key, pwd
         FROM events
@@ -130,7 +130,7 @@ pub fn event_credential(conn: &mut PooledConn, event_id: u64) -> Result<(String,
     };
 
     let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
-        None => return Err(ErrorKind::EventMissing),
+        None => return Err(Error::new(ErrorKind::Missing, "Event not found")),
         Some(row) => row,
     };
 
@@ -140,7 +140,7 @@ pub fn event_credential(conn: &mut PooledConn, event_id: u64) -> Result<(String,
     Ok((event_key, event_pwd))
 }
 
-pub fn event_login(conn: &mut PooledConn, event_key: &str) -> Result<(u64, String), ErrorKind> {
+pub fn event_login(conn: &mut PooledConn, event_key: &str) -> Result<(u64, String)> {
     let stmt = conn.prep(
         "SELECT event_id, pwd
         FROM events WHERE event_key = :event_key",
@@ -150,7 +150,7 @@ pub fn event_login(conn: &mut PooledConn, event_key: &str) -> Result<(u64, Strin
     };
 
     let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
-        None => return Err(ErrorKind::EventMissing),
+        None => return Err(Error::new(ErrorKind::Missing, "Event not found")),
         Some(row) => row,
     };
 
@@ -164,7 +164,7 @@ pub fn course_current_event(
     course_key: &str,
     date_min: &chrono::NaiveDateTime,
     date_max: &chrono::NaiveDateTime,
-) -> Result<(String, String), ErrorKind> {
+) -> Result<(String, String)> {
     let stmt = conn.prep(
         "SELECT s.event_key, s.pwd
         FROM events s
@@ -180,7 +180,7 @@ pub fn course_current_event(
     };
 
     let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
-        None => return Err(ErrorKind::EventMissing),
+        None => return Err(Error::new(ErrorKind::Missing, "Event not found")),
         Some(row) => row,
     };
 
@@ -194,7 +194,7 @@ pub fn location_current_event(
     location_key: &str,
     date_min: &chrono::NaiveDateTime,
     date_max: &chrono::NaiveDateTime,
-) -> Result<(String, String), ErrorKind> {
+) -> Result<(String, String)> {
     let stmt = conn.prep(
         "SELECT s.event_key, s.pwd
         FROM events s
@@ -210,7 +210,7 @@ pub fn location_current_event(
     };
 
     let mut row: mysql::Row = match conn.exec_first(&stmt, &params) {
-        Err(..) | Ok(None) => return Err(ErrorKind::EventMissing),
+        Err(..) | Ok(None) => return Err(Error::new(ErrorKind::Missing, "Event not found")),
         Ok(Some(row)) => row,
     };
     let event_key: String = row.take("event_key").unwrap();

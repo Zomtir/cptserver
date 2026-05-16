@@ -1,4 +1,4 @@
-use crate::error::ErrorKind;
+use crate::error::{Error, ErrorKind, Result};
 use regex::Regex;
 use std::path::PathBuf;
 
@@ -11,11 +11,11 @@ pub fn local_path(partial_path: &str) -> PathBuf {
     PathBuf::from(dir).join(partial_path)
 }
 
-pub fn validate_path(partial_path: &str) -> Result<(), ErrorKind> {
+pub fn validate_path(partial_path: &str) -> Result<()> {
     match Regex::new(r"^[a-zA-Z0-9_.+\-]+$") {
-        Err(..) => Err(ErrorKind::RegexError),
+        Err(..) => Err(Error::new(ErrorKind::Regex, "Path regex failed")),
         Ok(regex) => match regex.is_match(partial_path) {
-            false => Err(ErrorKind::Default),
+            false => Err(Error::new(ErrorKind::Default, "Path is invalid")),
             true => Ok(()),
         },
     }

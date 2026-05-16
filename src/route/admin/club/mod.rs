@@ -3,15 +3,13 @@ pub mod term;
 use rocket::serde::json::Json;
 
 use crate::common::{Affiliation, Club, Event, Term, User, WebDate, WebDateTime};
-use crate::error::{ErrorKind, Result};
+use crate::error::Result;
 use crate::session::UserSession;
 
 #[rocket::get("/admin/club_list")]
 pub fn club_list(session: UserSession) -> Result<Json<Vec<Club>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_club_read {
-        return Err(ErrorKind::RightClubMissing);
-    };
+    crate::permission::require_right(session.right.right_club_read)?;
 
     let clubs = crate::db::club::club_list(conn)?;
     Ok(Json(clubs))
@@ -20,9 +18,7 @@ pub fn club_list(session: UserSession) -> Result<Json<Vec<Club>>> {
 #[rocket::get("/admin/club_info?<club_id>")]
 pub fn club_info(session: UserSession, club_id: u32) -> Result<Json<Club>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_club_read {
-        return Err(ErrorKind::RightClubMissing);
-    };
+    crate::permission::require_right(session.right.right_club_read)?;
 
     let club = crate::db::club::club_info(conn, club_id)?;
 
@@ -32,9 +28,7 @@ pub fn club_info(session: UserSession, club_id: u32) -> Result<Json<Club>> {
 #[rocket::post("/admin/club_create", format = "application/json", data = "<club>")]
 pub fn club_create(session: UserSession, club: Json<Club>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_club_write {
-        return Err(ErrorKind::RightClubMissing);
-    };
+    crate::permission::require_right(session.right.right_club_write)?;
 
     let id = crate::db::club::club_create(conn, &club)?;
     Ok(id.to_string())
@@ -43,9 +37,7 @@ pub fn club_create(session: UserSession, club: Json<Club>) -> Result<String> {
 #[rocket::post("/admin/club_edit?<club_id>", format = "application/json", data = "<club>")]
 pub fn club_edit(session: UserSession, club_id: u32, club: Json<Club>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_club_write {
-        return Err(ErrorKind::RightClubMissing);
-    };
+    crate::permission::require_right(session.right.right_club_write)?;
 
     crate::db::club::club_edit(conn, club_id, &club)?;
     Ok(())
@@ -54,9 +46,7 @@ pub fn club_edit(session: UserSession, club_id: u32, club: Json<Club>) -> Result
 #[rocket::head("/admin/club_delete?<club_id>")]
 pub fn club_delete(session: UserSession, club_id: u32) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_club_write {
-        return Err(ErrorKind::RightClubMissing);
-    };
+    crate::permission::require_right(session.right.right_club_write)?;
 
     crate::db::club::club_delete(conn, club_id)?;
     Ok(())
@@ -67,9 +57,7 @@ pub fn club_delete(session: UserSession, club_id: u32) -> Result<()> {
 #[rocket::get("/admin/club_statistic_terms?<club_id>&<point_in_time>")]
 pub fn statistic_terms(session: UserSession, club_id: u32, point_in_time: WebDate) -> Result<Json<Vec<Term>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_club_read {
-        return Err(ErrorKind::RightClubMissing);
-    };
+    crate::permission::require_right(session.right.right_club_read)?;
 
     let terms = crate::db::club::term_list(conn, Some(club_id), None, Some(point_in_time.to_naive()))?;
     Ok(Json(terms))
@@ -78,9 +66,7 @@ pub fn statistic_terms(session: UserSession, club_id: u32, point_in_time: WebDat
 #[rocket::get("/admin/club_statistic_members?<club_id>&<point_in_time>")]
 pub fn statistic_members(session: UserSession, club_id: u32, point_in_time: WebDate) -> Result<Json<Vec<(User, u32)>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_club_read {
-        return Err(ErrorKind::RightClubMissing);
-    };
+    crate::permission::require_right(session.right.right_club_read)?;
 
     let leaderboard = crate::db::club::club_member_leaderboard(conn, club_id, None, point_in_time.to_naive())?;
     Ok(Json(leaderboard))
@@ -94,9 +80,7 @@ pub fn statistic_team(
     team_id: u32,
 ) -> Result<Json<Vec<User>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_club_read {
-        return Err(ErrorKind::RightClubMissing);
-    };
+    crate::permission::require_right(session.right.right_club_read)?;
 
     let list = crate::db::club::club_team_comparison(conn, club_id, team_id, point_in_time.to_naive())?;
     Ok(Json(list))
@@ -110,9 +94,7 @@ pub fn statistic_organisation(
     point_in_time: WebDate,
 ) -> Result<Json<Vec<Affiliation>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_club_read {
-        return Err(ErrorKind::RightClubMissing);
-    };
+    crate::permission::require_right(session.right.right_club_read)?;
 
     let list =
         crate::db::club::club_member_organisation(conn, club_id, organisation_id, None, point_in_time.to_naive())?;
@@ -129,9 +111,7 @@ pub fn statistic_attendance(
     time_window_end: WebDateTime,
 ) -> Result<Json<Vec<Event>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_club_read {
-        return Err(ErrorKind::RightClubMissing);
-    };
+    crate::permission::require_right(session.right.right_club_read)?;
 
     let stats = crate::db::club::club_user_attendance(
         conn,

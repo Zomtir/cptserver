@@ -2,15 +2,11 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Confirmation, User};
-use crate::error::ErrorKind;
+use crate::error::{Error, ErrorKind, Result};
 
 /* REGISTRATIONS */
 
-pub fn event_attendance_registration_list(
-    conn: &mut PooledConn,
-    event_id: u64,
-    role: String,
-) -> Result<Vec<User>, ErrorKind> {
+pub fn event_attendance_registration_list(conn: &mut PooledConn, event_id: u64, role: String) -> Result<Vec<User>> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
         FROM event_attendance_registrations
@@ -35,7 +31,7 @@ pub fn event_attendance_registration_info(
     event_id: u64,
     user_id: u64,
     role: String,
-) -> Result<Confirmation, ErrorKind> {
+) -> Result<Confirmation> {
     let stmt = conn.prep(
         "SELECT r.status
         FROM event_attendance_registrations r
@@ -62,7 +58,7 @@ pub fn event_attendance_registration_edit(
     user_id: u64,
     role: String,
     status: Confirmation,
-) -> Result<(), ErrorKind> {
+) -> Result<()> {
     let stmt = conn.prep(
         "INSERT INTO event_attendance_registrations (event_id, user_id, role, status)
         VALUES (:event_id, :user_id, :role, :status)
@@ -84,7 +80,7 @@ pub fn event_attendance_registration_remove(
     event_id: u64,
     user_id: u64,
     role: String,
-) -> Result<(), ErrorKind> {
+) -> Result<()> {
     let stmt = conn.prep(
         "DELETE FROM event_attendance_registrations
         WHERE event_id = :event_id AND user_id = :user_id AND role = :role;",
@@ -102,11 +98,7 @@ pub fn event_attendance_registration_remove(
 
 /* FILTER */
 
-pub fn event_attendance_filter_list(
-    conn: &mut PooledConn,
-    event_id: u64,
-    role: String,
-) -> Result<Vec<(User, bool)>, ErrorKind> {
+pub fn event_attendance_filter_list(conn: &mut PooledConn, event_id: u64, role: String) -> Result<Vec<(User, bool)>> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname, ef.access
         FROM event_attendance_filters ef
@@ -134,7 +126,7 @@ pub fn event_attendance_filter_edit(
     user_id: u64,
     role: String,
     access: bool,
-) -> Result<(), ErrorKind> {
+) -> Result<()> {
     let stmt = conn.prep(
         "INSERT INTO event_attendance_filters (event_id, user_id, role, access)
         VALUES (:event_id, :user_id, :role, :access)
@@ -151,12 +143,7 @@ pub fn event_attendance_filter_edit(
     Ok(())
 }
 
-pub fn event_attendance_filter_remove(
-    conn: &mut PooledConn,
-    event_id: u64,
-    user_id: u64,
-    role: String,
-) -> Result<(), ErrorKind> {
+pub fn event_attendance_filter_remove(conn: &mut PooledConn, event_id: u64, user_id: u64, role: String) -> Result<()> {
     let stmt = conn.prep(
         "DELETE FROM event_attendance_filters
         WHERE event_id = :event_id AND user_id = :user_id AND role = :role;",
@@ -179,7 +166,7 @@ pub fn event_attendance_presence_pool(
     event_id: u64,
     role: &str,
     access: bool,
-) -> Result<Vec<User>, ErrorKind> {
+) -> Result<Vec<User>> {
     let stmt = conn.prep(
         "SELECT users.user_id, users.user_key, users.firstname, users.lastname, users.nickname
         FROM users
@@ -218,11 +205,7 @@ pub fn event_attendance_presence_pool(
     Ok(users)
 }
 
-pub fn event_attendance_presence_list(
-    conn: &mut PooledConn,
-    event_id: u64,
-    role: &str,
-) -> Result<Vec<User>, ErrorKind> {
+pub fn event_attendance_presence_list(conn: &mut PooledConn, event_id: u64, role: &str) -> Result<Vec<User>> {
     let stmt = conn.prep(
         "SELECT u.user_id, u.user_key, u.firstname, u.lastname, u.nickname
         FROM event_attendance_presences ep
@@ -241,12 +224,7 @@ pub fn event_attendance_presence_list(
     Ok(users)
 }
 
-pub fn event_attendance_presence_true(
-    conn: &mut PooledConn,
-    event_id: u64,
-    user_id: u64,
-    role: &str,
-) -> Result<bool, ErrorKind> {
+pub fn event_attendance_presence_true(conn: &mut PooledConn, event_id: u64, user_id: u64, role: &str) -> Result<bool> {
     let stmt = conn.prep(
         "SELECT COUNT(1)
         FROM event_attendance_presences ep
@@ -262,16 +240,14 @@ pub fn event_attendance_presence_true(
     match conn.exec_first::<u32, _, _>(&stmt, &params)? {
         Some(0) => Ok(false),
         Some(1) => Ok(true),
-        _ => Err(ErrorKind::DatabaseError),
+        _ => Err(Error::new(
+            ErrorKind::Database,
+            "Database returned a non-boolean value for presence",
+        )),
     }
 }
 
-pub fn event_attendance_presence_add(
-    conn: &mut PooledConn,
-    event_id: u64,
-    user_id: u64,
-    role: &str,
-) -> Result<(), ErrorKind> {
+pub fn event_attendance_presence_add(conn: &mut PooledConn, event_id: u64, user_id: u64, role: &str) -> Result<()> {
     let stmt = conn.prep(
         "INSERT INTO event_attendance_presences (event_id, user_id, role)
         VALUES (:event_id, :user_id, :role);",
@@ -286,12 +262,7 @@ pub fn event_attendance_presence_add(
     Ok(())
 }
 
-pub fn event_attendance_presence_remove(
-    conn: &mut PooledConn,
-    event_id: u64,
-    user_id: u64,
-    role: &str,
-) -> Result<(), ErrorKind> {
+pub fn event_attendance_presence_remove(conn: &mut PooledConn, event_id: u64, user_id: u64, role: &str) -> Result<()> {
     let stmt = conn.prep(
         "DELETE FROM event_attendance_presences
         WHERE event_id = :event_id AND user_id = :user_id AND role = :role;",

@@ -1,7 +1,7 @@
 use rocket::serde::json::Json;
 
 use crate::common::{Event, User};
-use crate::error::{ErrorKind, Result};
+use crate::error::{Error, ErrorKind, Result};
 use crate::session::EventSession;
 
 #[rocket::get("/service/event_info")]
@@ -37,7 +37,7 @@ pub fn event_attendance_presence_add(session: EventSession, user_id: u64, role: 
     let pool = crate::db::event::attendance::event_attendance_presence_pool(conn, session.event_id, &role, true)?;
 
     if !pool.iter().any(|user| user.id == user_id) {
-        return Err(ErrorKind::EventPresenceForbidden);
+        return Err(Error::new(ErrorKind::Protected, "User is not in the presence pool"));
     }
     crate::db::event::attendance::event_attendance_presence_add(conn, session.event_id, user_id, &role)
 }

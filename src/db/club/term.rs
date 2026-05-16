@@ -3,7 +3,7 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Club, Term, User};
-use crate::error::ErrorKind;
+use crate::error::{Error, ErrorKind, Result};
 
 fn row_map(
     (term_id, user_id, user_key, firstname, lastname, nickname, club_id, club_key, club_name, begin, end): (
@@ -34,7 +34,7 @@ pub fn term_list(
     club_id: Option<u32>,
     user_id: Option<u32>,
     point_in_time: Option<chrono::NaiveDate>,
-) -> Result<Vec<Term>, ErrorKind> {
+) -> Result<Vec<Term>> {
     let stmt = conn.prep(
         "SELECT t.term_id,
             u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
@@ -58,7 +58,7 @@ pub fn term_list(
     Ok(terms)
 }
 
-pub fn term_info(conn: &mut PooledConn, term_id: u32) -> Result<Term, ErrorKind> {
+pub fn term_info(conn: &mut PooledConn, term_id: u32) -> Result<Term> {
     let stmt = conn.prep(
         "SELECT t.term_id,
             u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
@@ -75,10 +75,10 @@ pub fn term_info(conn: &mut PooledConn, term_id: u32) -> Result<Term, ErrorKind>
     };
 
     let row = conn.exec_first(&stmt, &params)?;
-    row.map(row_map).ok_or(ErrorKind::Missing)
+    row.map(row_map).ok_or(Error::new(ErrorKind::Missing, "Term not found"))
 }
 
-pub fn term_create(conn: &mut PooledConn, term: &Term) -> Result<u32, ErrorKind> {
+pub fn term_create(conn: &mut PooledConn, term: &Term) -> Result<u32> {
     let stmt = conn.prep(
         "INSERT INTO terms (user_id, club_id, term_begin, term_end)
         VALUES (:user_id, :club_id, :begin, :end)",
@@ -95,7 +95,7 @@ pub fn term_create(conn: &mut PooledConn, term: &Term) -> Result<u32, ErrorKind>
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn term_edit(conn: &mut PooledConn, term_id: i64, term: &Term) -> Result<(), ErrorKind> {
+pub fn term_edit(conn: &mut PooledConn, term_id: i64, term: &Term) -> Result<()> {
     let stmt = conn.prep(
         "UPDATE terms SET
             user_id  = :user_id,
@@ -117,7 +117,7 @@ pub fn term_edit(conn: &mut PooledConn, term_id: i64, term: &Term) -> Result<(),
     Ok(())
 }
 
-pub fn term_delete(conn: &mut PooledConn, term_id: i64) -> Result<(), ErrorKind> {
+pub fn term_delete(conn: &mut PooledConn, term_id: i64) -> Result<()> {
     let stmt = conn.prep("DELETE t FROM terms t WHERE t.term_id = :term_id")?;
 
     let params = params! {

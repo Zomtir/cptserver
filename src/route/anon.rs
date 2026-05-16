@@ -5,7 +5,7 @@ use rocket::serde::json::Json;
 
 use crate::common::{Club, Course, Location, Organisation, Skill};
 
-use crate::error::{ErrorKind, Result};
+use crate::error::{Error, ErrorKind, Result};
 
 #[rocket::head("/status")]
 pub fn status() -> Status {
@@ -51,7 +51,7 @@ pub fn club_image(club_id: u32) -> Result<Vec<u8>> {
     };
 
     let local_path = crate::common::fs::local_path(&image_url);
-    std::fs::read(local_path).map_err(|_| ErrorKind::Default)
+    std::fs::read(local_path).map_err(|_| Error::new(ErrorKind::Filesystem, "Failed to read club image"))
 }
 
 #[rocket::get("/anon/club_banner?<club_id>")]
@@ -65,7 +65,7 @@ pub fn club_banner(club_id: u32) -> Result<Vec<u8>> {
     };
 
     let local_path = crate::common::fs::local_path(&banner_url);
-    std::fs::read(local_path).map_err(|_| ErrorKind::Default)
+    std::fs::read(local_path).map_err(|_| Error::new(ErrorKind::Filesystem, "Failed to read club banner"))
 }
 
 #[rocket::get("/anon/course_list")]

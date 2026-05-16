@@ -2,181 +2,110 @@ use rocket::http::Status;
 use rocket::request::{Outcome, Request};
 use rocket::response::{self, Responder, Response};
 
-#[allow(dead_code)]
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorKind {
-    #[error("Default error")]
+    // General error
     Default,
-    #[error("Parsing error")]
-    Parsing,
-
-    #[error("Object already exists")]
-    AlreadyExists,
-    #[error("Object is missing")]
+    // Diverging information between two sources that should be identical
+    Mismatch,
+    // Logical conflicts like loaning an item out twice or returning an item that is not loaned out
+    Conflict,
+    // Trying an action that is not allowed in the current state
+    Disabled,
+    // Not finding an expected item or record
     Missing,
-
-    #[error("Database URL error")]
-    DatabaseURL,
-    #[error("Database connection error")]
-    DatabaseConnection,
-    #[error("Database pool error")]
-    DatabasePool,
-    #[error("Database error")]
-    DatabaseError,
-    #[error("Regex error")]
-    RegexError,
-    #[error("Time error")]
-    TimeError,
-
-    #[error("Session token missing")]
-    SessionTokenMissing,
-    #[error("Session token not valid")]
-    SessionTokenInvalid,
-    #[error("Session token expired")]
-    SessionTokenExpired,
-
-    #[error("User is missing")]
-    UserMissing,
-    #[error("User is disabled")]
-    UserDisabled,
-    #[error("User login failed")]
-    UserLoginFail,
-    #[error("User key is missing")]
-    UserKeyMissing,
-    #[error("User key has an invalid format")]
-    UserKeyInvalid,
-    #[error("User password is missing")]
-    UserPasswordMissing,
-    #[error("User password has an invalid format")]
-    UserPasswordInvalid,
-    #[error("User email is missing")]
-    UserEmailMissing,
-    #[error("User email has an invalid format")]
-    UserEmailInvalid,
-
-    #[error("Event is missing")]
-    EventMissing,
-    #[error("Event search has invalid criterias")]
-    EventSearchLimit,
-    #[error("Event owner is missing")]
-    EventOwnerMissing,
-    #[error("The user is not event owner")]
-    EventOwnerPermission,
-    #[error("Event owner is missing")]
-    EventOwnerProtection,
-    #[error("Event presence is missing")]
-    EventPresenceForbidden,
-    #[error("Event course is missing")]
-    EventCourseMissing,
-    #[error("Event login failed")]
-    EventLoginFail,
-    #[error("Event key is missing")]
-    EventKeyMissing,
-    #[error("Event key has an invalid format")]
-    EventKeyInvalid,
-    #[error("Event password is missing")]
-    EventPasswordMissing,
-    #[error("Event password has an invalid format")]
-    EventPasswordInvalid,
-    #[error("Event time window has invalid boundaries")]
-    EventWindowInvalid,
-    #[error("Event time window conflicts with others")]
-    EventWindowConflict,
-    #[error("Event status has an invalid format")]
-    EventStatusInvalid,
-    #[error("Event status is conflicting")]
-    EventStatusConflict,
-
-    #[error("Course is missing")]
-    CourseMissing,
-
-    #[error("Course moderator is missing")]
-    CourseModeratorMissing,
-    #[error("The user has insufficient course moderator permissions")]
-    CourseModeratorPermission,
-    #[error("Course login failed")]
-    CourseLoginFail,
-    #[error("Course key has an invalid format")]
-    CourseKeyInvalid,
-
-    #[error("Club is missing")]
-    ClubMissing,
-
-    #[error("Team is missing")]
-    TeamMissing,
-
-    #[error("Organisation is missing")]
-    OrganisationMissing,
-
-    #[error("Inventory stock is invalid")]
-    InventoryStockInvalid,
-    #[error("Inventory stock limit was reached")]
-    InventoryStockLimit,
-    #[error("Action does conflict with current stock values")]
-    InventoryStockConflict,
-    #[error("Inventory stock is missing")]
-    InventoryStockMissing,
-    #[error("Inventory possession is missing")]
-    InventoryPossessionMissing,
-    #[error("Inventory loaning has internal conflicts")]
-    InventoryLoanConflict,
-    #[error("Inventory transfer has internal conflicts")]
-    InventoryTransferConflict,
-
-    #[error("Conflicting permissions")]
-    RightConflict,
-    #[error("Club permissions are missing")]
-    RightClubMissing,
-    #[error("Competence permissions are missing")]
-    RightCompetenceMissing,
-    #[error("Course permissions are missing")]
-    RightCourseMissing,
-    #[error("Event permissions are missing")]
-    RightEventMissing,
-    #[error("Inventory permissions are missing")]
-    RightInventoryMissing,
-    #[error("Location permissions are missing")]
-    RightLocationMissing,
-    #[error("Organisation permissions are missing")]
-    RightOrganisationMissing,
-    #[error("Team permissions are missing")]
-    RightTeamMissing,
-    #[error("User permissions are missing")]
-    RightUserMissing,
+    // Finding multiple items or records where only one was expected
+    Duplicate,
+    // Invalid values or states, mostly inputs
+    Invalid,
+    // Overlapping ranges
+    Overlap,
+    // Range exceeding a boundary or a value exceeding a limit
+    Boundary,
+    // Permission errors like trying to access or modify a resource without the necessary permissions
+    Permission,
+    // Protected resources since it would violate integrity, like deleting an event with active sessions or removing oneself as owner of an event
+    Protected,
+    // Parsing errors like invalid input formats
+    Parsing,
+    // Using an invalid regex pattern
+    Regex,
+    // Login and session related errors like invalid credentials
+    Authentication,
+    // Expired tokens or cooldowns and throttles
+    Expired,
+    // Technical database errors
+    Database,
+    // Filesystem errors
+    Filesystem,
+    // Time and time zone related issues
+    Time,
 }
 
-impl From<mysql::UrlError> for ErrorKind {
+#[derive(thiserror::Error, Debug)]
+#[error("{message}")]
+pub struct Error {
+    pub kind: ErrorKind,
+
+    pub message: String,
+
+    #[source]
+    pub source: Option<Box<dyn std::error::Error + Send + Sync>>,
+}
+
+impl Error {
+    pub fn new(kind: ErrorKind, message: impl Into<String>) -> Self {
+        Self {
+            kind,
+            message: message.into(),
+            source: None,
+        }
+    }
+
+    pub fn with_source<E>(kind: ErrorKind, message: impl Into<String>, source: E) -> Self
+    where
+        E: std::error::Error + Send + Sync + 'static,
+    {
+        Self {
+            kind,
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+}
+
+impl From<mysql::UrlError> for Error {
     fn from(_: mysql::UrlError) -> Self {
-        ErrorKind::DatabaseURL
+        Error::new(ErrorKind::Database, "Database URL error")
     }
 }
 
-impl From<mysql::Error> for ErrorKind {
+impl From<mysql::Error> for Error {
     fn from(_: mysql::Error) -> Self {
-        ErrorKind::DatabaseError
+        Error::new(ErrorKind::Database, "Generic Database error")
     }
 }
 
-impl From<chrono::RoundingError> for ErrorKind {
+impl From<chrono::RoundingError> for Error {
     fn from(_: chrono::RoundingError) -> Self {
-        ErrorKind::TimeError
+        Error::new(ErrorKind::Time, "Time rounding error")
     }
 }
 
-impl<'r> Responder<'r, 'static> for ErrorKind {
+impl<'r> Responder<'r, 'static> for Error {
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
         Response::build()
             .status(Status::BadRequest)
-            .raw_header("error-uri", format!("{:?}", self))
-            .raw_header("error-msg", self.to_string())
+            .raw_header("error-uri", format!("{:?}", self.kind))
+            .raw_header("error-msg", self.message)
             .ok()
     }
 }
 
-impl ErrorKind {
-    pub fn outcome<T>(self) -> Outcome<T, ErrorKind> {
+impl Error {
+    pub fn outcome<T>(self) -> Outcome<T, Error> {
         rocket::outcome::Outcome::Error((Status::BadRequest, self))
     }
 }
 
-pub type Result<T = ()> = std::result::Result<T, ErrorKind>;
+pub type Result<T = ()> = std::result::Result<T, Error>;

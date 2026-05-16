@@ -1,7 +1,7 @@
 use rocket::serde::json::Json;
 
 use crate::common::{Course, User, WebBool};
-use crate::error::{ErrorKind, Result};
+use crate::error::Result;
 use crate::session::UserSession;
 
 #[rocket::get("/mod/course_responsibility?<active>&<public>")]
@@ -23,9 +23,7 @@ pub fn course_responsibility(
 #[rocket::get("/mod/course_moderator_list?<course_id>")]
 pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Json<Vec<User>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !crate::db::course::moderator::course_moderator_true(conn, course_id, session.user.id)? {
-        return Err(ErrorKind::CourseModeratorPermission);
-    };
+    crate::permission::require_course_moderator(conn, course_id, session.user.id)?;
 
     let moderators = crate::db::course::moderator::course_moderator_list(conn, course_id)?;
     Ok(Json(moderators))
@@ -34,9 +32,7 @@ pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Jso
 #[rocket::head("/mod/course_moderator_add?<course_id>&<user_id>")]
 pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !crate::db::course::moderator::course_moderator_true(conn, course_id, session.user.id)? {
-        return Err(ErrorKind::CourseModeratorPermission);
-    };
+    crate::permission::require_course_moderator(conn, course_id, session.user.id)?;
 
     crate::db::course::moderator::course_moderator_add(conn, course_id, user_id)?;
     Ok(())
@@ -45,9 +41,7 @@ pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u64) 
 #[rocket::head("/mod/course_moderator_remove?<course_id>&<user_id>")]
 pub fn course_moderator_remove(session: UserSession, course_id: u32, user_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !crate::db::course::moderator::course_moderator_true(conn, course_id, session.user.id)? {
-        return Err(ErrorKind::CourseModeratorPermission);
-    };
+    crate::permission::require_course_moderator(conn, course_id, session.user.id)?;
 
     crate::db::course::moderator::course_moderator_remove(conn, course_id, user_id)?;
     Ok(())

@@ -1,7 +1,7 @@
 use rocket::serde::json::Json;
 
 use crate::common::{Credential, Right};
-use crate::error::{ErrorKind, Result};
+use crate::error::{Error, ErrorKind, Result};
 use crate::session::{EventSession, UserSession, ADMINSESSION, EVENTSESSIONS, USERSESSIONS};
 
 #[rocket::post("/user_login", format = "application/json", data = "<credit>")]
@@ -10,14 +10,14 @@ pub fn user_login(credit: Json<Credential>) -> Result<String> {
 
     let user_key: &str = match &credit.login {
         Some(key) => key,
-        None => return Err(ErrorKind::UserKeyMissing),
+        None => return Err(Error::new(ErrorKind::Missing, "User key is missing")),
     };
 
     // If the user is a preconfigured admin, return him an admin session
     if ADMINSESSION.lock().unwrap().as_deref() == Some(user_key) {
         let user_id = match crate::db::user::user_created_true(conn, user_key)? {
             Some(id) => id,
-            None => return Err(ErrorKind::UserMissing),
+            None => return Err(Error::new(ErrorKind::Missing, "User not found")),
         };
         let user = crate::db::user::user_info(conn, user_id)?;
         let adminsession = UserSession::admin(&user);
@@ -28,7 +28,7 @@ pub fn user_login(credit: Json<Credential>) -> Result<String> {
 
     let user_hash: Vec<u8> = match &credit.password {
         Some(hash_string) => crate::common::decode_hash256(hash_string)?,
-        None => return Err(ErrorKind::UserPasswordMissing),
+        None => return Err(Error::new(ErrorKind::Missing, "User password is missing")),
     };
 
     let user = crate::db::login::user_login(conn, user_key, &user_hash)?;
@@ -52,31 +52,32 @@ pub fn event_login(credit: Json<Credential>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
 
     let event_key = match &credit.login {
-        None => return Err(ErrorKind::EventKeyMissing),
+        None => return Err(Error::new(ErrorKind::Missing, "Event key is missing")),
         Some(key) => {
             if key.is_empty() {
-                return Err(ErrorKind::EventKeyInvalid);
+                return Err(Error::new(ErrorKind::Invalid, "Event key is invalid"));
             }
             key
         }
     };
 
     let event_pwd = match &credit.password {
-        None => return Err(ErrorKind::EventPasswordMissing),
+        None => return Err(Error::new(ErrorKind::Missing, "Event password is missing")),
         Some(pwd) => {
             if pwd.is_empty() {
-                return Err(ErrorKind::EventPasswordInvalid);
+                return Err(Error::new(ErrorKind::Invalid, "Event password is invalid"));
             }
             pwd
         }
     };
 
-    println!("Event {} login attempt with password {}", event_key, event_pwd);
+    // Put behind debug flag
+    // println!("Event {} login attempt with password {}", event_key, event_pwd);
 
     let (event_id, event_pwd_check) = crate::db::login::event_login(conn, event_key)?;
 
     if *event_pwd != event_pwd_check {
-        return Err(ErrorKind::EventLoginFail);
+        return Err(Error::new(ErrorKind::Authentication, "Event login failed"));
     };
 
     let session_token: String = crate::common::random_string(30);

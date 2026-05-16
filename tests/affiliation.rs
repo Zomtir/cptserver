@@ -6,7 +6,7 @@ use cptserver::common::{Affiliation, Organisation, User};
 mod common;
 
 #[test]
-fn affiliation() -> Result<(), ErrorKind> {
+fn affiliation() -> Result<()> {
     let conn = &mut common::get_dbt_conn()?;
 
     let mut user = User::from_info(0, "key".into(), "first".into(), "last".into(), None);

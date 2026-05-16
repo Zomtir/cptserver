@@ -1,4 +1,4 @@
-use crate::error::{ErrorKind, Result};
+use crate::error::{Error, ErrorKind, Result};
 use mysql::{Pool, PooledConn};
 use std::sync::OnceLock;
 
@@ -19,7 +19,8 @@ pub fn get_db_conn() -> Result<PooledConn> {
             init_db_pool().ok()?;
             DBPOOL.get()
         })
-        .ok_or(ErrorKind::DatabasePool)?;
+        .ok_or(Error::new(ErrorKind::Database, "Failed to initialize database pool"))?;
 
-    pool.get_conn().map_err(|_| ErrorKind::DatabaseConnection)
+    pool.get_conn()
+        .map_err(|_| Error::new(ErrorKind::Database, "Failed to get database connection"))
 }

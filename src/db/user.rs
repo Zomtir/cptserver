@@ -2,7 +2,13 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{BankAccount, Credential, License, User};
-use crate::error::{ErrorKind, Result};
+use crate::error::{Error, ErrorKind, Result};
+
+mod bank_account;
+mod license;
+
+pub use bank_account::*;
+pub use license::*;
 
 pub fn user_list(conn: &mut PooledConn, active: Option<bool>) -> Result<Vec<User>> {
     let stmt = conn.prep(
@@ -42,7 +48,7 @@ pub fn user_info(conn: &mut PooledConn, user_id: u64) -> Result<User> {
     };
 
     let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
-        None => return Err(ErrorKind::UserMissing),
+        None => return Err(Error::new(ErrorKind::Missing, "User not found")),
         Some(row) => row,
     };
 
@@ -108,7 +114,7 @@ pub fn user_detailed(conn: &mut PooledConn, user_id: u64) -> Result<User> {
     };
 
     let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
-        None => return Err(ErrorKind::UserMissing),
+        None => return Err(Error::new(ErrorKind::Missing, "User not found")),
         Some(row) => row,
     };
 
@@ -313,7 +319,7 @@ pub fn user_password_info(conn: &mut PooledConn, user_id: u64) -> Result<Option<
 
 pub fn user_password_create(conn: &mut PooledConn, user_id: u64, hash_string: &str, salt_string: &str) -> Result<()> {
     if user_password_info(conn, user_id)?.is_some() {
-        return Err(ErrorKind::AlreadyExists)?;
+        return Err(Error::new(ErrorKind::Duplicate, "User credential already exists"));
     }
 
     let salt: Vec<u8> = crate::common::decode_hash128(salt_string)?;
@@ -354,7 +360,7 @@ pub fn user_password_create(conn: &mut PooledConn, user_id: u64, hash_string: &s
 
 pub fn user_password_edit(conn: &mut PooledConn, user_id: u64, hash_string: &str, salt_string: &str) -> Result<()> {
     let user_credential = match user_password_info(conn, user_id)? {
-        None => return Err(ErrorKind::Missing),
+        None => return Err(Error::new(ErrorKind::Missing, "User credential not found")),
         Some(credential) => credential,
     };
 
@@ -382,7 +388,7 @@ pub fn user_password_edit(conn: &mut PooledConn, user_id: u64, hash_string: &str
 
 pub fn user_password_delete(conn: &mut PooledConn, user_id: u64) -> Result<()> {
     let user_credential = match user_password_info(conn, user_id)? {
-        None => return Err(ErrorKind::Missing),
+        None => return Err(Error::new(ErrorKind::Missing, "User credential not found")),
         Some(credential) => credential,
     };
 
@@ -415,7 +421,7 @@ pub fn user_key_salt_value(conn: &mut PooledConn, user_key: &str) -> Result<Vec<
     };
 
     match conn.exec_first::<Vec<u8>, _, _>(&stmt, &params)? {
-        None => Err(ErrorKind::UserMissing),
+        None => Err(Error::new(ErrorKind::Missing, "User not found")),
         Some(salt) => Ok(salt),
     }
 }

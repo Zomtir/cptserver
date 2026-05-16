@@ -1,9 +1,9 @@
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::error::ErrorKind;
+use crate::error::Result;
 
-pub fn event_moderator_true(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<bool, ErrorKind> {
+pub fn event_moderator_true(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<bool> {
     let stmt = conn.prep(
         "SELECT COUNT(1)
         FROM course_moderators cm

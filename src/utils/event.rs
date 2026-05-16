@@ -1,10 +1,10 @@
 use crate::common::Event;
-use crate::error::{ErrorKind, Result};
+use crate::error::{Error, ErrorKind, Result};
 use chrono::DurationRound;
 
 pub fn validate_clear_password(password: String) -> Result<String> {
     if password.len() < 6 || password.len() > 50 {
-        return Err(ErrorKind::EventPasswordInvalid);
+        return Err(Error::new(ErrorKind::Invalid, "Invalid event password"));
     };
 
     Ok(password.to_string())
@@ -43,11 +43,11 @@ pub fn verify_event_search_window(
         let delta = end.signed_duration_since(begin);
 
         if delta < crate::config::EVENT_SEARCH_WINDOW_MIN() || delta > crate::config::EVENT_SEARCH_WINDOW_MAX() {
-            return Err(ErrorKind::EventSearchLimit);
+            return Err(Error::new(ErrorKind::Boundary, "Invalid event search window"));
         }
 
         if begin < crate::config::EVENT_SEARCH_DATE_MIN() || end > crate::config::EVENT_SEARCH_DATE_MAX() {
-            return Err(ErrorKind::EventSearchLimit);
+            return Err(Error::new(ErrorKind::Boundary, "Invalid event search date range"));
         }
     }
     Ok(())

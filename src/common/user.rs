@@ -1,5 +1,5 @@
 use crate::common::{BankAccount, Credential, License};
-use crate::error::ErrorKind;
+use crate::error::{Error, ErrorKind, Result};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
@@ -118,9 +118,9 @@ impl User {
  * METHODS
  */
 
-pub fn check_user_key(key: &Option<String>) -> Result<String, ErrorKind> {
+pub fn check_user_key(key: &Option<String>) -> Result<String> {
     let text = match key {
-        None => return Err(ErrorKind::UserKeyMissing),
+        None => return Err(Error::new(ErrorKind::Missing, "User key is missing")),
         Some(text) => text,
     };
 
@@ -128,21 +128,21 @@ pub fn check_user_key(key: &Option<String>) -> Result<String, ErrorKind> {
     Ok(text.into())
 }
 
-pub fn validate_user_key(text: &str) -> Result<(), ErrorKind> {
+pub fn validate_user_key(text: &str) -> Result<()> {
     if text.len() < 2 || text.len() > 20 {
-        return Err(ErrorKind::UserKeyInvalid);
+        return Err(Error::new(ErrorKind::Invalid, "User key has invalid length"));
     };
 
     if !text.chars().all(|c| c.is_alphanumeric()) {
-        return Err(ErrorKind::UserKeyInvalid);
+        return Err(Error::new(ErrorKind::Invalid, "User key contains invalid characters"));
     }
 
     Ok(())
 }
 
-pub fn check_user_email(email: &Option<String>) -> Result<String, ErrorKind> {
+pub fn check_user_email(email: &Option<String>) -> Result<String> {
     let text = match email {
-        None => return Err(ErrorKind::UserEmailMissing),
+        None => return Err(Error::new(ErrorKind::Missing, "User email is missing")),
         Some(text) => text,
     };
 
@@ -150,11 +150,11 @@ pub fn check_user_email(email: &Option<String>) -> Result<String, ErrorKind> {
     Ok(text.into())
 }
 
-pub fn validate_user_email(text: &str) -> Result<(), ErrorKind> {
+pub fn validate_user_email(text: &str) -> Result<()> {
     match Regex::new(r"^([a-z0-9._\-]([a-z0-9._\-+]*)?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})") {
-        Err(..) => Err(ErrorKind::RegexError),
+        Err(..) => Err(Error::new(ErrorKind::Regex, "Email regex failed")),
         Ok(regex) => match regex.is_match(text) {
-            false => Err(ErrorKind::UserEmailInvalid),
+            false => Err(Error::new(ErrorKind::Invalid, "User email is invalid")),
             true => Ok(()),
         },
     }

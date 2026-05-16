@@ -1,15 +1,13 @@
 use rocket::serde::json::Json;
 
 use crate::common::User;
-use crate::error::{ErrorKind, Result};
+use crate::error::Result;
 use crate::session::UserSession;
 
 #[rocket::get("/admin/course_moderator_list?<course_id>")]
 pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Json<Vec<User>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_course_read {
-        return Err(ErrorKind::RightCourseMissing);
-    };
+    crate::permission::require_right(session.right.right_course_read)?;
 
     let moderators = crate::db::course::moderator::course_moderator_list(conn, course_id)?;
     Ok(Json(moderators))
@@ -18,9 +16,7 @@ pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Jso
 #[rocket::head("/admin/course_moderator_add?<course_id>&<user_id>")]
 pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_course_write {
-        return Err(ErrorKind::RightCourseMissing);
-    };
+    crate::permission::require_right(session.right.right_course_write)?;
 
     crate::db::course::moderator::course_moderator_add(conn, course_id, user_id)?;
     Ok(())
@@ -29,9 +25,7 @@ pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u64) 
 #[rocket::head("/admin/course_moderator_remove?<course_id>&<user_id>")]
 pub fn course_moderator_remove(session: UserSession, course_id: u32, user_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
-    if !session.right.right_course_write {
-        return Err(ErrorKind::RightCourseMissing);
-    };
+    crate::permission::require_right(session.right.right_course_write)?;
 
     crate::db::course::moderator::course_moderator_remove(conn, course_id, user_id)?;
     Ok(())

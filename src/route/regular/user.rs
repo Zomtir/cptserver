@@ -1,7 +1,7 @@
 use rocket::serde::json::Json;
 
 use crate::common::{Credential, Right, User};
-use crate::error::{ErrorKind, Result};
+use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
 
 /*
@@ -24,7 +24,7 @@ pub fn user_right(session: UserSession) -> Json<Right> {
 pub fn user_password_info(session: UserSession) -> Result<Json<Credential>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     let credit = match crate::db::user::user_password_info(conn, session.user.id)? {
-        None => return Err(ErrorKind::UserPasswordMissing),
+        None => return Err(Error::new(ErrorKind::Missing, "User password is missing")),
         Some(cr) => cr,
     };
 
@@ -37,7 +37,7 @@ pub fn user_password_set(session: UserSession, credit: Json<Credential>) -> Resu
 
     let (hash, salt) = match (&credit.password, &credit.salt) {
         (Some(p), Some(s)) => (p, s),
-        _ => return Err(ErrorKind::UserPasswordInvalid),
+        _ => return Err(Error::new(ErrorKind::Invalid, "User password is invalid")),
     };
 
     crate::db::user::user_password_edit(conn, session.user.id, hash, salt)?;

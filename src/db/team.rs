@@ -2,13 +2,17 @@ use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
 use crate::common::{Right, Team};
-use crate::error::ErrorKind;
+use crate::error::{Error, ErrorKind, Result};
+
+mod member;
+
+pub use member::*;
 
 /*
  * METHODS
  */
 
-pub fn team_list(conn: &mut PooledConn) -> Result<Vec<Team>, ErrorKind> {
+pub fn team_list(conn: &mut PooledConn) -> Result<Vec<Team>> {
     let stmt = conn.prep(
         "SELECT
             team_id,
@@ -38,7 +42,7 @@ pub fn team_list(conn: &mut PooledConn) -> Result<Vec<Team>, ErrorKind> {
     Ok(teams)
 }
 
-pub fn team_info(conn: &mut PooledConn, team_id: &u32) -> Result<Team, ErrorKind> {
+pub fn team_info(conn: &mut PooledConn, team_id: &u32) -> Result<Team> {
     let stmt = conn.prep(
         "SELECT
             team_id,
@@ -72,7 +76,7 @@ pub fn team_info(conn: &mut PooledConn, team_id: &u32) -> Result<Team, ErrorKind
     };
 
     let mut row: mysql::Row = match conn.exec_first(&stmt, &params)? {
-        None => return Err(ErrorKind::TeamMissing),
+        None => return Err(Error::new(ErrorKind::Missing, "Team not found")),
         Some(row) => row,
     };
 
@@ -106,7 +110,7 @@ pub fn team_info(conn: &mut PooledConn, team_id: &u32) -> Result<Team, ErrorKind
     Ok(team)
 }
 
-pub fn team_create(conn: &mut PooledConn, team: &Team) -> Result<u32, ErrorKind> {
+pub fn team_create(conn: &mut PooledConn, team: &Team) -> Result<u32> {
     let stmt = conn.prep(
         "INSERT INTO teams (
             team_key,
@@ -129,7 +133,7 @@ pub fn team_create(conn: &mut PooledConn, team: &Team) -> Result<u32, ErrorKind>
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn team_edit(conn: &mut PooledConn, team_id: &u32, team: &Team) -> Result<(), ErrorKind> {
+pub fn team_edit(conn: &mut PooledConn, team_id: &u32, team: &Team) -> Result<()> {
     let stmt = conn.prep(
         "UPDATE teams SET
             team_key = :team_key,
@@ -149,7 +153,7 @@ pub fn team_edit(conn: &mut PooledConn, team_id: &u32, team: &Team) -> Result<()
     Ok(())
 }
 
-pub fn team_right_edit(conn: &mut PooledConn, team_id: &u32, right: &Right) -> Result<(), ErrorKind> {
+pub fn team_right_edit(conn: &mut PooledConn, team_id: &u32, right: &Right) -> Result<()> {
     let stmt = conn.prep(
         "UPDATE teams SET
             right_club_write = :right_club_write,
@@ -199,7 +203,7 @@ pub fn team_right_edit(conn: &mut PooledConn, team_id: &u32, right: &Right) -> R
     Ok(())
 }
 
-pub fn team_delete(conn: &mut PooledConn, team_id: &u32) -> Result<(), ErrorKind> {
+pub fn team_delete(conn: &mut PooledConn, team_id: &u32) -> Result<()> {
     let stmt = conn.prep("DELETE t FROM teams t WHERE t.team_id = :team_id")?;
     let params = params! {"team_id" => team_id};
 

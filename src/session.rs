@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 
 use crate::common::{Right, User};
-use crate::error::ErrorKind;
+use crate::error::{Error, ErrorKind};
 
 lazy_static::lazy_static! {
     pub static ref ADMINSESSION: Mutex<Option<String>> = Mutex::new(None);
@@ -28,24 +28,24 @@ pub struct UserSession {
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for UserSession {
-    type Error = crate::error::ErrorKind;
+    type Error = crate::error::Error;
 
-    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, crate::error::ErrorKind> {
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, crate::error::Error> {
         let head_token = match request.headers().get_one("Token") {
-            None => return ErrorKind::SessionTokenMissing.outcome(),
+            None => return Error::new(ErrorKind::Missing, "Session token is missing").outcome(),
             Some(token) => token,
         };
 
         let session: UserSession = match USERSESSIONS.lock().unwrap().get(&head_token.to_string()).cloned() {
             None => {
-                return ErrorKind::SessionTokenInvalid.outcome();
+                return Error::new(ErrorKind::Invalid, "Invalid session token").outcome();
             }
             Some(session) => session,
         };
 
         if session.expiry < chrono::Utc::now() {
             USERSESSIONS.lock().unwrap().remove(head_token);
-            return ErrorKind::SessionTokenExpired.outcome();
+            return Error::new(ErrorKind::Expired, "Session token has expired").outcome();
         }
 
         Success(session)
@@ -90,28 +90,29 @@ pub struct EventSession {
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for EventSession {
-    type Error = crate::error::ErrorKind;
+    type Error = crate::error::Error;
 
-    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, crate::error::ErrorKind> {
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, crate::error::Error> {
         let head_token = match request.headers().get_one("Token") {
-            None => return ErrorKind::SessionTokenMissing.outcome(),
+            None => return Error::new(ErrorKind::Missing, "Session token is missing").outcome(),
             Some(token) => token,
         };
 
         let session: EventSession = match EVENTSESSIONS.lock().unwrap().get(&head_token.to_string()).cloned() {
             None => {
-                return ErrorKind::SessionTokenInvalid.outcome();
+                return Error::new(ErrorKind::Invalid, "Invalid session token").outcome();
             }
             Some(session) => session,
         };
 
+        // Wrong token, should not happen as the session is looked up by the token, but just in case
         if session.token != *head_token {
-            return ErrorKind::SessionTokenInvalid.outcome();
+            return Error::new(ErrorKind::Mismatch, "Session token does not match internally").outcome();
         }
 
         if session.expiry < chrono::Utc::now() {
             EVENTSESSIONS.lock().unwrap().remove(&session.token);
-            return ErrorKind::SessionTokenExpired.outcome();
+            return Error::new(ErrorKind::Expired, "Session token has expired").outcome();
         }
 
         Success(session)
