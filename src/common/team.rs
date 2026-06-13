@@ -17,6 +17,8 @@ pub struct Right {
     pub right_competence_read: bool,
     pub right_course_write: bool,
     pub right_course_read: bool,
+    pub right_discipline_write: bool,
+    pub right_discipline_read: bool,
     pub right_event_write: bool,
     pub right_event_read: bool,
     pub right_inventory_write: bool,

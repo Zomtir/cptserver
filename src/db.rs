@@ -1,6 +1,7 @@
 pub mod club;
 pub mod competence;
 pub mod course;
+pub mod discipline;
 pub mod event;
 pub mod inventory;
 pub mod location;

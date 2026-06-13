@@ -10,6 +10,7 @@ mod club;
 mod confirmation;
 mod course;
 mod credential;
+mod discipline;
 mod event;
 mod gender;
 mod item;
@@ -31,6 +32,7 @@ pub use club::*;
 pub use confirmation::*;
 pub use course::*;
 pub use credential::*;
+pub use discipline::*;
 pub use event::*;
 #[allow(unused_imports)]
 pub use gender::*;

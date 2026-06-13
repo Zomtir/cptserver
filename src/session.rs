@@ -64,6 +64,8 @@ impl UserSession {
                 right_competence_read: true,
                 right_course_write: true,
                 right_course_read: true,
+                right_discipline_write: true,
+                right_discipline_read: true,
                 right_event_write: true,
                 right_event_read: true,
                 right_inventory_write: true,
