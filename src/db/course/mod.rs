@@ -131,7 +131,7 @@ pub fn course_requirement_list(conn: &mut PooledConn, course_id: u32) -> Result<
     let stmt = conn.prep(
         "SELECT r.requirement_id,
             c.course_id, c.course_key, c.title, c.active, c.public,
-            s.skill_id, s.skill_key, s.title, s.min, s.max,
+            s.skill_id, s.skill_key, s.name, s.min, s.max,
             r.rank
             FROM course_requirements r
         JOIN courses c ON c.course_id = r.course_id
@@ -151,7 +151,7 @@ pub fn course_requirement_list(conn: &mut PooledConn, course_id: u32) -> Result<
         course_public,
         skill_id,
         skill_key,
-        skill_title,
+        skill_name,
         skill_min,
         skill_max,
         rank,
@@ -167,7 +167,7 @@ pub fn course_requirement_list(conn: &mut PooledConn, course_id: u32) -> Result<
         skill: Skill {
             id: skill_id,
             key: skill_key,
-            title: skill_title,
+            name: skill_name,
             min: skill_min,
             max: skill_max,
         },

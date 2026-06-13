@@ -14,7 +14,7 @@ pub fn competence_list(
     let stmt = conn.prep(
         "SELECT uc.competence_id,
             u.user_id, u.user_key, u.firstname as user_firstname, u.lastname as user_lastname, u.nickname as user_nickname,
-            s.skill_id, s.skill_key, s.title as skill_title, s.min as skill_min, s.max as skill_max,
+            s.skill_id, s.skill_key, s.name as skill_name, s.min as skill_min, s.max as skill_max,
             uc.rank, uc.date,
             j.user_id as judge_id, j.user_key as judge_key, j.firstname as judge_firstname, j.lastname as judge_lastname, j.nickname as judge_nickname
         FROM user_competences uc
@@ -38,7 +38,7 @@ pub fn competence_list(
 
     for mut row in rows {
         let uc = Competence::from_row(&mut row);
-        competences.push(uc);
+        competences.push(uc.unwrap());
     }
 
     Ok(competences)
@@ -48,7 +48,7 @@ pub fn competence_info(conn: &mut PooledConn, competence_id: Option<u64>) -> Res
     let stmt = conn.prep(
         "SELECT uc.competence_id,
             u.user_id, u.user_key, u.firstname as user_firstname, u.lastname as user_lastname, u.nickname as user_nickname,
-            s.skill_id, s.skill_key, s.title as skill_title, s.min as skill_min, s.max as skill_max,
+            s.skill_id, s.skill_key, s.name as skill_name, s.min as skill_min, s.max as skill_max,
             uc.rank, uc.date,
             j.user_id as judge_id, j.user_key as judge_key, j.firstname as judge_firstname, j.lastname as judge_lastname, j.nickname as judge_nickname
         FROM user_competences uc
@@ -63,7 +63,7 @@ pub fn competence_info(conn: &mut PooledConn, competence_id: Option<u64>) -> Res
     };
 
     let row = conn.exec_first(&stmt, &params)?;
-    Ok(row.map(|mut r| Competence::from_row(&mut r)))
+    Ok(row.map(|mut r| Competence::from_row(&mut r).unwrap()))
 }
 
 pub fn competence_create(conn: &mut PooledConn, competence: &Competence) -> Result<u32> {
@@ -122,7 +122,7 @@ pub fn competence_delete(conn: &mut PooledConn, competence_id: u64) -> Result<()
 
 pub fn competence_summary(conn: &mut PooledConn, user_id: u64) -> Result<Vec<(Skill, i16)>> {
     let stmt = conn.prep(
-        "SELECT s.skill_id, s.skill_key, s.title, s.min, s.max, MAX(uc.rank)
+        "SELECT s.skill_id, s.skill_key, s.name, s.min, s.max, MAX(uc.rank)
         FROM user_competences uc
         JOIN skills s ON (uc.skill_id = s.skill_id)
         JOIN users j ON (uc.judge_id = j.user_id)
@@ -134,12 +134,12 @@ pub fn competence_summary(conn: &mut PooledConn, user_id: u64) -> Result<Vec<(Sk
         "user_id" => user_id,
     };
 
-    let map = |(skill_id, skill_key, skill_title, skill_min, skill_max, rank)| {
+    let map = |(skill_id, skill_key, skill_name, skill_min, skill_max, rank)| {
         (
             Skill {
                 id: skill_id,
                 key: skill_key,
-                title: skill_title,
+                name: skill_name,
                 min: skill_min,
                 max: skill_max,
             },

@@ -6,16 +6,16 @@ use crate::error::Result;
 
 pub fn skill_list(conn: &mut PooledConn) -> Result<Vec<Skill>> {
     let stmt = conn.prep(
-        "SELECT skill_id, skill_key, title, min, max
+        "SELECT skill_id, skill_key, name, min, max
         FROM skills;",
     )?;
 
     let params = params::Params::Empty;
 
-    let map = |(skill_id, skill_key, title, min, max)| Skill {
+    let map = |(skill_id, skill_key, name, min, max)| Skill {
         id: skill_id,
         key: skill_key,
-        title,
+        name,
         min,
         max,
     };
@@ -26,13 +26,13 @@ pub fn skill_list(conn: &mut PooledConn) -> Result<Vec<Skill>> {
 
 pub fn skill_create(conn: &mut PooledConn, skill: &Skill) -> Result<u32> {
     let stmt = conn.prep(
-        "INSERT INTO skills (skill_key, title, min, max)
-        VALUES (:skill_key, :title, :min, :max)",
+        "INSERT INTO skills (skill_key, name, min, max)
+        VALUES (:skill_key, :name, :min, :max)",
     )?;
 
     let params = params! {
         "skill_key" => &skill.key,
-        "title" => &skill.title,
+        "name" => &skill.name,
         "min" => &skill.min,
         "max" => &skill.max,
     };
@@ -46,7 +46,7 @@ pub fn skill_edit(conn: &mut PooledConn, skill_id: u32, skill: &Skill) -> Result
     let stmt = conn.prep(
         "UPDATE skills SET
             skill_key = :skill_key,
-            title = :title,
+            name = :name,
             min = :min,
             max = :max
         WHERE skill_id = :skill_id",
@@ -55,7 +55,7 @@ pub fn skill_edit(conn: &mut PooledConn, skill_id: u32, skill: &Skill) -> Result
     let params = params! {
         "skill_id" => &skill_id,
         "skill_key" => &skill.key,
-        "title" => &skill.title,
+        "name" => &skill.name,
         "min" => &skill.min,
         "max" => &skill.max,
     };
