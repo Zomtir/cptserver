@@ -14,4 +14,4 @@ pub mod user;
 
 pub use migrate::*;
 
-static SCHEME_VERSION: u8 = 3;
+static SCHEME_VERSION: u8 = 4;

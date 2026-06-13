@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2deb1
+-- version 5.2.3deb1
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost:8001
--- Generation Time: May 30, 2025 at 12:46 PM
--- Server version: 11.4.5-MariaDB-1
--- PHP Version: 8.4.5
+-- Host: localhost:3306
+-- Generation Time: Jun 13, 2026 at 10:42 AM
+-- Server version: 11.8.6-MariaDB-5 from Ubuntu
+-- PHP Version: 8.5.4
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -128,6 +128,17 @@ CREATE TABLE `course_requirements` (
   `skill_id` smallint(6) NOT NULL,
   `rank` tinyint(4) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `disciplines`
+--
+
+CREATE TABLE `disciplines` (
+  `discipline_id` smallint(6) NOT NULL,
+  `name` tinytext NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -297,7 +308,7 @@ CREATE TABLE `organisation_affiliations` (
 CREATE TABLE `skills` (
   `skill_id` smallint(6) NOT NULL,
   `skill_key` char(10) NOT NULL,
-  `title` tinytext NOT NULL,
+  `name` tinytext NOT NULL,
   `min` tinyint(4) NOT NULL DEFAULT 0,
   `max` tinyint(4) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -319,6 +330,8 @@ CREATE TABLE `teams` (
   `right_competence_read` tinyint(1) NOT NULL DEFAULT 0,
   `right_course_write` tinyint(1) NOT NULL DEFAULT 0,
   `right_course_read` tinyint(1) NOT NULL DEFAULT 0,
+  `right_discipline_write` tinyint(1) NOT NULL DEFAULT 0,
+  `right_discipline_read` tinyint(1) NOT NULL DEFAULT 0,
   `right_event_write` tinyint(1) NOT NULL DEFAULT 0,
   `right_event_read` tinyint(1) NOT NULL DEFAULT 0,
   `right_inventory_write` tinyint(1) NOT NULL DEFAULT 0,
@@ -357,6 +370,20 @@ CREATE TABLE `terms` (
   `term_begin` date DEFAULT NULL,
   `term_end` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `term_disciplines`
+--
+
+CREATE TABLE `term_disciplines` (
+  `id` int(11) NOT NULL,
+  `term_id` int(11) NOT NULL,
+  `discipline_id` smallint(6) NOT NULL,
+  `begin` year(4) DEFAULT NULL,
+  `end` year(4) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -421,6 +448,20 @@ CREATE TABLE `user_credentials` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `user_equipment`
+--
+
+CREATE TABLE `user_equipment` (
+  `equipment_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  `skill_id` smallint(6) NOT NULL,
+  `item_id` int(11) NOT NULL,
+  `count` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `user_possessions`
 --
 
@@ -480,22 +521,19 @@ ALTER TABLE `courses`
 -- Indexes for table `course_attendance_sieves`
 --
 ALTER TABLE `course_attendance_sieves`
-  ADD PRIMARY KEY (`course_id`,`team_id`,`role`),
-  ADD KEY `REF_team` (`team_id`);
+  ADD PRIMARY KEY (`course_id`,`team_id`,`role`);
 
 --
 -- Indexes for table `course_bookmarks`
 --
 ALTER TABLE `course_bookmarks`
-  ADD PRIMARY KEY (`course_id`,`user_id`),
-  ADD KEY `REF_user` (`user_id`);
+  ADD PRIMARY KEY (`course_id`,`user_id`);
 
 --
 -- Indexes for table `course_moderators`
 --
 ALTER TABLE `course_moderators`
-  ADD PRIMARY KEY (`course_id`,`user_id`),
-  ADD KEY `user_id` (`user_id`);
+  ADD PRIMARY KEY (`course_id`,`user_id`);
 
 --
 -- Indexes for table `course_requirements`
@@ -504,6 +542,12 @@ ALTER TABLE `course_requirements`
   ADD PRIMARY KEY (`requirement_id`),
   ADD KEY `REF_skill` (`skill_id`),
   ADD KEY `REF_course` (`course_id`);
+
+--
+-- Indexes for table `disciplines`
+--
+ALTER TABLE `disciplines`
+  ADD PRIMARY KEY (`discipline_id`);
 
 --
 -- Indexes for table `events`
@@ -532,8 +576,7 @@ ALTER TABLE `event_attendance_presences`
 -- Indexes for table `event_attendance_registrations`
 --
 ALTER TABLE `event_attendance_registrations`
-  ADD PRIMARY KEY (`event_id`,`user_id`,`role`),
-  ADD KEY `REF_user` (`user_id`);
+  ADD PRIMARY KEY (`event_id`,`user_id`,`role`);
 
 --
 -- Indexes for table `event_bookmarks`
@@ -546,8 +589,7 @@ ALTER TABLE `event_bookmarks`
 -- Indexes for table `event_owners`
 --
 ALTER TABLE `event_owners`
-  ADD PRIMARY KEY (`event_id`,`user_id`),
-  ADD KEY `REF_user` (`user_id`);
+  ADD PRIMARY KEY (`event_id`,`user_id`);
 
 --
 -- Indexes for table `items`
@@ -585,8 +627,7 @@ ALTER TABLE `organisations`
 -- Indexes for table `organisation_affiliations`
 --
 ALTER TABLE `organisation_affiliations`
-  ADD KEY `organisation_members_ibfk_1` (`organisation_id`),
-  ADD KEY `organisation_members_ibfk_2` (`user_id`);
+  ADD PRIMARY KEY (`organisation_id`,`user_id`) USING BTREE;
 
 --
 -- Indexes for table `skills`
@@ -618,6 +659,14 @@ ALTER TABLE `terms`
   ADD KEY `club_id` (`club_id`);
 
 --
+-- Indexes for table `term_disciplines`
+--
+ALTER TABLE `term_disciplines`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `REF_term` (`term_id`),
+  ADD KEY `REF_discipline` (`discipline_id`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -642,6 +691,15 @@ ALTER TABLE `user_competences`
 --
 ALTER TABLE `user_credentials`
   ADD PRIMARY KEY (`credential_id`);
+
+--
+-- Indexes for table `user_equipment`
+--
+ALTER TABLE `user_equipment`
+  ADD PRIMARY KEY (`equipment_id`),
+  ADD KEY `user_equipment_ibfk_1` (`user_id`),
+  ADD KEY `user_equipment_ibfk_2` (`skill_id`),
+  ADD KEY `user_equipment_ibfk_3` (`item_id`);
 
 --
 -- Indexes for table `user_possessions`
@@ -685,6 +743,12 @@ ALTER TABLE `courses`
 --
 ALTER TABLE `course_requirements`
   MODIFY `requirement_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `disciplines`
+--
+ALTER TABLE `disciplines`
+  MODIFY `discipline_id` smallint(6) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `events`
@@ -741,6 +805,12 @@ ALTER TABLE `terms`
   MODIFY `term_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `term_disciplines`
+--
+ALTER TABLE `term_disciplines`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
@@ -757,6 +827,12 @@ ALTER TABLE `user_competences`
 --
 ALTER TABLE `user_credentials`
   MODIFY `credential_id` mediumint(9) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `user_equipment`
+--
+ALTER TABLE `user_equipment`
+  MODIFY `equipment_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `user_possessions`
@@ -879,6 +955,13 @@ ALTER TABLE `terms`
   ADD CONSTRAINT `terms_ibfk_2` FOREIGN KEY (`club_id`) REFERENCES `clubs` (`club_id`) ON UPDATE CASCADE;
 
 --
+-- Constraints for table `term_disciplines`
+--
+ALTER TABLE `term_disciplines`
+  ADD CONSTRAINT `term_disciplines_ibfk_1` FOREIGN KEY (`term_id`) REFERENCES `terms` (`term_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `term_disciplines_ibfk_2` FOREIGN KEY (`discipline_id`) REFERENCES `disciplines` (`discipline_id`) ON UPDATE CASCADE;
+
+--
 -- Constraints for table `users`
 --
 ALTER TABLE `users`
@@ -894,6 +977,14 @@ ALTER TABLE `user_competences`
   ADD CONSTRAINT `user_competences_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `user_competences_ibfk_2` FOREIGN KEY (`skill_id`) REFERENCES `skills` (`skill_id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `user_competences_ibfk_3` FOREIGN KEY (`judge_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `user_equipment`
+--
+ALTER TABLE `user_equipment`
+  ADD CONSTRAINT `user_equipment_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `user_equipment_ibfk_2` FOREIGN KEY (`skill_id`) REFERENCES `skills` (`skill_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `user_equipment_ibfk_3` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `user_possessions`
