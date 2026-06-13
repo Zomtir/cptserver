@@ -1,5 +1,5 @@
 use cptserver;
-use cptserver::error::ErrorKind;
+use cptserver::error::Result;
 
 use cptserver::common::{Affiliation, Organisation, User};
 

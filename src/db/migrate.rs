@@ -1,20 +1,6 @@
-pub mod club;
-pub mod competence;
-pub mod course;
-pub mod event;
-pub mod inventory;
-pub mod location;
-pub mod login;
-pub mod organisation;
-pub mod skill;
-pub mod team;
-pub mod user;
-
 use crate::error::{Error, ErrorKind, Result};
 use mysql::prelude::Queryable;
 use mysql::PooledConn;
-
-static SCHEME_VERSION: u8 = 3;
 
 pub fn get_version(conn: &mut PooledConn) -> Result<u8> {
     let query_version = "SELECT version FROM _info;";
@@ -29,7 +15,7 @@ pub fn set_version(conn: &mut PooledConn, version: u8) -> Result<()> {
 }
 
 pub fn migrate_scheme(conn: &mut PooledConn, db_name: &str) -> Result<()> {
-    let latest_version: u8 = SCHEME_VERSION;
+    let latest_version: u8 = crate::db::SCHEME_VERSION;
 
     // Check if the database has tables
     let query_empty = format! {"SELECT COUNT(*) FROM information_schema.tables WHERE TABLE_SCHEMA = '{}';", db_name};
@@ -37,12 +23,12 @@ pub fn migrate_scheme(conn: &mut PooledConn, db_name: &str) -> Result<()> {
 
     // Case 1: The database is empty and we do a fresh install
     if is_empty {
-        let partial_path = format!("sql/schema_{}.sql", latest_version);
-        let local_path = crate::common::fs::local_path(&partial_path);
+        let partial_path = format!("schema_{}.sql", latest_version);
+        let full_path = crate::fs::get_sql_path().join(&partial_path);
         println!("DB: Fresh setup to version {}", latest_version);
 
         // Apply the schema
-        let query_schema = std::fs::read_to_string(local_path)
+        let query_schema = std::fs::read_to_string(full_path)
             .map_err(|_| Error::new(ErrorKind::Database, "Failed to read schema file"))?;
         conn.query_drop(&query_schema)?;
 
@@ -55,11 +41,11 @@ pub fn migrate_scheme(conn: &mut PooledConn, db_name: &str) -> Result<()> {
 
         // Case 2: Schema info is missing which is taken as indicator of schema version 0
         if !has_info {
-            let partial_path = "sql/migrate_0.sql";
-            let local_path = crate::common::fs::local_path(partial_path);
+            let partial_path = "migrate_0.sql";
+            let full_path = crate::fs::get_sql_path().join(&partial_path);
 
             // Run the script that makes the version 0 explicit
-            let query_migrate0 = std::fs::read_to_string(local_path)
+            let query_migrate0 = std::fs::read_to_string(full_path)
                 .map_err(|_| Error::new(ErrorKind::Database, "Failed to read initial migration file"))?;
             conn.query_drop(&query_migrate0)?;
         }
@@ -70,11 +56,11 @@ pub fn migrate_scheme(conn: &mut PooledConn, db_name: &str) -> Result<()> {
         println!("DB: Migration from version {} to {}", current_version, latest_version);
         // Do incremental migrations
         while current_version < latest_version {
-            let partial_path = format!("sql/migrate_{}.sql", current_version + 1);
-            let local_path = crate::common::fs::local_path(&partial_path);
+            let partial_path = format!("migrate_{}.sql", current_version + 1);
+            let full_path = crate::fs::get_sql_path().join(&partial_path);
 
             // Apply the next migration script
-            let query_migrate = std::fs::read_to_string(local_path)
+            let query_migrate = std::fs::read_to_string(full_path)
                 .map_err(|_| Error::new(ErrorKind::Database, "Failed to read migration file"))?;
             conn.query_drop(query_migrate)?;
             current_version += 1;

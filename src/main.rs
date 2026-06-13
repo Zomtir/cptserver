@@ -10,6 +10,7 @@ mod common;
 mod config;
 mod db;
 mod error;
+mod fs;
 mod permission;
 mod route;
 mod session;
@@ -31,7 +32,7 @@ fn promote_user_to_admin(conn: &mut PooledConn) -> anyhow::Result<()> {
     if crate::db::user::user_created_true(conn, admin_key)?.is_none() {
         let mut user = crate::common::User::from_info(
             0,
-            admin_key.clone(),
+            admin_key.into(),
             "Placeholder".to_string(),
             "Placeholder".to_string(),
             None,
@@ -40,13 +41,21 @@ fn promote_user_to_admin(conn: &mut PooledConn) -> anyhow::Result<()> {
     }
 
     // Elevate the user to admin
-    *crate::session::ADMINSESSION.lock().unwrap() = Some(admin_key.clone());
+    *crate::session::ADMINSESSION.lock().unwrap() = Some(admin_key.into());
     Ok(())
 }
 
 #[rocket::launch]
 fn rocket() -> _ {
-    config::readConfig();
+    let path_home_exe: Option<std::path::PathBuf> = std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|p| p.to_path_buf()));
+    let path_home_env = std::env::var("CPT_PATH_HOME").ok().map(|p| std::path::PathBuf::from(p));
+    let path_home = path_home_env.or(path_home_exe);
+
+    fs::init_paths(path_home);
+
+    config::read_config();
 
     if utils::db::init_db_pool().is_err() {
         panic!("Database pool initialization failed")

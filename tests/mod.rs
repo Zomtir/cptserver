@@ -1,5 +1,5 @@
 use cptserver;
-use cptserver::error::ErrorKind;
+use cptserver::error::Result;
 
 mod common;
 

@@ -45,13 +45,12 @@ pub fn club_image(club_id: u32) -> Result<Vec<u8>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     let club = crate::db::club::club_info(conn, club_id)?;
 
-    let image_url = match club.image_url {
-        None => "resources/club_image_placeholder.png".to_string(),
-        Some(url) => format!("data/clubs/{}", url),
+    let full_path = match club.image_url {
+        None => crate::fs::get_resources_path().join("club_image_placeholder.png"),
+        Some(url) => crate::fs::get_data_path().join(&format!("clubs/{}", url)),
     };
 
-    let local_path = crate::common::fs::local_path(&image_url);
-    std::fs::read(local_path).map_err(|_| Error::new(ErrorKind::Filesystem, "Failed to read club image"))
+    std::fs::read(full_path).map_err(|_| Error::new(ErrorKind::Filesystem, "Failed to read club image"))
 }
 
 #[rocket::get("/anon/club_banner?<club_id>")]
@@ -59,13 +58,12 @@ pub fn club_banner(club_id: u32) -> Result<Vec<u8>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     let club = crate::db::club::club_info(conn, club_id)?;
 
-    let banner_url = match club.banner_url {
-        None => "resources/club_banner_placeholder.png".to_string(),
-        Some(url) => format!("data/clubs/{}", url),
+    let full_path = match club.banner_url {
+        None => crate::fs::get_resources_path().join("club_banner_placeholder.png"),
+        Some(url) => crate::fs::get_data_path().join(&format!("clubs/{}", url)),
     };
 
-    let local_path = crate::common::fs::local_path(&banner_url);
-    std::fs::read(local_path).map_err(|_| Error::new(ErrorKind::Filesystem, "Failed to read club banner"))
+    std::fs::read(full_path).map_err(|_| Error::new(ErrorKind::Filesystem, "Failed to read club banner"))
 }
 
 #[rocket::get("/anon/course_list")]

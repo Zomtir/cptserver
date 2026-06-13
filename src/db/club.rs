@@ -55,10 +55,10 @@ pub fn club_info(conn: &mut PooledConn, club_id: u32) -> Result<Club> {
 
 pub fn club_create(conn: &mut PooledConn, club: &Club) -> Result<u32> {
     if let Some(image_url) = &club.image_url {
-        crate::common::fs::validate_path(image_url)?;
+        crate::fs::validate_path(image_url)?;
     }
     if let Some(banner_url) = &club.banner_url {
-        crate::common::fs::validate_path(banner_url)?;
+        crate::fs::validate_path(banner_url)?;
     }
 
     let stmt = conn.prep(
@@ -83,10 +83,10 @@ pub fn club_create(conn: &mut PooledConn, club: &Club) -> Result<u32> {
 
 pub fn club_edit(conn: &mut PooledConn, club_id: u32, club: &Club) -> Result<()> {
     if let Some(image_url) = &club.image_url {
-        crate::common::fs::validate_path(image_url)?;
+        crate::fs::validate_path(image_url)?;
     }
     if let Some(banner_url) = &club.banner_url {
-        crate::common::fs::validate_path(banner_url)?;
+        crate::fs::validate_path(banner_url)?;
     }
 
     let stmt = conn.prep(

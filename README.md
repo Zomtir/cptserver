@@ -6,6 +6,9 @@ This is the server application for providing an API for the cptclient. CPT stand
 Deployment
 ==========
 
+Database
+--------
+
 The server requires a suitable SQL database. The easiest way to setup is to setup a MariaDB database. Adapt the names to your liking. The program installs and updates the schema automatically.
 
 ```SQL
@@ -14,21 +17,56 @@ CREATE DATABASE cptdb;
 GRANT ALL PRIVILEGES ON cptdb.* TO 'cptdb-user'@'localhost';
 ```
 
-Then set up a config file called `cptserver.toml` for the server containing the database details. You can use `cptserver.template.toml` as template. `3306` is usually the default port.
+Server config
+-------------
 
-```
-db_server = 'localhost'
-db_port = 3306
-db_database = 'cptdb'
-db_user = 'cptdb-user'
-db_password = 'cptdb-password'
-```
+You can configure various settings in the following priority (lowest to highest):
 
-To create an initial admin user account, also include an `cpt_admin` in `cptserver.toml`. He has all right and requires no password. **Do remove this line as soon as you are done with the initial user/group setup.**
+* Default setting
+* Config file (.toml)
+* Environment variables
 
-```
-cpt_admin = 'admin'
-```
+If you plan to use `cptserver.toml` for the server settings, you can use `cptserver.template.toml` as template.
+
+Best practice for developement is to add your environment variables your `~/.bashrc`. On the server they should be included in the `.service` system unit.
+
+| ENVAR                    |      TOML           |  Default           |
+|:---                      |:---                 |:---                |
+| `CPT_PATH_HOME`          |  unavailable        | `$EXE`             |
+| `CPT_PATH_CONFIG`        |  unavailable        | `$CPT_PATH_HOME/cptserver.toml` |
+| `CPT_PATH_SQL`           |  unavailable        | `$CPT_PATH_HOME/sql/`           |
+| `CPT_PATH_RESOURCES`     |  unavailable        | `$CPT_PATH_HOME/resources/`     |
+| `CPT_PATH_DATA`          |  unavailable        | `$CPT_PATH_HOME/data/`          |
+| `CPT_ROCKET_ADDRESS`     |  `rocket_address`   | `'127.0.0.1'`      |
+| `CPT_ROCKET_PORT`        |  `rocket_port`      | `8000`             |
+| `CPT_ROCKET_LOG_LEVEL`   |  `rocket_log_level` | `'Normal'`         |
+| `CPT_DB_HOST`            |  `db_host`          | `'localhost'`      |
+| `CPT_DB_PORT`            |  `db_port`          | `3306`             |
+| `CPT_DB_DATABASE`        |  `db_database`      | `'cptdb'`          |
+| `CPT_DB_USER`            |  `db_user`          | `'cptdb-user'`     |
+| `CPT_DB_PASSWORD`        |  `db_password`      | `'cptdb-password'` |
+| `CPT_APP_ADMIN`          |  `app_admin`        | unset              |
+
+
+To create an initial admin user account, also include an `app_admin` in `cptserver.toml`. He has all right and requires no password. **Do remove this line as soon as you are done with the initial user/group setup.**
+
+<details>
+<summary>All settings</summary>
+
+| ENVAR                                           | TOML                                        | Default            |
+| :---------------------------------------------- | :------------------------------------------ | :----------------- |
+| `CPT_APP_SESSION_DURATION_HOURS`                | `app_session_duration_hours`                | ?                  |
+| `CPT_APP_EVENT_ACCEPTANCE_AUTO`                 | `app_event_acceptance_auto`                 | ?                  |
+| `CPT_APP_EVENT_SEARCH_DATE_MIN_YEAR`            | `app_event_search_date_min_year`            | ?                  |
+| `CPT_APP_EVENT_SEARCH_DATE_MAX_YEAR`            | `app_event_search_date_max_year`            | ?                  |
+| `CPT_APP_EVENT_SEARCH_WINDOW_MIN_DAYS`          | `app_event_search_window_min_days`          | ?                  |
+| `CPT_APP_EVENT_SEARCH_WINDOW_MAX_DAYS`          | `app_event_search_window_max_days`          | ?                  |
+| `CPT_APP_EVENT_OCCURRENCE_DURATION_MIN_MINUTES` | `app_event_occurrence_duration_min_minutes` | ?                  |
+| `CPT_APP_EVENT_OCCURRENCE_DURATION_MAX_DAYS`    | `app_event_occurrence_duration_max_days`    | ?                  |
+| `CPT_APP_EVENT_OCCURRENCE_SNAP_MINUTES`         | `app_event_occurrence_snap_minutes`         | ?                  |
+| `CPT_APP_EVENT_LOGIN_BUFFER_HOURS`              | `app_event_login_buffer_hours`              | ?                  |
+
+</details>
 
 Compiling and executing the application for developement is the usualy `cargo` workflow.
 
@@ -46,19 +84,23 @@ cargo run
 Testing
 =======
 
-If you want to `cargo test` the application, you have to adapt the `cpt_test_env.sh` in the project root directory beforehand. It has to contain the correct path to just mentioned directory to get a hold of uncompiled files. Also it contains your test database information.
+If you want to `cargo test` the application, you have to set configure a few `ENVAR` beforehand. You also should use a dedicated test database and make the information available.
 
-Either `source cpt_test_env.sh` to your current shell or put the content in your `~/.bashrc`.
+It is recommended to put your variables in `~/.bashrc`, a dedicated `TOML` test config is not available at this point.
 
-```
-export CPTSERVER_CONFIG=/home/user/development/cptserver
+<details>
+<summary>All settings</summary>
 
-export CPTDB_TEST_SERVER="localhost"
-export CPTDB_TEST_PORT=3306
-export CPTDB_TEST_DATABASE="cptdbt"
-export CPTDB_TEST_USER="cptdbt-user"
-export CPTDB_TEST_PASSWORD="cptdbt-password"
-```
+| ENVAR                    |      TOML           |  Default           |
+|:---                      |:---                 |:---                |
+| `CPT_PATH_HOME`          | unavailable         | `$PWD`             |
+| `CPT_TEST_DB_HOST`       | unavailable         | `'localhost'`      |
+| `CPT_TEST_DB_PORT`       | unavailable         | `3306`             |
+| `CPT_TEST_DB_DATABASE`   | unavailable         | `'cpttdb'`          |
+| `CPT_TEST_DB_USER`       | unavailable         | `'cpttdb-user'`     |
+| `CPT_TEST_DB_PASSWORD`   | unavailable         | `'cpttdb-password'` |
+
+</details>
 
 Releases
 ========
@@ -81,7 +123,7 @@ Adapt the Cargo.toml file.
 version = "1.1.1"
 ```
 
-Update the database scheme version to version `X` in src/db/mod.rs if neccessary, whereas `X` is the next increment from the previous one.
+Update the database scheme version to version `X` in src/db.rs if neccessary, whereas `X` is the next increment from the previous one.
 
 ```
 static SCHEME_VERSION : u8 = X;

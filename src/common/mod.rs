@@ -11,7 +11,6 @@ mod confirmation;
 mod course;
 mod credential;
 mod event;
-pub mod fs;
 mod gender;
 mod item;
 mod license;
