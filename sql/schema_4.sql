@@ -255,6 +255,7 @@ CREATE TABLE `licenses` (
   `id` mediumint(9) NOT NULL,
   `number` varchar(20) NOT NULL,
   `name` varchar(50) NOT NULL,
+  `issued` date DEFAULT NULL,
   `expiration` date NOT NULL,
   `file_url` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

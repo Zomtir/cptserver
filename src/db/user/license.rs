@@ -6,13 +6,14 @@ use crate::error::Result;
 
 pub fn user_license_main_create(conn: &mut PooledConn, user_id: u64, license: &License) -> Result<()> {
     let stmt = conn.prep(
-        "INSERT INTO licenses (number, name, expiration, file_url)
-        VALUES (:number, :name, :expiration, :file_url);",
+        "INSERT INTO licenses (number, name, issued,expiration, file_url)
+        VALUES (:number, :name, :issued, :expiration, :file_url);",
     )?;
 
     let params = params! {
         "number" => &license.number,
         "name" => &license.name,
+        "issued" => &license.issued,
         "expiration" => &license.expiration,
         "file_url" => &license.file_url,
     };
@@ -38,13 +39,14 @@ pub fn user_license_main_create(conn: &mut PooledConn, user_id: u64, license: &L
 
 pub fn user_license_extra_create(conn: &mut PooledConn, user_id: u64, license: &License) -> Result<()> {
     let stmt = conn.prep(
-        "INSERT INTO licenses (number, name, expiration, file_url)
-        VALUES (:number, :name, :expiration, :file_url);",
+        "INSERT INTO licenses (number, name, issued, expiration, file_url)
+        VALUES (:number, :name, :issued, :expiration, :file_url);",
     )?;
 
     let params = params! {
         "number" => &license.number,
         "name" => &license.name,
+        "issued" => &license.issued,
         "expiration" => &license.expiration,
         "file_url" => &license.file_url,
     };
@@ -75,6 +77,7 @@ pub fn user_license_main_edit(conn: &mut PooledConn, user_id: u64, license: &Lic
         SET
             licenses.number = :number,
             licenses.name = :name,
+            licenses.issued = :issued,
             licenses.expiration = :expiration,
             licenses.file_url = :file_url
         WHERE user_id = :user_id;",
@@ -84,6 +87,7 @@ pub fn user_license_main_edit(conn: &mut PooledConn, user_id: u64, license: &Lic
         "user_id" => &user_id,
         "number" => &license.number,
         "name" => &license.name,
+        "issued" => &license.issued,
         "expiration" => &license.expiration,
         "file_url" => &license.file_url,
     };
@@ -99,6 +103,7 @@ pub fn user_license_extra_edit(conn: &mut PooledConn, user_id: u64, license: &Li
         SET
             licenses.number = :number,
             licenses.name = :name,
+            licenses.issued = :issued,
             licenses.expiration = :expiration,
             licenses.file_url = :file_url
         WHERE users.user_id = :user_id;",
@@ -108,6 +113,7 @@ pub fn user_license_extra_edit(conn: &mut PooledConn, user_id: u64, license: &Li
         "user_id" => &user_id,
         "number" => &license.number,
         "name" => &license.name,
+        "issued" => &license.issued,
         "expiration" => &license.expiration,
         "file_url" => &license.file_url,
     };

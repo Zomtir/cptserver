@@ -31,3 +31,6 @@ CREATE TABLE `user_equipment` (`equipment_id` INT NOT NULL AUTO_INCREMENT , `use
 ALTER TABLE `user_equipment` ADD CONSTRAINT `user_equipment_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE `user_equipment` ADD CONSTRAINT `user_equipment_ibfk_2` FOREIGN KEY (`skill_id`) REFERENCES `skills`(`skill_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE `user_equipment` ADD CONSTRAINT `user_equipment_ibfk_3` FOREIGN KEY (`item_id`) REFERENCES `items`(`item_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+--- Add issued date to licenses
+ALTER TABLE `licenses` ADD `issued` DATE NULL DEFAULT NULL AFTER `name`;
