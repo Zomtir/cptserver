@@ -14,7 +14,7 @@ pub fn term_list(session: UserSession, club_id: Option<u32>, user_id: Option<u32
 }
 
 #[rocket::get("/admin/term_info?<term_id>")]
-pub fn term_info(session: UserSession, term_id: u32) -> Result<Json<Term>> {
+pub fn term_info(session: UserSession, term_id: u64) -> Result<Json<Term>> {
     crate::permission::require_right(session.right.right_club_read)?;
 
     let conn = &mut crate::utils::db::get_db_conn()?;
@@ -32,7 +32,7 @@ pub fn term_create(session: UserSession, term: Json<Term>) -> Result<String> {
 }
 
 #[rocket::post("/admin/term_edit?<term_id>", format = "application/json", data = "<term>")]
-pub fn term_edit(session: UserSession, term_id: i64, term: Json<Term>) -> Result<()> {
+pub fn term_edit(session: UserSession, term_id: u32, term: Json<Term>) -> Result<()> {
     crate::permission::require_right(session.right.right_club_write)?;
 
     let conn = &mut crate::utils::db::get_db_conn()?;
@@ -41,7 +41,7 @@ pub fn term_edit(session: UserSession, term_id: i64, term: Json<Term>) -> Result
 }
 
 #[rocket::head("/admin/term_delete?<term_id>")]
-pub fn term_delete(session: UserSession, term_id: i64) -> Result<()> {
+pub fn term_delete(session: UserSession, term_id: u32) -> Result<()> {
     crate::permission::require_right(session.right.right_club_write)?;
 
     let conn = &mut crate::utils::db::get_db_conn()?;

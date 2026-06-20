@@ -378,7 +378,7 @@ CREATE TABLE `terms` (
 --
 
 CREATE TABLE `term_disciplines` (
-  `id` int(11) NOT NULL,
+  `term_discipline_id` int(11) NOT NULL,
   `term_id` int(11) NOT NULL,
   `discipline_id` smallint(6) NOT NULL,
   `begin` year(4) DEFAULT NULL,
@@ -662,7 +662,7 @@ ALTER TABLE `terms`
 -- Indexes for table `term_disciplines`
 --
 ALTER TABLE `term_disciplines`
-  ADD PRIMARY KEY (`id`),
+  ADD PRIMARY KEY (`term_discipline_id`),
   ADD KEY `REF_term` (`term_id`),
   ADD KEY `REF_discipline` (`discipline_id`);
 
@@ -808,7 +808,7 @@ ALTER TABLE `terms`
 -- AUTO_INCREMENT for table `term_disciplines`
 --
 ALTER TABLE `term_disciplines`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `term_discipline_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`

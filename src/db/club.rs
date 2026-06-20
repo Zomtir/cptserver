@@ -6,10 +6,11 @@ use crate::error::{Error, ErrorKind, Result};
 
 mod statistics;
 mod term;
+mod term_discipline;
 
 pub use statistics::*;
 pub use term::*;
-
+pub use term_discipline::*;
 pub fn club_list(conn: &mut PooledConn) -> Result<Vec<Club>> {
     let stmt = conn.prep(
         "SELECT club_id, club_key, name

@@ -8,7 +8,7 @@ ALTER TABLE `organisation_affiliations` DROP INDEX `organisation_members_ibfk_1`
 CREATE TABLE `disciplines` (`discipline_id` SMALLINT NOT NULL AUTO_INCREMENT , `name` TINYTEXT NOT NULL , PRIMARY KEY (`discipline_id`));
 
 -- Create term disciplines table
-CREATE TABLE `term_disciplines` (`id` INT NOT NULL AUTO_INCREMENT , `term_id` INT NOT NULL , `discipline_id` SMALLINT NOT NULL , `begin` YEAR NULL , `end` YEAR NULL , PRIMARY KEY (`id`), KEY `REF_term` (`term_id`), KEY `REF_discipline` (`discipline_id`));
+CREATE TABLE `term_disciplines` (`term_discipline_id` INT NOT NULL AUTO_INCREMENT , `term_id` INT NOT NULL , `discipline_id` SMALLINT NOT NULL , `begin` YEAR NULL , `end` YEAR NULL , PRIMARY KEY (`term_discipline_id`), KEY `REF_term` (`term_id`), KEY `REF_discipline` (`discipline_id`));
 ALTER TABLE `term_disciplines` ADD CONSTRAINT `term_disciplines_ibfk_1` FOREIGN KEY (`term_id`) REFERENCES `terms`(`term_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE `term_disciplines` ADD CONSTRAINT `term_disciplines_ibfk_2` FOREIGN KEY (`discipline_id`) REFERENCES `disciplines`(`discipline_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 

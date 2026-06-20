@@ -1,33 +1,8 @@
-use chrono::NaiveDate;
 use mysql::prelude::Queryable;
 use mysql::{params, PooledConn};
 
-use crate::common::{Club, Term, User};
+use crate::common::Term;
 use crate::error::{Error, ErrorKind, Result};
-
-fn row_map(
-    (term_id, user_id, user_key, firstname, lastname, nickname, club_id, club_key, club_name, begin, end): (
-        u64,
-        u64,
-        String,
-        String,
-        String,
-        Option<String>,
-        u64,
-        String,
-        String,
-        Option<NaiveDate>,
-        Option<NaiveDate>,
-    ),
-) -> Term {
-    Term {
-        id: term_id,
-        user: User::from_info(user_id, user_key, firstname, lastname, nickname),
-        club: Club::from_info(club_id, club_key, club_name),
-        begin,
-        end,
-    }
-}
 
 pub fn term_list(
     conn: &mut PooledConn,
@@ -38,7 +13,7 @@ pub fn term_list(
     let stmt = conn.prep(
         "SELECT t.term_id,
             u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
-            c.club_id, c.club_key, c.name,
+            c.club_id, c.club_key, c.name AS club_name,
             t.term_begin, t.term_end
         FROM terms t
         JOIN users u ON (u.user_id = t.user_id)
@@ -54,15 +29,36 @@ pub fn term_list(
         "point_in_time" => point_in_time,
     };
 
-    let terms = conn.exec_map(&stmt, &params, &row_map)?;
+    let rows: Vec<mysql::Row> = conn.exec(&stmt, &params)?;
+
+    let mut terms = Vec::new();
+
+    for mut row in rows {
+        let term = Term::from_row(
+            row.take("term_id"),
+            row.take("user_id"),
+            row.take("user_key"),
+            row.take("firstname"),
+            row.take("lastname"),
+            row.take("nickname"),
+            row.take("club_id"),
+            row.take("club_key"),
+            row.take("club_name"),
+            row.take("term_begin"),
+            row.take("term_end"),
+        );
+
+        terms.push(term.unwrap());
+    }
+
     Ok(terms)
 }
 
-pub fn term_info(conn: &mut PooledConn, term_id: u32) -> Result<Term> {
+pub fn term_info(conn: &mut PooledConn, term_id: u64) -> Result<Term> {
     let stmt = conn.prep(
         "SELECT t.term_id,
             u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
-            c.club_id, c.club_key, c.name,
+            c.club_id, c.club_key, c.name As club_name,
             t.term_begin, t.term_end
         FROM terms t
         JOIN users u ON (u.user_id = t.user_id)
@@ -74,8 +70,28 @@ pub fn term_info(conn: &mut PooledConn, term_id: u32) -> Result<Term> {
         "term_id" => term_id,
     };
 
-    let row = conn.exec_first(&stmt, &params)?;
-    row.map(row_map).ok_or(Error::new(ErrorKind::Missing, "Term not found"))
+    let mut row = conn
+        .exec_first::<mysql::Row, _, _>(&stmt, &params)?
+        .ok_or(Error::new(ErrorKind::Missing, "Term not found"))?;
+
+    let mut term = Term::from_row(
+        row.take("term_id"),
+        row.take("user_id"),
+        row.take("user_key"),
+        row.take("firstname"),
+        row.take("lastname"),
+        row.take("nickname"),
+        row.take("club_id"),
+        row.take("club_key"),
+        row.take("club_name"),
+        row.take("term_begin"),
+        row.take("term_end"),
+    )
+    .unwrap();
+
+    term.disciplines = crate::db::club::term_discipline::term_discipline_list(conn, Some(term.id)).ok();
+
+    Ok(term)
 }
 
 pub fn term_create(conn: &mut PooledConn, term: &Term) -> Result<u32> {
@@ -95,7 +111,7 @@ pub fn term_create(conn: &mut PooledConn, term: &Term) -> Result<u32> {
     Ok(conn.last_insert_id() as u32)
 }
 
-pub fn term_edit(conn: &mut PooledConn, term_id: i64, term: &Term) -> Result<()> {
+pub fn term_edit(conn: &mut PooledConn, term_id: u32, term: &Term) -> Result<()> {
     let stmt = conn.prep(
         "UPDATE terms SET
             user_id  = :user_id,
@@ -117,7 +133,7 @@ pub fn term_edit(conn: &mut PooledConn, term_id: i64, term: &Term) -> Result<()>
     Ok(())
 }
 
-pub fn term_delete(conn: &mut PooledConn, term_id: i64) -> Result<()> {
+pub fn term_delete(conn: &mut PooledConn, term_id: u32) -> Result<()> {
     let stmt = conn.prep("DELETE t FROM terms t WHERE t.term_id = :term_id")?;
 
     let params = params! {

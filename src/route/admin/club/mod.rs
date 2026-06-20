@@ -1,4 +1,5 @@
 pub mod term;
+pub mod term_discipline;
 
 use rocket::serde::json::Json;
 
