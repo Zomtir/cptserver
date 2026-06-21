@@ -1,3 +1,17 @@
+## Release v1.6.0 (21st Jun 2026)
+
+- feat: Added sport disciplines
+- feat: Declare neccessary equipment for disciplines per user
+- feat: Added API for user images
+- feat: ENVAR fallback and setting IO changes
+- feat: Issue date for user license
+- feat: Added sport discipline activity during club term
+- refactor: Consolidate error kinds and add error text wrapping
+- refactor: Renamed skill title to skill name
+- chore: Update dependencies - mysql, rand, chrono
+- chore: Push DB schema to version 4
+- chore: Dependency upgrades of rand, chrono and mysql
+
 ## Release v1.5.0 (14th Dec 2025)
 
 - feat: Added item_info route
