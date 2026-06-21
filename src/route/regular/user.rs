@@ -56,10 +56,15 @@ pub fn user_image(user_id: u64) -> Result<Vec<u8>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     let image_url = crate::db::user::user_image(conn, user_id)?;
 
-    let full_path = match image_url {
-        None => crate::fs::get_resources_path().join("user_image_placeholder.png"),
-        Some(url) => crate::fs::get_data_path().join(&format!("users/{}", url)),
-    };
+    if let Some(url) = image_url {
+        let path = crate::fs::get_data_path().join(format!("users/{url}"));
 
-    std::fs::read(full_path).map_err(|_| Error::new(ErrorKind::Filesystem, "Failed to read user image"))
+        if let Ok(image) = std::fs::read(path) {
+            return Ok(image);
+        }
+    }
+
+    let placeholder = crate::fs::get_resources_path().join("user_image_placeholder.png");
+
+    std::fs::read(placeholder).map_err(|_| Error::new(ErrorKind::Filesystem, "Failed to read user image"))
 }

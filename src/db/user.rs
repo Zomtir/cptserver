@@ -282,7 +282,7 @@ pub fn user_edit(conn: &mut PooledConn, user_id: u64, user: &mut User) -> Result
         user.gender.clone().into(),
         user.height.into(),
         user.weight.into(),
-        user.image_url.clone().into(),
+        user.image_url.clone().filter(|s| !s.trim().is_empty()).into(),
         user.note.clone().into(),
         user_id.into(),
     ];
