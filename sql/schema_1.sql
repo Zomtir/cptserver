@@ -28,36 +28,43 @@ CREATE TABLE `clubs` (
   `description` varchar(100) DEFAULT NULL,
   `disciplines` varchar(500) DEFAULT NULL,
   `image_url` varchar(50) DEFAULT NULL,
-  `banner_url` varchar(50) DEFAULT NULL,
   `chairman` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`club_id`),
   UNIQUE KEY `KEY` (`club_key`)
-);
-CREATE TABLE `course_attendance_sieves` (
-  `course_id` mediumint(9) NOT NULL,
-  `team_id` mediumint(9) NOT NULL,
-  `role` enum('PARTICIPANT','LEADER','SUPPORTER','SPECTATOR') NOT NULL,
-  `access` tinyint(1) NOT NULL,
-  PRIMARY KEY (`course_id`,`team_id`,`role`),
-  KEY `course_attendance_sieves_ibfk_2` (`team_id`),
-  CONSTRAINT `course_attendance_sieves_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
-  CONSTRAINT `course_attendance_sieves_ibfk_2` FOREIGN KEY (`team_id`) REFERENCES `teams` (`team_id`) ON UPDATE CASCADE
 );
 CREATE TABLE `course_bookmarks` (
   `course_id` mediumint(9) NOT NULL,
   `user_id` mediumint(9) NOT NULL,
   PRIMARY KEY (`course_id`,`user_id`),
-  KEY `course_bookmarks_ibfk_2` (`user_id`),
+  KEY `REF_user` (`user_id`),
   CONSTRAINT `course_bookmarks_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
   CONSTRAINT `course_bookmarks_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE
+);
+CREATE TABLE `course_leader_sieves` (
+  `course_id` mediumint(9) NOT NULL,
+  `team_id` mediumint(9) NOT NULL,
+  `access` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`course_id`,`team_id`),
+  KEY `REF_team` (`team_id`),
+  CONSTRAINT `course_leader_sieves_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
+  CONSTRAINT `course_leader_sieves_ibfk_2` FOREIGN KEY (`team_id`) REFERENCES `teams` (`team_id`) ON UPDATE CASCADE
 );
 CREATE TABLE `course_moderators` (
   `course_id` mediumint(9) NOT NULL,
   `user_id` mediumint(9) NOT NULL,
   PRIMARY KEY (`course_id`,`user_id`),
-  KEY `course_moderators_ibfk_2` (`user_id`),
+  KEY `user_id` (`user_id`),
   CONSTRAINT `course_moderators_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
   CONSTRAINT `course_moderators_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE
+);
+CREATE TABLE `course_participant_sieves` (
+  `course_id` mediumint(9) NOT NULL,
+  `team_id` mediumint(9) NOT NULL,
+  `access` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`course_id`,`team_id`),
+  KEY `REF_team` (`team_id`),
+  CONSTRAINT `course_participant_sieves_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
+  CONSTRAINT `course_participant_sieves_ibfk_2` FOREIGN KEY (`team_id`) REFERENCES `teams` (`team_id`) ON UPDATE CASCADE
 );
 CREATE TABLE `course_requirements` (
   `requirement_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -69,6 +76,15 @@ CREATE TABLE `course_requirements` (
   KEY `REF_course` (`course_id`),
   CONSTRAINT `course_requirements_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
   CONSTRAINT `course_requirements_ibfk_2` FOREIGN KEY (`skill_id`) REFERENCES `skills` (`skill_id`) ON UPDATE CASCADE
+);
+CREATE TABLE `course_supporter_sieves` (
+  `course_id` mediumint(9) NOT NULL,
+  `team_id` mediumint(9) NOT NULL,
+  `access` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`course_id`,`team_id`),
+  KEY `REF_team` (`team_id`),
+  CONSTRAINT `course_supporter_sieves_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON UPDATE CASCADE,
+  CONSTRAINT `course_supporter_sieves_ibfk_2` FOREIGN KEY (`team_id`) REFERENCES `teams` (`team_id`) ON UPDATE CASCADE
 );
 CREATE TABLE `courses` (
   `course_id` mediumint(9) NOT NULL AUTO_INCREMENT,
@@ -82,40 +98,6 @@ CREATE TABLE `courses` (
   KEY `courses_ibfk_1` (`club_id`),
   CONSTRAINT `courses_ibfk_1` FOREIGN KEY (`club_id`) REFERENCES `clubs` (`club_id`) ON UPDATE CASCADE
 );
-CREATE TABLE `disciplines` (
-  `discipline_id` smallint(6) NOT NULL AUTO_INCREMENT,
-  `name` tinytext NOT NULL,
-  PRIMARY KEY (`discipline_id`)
-);
-CREATE TABLE `event_attendance_filters` (
-  `event_id` int(11) NOT NULL,
-  `user_id` mediumint(9) NOT NULL,
-  `role` enum('PARTICIPANT','LEADER','SUPPORTER','SPECTATOR') NOT NULL,
-  `access` tinyint(1) NOT NULL,
-  PRIMARY KEY (`event_id`,`user_id`,`role`),
-  KEY `event_attendance_filters_ibfk_2` (`user_id`),
-  CONSTRAINT `event_attendance_filters_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
-  CONSTRAINT `event_attendance_filters_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE
-);
-CREATE TABLE `event_attendance_presences` (
-  `event_id` int(11) NOT NULL,
-  `user_id` mediumint(9) NOT NULL,
-  `role` enum('PARTICIPANT','LEADER','SUPPORTER','SPECTATOR') NOT NULL,
-  PRIMARY KEY (`event_id`,`user_id`,`role`),
-  KEY `event_attendance_presences_ibfk_2` (`user_id`),
-  CONSTRAINT `event_attendance_presences_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
-  CONSTRAINT `event_attendance_presences_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE
-);
-CREATE TABLE `event_attendance_registrations` (
-  `event_id` int(11) NOT NULL,
-  `user_id` mediumint(9) NOT NULL,
-  `role` enum('PARTICIPANT','LEADER','SUPPORTER','SPECTATOR') NOT NULL,
-  `status` enum('POSITIVE','NEUTRAL','NEGATIVE','') NOT NULL,
-  PRIMARY KEY (`event_id`,`user_id`,`role`),
-  KEY `event_attendance_registrations_ibfk_2` (`user_id`),
-  CONSTRAINT `event_attendance_registrations_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON UPDATE CASCADE,
-  CONSTRAINT `event_attendance_registrations_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE
-);
 CREATE TABLE `event_bookmarks` (
   `event_id` int(11) NOT NULL,
   `user_id` mediumint(9) NOT NULL,
@@ -124,13 +106,91 @@ CREATE TABLE `event_bookmarks` (
   CONSTRAINT `event_bookmarks_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `event_bookmarks_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 );
+CREATE TABLE `event_leader_filters` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  `access` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`event_id`,`user_id`),
+  KEY `REF_user` (`user_id`),
+  CONSTRAINT `event_leader_filters_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `event_leader_filters_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE TABLE `event_leader_presences` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  PRIMARY KEY (`event_id`,`user_id`),
+  KEY `REF_user` (`user_id`),
+  CONSTRAINT `event_leader_presences_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `event_leader_presences_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE TABLE `event_leader_registrations` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  `status` enum('POSITIVE','NEUTRAL','NEGATIVE','') NOT NULL,
+  PRIMARY KEY (`event_id`,`user_id`),
+  KEY `REF_user` (`user_id`),
+  CONSTRAINT `event_leader_registrations_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `event_leader_registrations_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+);
 CREATE TABLE `event_owners` (
   `event_id` int(11) NOT NULL,
   `user_id` mediumint(9) NOT NULL,
   PRIMARY KEY (`event_id`,`user_id`),
-  KEY `event_owners_ibfk_2` (`user_id`),
+  KEY `REF_user` (`user_id`),
   CONSTRAINT `event_owners_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `event_owners_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE TABLE `event_participant_filters` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  `access` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`event_id`,`user_id`),
+  KEY `REF_user` (`user_id`),
+  CONSTRAINT `event_participant_filters_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `event_participant_filters_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE TABLE `event_participant_presences` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  PRIMARY KEY (`event_id`,`user_id`),
+  KEY `REF_user` (`user_id`),
+  CONSTRAINT `event_participant_presences_ibfk_2` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `event_participant_presences_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE TABLE `event_participant_registrations` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  `status` enum('POSITIVE','NEUTRAL','NEGATIVE','') NOT NULL,
+  PRIMARY KEY (`event_id`,`user_id`),
+  KEY `REF_user` (`user_id`),
+  CONSTRAINT `event_participant_registrations_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `event_participant_registrations_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE TABLE `event_supporter_filters` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  `access` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`event_id`,`user_id`),
+  KEY `REF_user` (`user_id`),
+  CONSTRAINT `event_supporter_filters_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `event_supporter_filters_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE TABLE `event_supporter_presences` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  PRIMARY KEY (`event_id`,`user_id`),
+  KEY `REF_user` (`user_id`),
+  CONSTRAINT `event_supporter_presences_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `event_supporter_presences_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE TABLE `event_supporter_registrations` (
+  `event_id` int(11) NOT NULL,
+  `user_id` mediumint(9) NOT NULL,
+  `status` enum('POSITIVE','NEUTRAL','NEGATIVE','') NOT NULL,
+  PRIMARY KEY (`event_id`,`user_id`),
+  KEY `REF_user` (`user_id`),
+  CONSTRAINT `event_supporter_registrations_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `event_supporter_registrations_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 );
 CREATE TABLE `events` (
   `event_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -168,11 +228,9 @@ CREATE TABLE `items` (
 );
 CREATE TABLE `licenses` (
   `id` mediumint(9) NOT NULL AUTO_INCREMENT,
-  `number` varchar(20) NOT NULL,
+  `number` int(11) NOT NULL,
   `name` varchar(50) NOT NULL,
-  `issued` date DEFAULT NULL,
   `expiration` date NOT NULL,
-  `file_url` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`)
 );
 CREATE TABLE `locations` (
@@ -190,8 +248,8 @@ CREATE TABLE `organisation_affiliations` (
   `permission_solo_date` date DEFAULT NULL,
   `permission_team_date` date DEFAULT NULL,
   `residency_move_date` date DEFAULT NULL,
-  PRIMARY KEY (`organisation_id`,`user_id`) USING BTREE,
-  KEY `organisation_affiliations_ibfk_2` (`user_id`),
+  KEY `organisation_members_ibfk_1` (`organisation_id`),
+  KEY `organisation_members_ibfk_2` (`user_id`),
   CONSTRAINT `organisation_affiliations_ibfk_1` FOREIGN KEY (`organisation_id`) REFERENCES `organisations` (`organisation_id`) ON UPDATE CASCADE,
   CONSTRAINT `organisation_affiliations_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE
 );
@@ -204,7 +262,7 @@ CREATE TABLE `organisations` (
 CREATE TABLE `skills` (
   `skill_id` smallint(6) NOT NULL AUTO_INCREMENT,
   `skill_key` char(10) NOT NULL,
-  `name` tinytext NOT NULL,
+  `title` tinytext NOT NULL,
   `min` tinyint(4) NOT NULL DEFAULT 0,
   `max` tinyint(4) NOT NULL DEFAULT 1,
   PRIMARY KEY (`skill_id`),
@@ -229,34 +287,20 @@ CREATE TABLE `teams` (
   `right_competence_read` tinyint(1) NOT NULL DEFAULT 0,
   `right_course_write` tinyint(1) NOT NULL DEFAULT 0,
   `right_course_read` tinyint(1) NOT NULL DEFAULT 0,
-  `right_discipline_write` tinyint(1) NOT NULL DEFAULT 0,
-  `right_discipline_read` tinyint(1) NOT NULL DEFAULT 0,
   `right_event_write` tinyint(1) NOT NULL DEFAULT 0,
   `right_event_read` tinyint(1) NOT NULL DEFAULT 0,
   `right_inventory_write` tinyint(1) NOT NULL DEFAULT 0,
   `right_inventory_read` tinyint(1) NOT NULL DEFAULT 0,
   `right_location_write` tinyint(1) NOT NULL DEFAULT 0,
   `right_location_read` tinyint(1) NOT NULL DEFAULT 0,
-  `right_organisation_write` tinyint(1) NOT NULL DEFAULT 0,
-  `right_organisation_read` tinyint(1) NOT NULL DEFAULT 0,
+  `right_organisation_write` tinyint(1) NOT NULL,
+  `right_organisation_read` tinyint(1) NOT NULL,
   `right_team_write` tinyint(1) NOT NULL DEFAULT 0,
   `right_team_read` tinyint(1) NOT NULL DEFAULT 0,
   `right_user_write` tinyint(1) NOT NULL DEFAULT 0,
   `right_user_read` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`team_id`),
   UNIQUE KEY `KEY` (`team_key`)
-);
-CREATE TABLE `term_disciplines` (
-  `term_discipline_id` int(11) NOT NULL AUTO_INCREMENT,
-  `term_id` int(11) NOT NULL,
-  `discipline_id` smallint(6) NOT NULL,
-  `begin` year(4) DEFAULT NULL,
-  `end` year(4) DEFAULT NULL,
-  PRIMARY KEY (`term_discipline_id`),
-  KEY `REF_term` (`term_id`),
-  KEY `REF_discipline` (`discipline_id`),
-  CONSTRAINT `term_disciplines_ibfk_1` FOREIGN KEY (`term_id`) REFERENCES `terms` (`term_id`) ON UPDATE CASCADE,
-  CONSTRAINT `term_disciplines_ibfk_2` FOREIGN KEY (`discipline_id`) REFERENCES `disciplines` (`discipline_id`) ON UPDATE CASCADE
 );
 CREATE TABLE `terms` (
   `term_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -285,28 +329,6 @@ CREATE TABLE `user_competences` (
   CONSTRAINT `user_competences_ibfk_2` FOREIGN KEY (`skill_id`) REFERENCES `skills` (`skill_id`) ON UPDATE CASCADE,
   CONSTRAINT `user_competences_ibfk_3` FOREIGN KEY (`judge_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE
 );
-CREATE TABLE `user_credentials` (
-  `credential_id` mediumint(9) NOT NULL AUTO_INCREMENT,
-  `salt` binary(16) NOT NULL,
-  `pepper` binary(16) NOT NULL,
-  `sp_hash` binary(32) NOT NULL,
-  `since` datetime NOT NULL,
-  PRIMARY KEY (`credential_id`)
-);
-CREATE TABLE `user_equipment` (
-  `equipment_id` int(11) NOT NULL AUTO_INCREMENT,
-  `user_id` mediumint(9) NOT NULL,
-  `skill_id` smallint(6) NOT NULL,
-  `item_id` int(11) NOT NULL,
-  `count` int(11) NOT NULL,
-  PRIMARY KEY (`equipment_id`),
-  KEY `user_equipment_ibfk_1` (`user_id`),
-  KEY `user_equipment_ibfk_2` (`skill_id`),
-  KEY `user_equipment_ibfk_3` (`item_id`),
-  CONSTRAINT `user_equipment_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE CASCADE,
-  CONSTRAINT `user_equipment_ibfk_2` FOREIGN KEY (`skill_id`) REFERENCES `skills` (`skill_id`) ON UPDATE CASCADE,
-  CONSTRAINT `user_equipment_ibfk_3` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON UPDATE CASCADE
-);
 CREATE TABLE `user_possessions` (
   `possession_id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` mediumint(9) NOT NULL,
@@ -325,12 +347,14 @@ CREATE TABLE `user_possessions` (
 CREATE TABLE `users` (
   `user_id` mediumint(9) NOT NULL AUTO_INCREMENT,
   `user_key` char(20) NOT NULL,
+  `pwd` binary(32) NOT NULL,
+  `pepper` binary(16) NOT NULL,
+  `salt` binary(16) NOT NULL,
   `enabled` tinyint(1) NOT NULL DEFAULT 0,
-  `credential` mediumint(9) DEFAULT NULL,
   `active` tinyint(1) NOT NULL DEFAULT 1,
   `firstname` varchar(20) NOT NULL,
   `lastname` varchar(20) NOT NULL,
-  `nickname` varchar(40) DEFAULT NULL,
+  `nickname` varchar(20) DEFAULT NULL,
   `address` varchar(60) DEFAULT NULL,
   `email` varchar(40) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
@@ -340,7 +364,6 @@ CREATE TABLE `users` (
   `gender` enum('MALE','FEMALE','OTHER') DEFAULT NULL,
   `height` smallint(6) DEFAULT NULL,
   `weight` smallint(6) DEFAULT NULL,
-  `image_url` varchar(50) DEFAULT NULL,
   `bank_account` mediumint(9) DEFAULT NULL,
   `license_main` mediumint(9) DEFAULT NULL,
   `license_extra` mediumint(9) DEFAULT NULL,
@@ -350,10 +373,8 @@ CREATE TABLE `users` (
   KEY `users_ibfk_1` (`license_main`),
   KEY `users_ibfk_2` (`license_extra`),
   KEY `users_ibfk_3` (`bank_account`),
-  KEY `users_ibfk_4` (`credential`),
   CONSTRAINT `users_ibfk_1` FOREIGN KEY (`license_main`) REFERENCES `licenses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `users_ibfk_2` FOREIGN KEY (`license_extra`) REFERENCES `licenses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `users_ibfk_3` FOREIGN KEY (`bank_account`) REFERENCES `bank_accounts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `users_ibfk_4` FOREIGN KEY (`credential`) REFERENCES `user_credentials` (`credential_id`) ON DELETE SET NULL ON UPDATE CASCADE
+  CONSTRAINT `users_ibfk_3` FOREIGN KEY (`bank_account`) REFERENCES `bank_accounts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
