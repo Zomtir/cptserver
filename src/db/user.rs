@@ -182,6 +182,22 @@ pub fn user_detailed(conn: &mut PooledConn, user_id: u64) -> Result<User> {
     Ok(user)
 }
 
+pub fn user_image(conn: &mut PooledConn, user_id: u64) -> Result<Option<String>> {
+    let stmt = conn.prep(
+        "SELECT
+            image_url
+        FROM users
+        WHERE user_id = :user_id;",
+    )?;
+
+    let params = params! {
+        "user_id" => &user_id,
+    };
+
+    let image_url: Option<Option<String>> = conn.exec_first::<Option<String>, _, _>(&stmt, &params)?;
+    Ok(image_url.unwrap())
+}
+
 pub fn user_create(conn: &mut PooledConn, user: &mut User) -> Result<u64> {
     user.key = match crate::common::check_user_key(&user.key) {
         Err(_) => Some(crate::common::random_string(6)),

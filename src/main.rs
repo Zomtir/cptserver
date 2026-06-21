@@ -143,6 +143,7 @@ fn rocket() -> _ {
                 route::regular::user::user_password_info,
                 route::regular::user::user_password_set,
                 route::regular::user::user_list,
+                route::regular::user::user_image,
                 route::admin::club::club_list,
                 route::admin::club::club_info,
                 route::admin::club::club_create,

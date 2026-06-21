@@ -50,3 +50,16 @@ pub fn user_list(_session: UserSession) -> Result<Json<Vec<User>>> {
     let users = crate::db::user::user_list(conn, Some(true))?;
     Ok(Json(users))
 }
+
+#[rocket::get("/regular/user_image?<user_id>")]
+pub fn user_image(user_id: u64) -> Result<Vec<u8>> {
+    let conn = &mut crate::utils::db::get_db_conn()?;
+    let image_url = crate::db::user::user_image(conn, user_id)?;
+
+    let full_path = match image_url {
+        None => crate::fs::get_resources_path().join("user_image_placeholder.png"),
+        Some(url) => crate::fs::get_data_path().join(&format!("users/{}", url)),
+    };
+
+    std::fs::read(full_path).map_err(|_| Error::new(ErrorKind::Filesystem, "Failed to read user image"))
+}
