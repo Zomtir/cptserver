@@ -1,3 +1,8 @@
+## Release v1.6.1 (19th Jul 2026)
+
+- fix: Empty/faulty user images did not fall back to a placeholder
+- chore: Added tool for verifying SQL migration scripts
+
 ## Release v1.6.0 (21st Jun 2026)
 
 - feat: Added sport disciplines
