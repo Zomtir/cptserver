@@ -1,7 +1,6 @@
 #![allow(clippy::too_many_arguments)]
 
 use mysql::PooledConn;
-use rocket_cors::{AllowedHeaders, AllowedOrigins};
 use std::collections::HashSet;
 
 extern crate mysql_common;
@@ -21,32 +20,27 @@ fn index() -> &'static str {
     "Welcome to the CPT server."
 }
 
-fn promote_user_to_admin(conn: &mut PooledConn) -> anyhow::Result<()> {
-    // Check if an admin user is configured
-    let admin_key = match crate::config::ADMIN_USER() {
-        Some(key) => key,
-        None => return Ok(()),
-    };
-
-    // If admin user is missing, create him
-    if crate::db::user::user_created_true(conn, admin_key)?.is_none() {
-        let mut user = crate::common::User::from_info(
-            0,
-            admin_key.into(),
-            "Placeholder".to_string(),
-            "Placeholder".to_string(),
-            None,
-        );
-        crate::db::user::user_create(conn, &mut user)?;
-    }
-
-    // Elevate the user to admin
-    *crate::session::ADMINSESSION.lock().unwrap() = Some(admin_key.into());
-    Ok(())
+#[derive(Clone)]
+struct AppState {
+    db: mysql::Pool,
 }
 
-#[rocket::launch]
-fn rocket() -> _ {
+pub fn get_db_conn() -> Result<PooledConn> {
+    let pool = DBPOOL
+        .get()
+        .or_else(|| {
+            init_db_pool().ok()?;
+            DBPOOL.get()
+        })
+        .ok_or(Error::new(ErrorKind::Database, "Failed to initialize database pool"))?;
+
+    pool.get_conn()
+        .map_err(|_| Error::new(ErrorKind::Database, "Failed to get database connection"))
+}
+
+
+#[tokio::main]
+async fn main() -> _ {
     let path_home_exe: Option<std::path::PathBuf> = std::env::current_exe()
         .ok()
         .and_then(|p| p.parent().map(|p| p.to_path_buf()));
@@ -70,41 +64,52 @@ fn rocket() -> _ {
         panic!("Database update failed")
     };
 
-    if promote_user_to_admin(&mut conn).is_err() {
+    if permission::promote_user_to_admin(&mut conn).is_err() {
         panic!("Admin elevation failed")
     };
 
     let rocket_config = crate::config::ROCKET_CONFIG();
 
+    // Setup AppState
+    let url = crate::config::DB_URL();
+    let pool = mysql::Pool::new(mysql::Opts::from_url(&url)?)?;
+    let app_state = AppState { db: pool };
+
     // CORS
-    let allowed_origins = AllowedOrigins::all();
-    let allowed_methods = vec![
-        rocket::http::Method::Head,
-        rocket::http::Method::Get,
-        rocket::http::Method::Post,
-        rocket::http::Method::Delete,
-    ]
-    .into_iter()
-    .map(From::from)
-    .collect();
-    let allowed_headers = AllowedHeaders::some(&["Token", "Accept", "Content-Type"]);
-    let expose_headers = HashSet::from(["Error-URI".to_string(), "Error-MSG".to_string()]);
+    let cors_layer = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::DELETE,
+            Method::HEAD,
+        ])
+        .allow_headers([
+            header::ACCEPT,
+            header::CONTENT_TYPE,
+            // TODO replace by Authorization header
+            HeaderName::from_static("token"),
+        ])
+        .expose_headers([
+            HeaderName::from_static("error-uri"),
+            HeaderName::from_static("error-msg"),
+        ])
+        // TODO: Enable credentials when token is retired
+        .allow_credentials(false);
 
-    let cors = rocket_cors::CorsOptions {
-        allowed_origins,
-        allowed_methods,
-        allowed_headers,
-        allow_credentials: true,
-        expose_headers,
-        ..Default::default()
-    }
-    .to_cors()
-    .unwrap();
+    // Router
+    let app = Router::new()
+        .route("/", get(index))
+        .with_state(app_state)
+        .layer(cors_layer);
 
-    rocket::custom(&rocket_config)
-        //.register(catchers![catchers::user_not_found])
-        .mount(
-            "/",
+    // Start server
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await?;
+    axum::serve(listener, app).await?
+
+
+
+/*
             rocket::routes![
                 index,
                 route::anon::status,
@@ -321,6 +326,5 @@ fn rocket() -> _ {
                 route::service::event::event_attendance_presence_add,
                 route::service::event::event_attendance_presence_remove,
             ],
-        )
-        .attach(cors)
+             */
 }
