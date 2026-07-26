@@ -1,5 +1,4 @@
-use rocket::form::error::{ErrorKind, Errors};
-use rocket::form::{self, DataField, FromFormField, ValueField};
+use serde::{Deserialize, Deserializer};
 
 pub use std::str::FromStr;
 
@@ -48,14 +47,12 @@ impl core::convert::From<Acceptance> for mysql_common::Value {
     }
 }
 
-#[rocket::async_trait]
-impl<'r> FromFormField<'r> for Acceptance {
-    fn from_value(field: ValueField<'r>) -> form::Result<'r, Self> {
-        Acceptance::from_str(field.value).map_err(|_| Errors::from(ErrorKind::Missing))
-    }
-
-    async fn from_data(field: DataField<'r, '_>) -> form::Result<'r, Self> {
-        let web_string: String = crate::common::parse_field(field).await?;
-        Acceptance::from_str(&web_string).map_err(|_| Errors::from(ErrorKind::Missing))
+impl<'de> Deserialize<'de> for Acceptance {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Acceptance::from_str(&s).map_err(serde::de::Error::custom)
     }
 }

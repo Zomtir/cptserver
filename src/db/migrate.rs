@@ -84,7 +84,11 @@ pub fn drop_scheme(conn: &mut PooledConn, db_name: &str) -> Result<()> {
     // Get the list of tables in the database and drop them
     let query_tables = format! {"SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = '{}';", db_name};
     let tables: Vec<String> = conn.query_map(query_tables, |table_name: String| table_name)?;
-    let drop_sql = tables.iter().map(|t| format!("DROP TABLE `{}`", t)).collect::<Vec<_>>().join(", ");
+    let drop_sql = tables
+        .iter()
+        .map(|t| format!("DROP TABLE `{}`", t))
+        .collect::<Vec<_>>()
+        .join(", ");
     conn.query_drop(&drop_sql)?;
 
     // Re-enable foreign key checks

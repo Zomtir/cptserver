@@ -12,7 +12,7 @@ static CONFIG: OnceLock<ServerConfig> = OnceLock::new();
 pub struct ServerConfig {
     pub rocket_address: String,
     pub rocket_port: u16,
-    pub rocket_log_level: String,
+    pub rocket_log_level: String, //XXX: Remove
 
     pub db_host: String,
     pub db_port: u16,
@@ -171,13 +171,9 @@ pub fn DB_URL() -> String {
     )
 }
 
-pub fn ROCKET_CONFIG() -> rocket::config::Config {
-    rocket::Config {
-        address: CONFIG.get().unwrap().rocket_address.parse().unwrap(),
-        port: CONFIG.get().unwrap().rocket_port,
-        log_level: CONFIG.get().unwrap().rocket_log_level.parse().unwrap(),
-        ..rocket::Config::default()
-    }
+pub fn SERVER_URL() -> String {
+    let cfg = CONFIG.get().unwrap();
+    format!("{}:{}", cfg.rocket_address, cfg.rocket_port)
 }
 
 pub fn ADMIN_USER() -> Option<&'static str> {

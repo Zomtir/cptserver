@@ -2,7 +2,7 @@ use crate::error::{Error, ErrorKind, Result};
 use mysql::PooledConn;
 
 
-fn promote_user_to_admin(conn: &mut PooledConn) -> anyhow::Result<()> {
+pub fn promote_user_to_admin(conn: &mut PooledConn) -> Result<()> {
     // Check if an admin user is configured
     let admin_key = match crate::config::ADMIN_USER() {
         Some(key) => key,

@@ -1,5 +1,4 @@
-use rocket::form::error::{ErrorKind, Errors};
-use rocket::form::{self, FromFormField, ValueField};
+use serde::{Deserialize, Deserializer};
 
 pub use std::str::FromStr;
 
@@ -51,9 +50,12 @@ impl core::convert::From<Gender> for mysql_common::Value {
     }
 }
 
-#[rocket::async_trait]
-impl<'r> FromFormField<'r> for Gender {
-    fn from_value(field: ValueField<'r>) -> form::Result<'r, Self> {
-        Gender::from_str(field.value).map_err(|_| Errors::from(ErrorKind::Missing))
+impl<'de> Deserialize<'de> for Gender {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Gender::from_str(&s).map_err(serde::de::Error::custom)
     }
 }

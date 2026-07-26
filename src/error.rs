@@ -1,6 +1,5 @@
-use rocket::http::Status;
-use rocket::request::{Outcome, Request};
-use rocket::response::{self, Responder, Response};
+use axum::http::{HeaderName, HeaderValue, StatusCode};
+use axum::response::{IntoResponse, Response};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorKind {
@@ -92,19 +91,27 @@ impl From<chrono::RoundingError> for Error {
     }
 }
 
-impl<'r> Responder<'r, 'static> for Error {
-    fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
-        Response::build()
-            .status(Status::BadRequest)
-            .raw_header("error-uri", format!("{:?}", self.kind))
-            .raw_header("error-msg", self.message)
-            .ok()
+impl IntoResponse for Error {
+    fn into_response(self) -> Response {
+        let mut response = StatusCode::BAD_REQUEST.into_response();
+
+        response.headers_mut().insert(
+            HeaderName::from_static("error-uri"),
+            HeaderValue::from_str(&format!("{:?}", self.kind)).unwrap(),
+        );
+
+        response.headers_mut().insert(
+            HeaderName::from_static("error-msg"),
+            HeaderValue::from_str(&self.message).unwrap(),
+        );
+
+        response
     }
 }
 
-impl Error {
-    pub fn outcome<T>(self) -> Outcome<T, Error> {
-        rocket::outcome::Outcome::Error((Status::BadRequest, self))
+impl std::fmt::Display for ErrorKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
 

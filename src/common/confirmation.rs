@@ -1,6 +1,4 @@
-use rocket::form::error::{ErrorKind, Errors};
-use rocket::form::{self, FromFormField, ValueField};
-
+use serde::{Deserialize, Deserializer};
 pub use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -54,9 +52,12 @@ impl core::convert::From<Confirmation> for mysql_common::Value {
     }
 }
 
-#[rocket::async_trait]
-impl<'r> FromFormField<'r> for Confirmation {
-    fn from_value(field: ValueField<'r>) -> form::Result<'r, Self> {
-        Confirmation::from_str(field.value).map_err(|_| Errors::from(ErrorKind::Missing))
+impl<'de> Deserialize<'de> for Confirmation {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Confirmation::from_str(&s).map_err(serde::de::Error::custom)
     }
 }

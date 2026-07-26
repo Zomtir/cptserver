@@ -1,7 +1,10 @@
 #![allow(clippy::too_many_arguments)]
 
-use mysql::PooledConn;
-use std::collections::HashSet;
+use axum::Router;
+use axum::routing::{get, post, put, delete, patch};
+use axum::http::Method;
+use axum::http::header::{self, HeaderName};
+use tower_http::cors::{Any, CorsLayer};
 
 extern crate mysql_common;
 
@@ -15,7 +18,6 @@ mod route;
 mod session;
 mod utils;
 
-#[rocket::get("/")]
 fn index() -> &'static str {
     "Welcome to the CPT server."
 }
@@ -25,22 +27,8 @@ struct AppState {
     db: mysql::Pool,
 }
 
-pub fn get_db_conn() -> Result<PooledConn> {
-    let pool = DBPOOL
-        .get()
-        .or_else(|| {
-            init_db_pool().ok()?;
-            DBPOOL.get()
-        })
-        .ok_or(Error::new(ErrorKind::Database, "Failed to initialize database pool"))?;
-
-    pool.get_conn()
-        .map_err(|_| Error::new(ErrorKind::Database, "Failed to get database connection"))
-}
-
-
 #[tokio::main]
-async fn main() -> _ {
+async fn main() -> Option<()> {
     let path_home_exe: Option<std::path::PathBuf> = std::env::current_exe()
         .ok()
         .and_then(|p| p.parent().map(|p| p.to_path_buf()));
@@ -104,10 +92,9 @@ async fn main() -> _ {
         .layer(cors_layer);
 
     // Start server
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await?;
-    axum::serve(listener, app).await?
-
-
+    let addr = crate::config::SERVER_URL();
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    axum::serve(listener, app).await?;
 
 /*
             rocket::routes![
