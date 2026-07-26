@@ -1,10 +1,9 @@
-use rocket::serde::json::Json;
+use axum::Json;
 
 use crate::common::Skill;
 use crate::error::Result;
 use crate::session::UserSession;
 
-#[rocket::get("/admin/skill_list")]
 pub fn skill_list(session: UserSession) -> Result<Json<Vec<Skill>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_competence_read)?;
@@ -13,7 +12,6 @@ pub fn skill_list(session: UserSession) -> Result<Json<Vec<Skill>>> {
     Ok(Json(skills))
 }
 
-#[rocket::post("/admin/skill_create", format = "application/json", data = "<skill>")]
 pub fn skill_create(session: UserSession, skill: Json<Skill>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_competence_write)?;
@@ -22,7 +20,6 @@ pub fn skill_create(session: UserSession, skill: Json<Skill>) -> Result<String> 
     Ok(id.to_string())
 }
 
-#[rocket::post("/admin/skill_edit?<skill_id>", format = "application/json", data = "<skill>")]
 pub fn skill_edit(session: UserSession, skill_id: u32, skill: Json<Skill>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_competence_write)?;
@@ -31,7 +28,6 @@ pub fn skill_edit(session: UserSession, skill_id: u32, skill: Json<Skill>) -> Re
     Ok(())
 }
 
-#[rocket::head("/admin/skill_delete?<skill_id>")]
 pub fn skill_delete(session: UserSession, skill_id: u32) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_competence_write)?;

@@ -1,4 +1,4 @@
-use rocket::serde::json::Json;
+use axum::Json;
 
 use crate::common::{Item, ItemCategory};
 use crate::error::Result;
@@ -6,7 +6,6 @@ use crate::session::UserSession;
 
 /* ITEMS */
 
-#[rocket::get("/admin/item_list?<category_id>")]
 pub fn item_list(session: UserSession, category_id: Option<u32>) -> Result<Json<Vec<Item>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_inventory_read)?;
@@ -15,7 +14,6 @@ pub fn item_list(session: UserSession, category_id: Option<u32>) -> Result<Json<
     Ok(Json(items))
 }
 
-#[rocket::get("/admin/item_info?<item_id>")]
 pub fn item_info(session: UserSession, item_id: u32) -> Result<Json<Item>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_inventory_read)?;
@@ -24,7 +22,6 @@ pub fn item_info(session: UserSession, item_id: u32) -> Result<Json<Item>> {
     Ok(Json(item))
 }
 
-#[rocket::post("/admin/item_create", format = "application/json", data = "<item>")]
 pub fn item_create(session: UserSession, item: Json<Item>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
@@ -33,7 +30,6 @@ pub fn item_create(session: UserSession, item: Json<Item>) -> Result<String> {
     Ok(id.to_string())
 }
 
-#[rocket::post("/admin/item_edit?<item_id>", format = "application/json", data = "<item>")]
 pub fn item_edit(session: UserSession, item_id: u64, item: Json<Item>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
@@ -42,7 +38,6 @@ pub fn item_edit(session: UserSession, item_id: u64, item: Json<Item>) -> Result
     Ok(())
 }
 
-#[rocket::head("/admin/item_delete?<item_id>")]
 pub fn item_delete(session: UserSession, item_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
@@ -53,7 +48,6 @@ pub fn item_delete(session: UserSession, item_id: u64) -> Result<()> {
 
 /* ITEM CATEGORIES */
 
-#[rocket::get("/admin/itemcat_list")]
 pub fn itemcat_list(session: UserSession) -> Result<Json<Vec<ItemCategory>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_inventory_read)?;
@@ -62,7 +56,6 @@ pub fn itemcat_list(session: UserSession) -> Result<Json<Vec<ItemCategory>>> {
     Ok(Json(itemcats))
 }
 
-#[rocket::post("/admin/itemcat_create", format = "application/json", data = "<itemcat>")]
 pub fn itemcat_create(session: UserSession, itemcat: Json<ItemCategory>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
@@ -71,7 +64,6 @@ pub fn itemcat_create(session: UserSession, itemcat: Json<ItemCategory>) -> Resu
     Ok(id.to_string())
 }
 
-#[rocket::post("/admin/itemcat_edit?<category_id>", format = "application/json", data = "<itemcat>")]
 pub fn itemcat_edit(session: UserSession, category_id: u64, itemcat: Json<ItemCategory>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
@@ -80,7 +72,6 @@ pub fn itemcat_edit(session: UserSession, category_id: u64, itemcat: Json<ItemCa
     Ok(())
 }
 
-#[rocket::head("/admin/itemcat_delete?<category_id>")]
 pub fn itemcat_delete(session: UserSession, category_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;

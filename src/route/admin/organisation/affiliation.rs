@@ -1,10 +1,9 @@
-use rocket::serde::json::Json;
+use axum::Json;
 
 use crate::common::Affiliation;
 use crate::error::Result;
 use crate::session::UserSession;
 
-#[rocket::get("/admin/affiliation_list?<user_id>&<organisation_id>")]
 pub fn affiliation_list(
     session: UserSession,
     user_id: Option<u64>,
@@ -17,7 +16,6 @@ pub fn affiliation_list(
     Ok(Json(affiliation))
 }
 
-#[rocket::get("/admin/affiliation_info?<user_id>&<organisation_id>")]
 pub fn affiliation_info(session: UserSession, user_id: u64, organisation_id: u32) -> Result<Json<Option<Affiliation>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_organisation_read)?;
@@ -26,7 +24,6 @@ pub fn affiliation_info(session: UserSession, user_id: u64, organisation_id: u32
     Ok(Json(affiliation))
 }
 
-#[rocket::head("/admin/affiliation_create?<user_id>&<organisation_id>")]
 pub fn affiliation_create(session: UserSession, user_id: u64, organisation_id: u32) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_organisation_write)?;
@@ -35,11 +32,6 @@ pub fn affiliation_create(session: UserSession, user_id: u64, organisation_id: u
     Ok(())
 }
 
-#[rocket::post(
-    "/admin/affiliation_edit?<user_id>&<organisation_id>",
-    format = "application/json",
-    data = "<affiliation>"
-)]
 pub fn affiliation_edit(
     session: UserSession,
     user_id: u64,
@@ -53,7 +45,6 @@ pub fn affiliation_edit(
     Ok(())
 }
 
-#[rocket::head("/admin/affiliation_delete?<user_id>&<organisation_id>")]
 pub fn affiliation_delete(session: UserSession, user_id: u64, organisation_id: u32) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_organisation_write)?;

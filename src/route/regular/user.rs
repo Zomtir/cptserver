@@ -1,4 +1,4 @@
-use rocket::serde::json::Json;
+use axum::Json;
 
 use crate::common::{Credential, Right, User};
 use crate::error::{Error, ErrorKind, Result};
@@ -8,19 +8,16 @@ use crate::session::UserSession;
  * ROUTES
  */
 
-#[rocket::get("/regular/user_info")]
 pub fn user_info(session: UserSession) -> Result<Json<User>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     let user = crate::db::user::user_info(conn, session.user.id)?;
     Ok(Json(user))
 }
 
-#[rocket::get("/regular/user_right")]
 pub fn user_right(session: UserSession) -> Json<Right> {
     Json(session.right)
 }
 
-#[rocket::get("/regular/user_password_info")]
 pub fn user_password_info(session: UserSession) -> Result<Json<Credential>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     let credit = match crate::db::user::user_password_info(conn, session.user.id)? {
@@ -31,7 +28,6 @@ pub fn user_password_info(session: UserSession) -> Result<Json<Credential>> {
     Ok(Json(credit))
 }
 
-#[rocket::post("/regular/user_password_edit", format = "application/json", data = "<credit>")]
 pub fn user_password_set(session: UserSession, credit: Json<Credential>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
 
@@ -44,14 +40,12 @@ pub fn user_password_set(session: UserSession, credit: Json<Credential>) -> Resu
     Ok(())
 }
 
-#[rocket::get("/regular/user_list")]
 pub fn user_list(_session: UserSession) -> Result<Json<Vec<User>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     let users = crate::db::user::user_list(conn, Some(true))?;
     Ok(Json(users))
 }
 
-#[rocket::get("/regular/user_image?<user_id>")]
 pub fn user_image(user_id: u64) -> Result<Vec<u8>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     let image_url = crate::db::user::user_image(conn, user_id)?;

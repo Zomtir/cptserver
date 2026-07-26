@@ -1,10 +1,9 @@
-use rocket::serde::json::Json;
+use axum::Json;
 
 use crate::common::{Course, User, WebBool};
 use crate::error::Result;
 use crate::session::UserSession;
 
-#[rocket::get("/mod/course_responsibility?<active>&<public>")]
 pub fn course_responsibility(
     session: UserSession,
     active: Option<WebBool>,
@@ -20,7 +19,6 @@ pub fn course_responsibility(
     Ok(Json(courses))
 }
 
-#[rocket::get("/mod/course_moderator_list?<course_id>")]
 pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Json<Vec<User>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_course_moderator(conn, course_id, session.user.id)?;
@@ -29,7 +27,6 @@ pub fn course_moderator_list(session: UserSession, course_id: u32) -> Result<Jso
     Ok(Json(moderators))
 }
 
-#[rocket::head("/mod/course_moderator_add?<course_id>&<user_id>")]
 pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_course_moderator(conn, course_id, session.user.id)?;
@@ -38,7 +35,6 @@ pub fn course_moderator_add(session: UserSession, course_id: u32, user_id: u64) 
     Ok(())
 }
 
-#[rocket::head("/mod/course_moderator_remove?<course_id>&<user_id>")]
 pub fn course_moderator_remove(session: UserSession, course_id: u32, user_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_course_moderator(conn, course_id, session.user.id)?;

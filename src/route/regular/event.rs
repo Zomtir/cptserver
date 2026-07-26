@@ -1,13 +1,8 @@
 use crate::common::{Acceptance, Confirmation, Event, Occurrence, WebBool, WebDateTime};
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
-use rocket::serde::json::Json;
+use axum::Json;
 
-/*
- * ROUTES
- */
-
-#[rocket::get("/regular/event_list?<begin>&<end>&<location_id>&<occurrence>&<acceptance>&<course_true>&<course_id>")]
 pub fn event_list(
     _session: UserSession,
     begin: Option<WebDateTime>,
@@ -38,7 +33,6 @@ pub fn event_list(
     Ok(Json(events))
 }
 
-#[rocket::post("/regular/event_create", format = "application/json", data = "<event>")]
 pub fn event_create(session: UserSession, mut event: Json<Event>) -> Result<String> {
     crate::utils::event::validate_event_dates(&mut event)?;
     let conn = &mut crate::utils::db::get_db_conn()?;
@@ -48,21 +42,18 @@ pub fn event_create(session: UserSession, mut event: Json<Event>) -> Result<Stri
     Ok(event_id.to_string())
 }
 
-#[rocket::get("/regular/event_owner_true?<event_id>")]
 pub fn event_owner_true(session: UserSession, event_id: u64) -> Result<Json<bool>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     let condition = crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)?;
     Ok(Json(condition))
 }
 
-#[rocket::get("/regular/event_moderator_true?<event_id>")]
 pub fn event_moderator_true(session: UserSession, event_id: u64) -> Result<Json<bool>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     let condition = crate::db::event::moderator::event_moderator_true(conn, event_id, session.user.id)?;
     Ok(Json(condition))
 }
 
-#[rocket::get("/regular/event_attendance_presence_true?<event_id>&<role>")]
 pub fn event_attendance_presence_true(session: UserSession, event_id: u64, role: String) -> Result<Json<bool>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     let condition =
@@ -70,7 +61,6 @@ pub fn event_attendance_presence_true(session: UserSession, event_id: u64, role:
     Ok(Json(condition))
 }
 
-#[rocket::head("/regular/event_attendance_presence_add?<event_id>&<role>")]
 pub fn event_attendance_presence_add(session: UserSession, event_id: u64, role: String) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     let pool = crate::db::event::attendance::event_attendance_presence_pool(conn, event_id, &role, true)?;
@@ -83,14 +73,12 @@ pub fn event_attendance_presence_add(session: UserSession, event_id: u64, role: 
     Ok(())
 }
 
-#[rocket::head("/regular/event_attendance_presence_remove?<event_id>&<role>")]
 pub fn event_attendance_presence_remove(session: UserSession, event_id: u64, role: String) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::db::event::attendance::event_attendance_presence_remove(conn, event_id, session.user.id, &role)?;
     Ok(())
 }
 
-#[rocket::get("/regular/event_bookmark_true?<event_id>")]
 pub fn event_bookmark_true(session: UserSession, event_id: u64) -> Result<Json<bool>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     // TODO check if you can participate
@@ -99,7 +87,6 @@ pub fn event_bookmark_true(session: UserSession, event_id: u64) -> Result<Json<b
     Ok(Json(bookmark))
 }
 
-#[rocket::head("/regular/event_bookmark_edit?<event_id>&<bookmark>")]
 pub fn event_bookmark_edit(session: UserSession, event_id: u64, bookmark: bool) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     // TODO check if you can participate
@@ -111,7 +98,6 @@ pub fn event_bookmark_edit(session: UserSession, event_id: u64, bookmark: bool) 
     Ok(())
 }
 
-#[rocket::get("/regular/event_attendance_registration_info?<event_id>&<role>")]
 pub fn event_attendance_registration_info(session: UserSession, event_id: u64, role: String) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     // TODO check if you can register (requirement)
@@ -121,7 +107,6 @@ pub fn event_attendance_registration_info(session: UserSession, event_id: u64, r
     Ok(status.to_string())
 }
 
-#[rocket::head("/regular/event_attendance_registration_edit?<event_id>&<role>&<status>")]
 pub fn event_attendance_registration_edit(
     session: UserSession,
     event_id: u64,

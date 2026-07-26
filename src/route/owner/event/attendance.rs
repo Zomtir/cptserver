@@ -1,9 +1,8 @@
 use crate::common::User;
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
-use rocket::serde::json::Json;
+use axum::Json;
 
-#[rocket::get("/owner/event_attendance_registration_list?<event_id>&<role>")]
 pub fn registration_list(session: UserSession, event_id: u64, role: String) -> Result<Json<Vec<User>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;
@@ -12,7 +11,6 @@ pub fn registration_list(session: UserSession, event_id: u64, role: String) -> R
     Ok(Json(users))
 }
 
-#[rocket::get("/owner/event_attendance_filter_list?<event_id>&<role>")]
 pub fn filter_list(session: UserSession, event_id: u64, role: String) -> Result<Json<Vec<(User, bool)>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;
@@ -21,7 +19,6 @@ pub fn filter_list(session: UserSession, event_id: u64, role: String) -> Result<
     Ok(Json(filters))
 }
 
-#[rocket::head("/owner/event_attendance_filter_edit?<event_id>&<user_id>&<role>&<access>")]
 pub fn filter_edit(session: UserSession, event_id: u64, user_id: u64, role: String, access: bool) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;
@@ -30,7 +27,6 @@ pub fn filter_edit(session: UserSession, event_id: u64, user_id: u64, role: Stri
     Ok(())
 }
 
-#[rocket::head("/owner/event_attendance_filter_remove?<event_id>&<user_id>&<role>")]
 pub fn filter_remove(session: UserSession, event_id: u64, user_id: u64, role: String) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;
@@ -39,7 +35,6 @@ pub fn filter_remove(session: UserSession, event_id: u64, user_id: u64, role: St
     Ok(())
 }
 
-#[rocket::get("/owner/event_attendance_presence_pool?<event_id>&<role>")]
 pub fn presence_pool(session: UserSession, event_id: u64, role: String) -> Result<Json<Vec<User>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;
@@ -48,7 +43,6 @@ pub fn presence_pool(session: UserSession, event_id: u64, role: String) -> Resul
     Ok(Json(users))
 }
 
-#[rocket::get("/owner/event_attendance_presence_list?<event_id>&<role>")]
 pub fn presence_list(session: UserSession, event_id: u64, role: String) -> Result<Json<Vec<User>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;
@@ -57,7 +51,6 @@ pub fn presence_list(session: UserSession, event_id: u64, role: String) -> Resul
     Ok(Json(users))
 }
 
-#[rocket::head("/owner/event_attendance_presence_add?<event_id>&<user_id>&<role>")]
 pub fn presence_add(session: UserSession, event_id: u64, user_id: u64, role: String) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;
@@ -72,7 +65,6 @@ pub fn presence_add(session: UserSession, event_id: u64, user_id: u64, role: Str
     Ok(())
 }
 
-#[rocket::head("/owner/event_attendance_presence_remove?<event_id>&<user_id>&<role>")]
 pub fn presence_remove(session: UserSession, event_id: u64, user_id: u64, role: String) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;

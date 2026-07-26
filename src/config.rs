@@ -12,7 +12,6 @@ static CONFIG: OnceLock<ServerConfig> = OnceLock::new();
 pub struct ServerConfig {
     pub rocket_address: String,
     pub rocket_port: u16,
-    pub rocket_log_level: String, //XXX: Remove
 
     pub db_host: String,
     pub db_port: u16,
@@ -38,7 +37,6 @@ impl Default for ServerConfig {
         Self {
             rocket_address: "127.0.0.1".into(),
             rocket_port: 8000,
-            rocket_log_level: "Normal".into(),
 
             db_host: "localhost".into(),
             db_port: 3306,
@@ -76,7 +74,6 @@ impl ServerConfig {
     fn apply_env_overrides(&mut self) {
         env_override!(self, rocket_address, "CPT_ROCKET_ADDRESS", String);
         env_override!(self, rocket_port, "CPT_ROCKET_PORT", u16);
-        env_override!(self, rocket_log_level, "CPT_ROCKET_LOG_LEVEL", String);
         env_override!(self, db_host, "CPT_DB_HOST", String);
         env_override!(self, db_port, "CPT_DB_PORT", u16);
         env_override!(self, db_database, "CPT_DB_DATABASE", String);
@@ -95,10 +92,9 @@ pub fn read_config() {
         server_conf.app_admin = "".to_string();
     }
 
-    println!("Rocket settings");
+    println!("Server settings");
     println!("    => address: {:?}", server_conf.rocket_address);
     println!("    => port: {:?}", server_conf.rocket_port);
-    println!("    => log level: {:?}", server_conf.rocket_log_level);
 
     println!("Database settings");
     println!("    => host: {:?}", server_conf.db_host);
@@ -106,7 +102,7 @@ pub fn read_config() {
     println!("    => database: {:?}", server_conf.db_database);
     println!("    => user: {:?}", server_conf.db_user);
 
-    println!("Server settings");
+    println!("App settings");
     println!("    => admin: {:?}", server_conf.app_admin);
     println!(
         "    => session_duration_hour: {:?}",

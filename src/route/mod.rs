@@ -31,7 +31,6 @@ pub mod regular {
 }
 
 pub mod service;
-
+pub mod generic;
 pub mod anon;
-
 pub mod login;

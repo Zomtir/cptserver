@@ -1,13 +1,12 @@
 pub mod term;
 pub mod term_discipline;
 
-use rocket::serde::json::Json;
+use axum::Json;
 
 use crate::common::{Affiliation, Club, Event, Term, User, WebDate, WebDateTime};
 use crate::error::Result;
 use crate::session::UserSession;
 
-#[rocket::get("/admin/club_list")]
 pub fn club_list(session: UserSession) -> Result<Json<Vec<Club>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_club_read)?;
@@ -16,7 +15,6 @@ pub fn club_list(session: UserSession) -> Result<Json<Vec<Club>>> {
     Ok(Json(clubs))
 }
 
-#[rocket::get("/admin/club_info?<club_id>")]
 pub fn club_info(session: UserSession, club_id: u32) -> Result<Json<Club>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_club_read)?;
@@ -26,7 +24,6 @@ pub fn club_info(session: UserSession, club_id: u32) -> Result<Json<Club>> {
     Ok(Json(club))
 }
 
-#[rocket::post("/admin/club_create", format = "application/json", data = "<club>")]
 pub fn club_create(session: UserSession, club: Json<Club>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_club_write)?;
@@ -35,7 +32,6 @@ pub fn club_create(session: UserSession, club: Json<Club>) -> Result<String> {
     Ok(id.to_string())
 }
 
-#[rocket::post("/admin/club_edit?<club_id>", format = "application/json", data = "<club>")]
 pub fn club_edit(session: UserSession, club_id: u32, club: Json<Club>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_club_write)?;
@@ -44,7 +40,6 @@ pub fn club_edit(session: UserSession, club_id: u32, club: Json<Club>) -> Result
     Ok(())
 }
 
-#[rocket::head("/admin/club_delete?<club_id>")]
 pub fn club_delete(session: UserSession, club_id: u32) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_club_write)?;
@@ -55,7 +50,6 @@ pub fn club_delete(session: UserSession, club_id: u32) -> Result<()> {
 
 /* STATISTICS */
 
-#[rocket::get("/admin/club_statistic_terms?<club_id>&<point_in_time>")]
 pub fn statistic_terms(session: UserSession, club_id: u32, point_in_time: WebDate) -> Result<Json<Vec<Term>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_club_read)?;
@@ -64,7 +58,6 @@ pub fn statistic_terms(session: UserSession, club_id: u32, point_in_time: WebDat
     Ok(Json(terms))
 }
 
-#[rocket::get("/admin/club_statistic_members?<club_id>&<point_in_time>")]
 pub fn statistic_members(session: UserSession, club_id: u32, point_in_time: WebDate) -> Result<Json<Vec<(User, u32)>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_club_read)?;
@@ -73,7 +66,6 @@ pub fn statistic_members(session: UserSession, club_id: u32, point_in_time: WebD
     Ok(Json(leaderboard))
 }
 
-#[rocket::get("/admin/club_statistic_team?<club_id>&<point_in_time>&<team_id>")]
 pub fn statistic_team(
     session: UserSession,
     club_id: u32,
@@ -87,7 +79,6 @@ pub fn statistic_team(
     Ok(Json(list))
 }
 
-#[rocket::get("/admin/club_statistic_organisation?<club_id>&<organisation_id>&<point_in_time>")]
 pub fn statistic_organisation(
     session: UserSession,
     club_id: u32,
@@ -102,7 +93,6 @@ pub fn statistic_organisation(
     Ok(Json(list))
 }
 
-#[rocket::get("/admin/club_statistic_attendance?<club_id>&<user_id>&<role>&<time_window_begin>&<time_window_end>")]
 pub fn statistic_attendance(
     session: UserSession,
     club_id: u32,

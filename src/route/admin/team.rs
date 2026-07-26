@@ -1,4 +1,4 @@
-use rocket::serde::json::Json;
+use axum::Json;
 
 use crate::common::{Right, Team, User};
 use crate::error::Result;
@@ -6,7 +6,6 @@ use crate::session::UserSession;
 
 /* ROUTES */
 
-#[rocket::get("/admin/team_list")]
 pub fn team_list(session: UserSession) -> Result<Json<Vec<Team>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_team_read)?;
@@ -15,7 +14,6 @@ pub fn team_list(session: UserSession) -> Result<Json<Vec<Team>>> {
     Ok(Json(teams))
 }
 
-#[rocket::get("/admin/team_info?<team_id>")]
 pub fn team_info(session: UserSession, team_id: u32) -> Result<Json<Team>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_team_read)?;
@@ -24,7 +22,6 @@ pub fn team_info(session: UserSession, team_id: u32) -> Result<Json<Team>> {
     Ok(Json(team))
 }
 
-#[rocket::post("/admin/team_create", format = "application/json", data = "<team>")]
 pub fn team_create(session: UserSession, team: Json<Team>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_team_write)?;
@@ -33,7 +30,6 @@ pub fn team_create(session: UserSession, team: Json<Team>) -> Result<String> {
     Ok(team_id.to_string())
 }
 
-#[rocket::post("/admin/team_edit?<team_id>", format = "application/json", data = "<team>")]
 pub fn team_edit(session: UserSession, team_id: u32, team: Json<Team>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_team_write)?;
@@ -42,7 +38,6 @@ pub fn team_edit(session: UserSession, team_id: u32, team: Json<Team>) -> Result
     Ok(())
 }
 
-#[rocket::post("/admin/team_right_edit?<team_id>", format = "application/json", data = "<right>")]
 pub fn team_right_edit(session: UserSession, team_id: u32, right: Json<Right>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_team_write)?;
@@ -51,7 +46,6 @@ pub fn team_right_edit(session: UserSession, team_id: u32, right: Json<Right>) -
     Ok(())
 }
 
-#[rocket::head("/admin/team_delete?<team_id>")]
 pub fn team_delete(session: UserSession, team_id: u32) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_team_write)?;
@@ -60,7 +54,6 @@ pub fn team_delete(session: UserSession, team_id: u32) -> Result<()> {
     Ok(())
 }
 
-#[rocket::get("/admin/team_member_list?<team_id>")]
 pub fn team_member_list(session: UserSession, team_id: u32) -> Result<Json<Vec<User>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_team_read)?;
@@ -69,7 +62,6 @@ pub fn team_member_list(session: UserSession, team_id: u32) -> Result<Json<Vec<U
     Ok(Json(users))
 }
 
-#[rocket::head("/admin/team_member_add?<team_id>&<user_id>")]
 pub fn team_member_add(session: UserSession, team_id: u32, user_id: u32) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_team_write)?;
@@ -80,7 +72,6 @@ pub fn team_member_add(session: UserSession, team_id: u32, user_id: u32) -> Resu
     // TODO: remove/add permissions of currently logged-in users
 }
 
-#[rocket::head("/admin/team_member_remove?<team_id>&<user_id>")]
 pub fn team_member_remove(session: UserSession, team_id: u32, user_id: u32) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_team_write)?;

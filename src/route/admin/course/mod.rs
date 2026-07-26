@@ -1,13 +1,12 @@
 pub mod attendance;
 pub mod moderator;
 
-use rocket::serde::json::Json;
+use axum::Json;
 
 use crate::common::{Acceptance, Course, Event, Requirement, User, WebBool};
 use crate::error::Result;
 use crate::session::UserSession;
 
-#[rocket::get("/admin/course_list?<mod_id>&<active>&<public>")]
 pub fn course_list(
     session: UserSession,
     mod_id: Option<u64>,
@@ -22,7 +21,6 @@ pub fn course_list(
     Ok(Json(courses))
 }
 
-#[rocket::post("/admin/course_create", format = "application/json", data = "<course>")]
 pub fn course_create(session: UserSession, course: Json<Course>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_course_write)?;
@@ -31,7 +29,6 @@ pub fn course_create(session: UserSession, course: Json<Course>) -> Result<Strin
     Ok(id.to_string())
 }
 
-#[rocket::post("/admin/course_edit?<course_id>", format = "application/json", data = "<course>")]
 pub fn course_edit(session: UserSession, course_id: u32, course: Json<Course>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_course_write)?;
@@ -40,7 +37,6 @@ pub fn course_edit(session: UserSession, course_id: u32, course: Json<Course>) -
     Ok(())
 }
 
-#[rocket::head("/admin/course_delete?<course_id>")]
 pub fn course_delete(session: UserSession, course_id: u32) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_course_write)?;
@@ -49,7 +45,6 @@ pub fn course_delete(session: UserSession, course_id: u32) -> Result<()> {
     Ok(())
 }
 
-#[rocket::get("/admin/course_event_list?<course_id>")]
 pub fn course_event_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Event>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_course_read)?;
@@ -68,7 +63,6 @@ pub fn course_event_list(session: UserSession, course_id: u32) -> Result<Json<Ve
     Ok(Json(events))
 }
 
-#[rocket::get("/admin/course_requirement_list?<course_id>")]
 pub fn course_requirement_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Requirement>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_course_read)?;
@@ -77,7 +71,6 @@ pub fn course_requirement_list(session: UserSession, course_id: u32) -> Result<J
     Ok(Json(reqs))
 }
 
-#[rocket::head("/admin/course_requirement_add?<course_id>&<skill_id>&<rank>")]
 pub fn course_requirement_add(session: UserSession, course_id: u32, skill_id: u32, rank: u32) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_course_write)?;
@@ -86,7 +79,6 @@ pub fn course_requirement_add(session: UserSession, course_id: u32, skill_id: u3
     Ok(())
 }
 
-#[rocket::head("/admin/course_requirement_remove?<requirement_id>")]
 pub fn course_requirement_remove(session: UserSession, requirement_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_course_write)?;
@@ -95,7 +87,6 @@ pub fn course_requirement_remove(session: UserSession, requirement_id: u64) -> R
     Ok(())
 }
 
-#[rocket::get("/admin/course_club_info?<course_id>")]
 pub fn course_club_info(session: UserSession, course_id: u64) -> Result<Json<Option<u32>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_course_read)?;
@@ -104,7 +95,6 @@ pub fn course_club_info(session: UserSession, course_id: u64) -> Result<Json<Opt
     Ok(Json(club_id))
 }
 
-#[rocket::head("/admin/course_club_edit?<course_id>&<club_id>")]
 pub fn course_club_edit(session: UserSession, course_id: u64, club_id: Option<u32>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_course_write)?;
@@ -114,7 +104,6 @@ pub fn course_club_edit(session: UserSession, course_id: u64, club_id: Option<u3
     Ok(())
 }
 
-#[rocket::get("/admin/course_statistic_class?<course_id>")]
 pub fn course_statistic_class(session: UserSession, course_id: u32) -> Result<Json<Vec<(Event, u64, u64, u64, u64)>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_course_read)?;
@@ -123,7 +112,6 @@ pub fn course_statistic_class(session: UserSession, course_id: u32) -> Result<Js
     Ok(Json(stats))
 }
 
-#[rocket::get("/admin/course_statistic_attendance?<course_id>&<role>")]
 pub fn course_statistic_attendance(
     session: UserSession,
     course_id: u32,
@@ -136,7 +124,6 @@ pub fn course_statistic_attendance(
     Ok(Json(stats))
 }
 
-#[rocket::get("/admin/course_statistic_attendance1?<course_id>&<user_id>&<role>")]
 pub fn course_statistic_attendance1(
     session: UserSession,
     course_id: u32,

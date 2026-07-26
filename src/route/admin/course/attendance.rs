@@ -1,10 +1,9 @@
-use rocket::serde::json::Json;
+use axum::Json;
 
 use crate::common::Team;
 use crate::error::Result;
 use crate::session::UserSession;
 
-#[rocket::get("/admin/course_attendance_sieve_list?<course_id>&<role>")]
 pub fn sieve_list(session: UserSession, course_id: u32, role: String) -> Result<Json<Vec<(Team, bool)>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_course_read)?;
@@ -13,7 +12,6 @@ pub fn sieve_list(session: UserSession, course_id: u32, role: String) -> Result<
     Ok(Json(teams))
 }
 
-#[rocket::head("/admin/course_attendance_sieve_edit?<course_id>&<team_id>&<role>&<access>")]
 pub fn sieve_edit(session: UserSession, course_id: u32, team_id: u64, role: String, access: bool) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_course_write)?;
@@ -22,7 +20,6 @@ pub fn sieve_edit(session: UserSession, course_id: u32, team_id: u64, role: Stri
     Ok(())
 }
 
-#[rocket::head("/admin/course_attendance_sieve_remove?<course_id>&<team_id>&<role>")]
 pub fn sieve_remove(session: UserSession, course_id: u32, team_id: u64, role: String) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_course_write)?;

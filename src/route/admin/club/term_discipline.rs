@@ -1,14 +1,9 @@
-use rocket::serde::json::Json;
+use axum::Json;
 
 use crate::common::TermDiscipline;
 use crate::error::Result;
 use crate::session::UserSession;
 
-#[rocket::post(
-    "/admin/term_discipline_create?<term_id>",
-    format = "application/json",
-    data = "<term_discipline>"
-)]
 pub fn term_discipline_create(
     session: UserSession,
     term_id: u32,
@@ -21,11 +16,6 @@ pub fn term_discipline_create(
     Ok(id.to_string())
 }
 
-#[rocket::post(
-    "/admin/term_discipline_edit?<term_discipline_id>",
-    format = "application/json",
-    data = "<term_discipline>"
-)]
 pub fn term_discipline_edit(
     session: UserSession,
     term_discipline_id: u32,
@@ -38,7 +28,6 @@ pub fn term_discipline_edit(
     Ok(())
 }
 
-#[rocket::head("/admin/term_discipline_delete?<term_discipline_id>")]
 pub fn term_discipline_delete(session: UserSession, term_discipline_id: u32) -> Result<()> {
     crate::permission::require_right(session.right.right_club_write)?;
 

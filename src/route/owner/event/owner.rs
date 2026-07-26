@@ -1,9 +1,8 @@
 use crate::common::User;
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
-use rocket::serde::json::Json;
+use axum::Json;
 
-#[rocket::get("/owner/event_owner_list?<event_id>")]
 pub fn event_owner_list(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;
@@ -12,7 +11,6 @@ pub fn event_owner_list(session: UserSession, event_id: u64) -> Result<Json<Vec<
     Ok(Json(users))
 }
 
-#[rocket::head("/owner/event_owner_add?<event_id>&<user_id>")]
 pub fn event_owner_add(session: UserSession, event_id: u64, user_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;
@@ -21,7 +19,6 @@ pub fn event_owner_add(session: UserSession, event_id: u64, user_id: u64) -> Res
     Ok(())
 }
 
-#[rocket::head("/owner/event_owner_remove?<event_id>&<user_id>")]
 pub fn event_owner_remove(session: UserSession, event_id: u64, user_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;

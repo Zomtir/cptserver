@@ -1,4 +1,4 @@
-use rocket::serde::json::Json;
+use axum::Json;
 
 use crate::common::{Credential, User, WebBool};
 use crate::error::{Error, ErrorKind, Result};
@@ -12,7 +12,6 @@ pub use license::*;
 
 /* ROUTES */
 
-#[rocket::get("/admin/user_list?<active>")]
 pub fn user_list(session: UserSession, active: Option<WebBool>) -> Result<Json<Vec<User>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_user_read)?;
@@ -21,7 +20,7 @@ pub fn user_list(session: UserSession, active: Option<WebBool>) -> Result<Json<V
     Ok(Json(users))
 }
 
-#[rocket::get("/admin/user_detailed?<user_id>")]
+
 pub fn user_detailed(session: UserSession, user_id: u64) -> Result<Json<User>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_user_read)?;
@@ -30,7 +29,6 @@ pub fn user_detailed(session: UserSession, user_id: u64) -> Result<Json<User>> {
     Ok(Json(user))
 }
 
-#[rocket::post("/admin/user_create", format = "application/json", data = "<user>")]
 pub fn user_create(session: UserSession, mut user: Json<User>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_user_write)?;
@@ -40,7 +38,6 @@ pub fn user_create(session: UserSession, mut user: Json<User>) -> Result<String>
     Ok(user_id.to_string())
 }
 
-#[rocket::post("/admin/user_edit?<user_id>", format = "application/json", data = "<user>")]
 pub fn user_edit(session: UserSession, user_id: u64, mut user: Json<User>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_user_write)?;
@@ -49,7 +46,6 @@ pub fn user_edit(session: UserSession, user_id: u64, mut user: Json<User>) -> Re
     Ok(())
 }
 
-#[rocket::head("/admin/user_delete?<user_id>")]
 pub fn user_delete(session: UserSession, user_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_user_write)?;
@@ -58,7 +54,6 @@ pub fn user_delete(session: UserSession, user_id: u64) -> Result<()> {
     Ok(())
 }
 
-#[rocket::get("/admin/user_password_info?<user_id>")]
 pub fn user_password_info(session: UserSession, user_id: u64) -> Result<Json<Credential>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_user_read)?;
@@ -71,11 +66,6 @@ pub fn user_password_info(session: UserSession, user_id: u64) -> Result<Json<Cre
     Ok(Json(credit))
 }
 
-#[rocket::post(
-    "/admin/user_password_create?<user_id>",
-    format = "application/json",
-    data = "<credit>"
-)]
 pub fn user_password_create(session: UserSession, user_id: u64, credit: Json<Credential>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_user_write)?;
@@ -90,11 +80,6 @@ pub fn user_password_create(session: UserSession, user_id: u64, credit: Json<Cre
     Ok(())
 }
 
-#[rocket::post(
-    "/admin/user_password_edit?<user_id>",
-    format = "application/json",
-    data = "<credit>"
-)]
 pub fn user_password_edit(session: UserSession, user_id: u64, credit: Json<Credential>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_user_write)?;
@@ -108,7 +93,6 @@ pub fn user_password_edit(session: UserSession, user_id: u64, credit: Json<Crede
     Ok(())
 }
 
-#[rocket::head("/admin/user_password_delete?<user_id>")]
 pub fn user_password_delete(session: UserSession, user_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_user_write)?;

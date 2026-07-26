@@ -1,10 +1,9 @@
-use rocket::serde::json::Json;
+use axum::Json;
 
 use crate::common::{Credential, Right};
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::{EventSession, UserSession, ADMINSESSION, EVENTSESSIONS, USERSESSIONS};
 
-#[rocket::post("/user_login", format = "application/json", data = "<credit>")]
 pub fn user_login(credit: Json<Credential>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
 
@@ -47,7 +46,6 @@ pub fn user_login(credit: Json<Credential>) -> Result<String> {
     Ok(session_token)
 }
 
-#[rocket::post("/event_login", format = "application/json", data = "<credit>")]
 pub fn event_login(credit: Json<Credential>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
 
@@ -94,7 +92,6 @@ pub fn event_login(credit: Json<Credential>) -> Result<String> {
     Ok(session_token)
 }
 
-#[rocket::get("/course_login?<course_key>")]
 pub fn course_login(course_key: String) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     let begin = (chrono::Utc::now() - crate::config::EVENT_LOGIN_BUFFER()).naive_utc();
@@ -112,7 +109,6 @@ pub fn course_login(course_key: String) -> Result<String> {
     event_login(Json(credentials))
 }
 
-#[rocket::get("/location_login?<location_key>")]
 pub fn location_login(location_key: String) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     let begin = (chrono::Utc::now() - crate::config::EVENT_LOGIN_BUFFER()).naive_utc();

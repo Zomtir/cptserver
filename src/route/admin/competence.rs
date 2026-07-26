@@ -1,10 +1,9 @@
-use rocket::serde::json::Json;
+use axum::Json;
 
 use crate::common::Competence;
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
 
-#[rocket::get("/admin/competence_list?<user_id>&<skill_id>&<min>&<max>")]
 pub fn competence_list(
     session: UserSession,
     user_id: Option<u64>,
@@ -20,7 +19,6 @@ pub fn competence_list(
     Ok(Json(competences))
 }
 
-#[rocket::get("/admin/competence_info?<competence_id>")]
 pub fn competence_info(session: UserSession, competence_id: Option<u64>) -> Result<Json<Competence>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_competence_read)?;
@@ -33,7 +31,6 @@ pub fn competence_info(session: UserSession, competence_id: Option<u64>) -> Resu
     }
 }
 
-#[rocket::post("/admin/competence_create", format = "application/json", data = "<competence>")]
 pub fn competence_create(session: UserSession, competence: Json<Competence>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_competence_write)?;
@@ -42,11 +39,6 @@ pub fn competence_create(session: UserSession, competence: Json<Competence>) -> 
     Ok(id.to_string())
 }
 
-#[rocket::post(
-    "/admin/competence_edit?<competence_id>",
-    format = "application/json",
-    data = "<competence>"
-)]
 pub fn competence_edit(session: UserSession, competence_id: u64, competence: Json<Competence>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_competence_write)?;
@@ -55,7 +47,6 @@ pub fn competence_edit(session: UserSession, competence_id: u64, competence: Jso
     Ok(())
 }
 
-#[rocket::head("/admin/competence_delete?<competence_id>")]
 pub fn competence_delete(session: UserSession, competence_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_competence_write)?;

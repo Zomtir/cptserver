@@ -1,10 +1,9 @@
-use rocket::serde::json::Json;
+use axum::Json;
 
 use crate::common::Location;
 use crate::error::Result;
 use crate::session::UserSession;
 
-#[rocket::get("/admin/location_list")]
 pub fn location_list(session: UserSession) -> Result<Json<Vec<Location>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_location_read)?;
@@ -13,7 +12,6 @@ pub fn location_list(session: UserSession) -> Result<Json<Vec<Location>>> {
     Ok(Json(locations))
 }
 
-#[rocket::post("/admin/location_create", format = "application/json", data = "<location>")]
 pub fn location_create(session: UserSession, location: Json<Location>) -> Result<String> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_location_write)?;
@@ -22,11 +20,6 @@ pub fn location_create(session: UserSession, location: Json<Location>) -> Result
     Ok(id.to_string())
 }
 
-#[rocket::post(
-    "/admin/location_edit?<location_id>",
-    format = "application/json",
-    data = "<location>"
-)]
 pub fn location_edit(session: UserSession, location_id: u32, location: Json<Location>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_location_write)?;
@@ -35,7 +28,6 @@ pub fn location_edit(session: UserSession, location_id: u32, location: Json<Loca
     Ok(())
 }
 
-#[rocket::head("/admin/location_delete?<location_id>")]
 pub fn location_delete(session: UserSession, location_id: u32) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_location_write)?;

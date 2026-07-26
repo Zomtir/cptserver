@@ -1,10 +1,9 @@
-use rocket::serde::json::Json;
+use axum::Json;
 
 use crate::common::User;
 use crate::error::Result;
 use crate::session::UserSession;
 
-#[rocket::get("/admin/event_owner_list?<event_id>")]
 pub fn owner_list(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_event_read)?;
@@ -13,7 +12,6 @@ pub fn owner_list(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>
     Ok(Json(filters))
 }
 
-#[rocket::head("/admin/event_owner_add?<event_id>&<user_id>")]
 pub fn owner_add(session: UserSession, event_id: u64, user_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_event_write)?;
@@ -22,7 +20,6 @@ pub fn owner_add(session: UserSession, event_id: u64, user_id: u64) -> Result<()
     Ok(())
 }
 
-#[rocket::head("/admin/event_owner_remove?<event_id>&<user_id>")]
 pub fn owner_remove(session: UserSession, event_id: u64, user_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_event_write)?;

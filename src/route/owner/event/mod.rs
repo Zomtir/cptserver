@@ -4,9 +4,8 @@ pub mod owner;
 use crate::common::{Acceptance, Course, Event, Occurrence, WebDateTime};
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
-use rocket::serde::json::Json;
+use axum::Json;
 
-#[rocket::get("/owner/event_list?<begin>&<end>&<location_id>&<occurrence>&<acceptance>")]
 pub fn event_list(
     session: UserSession,
     begin: WebDateTime,
@@ -35,7 +34,6 @@ pub fn event_list(
     Ok(Json(events))
 }
 
-#[rocket::get("/owner/event_info?<event_id>")]
 pub fn event_info(session: UserSession, event_id: u64) -> Result<Json<Event>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;
@@ -44,7 +42,6 @@ pub fn event_info(session: UserSession, event_id: u64) -> Result<Json<Event>> {
 }
 
 // TODO, check if new time is free
-#[rocket::post("/owner/event_edit?<event_id>", format = "application/json", data = "<event>")]
 pub fn event_edit(session: UserSession, event_id: u64, mut event: Json<Event>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;
@@ -56,7 +53,6 @@ pub fn event_edit(session: UserSession, event_id: u64, mut event: Json<Event>) -
     Ok(())
 }
 
-#[rocket::post("/owner/event_password_edit?<event_id>", format = "text/plain", data = "<password>")]
 pub fn event_password_edit(session: UserSession, event_id: u64, password: String) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;
@@ -66,7 +62,6 @@ pub fn event_password_edit(session: UserSession, event_id: u64, password: String
     Ok(())
 }
 
-#[rocket::get("/owner/event_course_info?<event_id>")]
 pub fn event_course_info(session: UserSession, event_id: u64) -> Result<Json<Option<Course>>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;
@@ -75,7 +70,6 @@ pub fn event_course_info(session: UserSession, event_id: u64) -> Result<Json<Opt
     Ok(Json(course))
 }
 
-#[rocket::head("/owner/event_course_edit?<event_id>&<course_id>")]
 pub fn event_course_edit(session: UserSession, event_id: u64, course_id: Option<u32>) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;
@@ -92,7 +86,6 @@ pub fn event_course_edit(session: UserSession, event_id: u64, course_id: Option<
     Ok(())
 }
 
-#[rocket::head("/owner/event_submit?<event_id>")]
 pub fn event_submit(session: UserSession, event_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;
@@ -118,7 +111,6 @@ pub fn event_submit(session: UserSession, event_id: u64) -> Result<()> {
     Ok(())
 }
 
-#[rocket::head("/owner/event_withdraw?<event_id>")]
 pub fn event_withdraw(session: UserSession, event_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;
@@ -127,7 +119,6 @@ pub fn event_withdraw(session: UserSession, event_id: u64) -> Result<()> {
     Ok(())
 }
 
-#[rocket::head("/owner/event_delete?<event_id>")]
 pub fn event_delete(session: UserSession, event_id: u64) -> Result<()> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_event_owner(conn, event_id, session.user.id)?;
