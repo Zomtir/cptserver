@@ -20,7 +20,6 @@ pub fn user_list(session: UserSession, active: Option<WebBool>) -> Result<Json<V
     Ok(Json(users))
 }
 
-
 pub fn user_detailed(session: UserSession, user_id: u64) -> Result<Json<User>> {
     let conn = &mut crate::utils::db::get_db_conn()?;
     crate::permission::require_right(session.right.right_user_read)?;

@@ -1,19 +1,8 @@
-extern crate lazy_static;
-
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 
-use std::collections::HashMap;
-use std::sync::Mutex;
-
 use crate::common::{Right, User};
 use crate::error::{Error, ErrorKind};
-
-lazy_static::lazy_static! {
-    pub static ref ADMINSESSION: Mutex<Option<String>> = Mutex::new(None);
-    pub static ref USERSESSIONS: Mutex<HashMap<String,UserSession>> = Mutex::new(HashMap::new());
-    pub static ref EVENTSESSIONS: Mutex<HashMap<String,EventSession>> = Mutex::new(HashMap::new());
-}
 
 /*
  * STRUCTS
@@ -25,16 +14,11 @@ pub struct UserSession {
     pub user: User,
     pub right: Right,
 }
-impl<S> FromRequestParts<S> for UserSession
-where
-    S: Send + Sync,
-{
+
+impl FromRequestParts<crate::AppState> for UserSession {
     type Rejection = crate::error::Error;
 
-    async fn from_request_parts(
-        parts: &mut Parts,
-        _state: &S,
-    ) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, state: &crate::AppState) -> Result<Self, Self::Rejection> {
         let head_token = parts
             .headers
             .get("Token")
@@ -42,7 +26,8 @@ where
             .to_str()
             .map_err(|_| Error::new(ErrorKind::Invalid, "Invalid Token header"))?;
 
-        let session = USERSESSIONS
+        let session = state
+            .user_sessions
             .lock()
             .unwrap()
             .get(head_token)
@@ -50,11 +35,8 @@ where
             .ok_or(Error::new(ErrorKind::Invalid, "Invalid session token"))?;
 
         if session.expiry < chrono::Utc::now() {
-            USERSESSIONS.lock().unwrap().remove(head_token);
-            return Err(Error::new(
-                ErrorKind::Expired,
-                "Session token has expired",
-            ));
+            state.user_sessions.lock().unwrap().remove(head_token);
+            return Err(Error::new(ErrorKind::Expired, "Session token has expired"));
         }
 
         Ok(session)
@@ -99,33 +81,30 @@ pub struct EventSession {
     pub event_id: u64,
 }
 
-#[rocket::async_trait]
-impl<'r> FromRequest<'r> for EventSession {
-    type Error = crate::error::Error;
+impl FromRequestParts<crate::AppState> for EventSession {
+    type Rejection = crate::error::Error;
 
-    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, crate::error::Error> {
-        let head_token = match request.headers().get_one("Token") {
-            None => return Error::new(ErrorKind::Missing, "Session token is missing").outcome(),
-            Some(token) => token,
-        };
+    async fn from_request_parts(parts: &mut Parts, state: &crate::AppState) -> Result<Self, Self::Rejection> {
+        let head_token = parts
+            .headers
+            .get("Token")
+            .ok_or(Error::new(ErrorKind::Missing, "Session token is missing"))?
+            .to_str()
+            .map_err(|_| Error::new(ErrorKind::Invalid, "Invalid Token header"))?;
 
-        let session: EventSession = match EVENTSESSIONS.lock().unwrap().get(&head_token.to_string()).cloned() {
-            None => {
-                return Error::new(ErrorKind::Invalid, "Invalid session token").outcome();
-            }
-            Some(session) => session,
-        };
-
-        // Wrong token, should not happen as the session is looked up by the token, but just in case
-        if session.token != *head_token {
-            return Error::new(ErrorKind::Mismatch, "Session token does not match internally").outcome();
-        }
+        let session = state
+            .event_sessions
+            .lock()
+            .unwrap()
+            .get(head_token)
+            .cloned()
+            .ok_or(Error::new(ErrorKind::Invalid, "Invalid session token"))?;
 
         if session.expiry < chrono::Utc::now() {
-            EVENTSESSIONS.lock().unwrap().remove(&session.token);
-            return Error::new(ErrorKind::Expired, "Session token has expired").outcome();
+            state.event_sessions.lock().unwrap().remove(head_token);
+            return Err(Error::new(ErrorKind::Expired, "Session token has expired"));
         }
 
-        Success(session)
+        Ok(session)
     }
 }

@@ -1,4 +1,4 @@
-use crate::error::{Result};
+use crate::error::Result;
 
 pub fn index() -> &'static str {
     "Welcome to the CPT server."

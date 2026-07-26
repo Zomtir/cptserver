@@ -30,7 +30,7 @@ pub mod regular {
     pub mod user;
 }
 
-pub mod service;
-pub mod generic;
 pub mod anon;
+pub mod generic;
 pub mod login;
+pub mod service;
