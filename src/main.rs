@@ -30,7 +30,7 @@ struct AppState {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> () {
     let path_home_exe: Option<std::path::PathBuf> = std::env::current_exe()
         .ok()
         .and_then(|p| p.parent().map(|p| p.to_path_buf()));
@@ -41,26 +41,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     config::read_config();
 
-    if utils::db::init_db_pool().is_err() {
-        panic!("Database pool initialization failed")
-    };
+    let url = crate::config::DB_URL();
+    let opts = mysql::Opts::from_url(&url).expect("Invalid database URL");
+
+    let pool = mysql::Pool::new(opts).expect("Failed to create database pool");
 
     let mut conn = match utils::db::get_db_conn() {
         Ok(conn) => conn,
         Err(_) => panic!("Database connection failed"),
     };
 
-    if db::migrate_scheme(&mut conn, &crate::config::DB_NAME()).is_err() {
-        panic!("Database update failed")
-    };
+    db::migrate_scheme(&mut conn, &crate::config::DB_NAME()).expect("Database update failed")
 
-    if permission::promote_user_to_admin(&mut conn).is_err() {
-        panic!("Admin elevation failed")
-    };
+
+    permission::promote_user_to_admin(&mut conn).expect("Admin elevation failed");
 
     // Setup AppState
-    let url = crate::config::DB_URL();
-    let pool = mysql::Pool::new(mysql::Opts::from_url(&url)?)?;
+
     let app_state = AppState {
         db: pool,
         admin_session: Arc::new(Mutex::new(None)),
