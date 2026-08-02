@@ -1,27 +1,29 @@
+use axum::extract::State;
 use axum::Json;
 
 use crate::common::User;
 use crate::error::Result;
 use crate::session::UserSession;
+use crate::AppState;
 
-pub fn owner_list(session: UserSession, event_id: u64) -> Result<Json<Vec<User>>> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn owner_list(State(state): State<AppState>, session: UserSession, event_id: u64) -> Result<Json<Vec<User>>> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_read)?;
 
     let filters = crate::db::event::owner::event_owner_list(conn, event_id)?;
     Ok(Json(filters))
 }
 
-pub fn owner_add(session: UserSession, event_id: u64, user_id: u64) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn owner_add(State(state): State<AppState>, session: UserSession, event_id: u64, user_id: u64) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_write)?;
 
     crate::db::event::owner::event_owner_add(conn, event_id, user_id)?;
     Ok(())
 }
 
-pub fn owner_remove(session: UserSession, event_id: u64, user_id: u64) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn owner_remove(State(state): State<AppState>, session: UserSession, event_id: u64, user_id: u64) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_write)?;
 
     crate::db::event::owner::event_owner_remove(conn, event_id, user_id)?;

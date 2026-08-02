@@ -1,9 +1,9 @@
 use crate::error::Result;
 
-pub fn index() -> &'static str {
+pub async fn index() -> &'static str {
     "Welcome to the CPT server."
 }
 
-pub fn status() -> Result<()> {
+pub async fn status() -> Result<()> {
     Ok(())
 }

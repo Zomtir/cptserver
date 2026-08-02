@@ -1,13 +1,15 @@
 pub mod attendance;
 pub mod owner;
 
-use axum::Json;
-
 use crate::common::{Acceptance, Affiliation, Course, Credential, Event, Item, Occurrence, User, WebBool, WebDateTime};
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
+use crate::AppState;
+use axum::extract::State;
+use axum::Json;
 
 pub fn event_list(
+    State(state): State<AppState>,
     session: UserSession,
     begin: Option<WebDateTime>,
     end: Option<WebDateTime>,
@@ -18,7 +20,7 @@ pub fn event_list(
     course_id: Option<u32>,
     owner_id: Option<u64>,
 ) -> Result<Json<Vec<Event>>> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_read)?;
 
     let begin = begin.map(|dt| dt.to_naive());
@@ -39,15 +41,19 @@ pub fn event_list(
     Ok(Json(events))
 }
 
-pub fn event_info(session: UserSession, event_id: u64) -> Result<Json<Event>> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_info(State(state): State<AppState>, session: UserSession, event_id: u64) -> Result<Json<Event>> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_read)?;
 
     Ok(Json(crate::db::event::event_info(conn, event_id)?))
 }
 
-pub fn event_credential(session: UserSession, event_id: u64) -> Result<Json<Credential>> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_credential(
+    State(state): State<AppState>,
+    session: UserSession,
+    event_id: u64,
+) -> Result<Json<Credential>> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_read)?;
 
     let (event_key, event_pwd) = crate::db::login::event_credential(conn, event_id)?;
@@ -61,8 +67,13 @@ pub fn event_credential(session: UserSession, event_id: u64) -> Result<Json<Cred
     }))
 }
 
-pub fn event_create(session: UserSession, course_id: Option<u32>, mut event: Json<Event>) -> Result<String> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_create(
+    State(state): State<AppState>,
+    session: UserSession,
+    course_id: Option<u32>,
+    mut event: Json<Event>,
+) -> Result<String> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_write)?;
 
     if course_id.is_some() {
@@ -75,8 +86,13 @@ pub fn event_create(session: UserSession, course_id: Option<u32>, mut event: Jso
     Ok(id.to_string())
 }
 
-pub fn event_edit(session: UserSession, event_id: u64, mut event: Json<Event>) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_edit(
+    State(state): State<AppState>,
+    session: UserSession,
+    event_id: u64,
+    mut event: Json<Event>,
+) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_write)?;
 
     crate::utils::event::validate_event_dates(&mut event)?;
@@ -85,8 +101,13 @@ pub fn event_edit(session: UserSession, event_id: u64, mut event: Json<Event>) -
     Ok(())
 }
 
-pub fn event_password_edit(session: UserSession, event_id: u64, password: String) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_password_edit(
+    State(state): State<AppState>,
+    session: UserSession,
+    event_id: u64,
+    password: String,
+) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_write)?;
 
     let password = crate::utils::event::validate_clear_password(password)?;
@@ -94,16 +115,25 @@ pub fn event_password_edit(session: UserSession, event_id: u64, password: String
     Ok(())
 }
 
-pub fn event_course_info(session: UserSession, event_id: u64) -> Result<Json<Option<Course>>> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_course_info(
+    State(state): State<AppState>,
+    session: UserSession,
+    event_id: u64,
+) -> Result<Json<Option<Course>>> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_read)?;
 
     let course = crate::db::event::event_course_info(conn, event_id)?;
     Ok(Json(course))
 }
 
-pub fn event_course_edit(session: UserSession, event_id: u64, course_id: Option<u32>) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_course_edit(
+    State(state): State<AppState>,
+    session: UserSession,
+    event_id: u64,
+    course_id: Option<u32>,
+) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_write)?;
     crate::permission::require_right(session.right.right_course_write)?;
 
@@ -111,16 +141,16 @@ pub fn event_course_edit(session: UserSession, event_id: u64, course_id: Option<
     Ok(())
 }
 
-pub fn event_delete(session: UserSession, event_id: u64) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_delete(State(state): State<AppState>, session: UserSession, event_id: u64) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_write)?;
 
     crate::db::event::event_delete(conn, event_id)?;
     Ok(())
 }
 
-pub fn event_accept(session: UserSession, event_id: u64) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_accept(State(state): State<AppState>, session: UserSession, event_id: u64) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_write)?;
 
     // Perhaps lock the DB during checking and potentially accepting the request
@@ -135,24 +165,24 @@ pub fn event_accept(session: UserSession, event_id: u64) -> Result<()> {
     Ok(())
 }
 
-pub fn event_reject(session: UserSession, event_id: u64) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_reject(State(state): State<AppState>, session: UserSession, event_id: u64) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_write)?;
 
     crate::db::event::event_acceptance_edit(conn, event_id, &Acceptance::Rejected)?;
     Ok(())
 }
 
-pub fn event_suspend(session: UserSession, event_id: u64) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_suspend(State(state): State<AppState>, session: UserSession, event_id: u64) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_write)?;
 
     crate::db::event::event_acceptance_edit(conn, event_id, &Acceptance::Pending)?;
     Ok(())
 }
 
-pub fn event_withdraw(session: UserSession, event_id: u64) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_withdraw(State(state): State<AppState>, session: UserSession, event_id: u64) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_write)?;
 
     crate::db::event::event_acceptance_edit(conn, event_id, &Acceptance::Draft)?;
@@ -160,11 +190,12 @@ pub fn event_withdraw(session: UserSession, event_id: u64) -> Result<()> {
 }
 
 pub fn statistic_packlist(
+    State(state): State<AppState>,
     session: UserSession,
     event_id: u64,
     skill_id: u32,
 ) -> Result<Json<Vec<(User, Item, u32, u32, u32)>>> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_read)?;
 
     let stats = crate::db::event::event_statistic_packlist(conn, event_id, skill_id)?;
@@ -172,11 +203,12 @@ pub fn statistic_packlist(
 }
 
 pub fn statistic_organisation(
+    State(state): State<AppState>,
     session: UserSession,
     event_id: u64,
     organisation_id: u64,
 ) -> Result<Json<Vec<Affiliation>>> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_read)?;
 
     let stats = crate::db::event::event_statistic_organisation(conn, event_id, organisation_id)?;

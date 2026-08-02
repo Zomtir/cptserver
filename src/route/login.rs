@@ -1,11 +1,12 @@
-use axum::Json;
-
 use crate::common::{Credential, Right};
 use crate::error::{Error, ErrorKind, Result};
-use crate::session::{EventSession, UserSession, ADMINSESSION, EVENTSESSIONS, USERSESSIONS};
+use crate::session::{EventSession, UserSession};
+use crate::AppState;
+use axum::extract::State;
+use axum::Json;
 
-pub fn user_login(credit: Json<Credential>) -> Result<String> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn user_login(State(state): State<AppState>, credit: Json<Credential>) -> Result<String> {
+    let conn = &mut state.db.get_conn()?;
 
     let user_key: &str = match &credit.login {
         Some(key) => key,
@@ -13,7 +14,7 @@ pub fn user_login(credit: Json<Credential>) -> Result<String> {
     };
 
     // If the user is a preconfigured admin, return him an admin session
-    if ADMINSESSION.lock().unwrap().as_deref() == Some(user_key) {
+    if state.admin_session.lock().unwrap().as_deref() == Some(user_key) {
         let user_id = match crate::db::user::user_created_true(conn, user_key)? {
             Some(id) => id,
             None => return Err(Error::new(ErrorKind::Missing, "User not found")),
@@ -21,7 +22,7 @@ pub fn user_login(credit: Json<Credential>) -> Result<String> {
         let user = crate::db::user::user_info(conn, user_id)?;
         let adminsession = UserSession::admin(&user);
         let token = crate::common::random_string(30);
-        USERSESSIONS.lock().unwrap().insert(token.clone(), adminsession);
+        state.user_sessions.lock().unwrap().insert(token.clone(), adminsession);
         return Ok(token);
     }
 
@@ -41,13 +42,17 @@ pub fn user_login(credit: Json<Credential>) -> Result<String> {
         right: user_right,
     };
 
-    USERSESSIONS.lock().unwrap().insert(session_token.clone(), session);
+    state
+        .user_sessions
+        .lock()
+        .unwrap()
+        .insert(session_token.clone(), session);
 
     Ok(session_token)
 }
 
-pub fn event_login(credit: Json<Credential>) -> Result<String> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_login(State(state): State<AppState>, credit: Json<Credential>) -> Result<String> {
+    let conn = &mut state.db.get_conn()?;
 
     let event_key = match &credit.login {
         None => return Err(Error::new(ErrorKind::Missing, "Event key is missing")),
@@ -87,13 +92,17 @@ pub fn event_login(credit: Json<Credential>) -> Result<String> {
         event_id,
     };
 
-    EVENTSESSIONS.lock().unwrap().insert(session_token.to_string(), session);
+    state
+        .event_sessions
+        .lock()
+        .unwrap()
+        .insert(session_token.to_string(), session);
 
     Ok(session_token)
 }
 
-pub fn course_login(course_key: String) -> Result<String> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn course_login(State(state): State<AppState>, course_key: String) -> Result<String> {
+    let conn = &mut state.db.get_conn()?;
     let begin = (chrono::Utc::now() - crate::config::EVENT_LOGIN_BUFFER()).naive_utc();
     let end = (chrono::Utc::now() + crate::config::EVENT_LOGIN_BUFFER()).naive_utc();
     let (event_key, event_pwd) = crate::db::login::course_current_event(conn, &course_key, &begin, &end)?;
@@ -106,11 +115,11 @@ pub fn course_login(course_key: String) -> Result<String> {
         since: None,
     };
 
-    event_login(Json(credentials))
+    event_login(State(state), Json(credentials))
 }
 
-pub fn location_login(location_key: String) -> Result<String> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn location_login(State(state): State<AppState>, location_key: String) -> Result<String> {
+    let conn = &mut state.db.get_conn()?;
     let begin = (chrono::Utc::now() - crate::config::EVENT_LOGIN_BUFFER()).naive_utc();
     let end = (chrono::Utc::now() + crate::config::EVENT_LOGIN_BUFFER()).naive_utc();
     let (event_key, event_pwd) = crate::db::login::location_current_event(conn, &location_key, &begin, &end)?;
@@ -123,5 +132,5 @@ pub fn location_login(location_key: String) -> Result<String> {
         since: None,
     };
 
-    event_login(Json(credentials))
+    event_login(State(state), Json(credentials))
 }

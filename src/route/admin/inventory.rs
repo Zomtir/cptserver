@@ -1,8 +1,9 @@
+use axum::extract::State;
 use axum::Json;
-
 use crate::common::{Possession, Stock, WebBool};
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
+use crate::AppState;
 
 mod equipment;
 mod item;
@@ -12,16 +13,21 @@ pub use item::*;
 
 /* STOCK */
 
-pub fn stock_list(session: UserSession, club_id: Option<u32>, item_id: Option<u32>) -> Result<Json<Vec<Stock>>> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn stock_list(
+    State(state): State<AppState>,
+    session: UserSession,
+    club_id: Option<u32>,
+    item_id: Option<u32>,
+) -> Result<Json<Vec<Stock>>> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_read)?;
 
     let stocks = crate::db::inventory::stock_list(conn, club_id, item_id)?;
     Ok(Json(stocks))
 }
 
-pub fn stock_create(session: UserSession, stock: Json<Stock>) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn stock_create(State(state): State<AppState>, session: UserSession, stock: Json<Stock>) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
 
     if stock.owned > 100 {
@@ -33,8 +39,13 @@ pub fn stock_create(session: UserSession, stock: Json<Stock>) -> Result<()> {
     Ok(())
 }
 
-pub fn stock_edit(session: UserSession, stock_id: u64, stock: Json<Stock>) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn stock_edit(
+    State(state): State<AppState>,
+    session: UserSession,
+    stock_id: u64,
+    stock: Json<Stock>,
+) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
 
     if stock.owned > 100 {
@@ -68,8 +79,8 @@ pub fn stock_edit(session: UserSession, stock_id: u64, stock: Json<Stock>) -> Re
     Ok(())
 }
 
-pub fn stock_delete(session: UserSession, stock_id: u64) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn stock_delete(State(state): State<AppState>, session: UserSession, stock_id: u64) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
 
     let stock = crate::db::inventory::stock_info(conn, stock_id)?;
@@ -87,8 +98,8 @@ pub fn stock_delete(session: UserSession, stock_id: u64) -> Result<()> {
     Ok(())
 }
 
-pub fn item_loan(session: UserSession, stock_id: u64, user_id: u64) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn item_loan(State(state): State<AppState>, session: UserSession, stock_id: u64, user_id: u64) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
 
     let stock = crate::db::inventory::stock_info(conn, stock_id)?;
@@ -111,8 +122,8 @@ pub fn item_loan(session: UserSession, stock_id: u64, user_id: u64) -> Result<()
     Ok(())
 }
 
-pub fn item_return(session: UserSession, possession_id: u64) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn item_return(State(state): State<AppState>, session: UserSession, possession_id: u64) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
 
     let possession = crate::db::inventory::possession_info(conn, possession_id)?;
@@ -148,8 +159,8 @@ pub fn item_return(session: UserSession, possession_id: u64) -> Result<()> {
     Ok(())
 }
 
-pub fn item_handout(session: UserSession, possession_id: u64) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn item_handout(State(state): State<AppState>, session: UserSession, possession_id: u64) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
 
     let possession = crate::db::inventory::possession_info(conn, possession_id)?;
@@ -185,8 +196,13 @@ pub fn item_handout(session: UserSession, possession_id: u64) -> Result<()> {
     Ok(())
 }
 
-pub fn item_restock(session: UserSession, possession_id: u64, stock_id: u64) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn item_restock(
+    State(state): State<AppState>,
+    session: UserSession,
+    possession_id: u64,
+    stock_id: u64,
+) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
 
     let possession = crate::db::inventory::possession_info(conn, possession_id)?;
@@ -214,13 +230,14 @@ pub fn item_restock(session: UserSession, possession_id: u64, stock_id: u64) -> 
 /* POSSESSIONS */
 
 pub fn possession_list(
+    State(state): State<AppState>,
     session: UserSession,
     user_id: Option<u64>,
     item_id: Option<u64>,
     owned: Option<WebBool>,
     club_id: Option<u32>,
 ) -> Result<Json<Vec<Possession>>> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_read)?;
 
     let possessions =
@@ -228,16 +245,21 @@ pub fn possession_list(
     Ok(Json(possessions))
 }
 
-pub fn possession_create(session: UserSession, user_id: u64, item_id: u64) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn possession_create(
+    State(state): State<AppState>,
+    session: UserSession,
+    user_id: u64,
+    item_id: u64,
+) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
 
     crate::db::inventory::possession_create(conn, user_id, item_id, chrono::Utc::now().date_naive(), true, None)?;
     Ok(())
 }
 
-pub fn possession_delete(session: UserSession, possession_id: u64) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn possession_delete(State(state): State<AppState>, session: UserSession, possession_id: u64) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
 
     let possession = crate::db::inventory::possession_info(conn, possession_id)?;

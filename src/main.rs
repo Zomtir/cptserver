@@ -7,7 +7,7 @@ use axum::Router;
 use tower_http::cors::{Any, CorsLayer};
 
 use std::collections::HashMap;
-use std::sync::{Arc,Mutex};
+use std::sync::{Arc, Mutex};
 
 extern crate mysql_common;
 
@@ -43,24 +43,17 @@ async fn main() -> () {
 
     let url = crate::config::DB_URL();
     let opts = mysql::Opts::from_url(&url).expect("Invalid database URL");
-
     let pool = mysql::Pool::new(opts).expect("Failed to create database pool");
 
-    let mut conn = match utils::db::get_db_conn() {
-        Ok(conn) => conn,
-        Err(_) => panic!("Database connection failed"),
-    };
+    let mut conn = pool.get_conn().expect("Database connection failed");
+    db::migrate_scheme(&mut conn, &crate::config::DB_NAME()).expect("Database update failed");
 
-    db::migrate_scheme(&mut conn, &crate::config::DB_NAME()).expect("Database update failed")
-
-
-    permission::promote_user_to_admin(&mut conn).expect("Admin elevation failed");
+    let session_admin = permission::promote_user_to_admin(&mut conn).expect("Admin elevation failed");
 
     // Setup AppState
-
     let app_state = AppState {
         db: pool,
-        admin_session: Arc::new(Mutex::new(None)),
+        admin_session: Arc::new(Mutex::new(session_admin)),
         user_sessions: Arc::new(Mutex::new(HashMap::new())),
         event_sessions: Arc::new(Mutex::new(HashMap::new())),
     };
@@ -79,7 +72,7 @@ async fn main() -> () {
             HeaderName::from_static("error-uri"),
             HeaderName::from_static("error-msg"),
         ])
-        // TODO: Enable credentials when token is retired
+        // TODO: Enable credentials when token is retired in Favour of Authorization header
         .allow_credentials(false);
 
     // Router
@@ -93,7 +86,6 @@ async fn main() -> () {
             "/admin/event_owner_remove",
             delete(route::admin::event::owner::owner_remove),
         )
-        
             #[rocket::get("/admin/discipline_list")]
             #[rocket::post("/admin/discipline_create", format = "application/json", data = "<discipline>")]
             #[rocket::post(
@@ -374,8 +366,10 @@ async fn main() -> () {
 
     // Start server
     let addr = crate::config::SERVER_URL();
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app).await?;
+    let listener = tokio::net::TcpListener::bind(&addr)
+        .await
+        .expect("Failed to create Tokio listener");
+    axum::serve(listener, app).await.expect("Failed to serve application");
 
     /*
     rocket::routes![
@@ -595,6 +589,4 @@ async fn main() -> () {
         route::service::event::event_attendance_presence_remove,
     ],
      */
-
-    Ok(())
 }

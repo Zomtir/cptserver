@@ -1,19 +1,26 @@
+use axum::extract::State;
 use axum::Json;
 
 use crate::common::{Acceptance, Event};
 use crate::error::Result;
 use crate::session::UserSession;
+use crate::AppState;
 
-pub fn event_list(session: UserSession, course_id: u32) -> Result<Json<Vec<Event>>> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_list(State(state): State<AppState>, session: UserSession, course_id: u32) -> Result<Json<Vec<Event>>> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_course_moderator(conn, course_id, session.user.id)?;
 
     let events = crate::db::event::event_list(conn, None, None, None, None, None, Some(true), Some(course_id), None)?;
     Ok(Json(events))
 }
 
-pub fn event_create(session: UserSession, course_id: u32, mut event: Json<Event>) -> Result<String> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_create(
+    State(state): State<AppState>,
+    session: UserSession,
+    course_id: u32,
+    mut event: Json<Event>,
+) -> Result<String> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_course_moderator(conn, course_id, session.user.id)?;
 
     crate::utils::event::validate_event_dates(&mut event)?;
@@ -22,8 +29,13 @@ pub fn event_create(session: UserSession, course_id: u32, mut event: Json<Event>
     Ok(id.to_string())
 }
 
-pub fn event_edit(session: UserSession, event_id: u64, mut event: Json<Event>) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_edit(
+    State(state): State<AppState>,
+    session: UserSession,
+    event_id: u64,
+    mut event: Json<Event>,
+) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_event_moderator(conn, event_id, session.user.id)?;
 
     crate::utils::event::validate_event_dates(&mut event)?;
@@ -32,8 +44,13 @@ pub fn event_edit(session: UserSession, event_id: u64, mut event: Json<Event>) -
     Ok(())
 }
 
-pub fn event_edit_password(session: UserSession, event_id: u64, password: String) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_edit_password(
+    State(state): State<AppState>,
+    session: UserSession,
+    event_id: u64,
+    password: String,
+) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_event_moderator(conn, event_id, session.user.id)?;
 
     let password = crate::utils::event::validate_clear_password(password)?;
@@ -41,8 +58,8 @@ pub fn event_edit_password(session: UserSession, event_id: u64, password: String
     Ok(())
 }
 
-pub fn event_delete(session: UserSession, event_id: u64) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_delete(State(state): State<AppState>, session: UserSession, event_id: u64) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::permission::require_event_moderator(conn, event_id, session.user.id)?;
 
     crate::db::event::event_delete(conn, event_id)?;

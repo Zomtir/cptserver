@@ -1,11 +1,11 @@
 use crate::error::{Error, ErrorKind, Result};
 use mysql::PooledConn;
 
-pub fn promote_user_to_admin(conn: &mut PooledConn) -> Result<()> {
+pub fn promote_user_to_admin(conn: &mut PooledConn) -> Result<Option<String>> {
     // Check if an admin user is configured
     let admin_key = match crate::config::ADMIN_USER() {
         Some(key) => key,
-        None => return Ok(()),
+        None => return Ok(None),
     };
 
     // If admin user is missing, create him
@@ -21,8 +21,7 @@ pub fn promote_user_to_admin(conn: &mut PooledConn) -> Result<()> {
     }
 
     // Elevate the user to admin
-    *crate::session::ADMINSESSION.lock().unwrap() = Some(admin_key.into());
-    Ok(())
+    Ok(Some(admin_key.into()))
 }
 
 pub fn require_event_moderator(conn: &mut PooledConn, event_id: u64, user_id: u64) -> Result<()> {

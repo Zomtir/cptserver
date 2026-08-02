@@ -1,9 +1,12 @@
 use crate::common::{Acceptance, Confirmation, Event, Occurrence, WebBool, WebDateTime};
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
+use crate::AppState;
+use axum::extract::State;
 use axum::Json;
 
 pub fn event_list(
+    State(state): State<AppState>,
     _session: UserSession,
     begin: Option<WebDateTime>,
     end: Option<WebDateTime>,
@@ -13,7 +16,7 @@ pub fn event_list(
     course_true: Option<WebBool>,
     course_id: Option<u32>,
 ) -> Result<Json<Vec<Event>>> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+    let conn = &mut state.db.get_conn()?;
 
     let begin = begin.map(|dt| dt.to_naive());
     let end = end.map(|dt| dt.to_naive());
@@ -33,36 +36,46 @@ pub fn event_list(
     Ok(Json(events))
 }
 
-pub fn event_create(session: UserSession, mut event: Json<Event>) -> Result<String> {
+pub fn event_create(State(state): State<AppState>, session: UserSession, mut event: Json<Event>) -> Result<String> {
     crate::utils::event::validate_event_dates(&mut event)?;
-    let conn = &mut crate::utils::db::get_db_conn()?;
+    let conn = &mut state.db.get_conn()?;
 
     let event_id = crate::db::event::event_create(conn, &event, &Acceptance::Draft, None)?;
     crate::db::event::owner::event_owner_add(conn, event_id, session.user.id)?;
     Ok(event_id.to_string())
 }
 
-pub fn event_owner_true(session: UserSession, event_id: u64) -> Result<Json<bool>> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_owner_true(State(state): State<AppState>, session: UserSession, event_id: u64) -> Result<Json<bool>> {
+    let conn = &mut state.db.get_conn()?;
     let condition = crate::db::event::owner::event_owner_true(conn, event_id, session.user.id)?;
     Ok(Json(condition))
 }
 
-pub fn event_moderator_true(session: UserSession, event_id: u64) -> Result<Json<bool>> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_moderator_true(State(state): State<AppState>, session: UserSession, event_id: u64) -> Result<Json<bool>> {
+    let conn = &mut state.db.get_conn()?;
     let condition = crate::db::event::moderator::event_moderator_true(conn, event_id, session.user.id)?;
     Ok(Json(condition))
 }
 
-pub fn event_attendance_presence_true(session: UserSession, event_id: u64, role: String) -> Result<Json<bool>> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_attendance_presence_true(
+    State(state): State<AppState>,
+    session: UserSession,
+    event_id: u64,
+    role: String,
+) -> Result<Json<bool>> {
+    let conn = &mut state.db.get_conn()?;
     let condition =
         crate::db::event::attendance::event_attendance_presence_true(conn, event_id, session.user.id, &role)?;
     Ok(Json(condition))
 }
 
-pub fn event_attendance_presence_add(session: UserSession, event_id: u64, role: String) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_attendance_presence_add(
+    State(state): State<AppState>,
+    session: UserSession,
+    event_id: u64,
+    role: String,
+) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     let pool = crate::db::event::attendance::event_attendance_presence_pool(conn, event_id, &role, true)?;
 
     if !pool.iter().any(|user| user.id == session.user.id) {
@@ -73,22 +86,32 @@ pub fn event_attendance_presence_add(session: UserSession, event_id: u64, role: 
     Ok(())
 }
 
-pub fn event_attendance_presence_remove(session: UserSession, event_id: u64, role: String) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_attendance_presence_remove(
+    State(state): State<AppState>,
+    session: UserSession,
+    event_id: u64,
+    role: String,
+) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     crate::db::event::attendance::event_attendance_presence_remove(conn, event_id, session.user.id, &role)?;
     Ok(())
 }
 
-pub fn event_bookmark_true(session: UserSession, event_id: u64) -> Result<Json<bool>> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_bookmark_true(State(state): State<AppState>, session: UserSession, event_id: u64) -> Result<Json<bool>> {
+    let conn = &mut state.db.get_conn()?;
     // TODO check if you can participate
 
     let bookmark = crate::db::event::event_bookmark_true(conn, event_id, session.user.id)?;
     Ok(Json(bookmark))
 }
 
-pub fn event_bookmark_edit(session: UserSession, event_id: u64, bookmark: bool) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_bookmark_edit(
+    State(state): State<AppState>,
+    session: UserSession,
+    event_id: u64,
+    bookmark: bool,
+) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
     // TODO check if you can participate
 
     match bookmark {
@@ -98,8 +121,13 @@ pub fn event_bookmark_edit(session: UserSession, event_id: u64, bookmark: bool) 
     Ok(())
 }
 
-pub fn event_attendance_registration_info(session: UserSession, event_id: u64, role: String) -> Result<String> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+pub fn event_attendance_registration_info(
+    State(state): State<AppState>,
+    session: UserSession,
+    event_id: u64,
+    role: String,
+) -> Result<String> {
+    let conn = &mut state.db.get_conn()?;
     // TODO check if you can register (requirement)
 
     let status =
@@ -108,12 +136,13 @@ pub fn event_attendance_registration_info(session: UserSession, event_id: u64, r
 }
 
 pub fn event_attendance_registration_edit(
+    State(state): State<AppState>,
     session: UserSession,
     event_id: u64,
     role: String,
     status: Confirmation,
 ) -> Result<()> {
-    let conn = &mut crate::utils::db::get_db_conn()?;
+    let conn = &mut state.db.get_conn()?;
     // TODO check if you can register (requirement)
 
     match status {
