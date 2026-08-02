@@ -2,7 +2,7 @@
 
 use axum::http::header::{self, HeaderName};
 use axum::http::Method;
-use axum::routing::{delete, get, post, put};
+use axum::routing::{head, get, post};
 use axum::Router;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -78,8 +78,46 @@ async fn main() -> () {
     // Router
     let app = Router::new()
         .route("/", get(route::generic::index))
-        /*
         .route("/status", get(route::generic::status))
+        .route("/user_login", post(route::login::user_login))
+        .route("/event_login", post(route::login::event_login))
+        .route("/course_login", get(route::login::course_login))
+        .route("/location_login", get(route::login::location_login))
+        xxx todo: move course_key and location_key to path parameters
+
+
+
+
+        /*
+        #[rocket::post("/user_login", format = "application/json", data = "<credit>")]
+        #[rocket::post("/event_login", format = "application/json", data = "<credit>")]
+        #[rocket::get("/course_login?<course_key>")]
+        #[rocket::get("/location_login?<location_key>")]
+
+        route::login::user_login,
+        route::login::event_login,
+        route::login::course_login,
+        route::login::location_login,
+
+        route::anon::location_list,
+        route::anon::organisation_list,
+        route::anon::skill_list,
+        route::anon::club_list,
+        route::anon::club_image,
+        route::anon::club_banner,
+        route::anon::course_list,
+        route::anon::user_salt,
+
+        //#[rocket::get("/anon/location_list")]
+        //#[rocket::get("/anon/organisation_list")]
+        //#[rocket::get("/anon/skill_list")]
+        //#[rocket::get("/anon/club_list")]
+        //#[rocket::get("/anon/club_image?<club_id>")]
+        //#[rocket::get("/anon/club_banner?<club_id>")]
+        //#[rocket::get("/anon/course_list")]
+        //#[rocket::get("/anon/user_salt?<user_key>")]
+
+
         .route("/admin/event_owner_list", get(route::admin::event::owner::owner_list))
         .route("/admin/event_owner_add", post(route::admin::event::owner::owner_add))
         .route(
@@ -107,18 +145,7 @@ async fn main() -> () {
             #[rocket::post("/admin/skill_create", format = "application/json", data = "<skill>")]
             #[rocket::post("/admin/skill_edit?<skill_id>", format = "application/json", data = "<skill>")]
             #[rocket::head("/admin/skill_delete?<skill_id>")]
-            #[rocket::post("/user_login", format = "application/json", data = "<credit>")]
-            #[rocket::post("/event_login", format = "application/json", data = "<credit>")]
-            #[rocket::get("/course_login?<course_key>")]
-            #[rocket::get("/location_login?<location_key>")]
-            //#[rocket::get("/anon/location_list")]
-            //#[rocket::get("/anon/organisation_list")]
-            //#[rocket::get("/anon/skill_list")]
-            //#[rocket::get("/anon/club_list")]
-            //#[rocket::get("/anon/club_image?<club_id>")]
-            //#[rocket::get("/anon/club_banner?<club_id>")]
-            //#[rocket::get("/anon/course_list")]
-            //#[rocket::get("/anon/user_salt?<user_key>")]
+
             //#[rocket::get("/admin/event_owner_list?<event_id>")]
             //#[rocket::head("/admin/event_owner_add?<event_id>&<user_id>")]
             //#[rocket::head("/admin/event_owner_remove?<event_id>&<user_id>")]
@@ -373,20 +400,6 @@ async fn main() -> () {
 
     /*
     rocket::routes![
-        index,
-        route::anon::status,
-        route::anon::location_list,
-        route::anon::organisation_list,
-        route::anon::skill_list,
-        route::anon::club_list,
-        route::anon::club_image,
-        route::anon::club_banner,
-        route::anon::course_list,
-        route::anon::user_salt,
-        route::login::user_login,
-        route::login::event_login,
-        route::login::course_login,
-        route::login::location_login,
         route::admin::user::user_list,
         route::admin::user::user_detailed,
         route::admin::user::user_create,

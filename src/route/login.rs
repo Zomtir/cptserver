@@ -5,7 +5,7 @@ use crate::AppState;
 use axum::extract::State;
 use axum::Json;
 
-pub fn user_login(State(state): State<AppState>, credit: Json<Credential>) -> Result<String> {
+pub async fn user_login(State(state): State<AppState>, Json(credit): Json<Credential>) -> Result<String> {
     let conn = &mut state.db.get_conn()?;
 
     let user_key: &str = match &credit.login {
@@ -51,7 +51,7 @@ pub fn user_login(State(state): State<AppState>, credit: Json<Credential>) -> Re
     Ok(session_token)
 }
 
-pub fn event_login(State(state): State<AppState>, credit: Json<Credential>) -> Result<String> {
+pub async fn event_login(State(state): State<AppState>, Json(credit): Json<Credential>) -> Result<String> {
     let conn = &mut state.db.get_conn()?;
 
     let event_key = match &credit.login {
@@ -101,7 +101,7 @@ pub fn event_login(State(state): State<AppState>, credit: Json<Credential>) -> R
     Ok(session_token)
 }
 
-pub fn course_login(State(state): State<AppState>, course_key: String) -> Result<String> {
+pub async fn course_login(State(state): State<AppState>, course_key: String) -> Result<String> {
     let conn = &mut state.db.get_conn()?;
     let begin = (chrono::Utc::now() - crate::config::EVENT_LOGIN_BUFFER()).naive_utc();
     let end = (chrono::Utc::now() + crate::config::EVENT_LOGIN_BUFFER()).naive_utc();
@@ -115,10 +115,10 @@ pub fn course_login(State(state): State<AppState>, course_key: String) -> Result
         since: None,
     };
 
-    event_login(State(state), Json(credentials))
+    event_login(State(state), Json(credentials)).await
 }
 
-pub fn location_login(State(state): State<AppState>, location_key: String) -> Result<String> {
+pub async fn location_login(State(state): State<AppState>, location_key: String) -> Result<String> {
     let conn = &mut state.db.get_conn()?;
     let begin = (chrono::Utc::now() - crate::config::EVENT_LOGIN_BUFFER()).naive_utc();
     let end = (chrono::Utc::now() + crate::config::EVENT_LOGIN_BUFFER()).naive_utc();
@@ -132,5 +132,5 @@ pub fn location_login(State(state): State<AppState>, location_key: String) -> Re
         since: None,
     };
 
-    event_login(State(state), Json(credentials))
+    event_login(State(state), Json(credentials)).await
 }
