@@ -2,21 +2,9 @@ use crate::AppState;
 use axum::extract::State;
 use axum::Json;
 
-use crate::common::{Club, Course, Location, Organisation, Skill};
+use crate::common::{Club, Course, Skill};
 
 use crate::error::{Error, ErrorKind, Result};
-
-pub fn location_list(State(state): State<AppState>) -> Result<Json<Vec<Location>>> {
-    let conn = &mut state.db.get_conn()?;
-    let locations = crate::db::location::location_list(conn)?;
-    Ok(Json(locations))
-}
-
-pub fn organisation_list(State(state): State<AppState>) -> Result<Json<Vec<Organisation>>> {
-    let conn = &mut state.db.get_conn()?;
-    let organisations = crate::db::organisation::organisation_list(conn)?;
-    Ok(Json(organisations))
-}
 
 pub fn skill_list(State(state): State<AppState>) -> Result<Json<Vec<Skill>>> {
     let conn = &mut state.db.get_conn()?;

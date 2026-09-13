@@ -31,5 +31,7 @@ pub mod regular {
 pub mod anon;
 pub mod generic;
 pub mod login;
+pub mod location;
+pub mod organisation;
 pub mod service;
 pub mod user;

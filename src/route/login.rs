@@ -135,13 +135,3 @@ pub async fn location_login(State(state): State<AppState>, Path(location_key): P
     event_login(State(state), Json(credentials)).await
 }
 
-pub async fn user_salt(State(state): State<AppState>, Path(user_key): Path<String>) -> Result<String> {
-    let conn = &mut state.db.get_conn()?;
-    let salt = crate::db::user::user_key_salt_value(conn, &user_key);
-
-    // If the user does not exist, just return a "random" salt to prevent data scraping
-    match salt {
-        Err(_) => Ok(hex::encode(crate::common::hash128_string(&user_key))),
-        Ok(salt) => Ok(hex::encode(salt)),
-    }
-}

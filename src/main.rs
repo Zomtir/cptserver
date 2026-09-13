@@ -83,26 +83,40 @@ async fn main() -> () {
         .route("/event_login", post(route::login::event_login))
         .route("/course_login/{course_key}", get(route::login::course_login))
         .route("/location_login/{location_key}", get(route::login::location_login))
-        .route("/user_salt/{user_key}", get(route::login::user_salt))
+        .route("/user/{user_key}/salt", get(route::user::user_salt))
         .route("/user/list", get(route::user::user_list))
+        .route("/user/create", post(route::user::user_create))
         .route("/user/id/{user_id}/right", get(route::user::user_right))
+        .route("/user/id/{user_id}/info", get(route::user::user_info))
+        .route("/user/id/{user_id}/detailed", get(route::user::user_detailed))
+        .route("/user/id/{user_id}/edit", post(route::user::user_edit))
+        .route("/user/id/{user_id}/delete", axum::routing::delete(route::user::user_delete))
+        .route("/user/id/{user_id}/password/info", get(route::user::user_password_info))
+        .route("/user/id/{user_id}/password/create", post(route::user::user_password_create))
+        .route("/user/id/{user_id}/password/edit", post(route::user::user_password_edit))
+        .route("/user/id/{user_id}/password/delete", axum::routing::delete(route::user::user_password_delete))
+        .route("/user/id/{user_id}/image", get(route::user::user_image))
+        .route("/organisation/list", get(route::organisation::organisation_list))
+        .route("/organisation/id/{organisation_id}/info", get(route::organisation::organisation_info))
+        .route("/organisation/create", post(route::organisation::organisation_create))
+        .route("/organisation/id/{organisation_id}/edit", post(route::organisation::organisation_edit))
+        .route(
+            "/organisation/id/{organisation_id}/delete",
+            axum::routing::delete(route::organisation::organisation_delete),
+        )
+        .route("/location/list", get(route::location::location_list))
+        .route("/location/create", post(route::location::location_create))
+        .route("/location/id/{location_id}/edit", post(route::location::location_edit))
+        .route("/location/id/{location_id}/delete", axum::routing::delete(route::location::location_delete))
+        
         /*
-        #[rocket::post("/user_login", format = "application/json", data = "<credit>")]
-        #[rocket::post("/event_login", format = "application/json", data = "<credit>")]
-        #[rocket::get("/course_login?<course_key>")]
-        #[rocket::get("/location_login?<location_key>")]
-        route::login::user_login,
-        route::login::event_login,
-        route::login::course_login,
-        route::login::location_login,
-        route::anon::location_list,
+
         route::anon::organisation_list,
         route::anon::skill_list,
         route::anon::club_list,
         route::anon::club_image,
         route::anon::club_banner,
         route::anon::course_list,
-        //#[rocket::get("/anon/location_list")]
         //#[rocket::get("/anon/organisation_list")]
         //#[rocket::get("/anon/skill_list")]
         //#[rocket::get("/anon/club_list")]
@@ -191,14 +205,6 @@ async fn main() -> () {
             #[rocket::head("/owner/event_submit?<event_id>")]
             #[rocket::head("/owner/event_withdraw?<event_id>")]
             #[rocket::head("/owner/event_delete?<event_id>")]
-            #[rocket::get("/admin/location_list")]
-            #[rocket::post("/admin/location_create", format = "application/json", data = "<location>")]
-            #[rocket::post(
-                "/admin/location_edit?<location_id>",
-                format = "application/json",
-                data = "<location>"
-            )]
-            #[rocket::head("/admin/location_delete?<location_id>")]
             #[rocket::get("/admin/team_list")]
             #[rocket::get("/admin/team_info?<team_id>")]
             #[rocket::post("/admin/team_create", format = "application/json", data = "<team>")]
@@ -510,10 +516,6 @@ async fn main() -> () {
         route::owner::event::attendance::presence_list,
         route::owner::event::attendance::presence_add,
         route::owner::event::attendance::presence_remove,
-        route::admin::location::location_list,
-        route::admin::location::location_create,
-        route::admin::location::location_edit,
-        route::admin::location::location_delete,
         route::admin::organisation::organisation_list,
         route::admin::organisation::organisation_info,
         route::admin::organisation::organisation_create,
