@@ -2,7 +2,7 @@ use crate::common::{Credential, Right};
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::{EventSession, UserSession};
 use crate::AppState;
-use axum::extract::State;
+use axum::extract::{Path, State};
 use axum::Json;
 
 pub async fn user_login(State(state): State<AppState>, Json(credit): Json<Credential>) -> Result<String> {
@@ -101,7 +101,7 @@ pub async fn event_login(State(state): State<AppState>, Json(credit): Json<Crede
     Ok(session_token)
 }
 
-pub async fn course_login(State(state): State<AppState>, course_key: String) -> Result<String> {
+pub async fn course_login(State(state): State<AppState>, Path(course_key): Path<String>) -> Result<String> {
     let conn = &mut state.db.get_conn()?;
     let begin = (chrono::Utc::now() - crate::config::EVENT_LOGIN_BUFFER()).naive_utc();
     let end = (chrono::Utc::now() + crate::config::EVENT_LOGIN_BUFFER()).naive_utc();
@@ -118,7 +118,7 @@ pub async fn course_login(State(state): State<AppState>, course_key: String) -> 
     event_login(State(state), Json(credentials)).await
 }
 
-pub async fn location_login(State(state): State<AppState>, location_key: String) -> Result<String> {
+pub async fn location_login(State(state): State<AppState>, Path(location_key): Path<String>) -> Result<String> {
     let conn = &mut state.db.get_conn()?;
     let begin = (chrono::Utc::now() - crate::config::EVENT_LOGIN_BUFFER()).naive_utc();
     let end = (chrono::Utc::now() + crate::config::EVENT_LOGIN_BUFFER()).naive_utc();
@@ -133,4 +133,15 @@ pub async fn location_login(State(state): State<AppState>, location_key: String)
     };
 
     event_login(State(state), Json(credentials)).await
+}
+
+pub async fn user_salt(State(state): State<AppState>, Path(user_key): Path<String>) -> Result<String> {
+    let conn = &mut state.db.get_conn()?;
+    let salt = crate::db::user::user_key_salt_value(conn, &user_key);
+
+    // If the user does not exist, just return a "random" salt to prevent data scraping
+    match salt {
+        Err(_) => Ok(hex::encode(crate::common::hash128_string(&user_key))),
+        Ok(salt) => Ok(hex::encode(salt)),
+    }
 }

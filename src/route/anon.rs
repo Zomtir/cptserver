@@ -59,14 +59,3 @@ pub fn course_list(State(state): State<AppState>) -> Result<Json<Vec<Course>>> {
     let courses = crate::db::course::course_list(conn, None, Some(true), Some(true))?;
     Ok(Json(courses))
 }
-
-pub fn user_salt(State(state): State<AppState>, user_key: String) -> Result<String> {
-    let conn = &mut state.db.get_conn()?;
-    let salt = crate::db::user::user_key_salt_value(conn, &user_key);
-
-    // If the user does not exist, just return a "random" salt to prevent data scraping
-    match salt {
-        Err(_) => Ok(hex::encode(crate::common::hash128_string(&user_key))),
-        Ok(salt) => Ok(hex::encode(salt)),
-    }
-}

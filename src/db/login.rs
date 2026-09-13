@@ -41,13 +41,14 @@ pub fn user_login(conn: &mut PooledConn, user_key: &str, salted_hash: &Vec<u8>) 
     };
     let peppered_hash: Vec<u8> = crate::common::hash_sha256(salted_hash, &pepper);
 
+    #[cfg(debug_assertions)]
     println!(
-        "User {} login attempt with salted hash {} (salt {}) resulting in peppered hash {} (pepper {})",
+        "Login attempt!\nUser: {}\nSalt: {}\nSalted Hash: {}\nPepper: {}\nPeppered Hash: {}",
         user_key,
-        hex::encode(salted_hash),
         hex::encode(&salt),
-        hex::encode(&peppered_hash),
-        hex::encode(&pepper)
+        hex::encode(salted_hash),
+        hex::encode(&pepper),
+        hex::encode(&peppered_hash)
     );
 
     let peppered_hash_db: Vec<u8> = row.take("sp_hash").unwrap();

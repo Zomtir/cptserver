@@ -9,7 +9,7 @@ use crate::error::Result;
 use crate::session::UserSession;
 use crate::AppState;
 
-pub fn club_list(State(state): State<AppState>,session: UserSession) -> Result<Json<Vec<Club>>> {
+pub fn club_list(State(state): State<AppState>, session: UserSession) -> Result<Json<Vec<Club>>> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_club_read)?;
 

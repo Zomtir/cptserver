@@ -1,9 +1,9 @@
-use axum::extract::State;
-use axum::Json;
 use crate::common::{Possession, Stock, WebBool};
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
 use crate::AppState;
+use axum::extract::State;
+use axum::Json;
 
 mod equipment;
 mod item;
