@@ -84,6 +84,8 @@ async fn main() -> () {
         .route("/course_login/{course_key}", get(route::login::course_login))
         .route("/location_login/{location_key}", get(route::login::location_login))
         .route("/user_salt/{user_key}", get(route::login::user_salt))
+        .route("/user/list", get(route::user::user_list))
+        .route("/user/id/{user_id}/right", get(route::user::user_right))
         /*
         #[rocket::post("/user_login", format = "application/json", data = "<credit>")]
         #[rocket::post("/event_login", format = "application/json", data = "<credit>")]

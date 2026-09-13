@@ -1,4 +1,5 @@
 use crate::error::{Error, ErrorKind, Result};
+use crate::session::UserSession;
 use mysql::PooledConn;
 
 pub fn promote_user_to_admin(conn: &mut PooledConn) -> Result<Option<String>> {
@@ -59,5 +60,16 @@ pub fn require_right(permission: bool) -> Result<()> {
         Ok(())
     } else {
         Err(Error::new(ErrorKind::Permission, "User has insufficient rights"))
+    }
+}
+
+pub fn is_self(session: &UserSession, user_id: u64) -> Result<()> {
+    if session.user.id == user_id {
+        Ok(())
+    } else {
+        Err(Error::new(
+            ErrorKind::Permission,
+            "User is not the owner of the resource",
+        ))
     }
 }

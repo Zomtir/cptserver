@@ -9,7 +9,6 @@ pub mod admin {
     pub mod organisation;
     pub mod skill;
     pub mod team;
-    pub mod user;
 }
 
 pub mod owner {
@@ -27,10 +26,10 @@ pub mod regular {
     pub mod event;
     pub mod inventory;
     pub mod team;
-    pub mod user;
 }
 
 pub mod anon;
 pub mod generic;
 pub mod login;
 pub mod service;
+pub mod user;
