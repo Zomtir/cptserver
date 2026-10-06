@@ -104,10 +104,62 @@ async fn main() -> () {
             "/organisation/id/{organisation_id}/delete",
             axum::routing::delete(route::organisation::organisation_delete),
         )
+        .route(
+            "/organisation/affiliation/list",
+            get(route::organisation::affiliation_list),
+        )
+        .route(
+            "/organisation/{organisation_id}/affiliation/user/id/{user_id}/info",
+            get(route::organisation::affiliation_info),
+        )
+        .route(
+            "/organisation/{organisation_id}/affiliation/user/id/{user_id}/create",
+            post(route::organisation::affiliation_create),
+        )
+        .route(
+            "/organisation/{organisation_id}/affiliation/user/id/{user_id}/edit",
+            post(route::organisation::affiliation_edit),
+        )
+        .route(
+            "/organisation/{organisation_id}/affiliation/user/id/{user_id}/delete",
+            axum::routing::delete(route::organisation::affiliation_delete),
+        )
         .route("/location/list", get(route::location::location_list))
         .route("/location/create", post(route::location::location_create))
         .route("/location/id/{location_id}/edit", post(route::location::location_edit))
         .route("/location/id/{location_id}/delete", axum::routing::delete(route::location::location_delete))
+        .route("/club/list", get(route::club::club_list))
+        .route("/club/id/{club_id}/image", get(route::club::club_image))
+        .route("/club/id/{club_id}/banner", get(route::club::club_banner))
+        .route("/club/id/{club_id}/info", get(route::club::club_info))
+        .route("/club/create", post(route::club::club_create))
+        .route("/club/id/{club_id}/edit", post(route::club::club_edit))
+        .route("/club/id/{club_id}/delete", axum::routing::delete(route::club::club_delete))
+        .route("/club/id/{club_id}/statistic/terms", get(route::club::statistic_terms))
+        .route("/club/id/{club_id}/statistic/members", get(route::club::statistic_members))
+        .route("/club/id/{club_id}/statistic/team", get(route::club::statistic_team))
+        .route(
+            "/club/id/{club_id}/statistic/organisation",
+            get(route::club::statistic_organisation),
+        )
+        .route(
+            "/club/id/{club_id}/statistic/attendance",
+            get(route::club::statistic_attendance),
+        )
+        .route("/club/term/list", get(route::club::term_list))
+        .route("/club/term/id/{term_id}/info", get(route::club::term_info))
+        .route("/club/term/create", post(route::club::term_create))
+        .route("/club/term/id/{term_id}/edit", post(route::club::term_edit))
+        .route("/club/term/id/{term_id}/delete", axum::routing::delete(route::club::term_delete))
+        .route("/club/term/id/{term_id}/discipline/create", post(route::club::term_discipline_create))
+        .route(
+            "/club/term/discipline/id/{term_discipline_id}/edit",
+            post(route::club::term_discipline_edit),
+        )
+        .route(
+            "/club/term/discipline/id/{term_discipline_id}/delete",
+            axum::routing::delete(route::club::term_discipline_delete),
+        )
         
         /*
 
