@@ -401,7 +401,7 @@ pub fn event_statistic_packlist(
         "
         SELECT
             u.user_id, u.user_key, u.firstname, u.lastname, u.nickname,
-            i.item_id, i.name AS item_name,
+            i.item_id, i.name AS item_name, ic.category_id, ic.name as category_name,
             ue.count AS count_target,
             COALESCE(up.count_current, 0) AS count_current
 
@@ -415,6 +415,8 @@ pub fn event_statistic_packlist(
 
         LEFT JOIN items i
             ON i.item_id = ue.item_id
+
+        LEFT JOIN item_categories ic ON (i.category_id = ic.category_id)
 
         LEFT JOIN (
             SELECT
@@ -437,7 +439,9 @@ pub fn event_statistic_packlist(
         "skill_id" => skill_id,
     };
     let map =
-        |(user_id, user_key, firstname, lastname, nickname, item_id, item_name, count_required, count_owned): (
+        |(user_id, user_key, firstname, lastname, nickname, item_id, item_name, category_id, category_name, count_required, count_owned): (
+            _,
+            _,
             _,
             _,
             _,
@@ -451,7 +455,7 @@ pub fn event_statistic_packlist(
             let count_needed: u32 = count_required.saturating_sub(count_owned);
             (
                 { User::from_info(user_id, user_key, firstname, lastname, nickname) },
-                { Item::from_row(item_id, item_name, None, None).unwrap() },
+                { Item::from_row(item_id, item_name, category_id, category_name).unwrap() },
                 count_required,
                 count_owned,
                 count_needed,
