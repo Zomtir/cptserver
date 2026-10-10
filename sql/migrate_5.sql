@@ -20,3 +20,6 @@ UPDATE user_credentials AS uc
     JOIN users AS u ON u.credential = uc.credential_id
     SET uc.enabled = TRUE
     WHERE u.enabled = TRUE;
+
+-- Add enabled flag to items
+ALTER TABLE `items` ADD `enabled` BOOLEAN NOT NULL DEFAULT TRUE AFTER `item_id`;
