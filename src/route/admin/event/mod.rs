@@ -59,6 +59,7 @@ pub fn event_credential(session: UserSession, event_id: u64) -> Result<Json<Cred
 
     Ok(Json(Credential {
         id: None,
+        enabled: None,
         login: Some(event_key),
         password: Some(event_pwd),
         salt: None,

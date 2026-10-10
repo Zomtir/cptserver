@@ -103,6 +103,7 @@ pub fn course_login(course_key: String) -> Result<String> {
 
     let credentials = Credential {
         id: None,
+        enabled: None,
         login: Some(event_key),
         password: Some(event_pwd),
         salt: None,
@@ -121,6 +122,7 @@ pub fn location_login(location_key: String) -> Result<String> {
 
     let credentials = Credential {
         id: None,
+        enabled: None,
         login: Some(event_key),
         password: Some(event_pwd),
         salt: None,

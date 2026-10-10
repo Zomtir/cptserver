@@ -6,7 +6,7 @@ use crate::error::{Error, ErrorKind, Result};
 
 pub fn user_login(conn: &mut PooledConn, user_key: &str, salted_hash: &Vec<u8>) -> Result<User> {
     let stmt = conn.prep(
-        "SELECT u.user_id, u.user_key, uc.sp_hash, uc.pepper, uc.salt, u.enabled, u.firstname, u.lastname, u.nickname
+        "SELECT u.user_id, u.user_key, uc.enabled AS credential_enabled, uc.sp_hash, uc.pepper, uc.salt, u.firstname, u.lastname, u.nickname
         FROM users u
         LEFT JOIN user_credentials uc ON uc.credential_id = u.credential
         WHERE u.user_key = :user_key;",
@@ -21,9 +21,9 @@ pub fn user_login(conn: &mut PooledConn, user_key: &str, salted_hash: &Vec<u8>) 
         Some(row) => row,
     };
 
-    // User is disabled
-    if !row.take::<bool, &str>("enabled").unwrap() {
-        return Err(Error::new(ErrorKind::Disabled, "User is disabled"));
+    // User login is disabled
+    if !row.take::<bool, &str>("credential_enabled").unwrap() {
+        return Err(Error::new(ErrorKind::Disabled, "User login is disabled"));
     }
 
     let user: User = User::from_info(

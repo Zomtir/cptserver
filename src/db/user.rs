@@ -34,8 +34,6 @@ pub fn user_info(conn: &mut PooledConn, user_id: u64) -> Result<User> {
         "SELECT
             user_id,
             user_key,
-            enabled,
-            active,
             firstname,
             lastname,
             nickname
@@ -69,10 +67,11 @@ pub fn user_detailed(conn: &mut PooledConn, user_id: u64) -> Result<User> {
             users.user_id,
             user_key,
             enabled,
+            active,
             cr.credential_id AS credential_id,
+            cr.enabled AS credential_enabled,
             cr.salt AS credential_salt,
             cr.since AS credential_since,
-            active,
             firstname,
             lastname,
             nickname,
@@ -124,17 +123,18 @@ pub fn user_detailed(conn: &mut PooledConn, user_id: u64) -> Result<User> {
         id: row.take("user_id").unwrap(),
         key: row.take("user_key").unwrap(),
         enabled: row.take("enabled").unwrap(),
+        active: row.take("active").unwrap(),
         credential: row
             .take::<Option<u32>, &str>("credential_id")
             .unwrap()
             .map(|id| Credential {
                 id: Some(id),
+                enabled: row.take("credential_enabled").unwrap(),
                 login: None,
                 password: None,
                 salt: row.take("credential_salt").map(|s: Vec<u8>| hex::encode(s)),
                 since: row.take("credential_since").unwrap(),
             }),
-        active: row.take("active").unwrap(),
         firstname: row.take("firstname").unwrap(),
         lastname: row.take("lastname").unwrap(),
         nickname: row.take("nickname").unwrap(),
@@ -217,7 +217,7 @@ pub fn user_create(conn: &mut PooledConn, user: &mut User) -> Result<u64> {
 
     let params = params! {
         "user_key" => &user.key,
-        "enabled" => user.enabled.unwrap_or(false),
+        "enabled" => user.enabled.unwrap_or(true),
         "active" => user.active.unwrap_or(true),
         "firstname" => &user.firstname,
         "lastname" => &user.lastname,
@@ -311,7 +311,7 @@ pub fn user_created_true(conn: &mut PooledConn, user_key: &str) -> Result<Option
 
 pub fn user_password_info(conn: &mut PooledConn, user_id: u64) -> Result<Option<Credential>> {
     let stmt = conn.prep(
-        "SELECT uc.credential_id, uc.salt, uc.since
+        "SELECT uc.credential_id, uc.enabled AS credential_enabled, uc.salt, uc.since
         FROM user_credentials uc 
         JOIN users u ON u.credential = uc.credential_id
         WHERE u.user_id = :user_id;",
@@ -328,6 +328,7 @@ pub fn user_password_info(conn: &mut PooledConn, user_id: u64) -> Result<Option<
 
     let creditial = Credential {
         id: row.take("credential_id").unwrap(),
+        enabled: row.take("credential_enabled").unwrap(),
         login: None,
         password: None,
         salt: row.take("salt").map(|s: Vec<u8>| hex::encode(s)),
