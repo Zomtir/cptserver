@@ -12,3 +12,11 @@ ALTER TABLE `club_compensations` ADD CONSTRAINT `club_compensations_ibfk_1` FORE
 
 -- Add location hours
 CREATE TABLE `location_hours` (`location_hour_id` INT NOT NULL AUTO_INCREMENT , `location_id` SMALLINT NOT NULL , `open` TIME NOT NULL , `close` TIME NOT NULL , `from_date` DATE NULL , `until_date` DATE NULL , `weekday` BIT(7) NOT NULL , PRIMARY KEY (`location_hour_id`));
+
+-- Add login enabled flag to user credentials and migrate existing status
+ALTER TABLE `users` CHANGE `enabled` `enabled` TINYINT(1) NOT NULL DEFAULT '1';
+ALTER TABLE `user_credentials` ADD `enabled` BOOLEAN NOT NULL DEFAULT FALSE AFTER `credential_id`;
+UPDATE user_credentials AS uc
+    JOIN users AS u ON u.credential = uc.credential_id
+    SET uc.enabled = TRUE
+    WHERE u.enabled = TRUE;
