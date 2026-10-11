@@ -1,4 +1,4 @@
-use axum::extract::State;
+use axum::extract::{Path, State};
 use axum::Json;
 
 use crate::common::Discipline;
@@ -6,7 +6,10 @@ use crate::error::Result;
 use crate::session::UserSession;
 use crate::AppState;
 
-pub fn discipline_list(State(state): State<AppState>, session: UserSession) -> Result<Json<Vec<Discipline>>> {
+pub async fn discipline_list(
+    State(state): State<AppState>,
+    session: UserSession,
+) -> Result<Json<Vec<Discipline>>> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_discipline_read)?;
 
@@ -14,7 +17,7 @@ pub fn discipline_list(State(state): State<AppState>, session: UserSession) -> R
     Ok(Json(disciplines))
 }
 
-pub fn discipline_create(
+pub async fn discipline_create(
     State(state): State<AppState>,
     session: UserSession,
     discipline: Json<Discipline>,
@@ -26,10 +29,10 @@ pub fn discipline_create(
     Ok(id.to_string())
 }
 
-pub fn discipline_edit(
+pub async fn discipline_edit(
     State(state): State<AppState>,
     session: UserSession,
-    discipline_id: u32,
+    Path(discipline_id): Path<u32>,
     discipline: Json<Discipline>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
@@ -39,7 +42,11 @@ pub fn discipline_edit(
     Ok(())
 }
 
-pub fn discipline_delete(State(state): State<AppState>, session: UserSession, discipline_id: u32) -> Result<()> {
+pub async fn discipline_delete(
+    State(state): State<AppState>,
+    session: UserSession,
+    Path(discipline_id): Path<u32>,
+) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_discipline_write)?;
 

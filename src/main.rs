@@ -128,6 +128,13 @@ async fn main() -> () {
         .route("/location/create", post(route::location::location_create))
         .route("/location/id/{location_id}/edit", post(route::location::location_edit))
         .route("/location/id/{location_id}/delete", axum::routing::delete(route::location::location_delete))
+        .route("/discipline/list", get(route::discipline::discipline_list))
+        .route("/discipline/create", post(route::discipline::discipline_create))
+        .route("/discipline/id/{discipline_id}/edit", post(route::discipline::discipline_edit))
+        .route(
+            "/discipline/id/{discipline_id}/delete",
+            axum::routing::delete(route::discipline::discipline_delete),
+        )
         .route("/club/list", get(route::club::club_list))
         .route("/club/id/{club_id}/image", get(route::club::club_image))
         .route("/club/id/{club_id}/banner", get(route::club::club_banner))
@@ -237,17 +244,6 @@ async fn main() -> () {
                 data = "<credit>"
             )]
             #[rocket::head("/admin/user_password_delete?<user_id>")]
-            #[rocket::post(
-                "/admin/term_discipline_create?<term_id>",
-                format = "application/json",
-                data = "<term_discipline>"
-            )]
-            #[rocket::post(
-                "/admin/term_discipline_edit?<term_discipline_id>",
-                format = "application/json",
-                data = "<term_discipline>"
-            )]
-            #[rocket::head("/admin/term_discipline_delete?<term_discipline_id>")]
             #[rocket::get("/owner/event_list?<begin>&<end>&<location_id>&<occurrence>&<acceptance>")]
             #[rocket::get("/owner/event_info?<event_id>")]
             #[rocket::post("/owner/event_edit?<event_id>", format = "application/json", data = "<event>")]
@@ -609,10 +605,6 @@ async fn main() -> () {
         route::admin::skill::skill_create,
         route::admin::skill::skill_edit,
         route::admin::skill::skill_delete,
-        route::admin::discipline::discipline_list,
-        route::admin::discipline::discipline_create,
-        route::admin::discipline::discipline_edit,
-        route::admin::discipline::discipline_delete,
         route::admin::team::team_list,
         route::admin::team::team_info,
         route::admin::team::team_create,
@@ -628,9 +620,6 @@ async fn main() -> () {
         route::admin::club::term::term_create,
         route::admin::club::term::term_edit,
         route::admin::club::term::term_delete,
-        route::admin::club::term_discipline::term_discipline_create,
-        route::admin::club::term_discipline::term_discipline_edit,
-        route::admin::club::term_discipline::term_discipline_delete,
         route::admin::competence::competence_list,
         route::admin::competence::competence_info,
         route::admin::competence::competence_create,
