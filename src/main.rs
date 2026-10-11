@@ -90,16 +90,34 @@ async fn main() -> () {
         .route("/user/id/{user_id}/info", get(route::user::user_info))
         .route("/user/id/{user_id}/detailed", get(route::user::user_detailed))
         .route("/user/id/{user_id}/edit", post(route::user::user_edit))
-        .route("/user/id/{user_id}/delete", axum::routing::delete(route::user::user_delete))
+        .route(
+            "/user/id/{user_id}/delete",
+            axum::routing::delete(route::user::user_delete),
+        )
         .route("/user/id/{user_id}/password/info", get(route::user::user_password_info))
-        .route("/user/id/{user_id}/password/create", post(route::user::user_password_create))
-        .route("/user/id/{user_id}/password/edit", post(route::user::user_password_edit))
-        .route("/user/id/{user_id}/password/delete", axum::routing::delete(route::user::user_password_delete))
+        .route(
+            "/user/id/{user_id}/password/create",
+            post(route::user::user_password_create),
+        )
+        .route(
+            "/user/id/{user_id}/password/edit",
+            post(route::user::user_password_edit),
+        )
+        .route(
+            "/user/id/{user_id}/password/delete",
+            axum::routing::delete(route::user::user_password_delete),
+        )
         .route("/user/id/{user_id}/image", get(route::user::user_image))
         .route("/organisation/list", get(route::organisation::organisation_list))
-        .route("/organisation/id/{organisation_id}/info", get(route::organisation::organisation_info))
+        .route(
+            "/organisation/id/{organisation_id}/info",
+            get(route::organisation::organisation_info),
+        )
         .route("/organisation/create", post(route::organisation::organisation_create))
-        .route("/organisation/id/{organisation_id}/edit", post(route::organisation::organisation_edit))
+        .route(
+            "/organisation/id/{organisation_id}/edit",
+            post(route::organisation::organisation_edit),
+        )
         .route(
             "/organisation/id/{organisation_id}/delete",
             axum::routing::delete(route::organisation::organisation_delete),
@@ -127,10 +145,16 @@ async fn main() -> () {
         .route("/location/list", get(route::location::location_list))
         .route("/location/create", post(route::location::location_create))
         .route("/location/id/{location_id}/edit", post(route::location::location_edit))
-        .route("/location/id/{location_id}/delete", axum::routing::delete(route::location::location_delete))
+        .route(
+            "/location/id/{location_id}/delete",
+            axum::routing::delete(route::location::location_delete),
+        )
         .route("/discipline/list", get(route::discipline::discipline_list))
         .route("/discipline/create", post(route::discipline::discipline_create))
-        .route("/discipline/id/{discipline_id}/edit", post(route::discipline::discipline_edit))
+        .route(
+            "/discipline/id/{discipline_id}/edit",
+            post(route::discipline::discipline_edit),
+        )
         .route(
             "/discipline/id/{discipline_id}/delete",
             axum::routing::delete(route::discipline::discipline_delete),
@@ -141,9 +165,15 @@ async fn main() -> () {
         .route("/club/id/{club_id}/info", get(route::club::club_info))
         .route("/club/create", post(route::club::club_create))
         .route("/club/id/{club_id}/edit", post(route::club::club_edit))
-        .route("/club/id/{club_id}/delete", axum::routing::delete(route::club::club_delete))
+        .route(
+            "/club/id/{club_id}/delete",
+            axum::routing::delete(route::club::club_delete),
+        )
         .route("/club/id/{club_id}/statistic/terms", get(route::club::statistic_terms))
-        .route("/club/id/{club_id}/statistic/members", get(route::club::statistic_members))
+        .route(
+            "/club/id/{club_id}/statistic/members",
+            get(route::club::statistic_members),
+        )
         .route("/club/id/{club_id}/statistic/team", get(route::club::statistic_team))
         .route(
             "/club/id/{club_id}/statistic/organisation",
@@ -157,8 +187,14 @@ async fn main() -> () {
         .route("/club/term/id/{term_id}/info", get(route::club::term_info))
         .route("/club/term/create", post(route::club::term_create))
         .route("/club/term/id/{term_id}/edit", post(route::club::term_edit))
-        .route("/club/term/id/{term_id}/delete", axum::routing::delete(route::club::term_delete))
-        .route("/club/term/id/{term_id}/discipline/create", post(route::club::term_discipline_create))
+        .route(
+            "/club/term/id/{term_id}/delete",
+            axum::routing::delete(route::club::term_delete),
+        )
+        .route(
+            "/club/term/id/{term_id}/discipline/create",
+            post(route::club::term_discipline_create),
+        )
         .route(
             "/club/term/discipline/id/{term_discipline_id}/edit",
             post(route::club::term_discipline_edit),
@@ -167,9 +203,40 @@ async fn main() -> () {
             "/club/term/discipline/id/{term_discipline_id}/delete",
             axum::routing::delete(route::club::term_discipline_delete),
         )
-        
+        .route("/event/list", get(route::event::event_list))
+        .route("/event/id/{event_id}/info", get(route::event::event_info))
+        .route("/event/create", post(route::event::event_create))
+        .route("/event/id/{event_id}/edit", post(route::event::event_edit))
+        .route(
+            "/event/id/{event_id}/delete",
+            axum::routing::delete(route::event::event_delete),
+        )
+        .route(
+            "/event/id/{event_id}/acceptance/edit",
+            post(route::event::event_acceptance_edit),
+        )
+        .route(
+            "/event/id/{event_id}/credential/info",
+            get(route::event::event_credential_info),
+        )
+        .route(
+            "/event/id/{event_id}/password/edit",
+            post(route::event::event_password_edit),
+        )
+        .route("/event/id/{event_id}/course/info", get(route::event::event_course_info))
+        .route(
+            "/event/id/{event_id}/course/edit",
+            post(route::event::event_course_edit),
+        )
+        .route(
+            "/event/id/{event_id}/statistic/packlist",
+            get(route::event::statistic_packlist),
+        )
+        .route(
+            "/event/id/{event_id}/statistic/organisation",
+            get(route::event::statistic_organisation),
+        )
         /*
-
         route::anon::organisation_list,
         route::anon::skill_list,
         route::anon::club_list,
@@ -335,10 +402,6 @@ async fn main() -> () {
             #[rocket::get("/admin/event_course_info?<event_id>")]
             #[rocket::head("/admin/event_course_edit?<event_id>&<course_id>")]
             #[rocket::head("/admin/event_delete?<event_id>")]
-            #[rocket::head("/admin/event_accept?<event_id>")]
-            #[rocket::head("/admin/event_reject?<event_id>")]
-            #[rocket::head("/admin/event_suspend?<event_id>")]
-            #[rocket::head("/admin/event_withdraw?<event_id>")]
             #[rocket::get("/admin/event_statistic_packlist?<event_id>&<skill_id>")]
             #[rocket::get("/admin/event_statistic_organisation?<event_id>&<organisation_id>")]
             #[rocket::get("/admin/user_equipment_list?<user_id>&<skill_id>&<item_id>")]
@@ -511,12 +574,8 @@ async fn main() -> () {
         route::admin::event::event_course_info,
         route::admin::event::event_course_edit,
         route::admin::event::event_delete,
-        route::admin::event::event_accept,
-        route::admin::event::event_reject,
-        route::admin::event::event_suspend,
-        route::admin::event::event_withdraw,
-        route::admin::event::statistic_packlist,
-        route::admin::event::statistic_organisation,
+        route::event::statistic_packlist,
+        route::event::statistic_organisation,
         route::admin::event::owner::owner_list,
         route::admin::event::owner::owner_add,
         route::admin::event::owner::owner_remove,

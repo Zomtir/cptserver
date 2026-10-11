@@ -41,6 +41,16 @@ impl std::str::FromStr for Acceptance {
     }
 }
 
+impl TryFrom<String> for Acceptance {
+    type Error = crate::error::Error;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        value
+            .parse()
+            .map_err(|_| crate::error::Error::new(crate::error::ErrorKind::Invalid, "Invalid acceptance"))
+    }
+}
+
 impl core::convert::From<Acceptance> for mysql_common::Value {
     fn from(a: Acceptance) -> Self {
         mysql_common::Value::Bytes(a.to_string().into_bytes())

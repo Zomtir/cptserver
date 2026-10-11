@@ -75,11 +75,7 @@ pub async fn club_info(
     Ok(Json(crate::db::club::club_info(conn, club_id)?))
 }
 
-pub async fn club_create(
-    State(state): State<AppState>,
-    session: UserSession,
-    club: Json<Club>,
-) -> Result<String> {
+pub async fn club_create(State(state): State<AppState>, session: UserSession, club: Json<Club>) -> Result<String> {
     crate::permission::require_right(session.right.right_club_write)?;
     let conn = &mut state.db.get_conn()?;
     Ok(crate::db::club::club_create(conn, &club)?.to_string())
@@ -96,11 +92,7 @@ pub async fn club_edit(
     crate::db::club::club_edit(conn, club_id, &club)
 }
 
-pub async fn club_delete(
-    State(state): State<AppState>,
-    session: UserSession,
-    Path(club_id): Path<u32>,
-) -> Result<()> {
+pub async fn club_delete(State(state): State<AppState>, session: UserSession, Path(club_id): Path<u32>) -> Result<()> {
     crate::permission::require_right(session.right.right_club_write)?;
     let conn = &mut state.db.get_conn()?;
     crate::db::club::club_delete(conn, club_id)
@@ -196,7 +188,12 @@ pub async fn term_list(
 ) -> Result<Json<Vec<Term>>> {
     crate::permission::require_right(session.right.right_club_read)?;
     let conn = &mut state.db.get_conn()?;
-    Ok(Json(crate::db::club::term_list(conn, query.club_id, query.user_id, None)?))
+    Ok(Json(crate::db::club::term_list(
+        conn,
+        query.club_id,
+        query.user_id,
+        None,
+    )?))
 }
 
 pub async fn term_info(
@@ -209,11 +206,7 @@ pub async fn term_info(
     Ok(Json(crate::db::club::term_info(conn, term_id)?))
 }
 
-pub async fn term_create(
-    State(state): State<AppState>,
-    session: UserSession,
-    term: Json<Term>,
-) -> Result<String> {
+pub async fn term_create(State(state): State<AppState>, session: UserSession, term: Json<Term>) -> Result<String> {
     crate::permission::require_right(session.right.right_club_write)?;
     let conn = &mut state.db.get_conn()?;
     Ok(crate::db::club::term_create(conn, &term)?.to_string())
@@ -230,11 +223,7 @@ pub async fn term_edit(
     crate::db::club::term_edit(conn, term_id, &term)
 }
 
-pub async fn term_delete(
-    State(state): State<AppState>,
-    session: UserSession,
-    Path(term_id): Path<u32>,
-) -> Result<()> {
+pub async fn term_delete(State(state): State<AppState>, session: UserSession, Path(term_id): Path<u32>) -> Result<()> {
     crate::permission::require_right(session.right.right_club_write)?;
     let conn = &mut state.db.get_conn()?;
     crate::db::club::term_delete(conn, term_id)

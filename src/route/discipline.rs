@@ -6,10 +6,7 @@ use crate::error::Result;
 use crate::session::UserSession;
 use crate::AppState;
 
-pub async fn discipline_list(
-    State(state): State<AppState>,
-    session: UserSession,
-) -> Result<Json<Vec<Discipline>>> {
+pub async fn discipline_list(State(state): State<AppState>, session: UserSession) -> Result<Json<Vec<Discipline>>> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_discipline_read)?;
 

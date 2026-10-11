@@ -46,7 +46,8 @@ pub async fn user_right(
     session: UserSession,
     Path(user_id): Path<u64>,
 ) -> Result<Json<Right>> {
-    crate::permission::require_right(session.right.right_user_read).or(crate::permission::is_self(&session, user_id))?;
+    crate::permission::require_right(session.right.right_user_read)
+        .or(crate::permission::is_self(&session, user_id))?;
 
     let conn = &mut state.db.get_conn()?;
     let right = crate::db::login::user_right(conn, user_id)?;
@@ -58,7 +59,8 @@ pub async fn user_info(
     session: UserSession,
     Path(user_id): Path<u64>,
 ) -> Result<Json<User>> {
-    crate::permission::require_right(session.right.right_user_read).or(crate::permission::is_self(&session, user_id))?;
+    crate::permission::require_right(session.right.right_user_read)
+        .or(crate::permission::is_self(&session, user_id))?;
 
     let conn = &mut state.db.get_conn()?;
     let user = crate::db::user::user_info(conn, user_id)?;
@@ -77,11 +79,7 @@ pub async fn user_detailed(
     Ok(Json(user))
 }
 
-pub async fn user_create(
-    State(state): State<AppState>,
-    session: UserSession,
-    mut user: Json<User>,
-) -> Result<String> {
+pub async fn user_create(State(state): State<AppState>, session: UserSession, mut user: Json<User>) -> Result<String> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_user_write)?;
 
@@ -103,11 +101,7 @@ pub async fn user_edit(
     Ok(())
 }
 
-pub async fn user_delete(
-    State(state): State<AppState>,
-    session: UserSession,
-    Path(user_id): Path<u64>,
-) -> Result<()> {
+pub async fn user_delete(State(state): State<AppState>, session: UserSession, Path(user_id): Path<u64>) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_user_write)?;
 
@@ -121,7 +115,8 @@ pub async fn user_password_info(
     Path(user_id): Path<u64>,
 ) -> Result<Json<Credential>> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_user_read).or(crate::permission::is_self(&session, user_id))?;
+    crate::permission::require_right(session.right.right_user_read)
+        .or(crate::permission::is_self(&session, user_id))?;
 
     let credit = match crate::db::user::user_password_info(conn, user_id)? {
         None => return Err(Error::new(ErrorKind::Missing, "User password is missing")),
@@ -157,7 +152,8 @@ pub async fn user_password_edit(
     credit: Json<Credential>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_user_write).or(crate::permission::is_self(&session, user_id))?;
+    crate::permission::require_right(session.right.right_user_write)
+        .or(crate::permission::is_self(&session, user_id))?;
 
     let (hash, salt) = match (&credit.password, &credit.salt) {
         (Some(p), Some(s)) => (p, s),
@@ -185,7 +181,8 @@ pub async fn user_image(
     session: UserSession,
     Path(user_id): Path<u64>,
 ) -> Result<Vec<u8>> {
-    crate::permission::require_right(session.right.right_user_read).or(crate::permission::is_self(&session, user_id))?;
+    crate::permission::require_right(session.right.right_user_read)
+        .or(crate::permission::is_self(&session, user_id))?;
 
     let conn = &mut state.db.get_conn()?;
     let image_url = crate::db::user::user_image(conn, user_id)?;

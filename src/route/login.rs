@@ -134,4 +134,3 @@ pub async fn location_login(State(state): State<AppState>, Path(location_key): P
 
     event_login(State(state), Json(credentials)).await
 }
-
