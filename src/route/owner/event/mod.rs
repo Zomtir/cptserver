@@ -1,4 +1,3 @@
-pub mod attendance;
 pub mod owner;
 
 use crate::common::{Acceptance, Course, Event, Occurrence, WebDateTime};

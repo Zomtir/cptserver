@@ -7,6 +7,8 @@ use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
 use crate::AppState;
 
+pub mod attendance;
+
 #[derive(Deserialize)]
 pub struct EventListQuery {
     pub begin: Option<WebDateTime>,

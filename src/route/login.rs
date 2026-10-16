@@ -87,7 +87,6 @@ pub async fn event_login(State(state): State<AppState>, Json(credit): Json<Crede
     let session_expiry = chrono::Utc::now() + crate::config::SESSION_DURATION();
 
     let session: EventSession = EventSession {
-        token: session_token.to_string(),
         expiry: session_expiry,
         event_id,
     };

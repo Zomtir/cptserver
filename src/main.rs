@@ -2,7 +2,7 @@
 
 use axum::http::header::{self, HeaderName};
 use axum::http::Method;
-use axum::routing::{get, head, post};
+use axum::routing::{get, head, post, delete};
 use axum::Router;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -92,7 +92,7 @@ async fn main() -> () {
         .route("/user/id/{user_id}/edit", post(route::user::user_edit))
         .route(
             "/user/id/{user_id}/delete",
-            axum::routing::delete(route::user::user_delete),
+            delete(route::user::user_delete),
         )
         .route("/user/id/{user_id}/password/info", get(route::user::user_password_info))
         .route(
@@ -105,7 +105,7 @@ async fn main() -> () {
         )
         .route(
             "/user/id/{user_id}/password/delete",
-            axum::routing::delete(route::user::user_password_delete),
+            delete(route::user::user_password_delete),
         )
         .route("/user/id/{user_id}/image", get(route::user::user_image))
         .route("/organisation/list", get(route::organisation::organisation_list))
@@ -120,7 +120,7 @@ async fn main() -> () {
         )
         .route(
             "/organisation/id/{organisation_id}/delete",
-            axum::routing::delete(route::organisation::organisation_delete),
+            delete(route::organisation::organisation_delete),
         )
         .route(
             "/organisation/affiliation/list",
@@ -140,14 +140,14 @@ async fn main() -> () {
         )
         .route(
             "/organisation/{organisation_id}/affiliation/user/id/{user_id}/delete",
-            axum::routing::delete(route::organisation::affiliation_delete),
+            delete(route::organisation::affiliation_delete),
         )
         .route("/location/list", get(route::location::location_list))
         .route("/location/create", post(route::location::location_create))
         .route("/location/id/{location_id}/edit", post(route::location::location_edit))
         .route(
             "/location/id/{location_id}/delete",
-            axum::routing::delete(route::location::location_delete),
+            delete(route::location::location_delete),
         )
         .route("/discipline/list", get(route::discipline::discipline_list))
         .route("/discipline/create", post(route::discipline::discipline_create))
@@ -157,7 +157,7 @@ async fn main() -> () {
         )
         .route(
             "/discipline/id/{discipline_id}/delete",
-            axum::routing::delete(route::discipline::discipline_delete),
+            delete(route::discipline::discipline_delete),
         )
         .route("/club/list", get(route::club::club_list))
         .route("/club/id/{club_id}/image", get(route::club::club_image))
@@ -167,7 +167,7 @@ async fn main() -> () {
         .route("/club/id/{club_id}/edit", post(route::club::club_edit))
         .route(
             "/club/id/{club_id}/delete",
-            axum::routing::delete(route::club::club_delete),
+            delete(route::club::club_delete),
         )
         .route("/club/id/{club_id}/statistic/terms", get(route::club::statistic_terms))
         .route(
@@ -189,7 +189,7 @@ async fn main() -> () {
         .route("/club/term/id/{term_id}/edit", post(route::club::term_edit))
         .route(
             "/club/term/id/{term_id}/delete",
-            axum::routing::delete(route::club::term_delete),
+            delete(route::club::term_delete),
         )
         .route(
             "/club/term/id/{term_id}/discipline/create",
@@ -201,7 +201,7 @@ async fn main() -> () {
         )
         .route(
             "/club/term/discipline/id/{term_discipline_id}/delete",
-            axum::routing::delete(route::club::term_discipline_delete),
+            delete(route::club::term_discipline_delete),
         )
         .route("/event/list", get(route::event::event_list))
         .route("/event/id/{event_id}/info", get(route::event::event_info))
@@ -209,7 +209,7 @@ async fn main() -> () {
         .route("/event/id/{event_id}/edit", post(route::event::event_edit))
         .route(
             "/event/id/{event_id}/delete",
-            axum::routing::delete(route::event::event_delete),
+            delete(route::event::event_delete),
         )
         .route(
             "/event/id/{event_id}/acceptance/edit",
@@ -235,6 +235,38 @@ async fn main() -> () {
         .route(
             "/event/id/{event_id}/statistic/organisation",
             get(route::event::statistic_organisation),
+        )
+        .route(
+            "/event/id/{event_id}/attendance/registration/list",
+            get(route::event::attendance::registration_list),
+        )
+        .route(
+            "/event/id/{event_id}/attendance/filter/list",
+            get(route::event::attendance::filter_list),
+        )
+        .route(
+            "/event/id/{event_id}/attendance/filter/edit",
+            post(route::event::attendance::filter_edit),
+        )
+        .route(
+            "/event/id/{event_id}/attendance/filter/delete",
+            delete(route::event::attendance::filter_remove),
+        )
+        .route(
+            "/event/id/{event_id}/attendance/presence/pool",
+            get(route::event::attendance::presence_pool),
+        )
+        .route(
+            "/event/id/{event_id}/attendance/presence/list",
+            get(route::event::attendance::presence_list),
+        )
+        .route(
+            "/event/id/{event_id}/attendance/presence/add",
+            post(route::event::attendance::presence_add),
+        )
+        .route(
+            "/event/id/{event_id}/attendance/presence/remove",
+            delete(route::event::attendance::presence_remove),
         )
         /*
         route::anon::organisation_list,
