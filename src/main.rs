@@ -2,7 +2,7 @@
 
 use axum::http::header::{self, HeaderName};
 use axum::http::Method;
-use axum::routing::{delete, get, post};
+use axum::routing::{delete, get, head, post};
 use axum::Router;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -386,21 +386,6 @@ async fn main() -> () {
             #[rocket::get("/admin/possession_list?<user_id>&<item_id>&<owned>&<club_id>")]
             #[rocket::head("/admin/possession_create?<user_id>&<item_id>")]
             #[rocket::head("/admin/possession_delete?<possession_id>")]
-            #[rocket::get("/admin/club_list")]
-            #[rocket::get("/admin/club_info?<club_id>")]
-            #[rocket::post("/admin/club_create", format = "application/json", data = "<club>")]
-            #[rocket::post("/admin/club_edit?<club_id>", format = "application/json", data = "<club>")]
-            #[rocket::head("/admin/club_delete?<club_id>")]
-            #[rocket::get("/admin/club_statistic_terms?<club_id>&<point_in_time>")]
-            #[rocket::get("/admin/club_statistic_members?<club_id>&<point_in_time>")]
-            #[rocket::get("/admin/club_statistic_team?<club_id>&<point_in_time>&<team_id>")]
-            #[rocket::get("/admin/club_statistic_organisation?<club_id>&<organisation_id>&<point_in_time>")]
-            #[rocket::get("/admin/club_statistic_attendance?<club_id>&<user_id>&<role>&<time_window_begin>&<time_window_end>")]
-            #[rocket::get("/admin/term_list?<club_id>&<user_id>")]
-            #[rocket::get("/admin/term_info?<term_id>")]
-            #[rocket::post("/admin/term_create", format = "application/json", data = "<term>")]
-            #[rocket::post("/admin/term_edit?<term_id>", format = "application/json", data = "<term>")]
-            #[rocket::head("/admin/term_delete?<term_id>")]
             #[rocket::get("/admin/course_attendance_sieve_list?<course_id>&<role>")]
             #[rocket::head("/admin/course_attendance_sieve_edit?<course_id>&<team_id>&<role>&<access>")]
             #[rocket::head("/admin/course_attendance_sieve_remove?<course_id>&<team_id>&<role>")]
