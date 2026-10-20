@@ -8,6 +8,7 @@ use crate::session::UserSession;
 use crate::AppState;
 
 pub mod attendance;
+pub mod owner;
 
 #[derive(Deserialize)]
 pub struct EventListQuery {
@@ -27,12 +28,12 @@ pub async fn event_list(
     Query(query): Query<EventListQuery>,
 ) -> Result<Json<Vec<Event>>> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_event_read)?;
+    crate::permission::require_right(session.right.right_event_read)
+        .or(crate::permission::is_self(&session, query.owner_id))?;
 
     let begin = query.begin.map(|date_time| date_time.to_naive());
     let end = query.end.map(|date_time| date_time.to_naive());
     crate::utils::event::verify_event_search_window(begin, end)?;
-
     let events = crate::db::event::event_list(
         conn,
         begin,
@@ -53,7 +54,11 @@ pub async fn event_info(
     Path(event_id): Path<u64>,
 ) -> Result<Json<Event>> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_event_read)?;
+    crate::permission::require_right(session.right.right_event_read).or(crate::permission::require_event_owner(
+        conn,
+        event_id,
+        session.user.id,
+    ))?;
 
     Ok(Json(crate::db::event::event_info(conn, event_id)?))
 }
@@ -89,7 +94,11 @@ pub async fn event_edit(
     mut event: Json<Event>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_event_write)?;
+    crate::permission::require_right(session.right.right_event_write).or(crate::permission::require_event_owner(
+        conn,
+        event_id,
+        session.user.id,
+    ))?;
 
     crate::utils::event::validate_event_dates(&mut event)?;
     crate::db::event::event_edit(conn, event_id, &event)?;
@@ -102,7 +111,11 @@ pub async fn event_delete(
     Path(event_id): Path<u64>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_event_write)?;
+    crate::permission::require_right(session.right.right_event_write).or(crate::permission::require_event_owner(
+        conn,
+        event_id,
+        session.user.id,
+    ))?;
 
     crate::db::event::event_delete(conn, event_id)?;
     Ok(())
@@ -115,7 +128,11 @@ pub async fn event_acceptance_edit(
     acceptance: String,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_event_write)?;
+    crate::permission::require_right(session.right.right_event_write).or(crate::permission::require_event_owner(
+        conn,
+        event_id,
+        session.user.id,
+    ))?;
 
     let acceptance = Acceptance::try_from(acceptance)?;
 
@@ -128,13 +145,51 @@ pub async fn event_acceptance_edit(
     Ok(())
 }
 
+pub async fn event_submit(
+    State(state): State<AppState>,
+    session: UserSession,
+    Path(event_id): Path<u64>,
+) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
+    crate::permission::require_event_owner(conn, event_id, session.user.id)?;
+    let event = crate::db::event::event_info(conn, event_id)?;
+    if !crate::utils::event::is_event_valid(&event) {
+        return Err(Error::new(ErrorKind::Invalid, "Event contains invalid data"));
+    }
+
+    let acceptance = if !crate::config::EVENT_ACCEPTENCE_AUTO() {
+        Acceptance::Pending
+    } else if crate::db::event::event_free_true(conn, &event)? {
+        Acceptance::Accepted
+    } else {
+        Acceptance::Rejected
+    };
+    crate::db::event::event_acceptance_edit(conn, event.id, &acceptance)?;
+    Ok(())
+}
+
+pub async fn event_withdraw(
+    State(state): State<AppState>,
+    session: UserSession,
+    Path(event_id): Path<u64>,
+) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
+    crate::permission::require_event_owner(conn, event_id, session.user.id)?;
+    crate::db::event::event_acceptance_edit(conn, event_id, &Acceptance::Draft)?;
+    Ok(())
+}
+
 pub async fn event_credential_info(
     State(state): State<AppState>,
     session: UserSession,
     Path(event_id): Path<u64>,
 ) -> Result<Json<Credential>> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_event_read)?;
+    crate::permission::require_right(session.right.right_event_read).or(crate::permission::require_event_owner(
+        conn,
+        event_id,
+        session.user.id,
+    ))?;
 
     let (event_key, event_password) = crate::db::login::event_credential(conn, event_id)?;
 
@@ -167,7 +222,11 @@ pub async fn event_course_info(
     Path(event_id): Path<u64>,
 ) -> Result<Json<Option<crate::common::Course>>> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_event_read)?;
+    crate::permission::require_right(session.right.right_event_read).or(crate::permission::require_event_owner(
+        conn,
+        event_id,
+        session.user.id,
+    ))?;
 
     let course = crate::db::event::event_course_info(conn, event_id)?;
     Ok(Json(course))
@@ -185,8 +244,23 @@ pub async fn event_course_edit(
     Query(query): Query<EventCourseEditQuery>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_event_write)?;
-    crate::permission::require_right(session.right.right_course_write)?;
+    crate::permission::require_right(session.right.right_event_write).or(crate::permission::require_event_owner(
+        conn,
+        event_id,
+        session.user.id,
+    ))?;
+
+    crate::permission::require_right(session.right.right_course_write).or_else(|_| -> Result<()> {
+        if let Some(old_course) = crate::db::event::event_course_info(conn, event_id)? {
+            crate::permission::require_course_moderator(conn, old_course.id, session.user.id)?;
+        }
+
+        if let Some(new_course) = query.course_id {
+            crate::permission::require_course_moderator(conn, new_course, session.user.id)?;
+        }
+
+        Ok(())
+    })?;
 
     crate::db::event::event_course_edit(conn, event_id, query.course_id)?;
     Ok(())

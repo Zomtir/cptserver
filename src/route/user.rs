@@ -47,7 +47,7 @@ pub async fn user_right(
     Path(user_id): Path<u64>,
 ) -> Result<Json<Right>> {
     crate::permission::require_right(session.right.right_user_read)
-        .or(crate::permission::is_self(&session, user_id))?;
+        .or(crate::permission::is_self(&session, Some(user_id)))?;
 
     let conn = &mut state.db.get_conn()?;
     let right = crate::db::login::user_right(conn, user_id)?;
@@ -60,7 +60,7 @@ pub async fn user_info(
     Path(user_id): Path<u64>,
 ) -> Result<Json<User>> {
     crate::permission::require_right(session.right.right_user_read)
-        .or(crate::permission::is_self(&session, user_id))?;
+        .or(crate::permission::is_self(&session, Some(user_id)))?;
 
     let conn = &mut state.db.get_conn()?;
     let user = crate::db::user::user_info(conn, user_id)?;
@@ -116,7 +116,7 @@ pub async fn user_password_info(
 ) -> Result<Json<Credential>> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_user_read)
-        .or(crate::permission::is_self(&session, user_id))?;
+        .or(crate::permission::is_self(&session, Some(user_id)))?;
 
     let credit = match crate::db::user::user_password_info(conn, user_id)? {
         None => return Err(Error::new(ErrorKind::Missing, "User password is missing")),
@@ -153,7 +153,7 @@ pub async fn user_password_edit(
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_user_write)
-        .or(crate::permission::is_self(&session, user_id))?;
+        .or(crate::permission::is_self(&session, Some(user_id)))?;
 
     let (hash, salt) = match (&credit.password, &credit.salt) {
         (Some(p), Some(s)) => (p, s),
@@ -182,7 +182,7 @@ pub async fn user_image(
     Path(user_id): Path<u64>,
 ) -> Result<Vec<u8>> {
     crate::permission::require_right(session.right.right_user_read)
-        .or(crate::permission::is_self(&session, user_id))?;
+        .or(crate::permission::is_self(&session, Some(user_id)))?;
 
     let conn = &mut state.db.get_conn()?;
     let image_url = crate::db::user::user_image(conn, user_id)?;

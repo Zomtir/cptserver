@@ -63,8 +63,8 @@ pub fn require_right(permission: bool) -> Result<()> {
     }
 }
 
-pub fn is_self(session: &UserSession, user_id: u64) -> Result<()> {
-    if session.user.id == user_id {
+pub fn is_self(session: &UserSession, user_id: Option<u64>) -> Result<()> {
+    if user_id.is_some_and(|user_id| session.user.id == user_id) {
         Ok(())
     } else {
         Err(Error::new(

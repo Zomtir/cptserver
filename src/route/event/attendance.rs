@@ -19,22 +19,20 @@ pub struct AttendanceFilterQuery {
     pub access: Option<bool>,
 }
 
-fn require_attendance_read(
-    conn: &mut mysql::PooledConn,
-    session: &UserSession,
-    event_id: u64,
-) -> Result<()> {
-    crate::permission::require_right(session.right.right_event_read)
-        .or(crate::permission::require_event_owner(conn, event_id, session.user.id))
+fn require_attendance_read(conn: &mut mysql::PooledConn, session: &UserSession, event_id: u64) -> Result<()> {
+    crate::permission::require_right(session.right.right_event_read).or(crate::permission::require_event_owner(
+        conn,
+        event_id,
+        session.user.id,
+    ))
 }
 
-fn require_attendance_write(
-    conn: &mut mysql::PooledConn,
-    session: &UserSession,
-    event_id: u64,
-) -> Result<()> {
-    crate::permission::require_right(session.right.right_event_write)
-        .or(crate::permission::require_event_owner(conn, event_id, session.user.id))
+fn require_attendance_write(conn: &mut mysql::PooledConn, session: &UserSession, event_id: u64) -> Result<()> {
+    crate::permission::require_right(session.right.right_event_write).or(crate::permission::require_event_owner(
+        conn,
+        event_id,
+        session.user.id,
+    ))
 }
 
 pub async fn registration_list(
@@ -75,13 +73,7 @@ pub async fn filter_edit(
     let access = query
         .access
         .ok_or_else(|| Error::new(ErrorKind::Missing, "Attendance filter access is missing"))?;
-    crate::db::event::attendance::event_attendance_filter_edit(
-        conn,
-        event_id,
-        query.user_id,
-        query.role,
-        access,
-    )?;
+    crate::db::event::attendance::event_attendance_filter_edit(conn, event_id, query.user_id, query.role, access)?;
     Ok(())
 }
 

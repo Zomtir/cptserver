@@ -2,7 +2,7 @@
 
 use axum::http::header::{self, HeaderName};
 use axum::http::Method;
-use axum::routing::{get, head, post, delete};
+use axum::routing::{delete, get, head, post};
 use axum::Router;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -90,10 +90,7 @@ async fn main() -> () {
         .route("/user/id/{user_id}/info", get(route::user::user_info))
         .route("/user/id/{user_id}/detailed", get(route::user::user_detailed))
         .route("/user/id/{user_id}/edit", post(route::user::user_edit))
-        .route(
-            "/user/id/{user_id}/delete",
-            delete(route::user::user_delete),
-        )
+        .route("/user/id/{user_id}/delete", delete(route::user::user_delete))
         .route("/user/id/{user_id}/password/info", get(route::user::user_password_info))
         .route(
             "/user/id/{user_id}/password/create",
@@ -165,10 +162,7 @@ async fn main() -> () {
         .route("/club/id/{club_id}/info", get(route::club::club_info))
         .route("/club/create", post(route::club::club_create))
         .route("/club/id/{club_id}/edit", post(route::club::club_edit))
-        .route(
-            "/club/id/{club_id}/delete",
-            delete(route::club::club_delete),
-        )
+        .route("/club/id/{club_id}/delete", delete(route::club::club_delete))
         .route("/club/id/{club_id}/statistic/terms", get(route::club::statistic_terms))
         .route(
             "/club/id/{club_id}/statistic/members",
@@ -187,10 +181,7 @@ async fn main() -> () {
         .route("/club/term/id/{term_id}/info", get(route::club::term_info))
         .route("/club/term/create", post(route::club::term_create))
         .route("/club/term/id/{term_id}/edit", post(route::club::term_edit))
-        .route(
-            "/club/term/id/{term_id}/delete",
-            delete(route::club::term_delete),
-        )
+        .route("/club/term/id/{term_id}/delete", delete(route::club::term_delete))
         .route(
             "/club/term/id/{term_id}/discipline/create",
             post(route::club::term_discipline_create),
@@ -207,10 +198,7 @@ async fn main() -> () {
         .route("/event/id/{event_id}/info", get(route::event::event_info))
         .route("/event/create", post(route::event::event_create))
         .route("/event/id/{event_id}/edit", post(route::event::event_edit))
-        .route(
-            "/event/id/{event_id}/delete",
-            delete(route::event::event_delete),
-        )
+        .route("/event/id/{event_id}/delete", delete(route::event::event_delete))
         .route(
             "/event/id/{event_id}/acceptance/edit",
             post(route::event::event_acceptance_edit),
@@ -267,6 +255,17 @@ async fn main() -> () {
         .route(
             "/event/id/{event_id}/attendance/presence/remove",
             delete(route::event::attendance::presence_remove),
+        )
+        .route("/event/id/{event_id}/submit", post(route::event::event_submit))
+        .route("/event/id/{event_id}/withdraw", post(route::event::event_withdraw))
+        .route("/event/id/{event_id}/owners", get(route::event::owner::owner_list))
+        .route(
+            "/event/id/{event_id}/owner/id/{user_id}/add",
+            post(route::event::owner::owner_add),
+        )
+        .route(
+            "/event/id/{event_id}/owner/id/{user_id}/remove",
+            delete(route::event::owner::owner_remove),
         )
         /*
         route::anon::organisation_list,
