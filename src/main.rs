@@ -2,7 +2,7 @@
 
 use axum::http::header::{self, HeaderName};
 use axum::http::Method;
-use axum::routing::{delete, get, head, post};
+use axum::routing::{delete, get, post};
 use axum::Router;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -156,6 +156,13 @@ async fn main() -> () {
             "/discipline/id/{discipline_id}/delete",
             delete(route::discipline::discipline_delete),
         )
+        .route("/skill/list", get(route::skill::skill_list))
+        .route("/skill/create", post(route::skill::skill_create))
+        .route("/skill/id/{skill_id}/edit", post(route::skill::skill_edit))
+        .route(
+            "/skill/id/{skill_id}/delete",
+            delete(route::skill::skill_delete),
+        )
         .route("/club/list", get(route::club::club_list))
         .route("/club/id/{club_id}/image", get(route::club::club_image))
         .route("/club/id/{club_id}/banner", get(route::club::club_banner))
@@ -269,7 +276,6 @@ async fn main() -> () {
         )
         /*
         route::anon::organisation_list,
-        route::anon::skill_list,
         route::anon::club_list,
         route::anon::club_image,
         route::anon::club_banner,
@@ -691,10 +697,10 @@ async fn main() -> () {
         route::admin::inventory::user_equipment_create,
         route::admin::inventory::user_equipment_edit,
         route::admin::inventory::user_equipment_delete,
-        route::admin::skill::skill_list,
-        route::admin::skill::skill_create,
-        route::admin::skill::skill_edit,
-        route::admin::skill::skill_delete,
+        route::skill::skill_list,
+        route::skill::skill_create,
+        route::skill::skill_edit,
+        route::skill::skill_delete,
         route::admin::team::team_list,
         route::admin::team::team_info,
         route::admin::team::team_create,
