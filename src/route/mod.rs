@@ -1,7 +1,6 @@
 pub mod admin {
     pub mod competence;
     pub mod course;
-    pub mod event;
     pub mod inventory;
     pub mod location;
     pub mod skill;

@@ -1,8 +1,7 @@
-use axum::extract::{Path, Query, State};
+use axum::extract::{Path, State};
 use axum::Json;
-use serde::Deserialize;
 
-use crate::common::{Acceptance, Course, Event, Occurrence, User, WebDateTime};
+use crate::common::User;
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
 use crate::AppState;
@@ -13,7 +12,8 @@ pub async fn owner_list(
     Path(event_id): Path<u64>,
 ) -> Result<Json<Vec<User>>> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_event_owner(conn, event_id, session.user.id)?;
+    crate::permission::require_right(session.right.right_event_read)
+        .or(crate::permission::require_event_owner(conn, event_id, session.user.id))?;
     Ok(Json(crate::db::event::owner::event_owner_list(conn, event_id)?))
 }
 
@@ -23,7 +23,8 @@ pub async fn owner_add(
     Path((event_id, user_id)): Path<(u64, u64)>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_event_owner(conn, event_id, session.user.id)?;
+    crate::permission::require_right(session.right.right_event_write)
+        .or(crate::permission::require_event_owner(conn, event_id, session.user.id))?;
     crate::db::event::owner::event_owner_add(conn, event_id, user_id)?;
     Ok(())
 }
@@ -34,8 +35,9 @@ pub async fn owner_remove(
     Path((event_id, user_id)): Path<(u64, u64)>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_event_owner(conn, event_id, session.user.id)?;
-    if user_id == session.user.id {
+    crate::permission::require_right(session.right.right_event_write)
+        .or(crate::permission::require_event_owner(conn, event_id, session.user.id))?;
+    if !session.right.right_event_write && user_id == session.user.id {
         return Err(Error::new(ErrorKind::Protected, "Cannot remove self from event owners"));
     }
     crate::db::event::owner::event_owner_remove(conn, event_id, user_id)?;
