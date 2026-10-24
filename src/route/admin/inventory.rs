@@ -1,4 +1,4 @@
-use crate::common::{Possession, Stock, WebBool};
+use crate::common::Stock;
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
 use crate::AppState;
@@ -6,10 +6,7 @@ use axum::extract::State;
 use axum::Json;
 
 mod equipment;
-mod item;
-
 pub use equipment::*;
-pub use item::*;
 
 /* STOCK */
 
@@ -227,51 +224,3 @@ pub fn item_restock(
     Ok(())
 }
 
-/* POSSESSIONS */
-
-pub fn possession_list(
-    State(state): State<AppState>,
-    session: UserSession,
-    user_id: Option<u64>,
-    item_id: Option<u64>,
-    owned: Option<WebBool>,
-    club_id: Option<u32>,
-) -> Result<Json<Vec<Possession>>> {
-    let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_inventory_read)?;
-
-    let possessions =
-        crate::db::inventory::possession_list(conn, user_id, item_id, owned.map(|b| b.to_bool()), club_id)?;
-    Ok(Json(possessions))
-}
-
-pub fn possession_create(
-    State(state): State<AppState>,
-    session: UserSession,
-    user_id: u64,
-    item_id: u64,
-) -> Result<()> {
-    let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_inventory_write)?;
-
-    crate::db::inventory::possession_create(conn, user_id, item_id, chrono::Utc::now().date_naive(), true, None)?;
-    Ok(())
-}
-
-pub fn possession_delete(State(state): State<AppState>, session: UserSession, possession_id: u64) -> Result<()> {
-    let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_inventory_write)?;
-
-    let possession = crate::db::inventory::possession_info(conn, possession_id)?;
-
-    // Cannot delete items one does not own
-    if !&possession.owned {
-        return Err(Error::new(
-            ErrorKind::Permission,
-            "Cannot delete items that are not owned",
-        ));
-    }
-
-    crate::db::inventory::possession_delete(conn, possession_id)?;
-    Ok(())
-}

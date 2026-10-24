@@ -18,7 +18,6 @@ pub mod regular {
     pub mod competence;
     pub mod course;
     pub mod event;
-    pub mod inventory;
     pub mod team;
 }
 
@@ -27,6 +26,7 @@ pub mod club;
 pub mod discipline;
 pub mod event;
 pub mod generic;
+pub mod inventory;
 pub mod location;
 pub mod login;
 pub mod organisation;

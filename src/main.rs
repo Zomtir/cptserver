@@ -163,6 +163,30 @@ async fn main() -> () {
             "/skill/id/{skill_id}/delete",
             delete(route::skill::skill_delete),
         )
+        .route("/item/list", get(route::inventory::item_list))
+        .route("/item/id/{item_id}/info", get(route::inventory::item_info))
+        .route("/item/create", post(route::inventory::item_create))
+        .route("/item/id/{item_id}/edit", post(route::inventory::item_edit))
+        .route("/item/id/{item_id}/delete", delete(route::inventory::item_delete))
+        .route("/itemcat/list", get(route::inventory::itemcat_list))
+        .route("/itemcat/create", post(route::inventory::itemcat_create))
+        .route(
+            "/itemcat/id/{category_id}/edit",
+            post(route::inventory::itemcat_edit),
+        )
+        .route(
+            "/itemcat/id/{category_id}/delete",
+            delete(route::inventory::itemcat_delete),
+        )
+        .route("/possession/list", get(route::inventory::possession_list))
+        .route(
+            "/possession/create",
+            post(route::inventory::possession_create),
+        )
+        .route(
+            "/possession/id/{possession_id}/delete",
+            delete(route::inventory::possession_delete),
+        )
         .route("/club/list", get(route::club::club_list))
         .route("/club/id/{club_id}/image", get(route::club::club_image))
         .route("/club/id/{club_id}/banner", get(route::club::club_banner))
@@ -431,15 +455,6 @@ async fn main() -> () {
             #[rocket::head("/admin/user_equipment_create?<user_id>&<skill_id>&<item_id>&<count>")]
             #[rocket::head("/admin/user_equipment_edit?<equipment_id>&<count>")]
             #[rocket::head("/admin/user_equipment_delete?<equipment_id>")]
-            #[rocket::get("/admin/item_list?<category_id>")]
-            #[rocket::get("/admin/item_info?<item_id>")]
-            #[rocket::post("/admin/item_create", format = "application/json", data = "<item>")]
-            #[rocket::post("/admin/item_edit?<item_id>", format = "application/json", data = "<item>")]
-            #[rocket::head("/admin/item_delete?<item_id>")]
-            #[rocket::get("/admin/itemcat_list")]
-            #[rocket::post("/admin/itemcat_create", format = "application/json", data = "<itemcat>")]
-            #[rocket::post("/admin/itemcat_edit?<category_id>", format = "application/json", data = "<itemcat>")]
-            #[rocket::head("/admin/itemcat_delete?<category_id>")]
             #[rocket::get("/admin/affiliation_list?<user_id>&<organisation_id>")]
             #[rocket::get("/admin/affiliation_info?<user_id>&<organisation_id>")]
             #[rocket::head("/admin/affiliation_create?<user_id>&<organisation_id>")]
@@ -655,17 +670,6 @@ async fn main() -> () {
         route::admin::organisation::affiliation_create,
         route::admin::organisation::affiliation_edit,
         route::admin::organisation::affiliation_delete,
-        route::regular::inventory::possession_list,
-        route::regular::inventory::itemcat_list,
-        route::admin::inventory::item_list,
-        route::admin::inventory::item_info,
-        route::admin::inventory::item_create,
-        route::admin::inventory::item_edit,
-        route::admin::inventory::item_delete,
-        route::admin::inventory::itemcat_list,
-        route::admin::inventory::itemcat_create,
-        route::admin::inventory::itemcat_edit,
-        route::admin::inventory::itemcat_delete,
         route::admin::inventory::stock_list,
         route::admin::inventory::stock_create,
         route::admin::inventory::stock_edit,
@@ -673,10 +677,7 @@ async fn main() -> () {
         route::admin::inventory::item_loan,
         route::admin::inventory::item_return,
         route::admin::inventory::item_handout,
-        route::admin::inventory::item_restock,
-        route::admin::inventory::possession_list,
-        route::admin::inventory::possession_create,
-        route::admin::inventory::possession_delete,
+        route::admin::inventory::item_restock
         route::admin::inventory::user_equipment_list,
         route::admin::inventory::user_equipment_info,
         route::admin::inventory::user_equipment_create,
