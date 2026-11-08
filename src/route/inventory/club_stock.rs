@@ -2,23 +2,34 @@ use crate::common::Stock;
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
 use crate::AppState;
-use axum::extract::State;
+use axum::extract::{Path, Query, State};
 use axum::Json;
+use serde::Deserialize;
 
-pub fn stock_list(
+#[derive(Deserialize)]
+pub struct StockListQuery {
+    pub club_id: Option<u32>,
+    pub item_id: Option<u32>,
+}
+
+#[derive(Deserialize)]
+pub struct StockLoanQuery {
+    pub user_id: u64,
+}
+
+pub async fn stock_list(
     State(state): State<AppState>,
     session: UserSession,
-    club_id: Option<u32>,
-    item_id: Option<u32>,
+    Query(query): Query<StockListQuery>,
 ) -> Result<Json<Vec<Stock>>> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_read)?;
 
-    let stocks = crate::db::inventory::stock_list(conn, club_id, item_id)?;
+    let stocks = crate::db::inventory::stock_list(conn, query.club_id, query.item_id)?;
     Ok(Json(stocks))
 }
 
-pub fn stock_create(State(state): State<AppState>, session: UserSession, stock: Json<Stock>) -> Result<()> {
+pub async fn stock_create(State(state): State<AppState>, session: UserSession, stock: Json<Stock>) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
 
@@ -31,10 +42,10 @@ pub fn stock_create(State(state): State<AppState>, session: UserSession, stock: 
     Ok(())
 }
 
-pub fn stock_edit(
+pub async fn stock_edit(
     State(state): State<AppState>,
     session: UserSession,
-    stock_id: u64,
+    Path(stock_id): Path<u64>,
     stock: Json<Stock>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
@@ -71,7 +82,11 @@ pub fn stock_edit(
     Ok(())
 }
 
-pub fn stock_delete(State(state): State<AppState>, session: UserSession, stock_id: u64) -> Result<()> {
+pub async fn stock_delete(
+    State(state): State<AppState>,
+    session: UserSession,
+    Path(stock_id): Path<u64>,
+) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
 
@@ -90,7 +105,12 @@ pub fn stock_delete(State(state): State<AppState>, session: UserSession, stock_i
     Ok(())
 }
 
-pub fn item_loan(State(state): State<AppState>, session: UserSession, stock_id: u64, user_id: u64) -> Result<()> {
+pub async fn item_loan(
+    State(state): State<AppState>,
+    session: UserSession,
+    Path(stock_id): Path<u64>,
+    Query(query): Query<StockLoanQuery>,
+) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
 
@@ -104,7 +124,7 @@ pub fn item_loan(State(state): State<AppState>, session: UserSession, stock_id: 
     crate::db::inventory::stock_edit(conn, stock_id, &stock.storage, stock.owned, stock.loaned + 1)?;
     crate::db::inventory::possession_create(
         conn,
-        user_id,
+        query.user_id,
         stock.item.id,
         chrono::Utc::now().date_naive(),
         false,
@@ -114,7 +134,11 @@ pub fn item_loan(State(state): State<AppState>, session: UserSession, stock_id: 
     Ok(())
 }
 
-pub fn item_return(State(state): State<AppState>, session: UserSession, possession_id: u64) -> Result<()> {
+pub async fn item_return(
+    State(state): State<AppState>,
+    session: UserSession,
+    Path(possession_id): Path<u64>,
+) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
 
@@ -151,7 +175,11 @@ pub fn item_return(State(state): State<AppState>, session: UserSession, possessi
     Ok(())
 }
 
-pub fn item_handout(State(state): State<AppState>, session: UserSession, possession_id: u64) -> Result<()> {
+pub async fn item_handout(
+    State(state): State<AppState>,
+    session: UserSession,
+    Path(possession_id): Path<u64>,
+) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
 
@@ -188,11 +216,10 @@ pub fn item_handout(State(state): State<AppState>, session: UserSession, possess
     Ok(())
 }
 
-pub fn item_restock(
+pub async fn item_restock(
     State(state): State<AppState>,
     session: UserSession,
-    possession_id: u64,
-    stock_id: u64,
+    Path((possession_id, stock_id)): Path<(u64, u64)>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;

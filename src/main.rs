@@ -178,6 +178,49 @@ async fn main() -> () {
             "/itemcat/id/{category_id}/delete",
             delete(route::inventory::itemcat_delete),
         )
+        .route("/equipment/list", get(route::inventory::user_equipment::user_equipment_list))
+        .route(
+            "/equipment/id/{equipment_id}/info",
+            get(route::inventory::user_equipment::user_equipment_info),
+        )
+        .route(
+            "/equipment/create",
+            post(route::inventory::user_equipment::user_equipment_create),
+        )
+        .route(
+            "/equipment/id/{equipment_id}/edit",
+            post(route::inventory::user_equipment::user_equipment_edit),
+        )
+        .route(
+            "/equipment/id/{equipment_id}/delete",
+            delete(route::inventory::user_equipment::user_equipment_delete),
+        )
+        .route("/stock/list", get(route::inventory::club_stock::stock_list))
+        .route("/stock/create", post(route::inventory::club_stock::stock_create))
+        .route(
+            "/stock/id/{stock_id}/edit",
+            post(route::inventory::club_stock::stock_edit),
+        )
+        .route(
+            "/stock/id/{stock_id}/delete",
+            delete(route::inventory::club_stock::stock_delete),
+        )
+        .route(
+            "/stock/id/{stock_id}/loan",
+            post(route::inventory::club_stock::item_loan),
+        )
+        .route(
+            "/possession/id/{possession_id}/return",
+            delete(route::inventory::club_stock::item_return),
+        )
+        .route(
+            "/possession/id/{possession_id}/handout",
+            post(route::inventory::club_stock::item_handout),
+        )
+        .route(
+            "/possession/id/{possession_id}/stock/id/{stock_id}/restock",
+            post(route::inventory::club_stock::item_restock),
+        )
         .route(
             "/possession/list",
             get(route::inventory::user_possession::possession_list),
@@ -707,11 +750,11 @@ async fn main() -> () {
         route::admin::inventory::item_return,
         route::admin::inventory::item_handout,
         route::admin::inventory::item_restock
-        route::admin::inventory::user_equipment_list,
-        route::admin::inventory::user_equipment_info,
-        route::admin::inventory::user_equipment_create,
-        route::admin::inventory::user_equipment_edit,
-        route::admin::inventory::user_equipment_delete,
+        route::inventory::user_equipment::user_equipment_list,
+        route::inventory::user_equipment::user_equipment_info,
+        route::inventory::user_equipment::user_equipment_create,
+        route::inventory::user_equipment::user_equipment_edit,
+        route::inventory::user_equipment::user_equipment_delete,
         route::skill::skill_list,
         route::skill::skill_create,
         route::skill::skill_edit,
