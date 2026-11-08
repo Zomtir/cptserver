@@ -1,21 +1,12 @@
-pub mod admin {
-    pub mod competence;
-    pub mod course;
-    pub mod inventory;
-    pub mod team;
-}
-
 pub mod owner {
     pub mod event;
 }
 
 pub mod moderator {
-    pub mod course;
     pub mod event;
 }
 
 pub mod regular {
-    pub mod competence;
     pub mod course;
     pub mod event;
     pub mod team;
