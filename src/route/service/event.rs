@@ -5,6 +5,11 @@ use crate::AppState;
 use axum::extract::State;
 use axum::Json;
 
+// Migration status:
+// These handlers are not superseded by route/event.rs. They authenticate with
+// EventSession rather than UserSession. Merge them into route/event/service.rs
+// when activating the service API, keeping the EventSession boundary intact.
+
 pub fn event_info(State(state): State<AppState>, session: EventSession) -> Result<Json<Event>> {
     let conn = &mut state.db.get_conn()?;
     Ok(Json(crate::db::event::event_info(conn, session.event_id)?))
@@ -16,6 +21,8 @@ pub fn event_note_edit(State(state): State<AppState>, session: EventSession, not
     Ok(())
 }
 
+// Merge candidate: event-session attendance operations should share the event
+// service route namespace, but must not be merged with user-session attendance.
 pub fn event_attendance_presence_pool(
     State(state): State<AppState>,
     session: EventSession,

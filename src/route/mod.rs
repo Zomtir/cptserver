@@ -22,7 +22,6 @@ pub mod inventory;
 pub mod location;
 pub mod login;
 pub mod organisation;
-pub mod service;
 pub mod skill;
 pub mod team;
 pub mod user;

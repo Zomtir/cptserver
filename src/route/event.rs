@@ -9,6 +9,7 @@ use crate::AppState;
 
 pub mod attendance;
 pub mod owner;
+pub mod service;
 
 #[derive(Deserialize)]
 pub struct EventListQuery {
@@ -209,7 +210,8 @@ pub async fn event_password_edit(
     password: String,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_event_write)?;
+    crate::permission::require_right(session.right.right_event_write)
+        .or(crate::permission::require_event_owner(conn, event_id, session.user.id))?;
 
     let password = crate::utils::event::validate_clear_password(password)?;
     crate::db::event::event_password_edit(conn, event_id, password)?;

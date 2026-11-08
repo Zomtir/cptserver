@@ -2,7 +2,7 @@
 
 use axum::http::header::{self, HeaderName};
 use axum::http::Method;
-use axum::routing::{delete, get, head, post};
+use axum::routing::{delete, get, post};
 use axum::Router;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -328,6 +328,27 @@ async fn main() -> () {
         .route(
             "/event/id/{event_id}/owner/id/{user_id}/remove",
             delete(route::event::owner::owner_remove),
+        )
+        .route("/event/service/info", get(route::event::service::event_info))
+        .route(
+            "/event/service/note/edit",
+            post(route::event::service::event_note_edit),
+        )
+        .route(
+            "/event/service/attendance/presence/pool",
+            get(route::event::service::attendance_presence_pool),
+        )
+        .route(
+            "/event/service/attendance/presence/list",
+            get(route::event::service::attendance_presence_list),
+        )
+        .route(
+            "/event/service/attendance/presence/add",
+            post(route::event::service::attendance_presence_add),
+        )
+        .route(
+            "/event/service/attendance/presence/remove",
+            delete(route::event::service::attendance_presence_remove),
         )
         /*
         route::anon::organisation_list,
@@ -737,12 +758,12 @@ async fn main() -> () {
         route::admin::competence::competence_delete,
         route::regular::competence::competence_list,
         route::regular::competence::competence_summary,
-        route::service::event::event_info,
-        route::service::event::event_note_edit,
-        route::service::event::event_attendance_presence_pool,
-        route::service::event::event_attendance_presence_list,
-        route::service::event::event_attendance_presence_add,
-        route::service::event::event_attendance_presence_remove,
+        route::event::service::event_info,
+        route::event::service::event_note_edit,
+        route::event::service::attendance_presence_pool,
+        route::event::service::attendance_presence_list,
+        route::event::service::attendance_presence_add,
+        route::event::service::attendance_presence_remove,
     ],
      */
 }
