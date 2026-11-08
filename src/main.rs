@@ -299,6 +299,10 @@ async fn main() -> () {
             "/course/user/id/{user_id}/responsibility",
             get(route::course::moderator::course_responsibility),
         )
+        .route(
+            "/course/user/id/{user_id}/availability",
+            get(route::course::course_availability),
+        )
         .route("/event/list", get(route::event::event_list))
         .route("/event/id/{event_id}/info", get(route::event::event_info))
         .route("/event/create", post(route::event::event_create))
@@ -609,7 +613,6 @@ async fn main() -> () {
             #[rocket::get("/owner/event_attendance_presence_list?<event_id>&<role>")]
             #[rocket::head("/owner/event_attendance_presence_add?<event_id>&<user_id>&<role>")]
             #[rocket::head("/owner/event_attendance_presence_remove?<event_id>&<user_id>&<role>")]
-            #[rocket::get("/regular/course_availability")]
             #[rocket::get("/owner/event_owner_list?<event_id>")]
             #[rocket::head("/owner/event_owner_add?<event_id>&<user_id>")]
             #[rocket::head("/owner/event_owner_remove?<event_id>&<user_id>")]
@@ -673,36 +676,15 @@ async fn main() -> () {
         route::admin::club::statistic_team,
         route::admin::club::statistic_organisation,
         route::admin::club::statistic_attendance,
-        route::admin::course::course_list,
-        route::admin::course::course_create,
-        route::admin::course::course_edit,
-        route::admin::course::course_delete,
-        route::admin::course::course_event_list,
-        route::admin::course::course_requirement_list,
-        route::admin::course::course_requirement_add,
-        route::admin::course::course_requirement_remove,
-        route::admin::course::course_club_info,
-        route::admin::course::course_club_edit,
-        route::admin::course::course_statistic_class,
-        route::admin::course::course_statistic_attendance,
-        route::admin::course::course_statistic_attendance1,
-        route::course::moderator::course_moderator_list,
-        route::course::moderator::course_moderator_add,
-        route::course::moderator::course_moderator_remove,
-        route::admin::course::attendance::sieve_list,
-        route::admin::course::attendance::sieve_edit,
-        route::admin::course::attendance::sieve_remove,
-        route::regular::course::course_availability,
-        route::moderator::course::course_responsibility,
         route::admin::event::event_list,
         route::admin::event::event_info,
         route::admin::event::event_credential,
-        route::admin::event::event_create,
-        route::admin::event::event_edit,
-        route::admin::event::event_password_edit,
-        route::admin::event::event_course_info,
-        route::admin::event::event_course_edit,
-        route::admin::event::event_delete,
+        route::event::event_create,
+        route::event::event_edit,
+        route::event::event_password_edit,
+        route::event::event_course_info,
+        route::event::event_course_edit,
+        route::event::event_delete,
         route::event::statistic_packlist,
         route::event::statistic_organisation,
         route::admin::event::owner::owner_list,
@@ -716,11 +698,6 @@ async fn main() -> () {
         route::admin::event::attendance::presence_list,
         route::admin::event::attendance::presence_add,
         route::admin::event::attendance::presence_remove,
-        route::moderator::event::event_list,
-        route::moderator::event::event_create,
-        route::moderator::event::event_edit,
-        route::moderator::event::event_edit_password,
-        route::moderator::event::event_delete,
         route::regular::event::event_list,
         route::regular::event::event_create,
         route::regular::event::event_owner_true,

@@ -30,6 +30,7 @@ pub async fn event_list(
 ) -> Result<Json<Vec<Event>>> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_read)
+        .or(crate::permission::require_course_moderator(conn, query.course_id, Some(session.user.id)))
         .or(crate::permission::is_self(&session, query.owner_id))?;
 
     let begin = query.begin.map(|date_time| date_time.to_naive());
@@ -76,10 +77,13 @@ pub async fn event_create(
     mut event: Json<Event>,
 ) -> Result<String> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_event_write)?;
-
-    if query.course_id.is_some() {
-        crate::permission::require_right(session.right.right_course_write)?;
+    if let Some(course_id) = query.course_id {
+        crate::permission::require_right(session.right.right_event_write)
+            .or(crate::permission::require_course_moderator(conn, Some(course_id), Some(session.user.id)))?;
+        crate::permission::require_right(session.right.right_course_write)
+            .or(crate::permission::require_course_moderator(conn, Some(course_id), Some(session.user.id)))?;
+    } else {
+        crate::permission::require_right(session.right.right_event_write)?;
     }
 
     crate::utils::event::validate_event_dates(&mut event)?;
@@ -95,11 +99,9 @@ pub async fn event_edit(
     mut event: Json<Event>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_event_write).or(crate::permission::require_event_owner(
-        conn,
-        event_id,
-        session.user.id,
-    ))?;
+    crate::permission::require_right(session.right.right_event_write)
+        .or(crate::permission::require_event_moderator(conn, event_id, session.user.id))
+        .or(crate::permission::require_event_owner(conn, event_id, session.user.id))?;
 
     crate::utils::event::validate_event_dates(&mut event)?;
     crate::db::event::event_edit(conn, event_id, &event)?;
@@ -112,11 +114,9 @@ pub async fn event_delete(
     Path(event_id): Path<u64>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_event_write).or(crate::permission::require_event_owner(
-        conn,
-        event_id,
-        session.user.id,
-    ))?;
+    crate::permission::require_right(session.right.right_event_write)
+        .or(crate::permission::require_event_moderator(conn, event_id, session.user.id))
+        .or(crate::permission::require_event_owner(conn, event_id, session.user.id))?;
 
     crate::db::event::event_delete(conn, event_id)?;
     Ok(())
@@ -211,6 +211,7 @@ pub async fn event_password_edit(
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_event_write)
+        .or(crate::permission::require_event_moderator(conn, event_id, session.user.id))
         .or(crate::permission::require_event_owner(conn, event_id, session.user.id))?;
 
     let password = crate::utils::event::validate_clear_password(password)?;
@@ -254,11 +255,11 @@ pub async fn event_course_edit(
 
     crate::permission::require_right(session.right.right_course_write).or_else(|_| -> Result<()> {
         if let Some(old_course) = crate::db::event::event_course_info(conn, event_id)? {
-            crate::permission::require_course_moderator(conn, old_course.id, session.user.id)?;
+            crate::permission::require_course_moderator(conn, Some(old_course.id), Some(session.user.id))?;
         }
 
         if let Some(new_course) = query.course_id {
-            crate::permission::require_course_moderator(conn, new_course, session.user.id)?;
+            crate::permission::require_course_moderator(conn, Some(new_course), Some(session.user.id))?;
         }
 
         Ok(())

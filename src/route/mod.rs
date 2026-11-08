@@ -1,9 +1,4 @@
-pub mod moderator {
-    pub mod event;
-}
-
 pub mod regular {
-    pub mod course;
     pub mod event;
     pub mod team;
 }

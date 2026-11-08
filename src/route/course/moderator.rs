@@ -16,7 +16,7 @@ pub async fn course_moderator_list(
 ) -> Result<Json<Vec<User>>> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_course_read)
-        .or(crate::permission::require_course_moderator(conn, course_id, session.user.id))?;
+        .or(crate::permission::require_course_moderator(conn, Some(course_id), Some(session.user.id)))?;
 
     let moderators = crate::db::course::moderator::course_moderator_list(conn, course_id)?;
     Ok(Json(moderators))
@@ -29,7 +29,7 @@ pub async fn course_moderator_add(
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_course_write)
-        .or(crate::permission::require_course_moderator(conn, course_id, session.user.id))?;
+        .or(crate::permission::require_course_moderator(conn, Some(course_id), Some(session.user.id)))?;
 
     crate::db::course::moderator::course_moderator_add(conn, course_id, user_id)?;
     Ok(())
@@ -42,7 +42,7 @@ pub async fn course_moderator_remove(
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_course_write)
-        .or(crate::permission::require_course_moderator(conn, course_id, session.user.id))?;
+        .or(crate::permission::require_course_moderator(conn, Some(course_id), Some(session.user.id)))?;
 
     crate::db::course::moderator::course_moderator_remove(conn, course_id, user_id)?;
     Ok(())
