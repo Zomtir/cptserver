@@ -178,14 +178,29 @@ async fn main() -> () {
             "/itemcat/id/{category_id}/delete",
             delete(route::inventory::itemcat_delete),
         )
-        .route("/possession/list", get(route::inventory::possession_list))
+        .route(
+            "/possession/list",
+            get(route::inventory::user_possession::possession_list),
+        )
         .route(
             "/possession/create",
-            post(route::inventory::possession_create),
+            post(route::inventory::user_possession::possession_create),
         )
         .route(
             "/possession/id/{possession_id}/delete",
-            delete(route::inventory::possession_delete),
+            delete(route::inventory::user_possession::possession_delete),
+        )
+        .route(
+            "/possession/list",
+            get(route::inventory::user_possession::possession_list),
+        )
+        .route(
+            "/possession/create",
+            post(route::inventory::user_possession::possession_create),
+        )
+        .route(
+            "/possession/id/{possession_id}/delete",
+            delete(route::inventory::user_possession::possession_delete),
         )
         .route("/club/list", get(route::club::club_list))
         .route("/club/id/{club_id}/image", get(route::club::club_image))
@@ -224,6 +239,22 @@ async fn main() -> () {
         .route(
             "/club/term/discipline/id/{term_discipline_id}/delete",
             delete(route::club::term_discipline_delete),
+        )
+        .route(
+            "/course/id/{course_id}/moderators",
+            get(route::course::moderator::course_moderator_list),
+        )
+        .route(
+            "/course/id/{course_id}/moderator/id/{user_id}/add",
+            post(route::course::moderator::course_moderator_add),
+        )
+        .route(
+            "/course/id/{course_id}/moderator/id/{user_id}/remove",
+            delete(route::course::moderator::course_moderator_remove),
+        )
+        .route(
+            "/course/user/id/{user_id}/responsibility",
+            get(route::course::moderator::course_responsibility),
         )
         .route("/event/list", get(route::event::event_list))
         .route("/event/id/{event_id}/info", get(route::event::event_info))
@@ -591,17 +622,14 @@ async fn main() -> () {
         route::admin::course::course_statistic_class,
         route::admin::course::course_statistic_attendance,
         route::admin::course::course_statistic_attendance1,
-        route::admin::course::moderator::course_moderator_list,
-        route::admin::course::moderator::course_moderator_add,
-        route::admin::course::moderator::course_moderator_remove,
+        route::course::moderator::course_moderator_list,
+        route::course::moderator::course_moderator_add,
+        route::course::moderator::course_moderator_remove,
         route::admin::course::attendance::sieve_list,
         route::admin::course::attendance::sieve_edit,
         route::admin::course::attendance::sieve_remove,
         route::regular::course::course_availability,
         route::moderator::course::course_responsibility,
-        route::moderator::course::course_moderator_list,
-        route::moderator::course::course_moderator_add,
-        route::moderator::course::course_moderator_remove,
         route::admin::event::event_list,
         route::admin::event::event_info,
         route::admin::event::event_credential,

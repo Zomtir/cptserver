@@ -2,7 +2,7 @@ use axum::extract::{Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
 
-use crate::common::{Item, ItemCategory, Possession, WebBool};
+use crate::common::{Possession, WebBool};
 use crate::error::Result;
 use crate::session::UserSession;
 use crate::AppState;

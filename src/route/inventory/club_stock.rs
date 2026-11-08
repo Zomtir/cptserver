@@ -5,11 +5,6 @@ use crate::AppState;
 use axum::extract::State;
 use axum::Json;
 
-mod equipment;
-pub use equipment::*;
-
-/* STOCK */
-
 pub fn stock_list(
     State(state): State<AppState>,
     session: UserSession,

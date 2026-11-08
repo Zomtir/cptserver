@@ -1,107 +1,74 @@
-use axum::extract::State;
+use axum::extract::{Path, Query, State};
 use axum::Json;
+use serde::Deserialize;
 
 use crate::common::User;
 use crate::error::Result;
 use crate::session::UserSession;
 use crate::AppState;
 
-pub fn course_moderator_list(
+use crate::common::{Course, WebBool};
+
+pub async fn course_moderator_list(
     State(state): State<AppState>,
     session: UserSession,
-    course_id: u32,
+    Path(course_id): Path<u32>,
 ) -> Result<Json<Vec<User>>> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_course_read)?;
+    crate::permission::require_right(session.right.right_course_read)
+        .or(crate::permission::require_course_moderator(conn, course_id, session.user.id))?;
 
     let moderators = crate::db::course::moderator::course_moderator_list(conn, course_id)?;
     Ok(Json(moderators))
 }
 
-pub fn course_moderator_add(
+pub async fn course_moderator_add(
     State(state): State<AppState>,
     session: UserSession,
-    course_id: u32,
-    user_id: u64,
+    Path((course_id, user_id)): Path<(u32, u64)>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_course_write)?;
+    crate::permission::require_right(session.right.right_course_write)
+        .or(crate::permission::require_course_moderator(conn, course_id, session.user.id))?;
 
     crate::db::course::moderator::course_moderator_add(conn, course_id, user_id)?;
     Ok(())
 }
 
-pub fn course_moderator_remove(
+pub async fn course_moderator_remove(
     State(state): State<AppState>,
     session: UserSession,
-    course_id: u32,
-    user_id: u64,
+    Path((course_id, user_id)): Path<(u32, u64)>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_course_write)?;
+    crate::permission::require_right(session.right.right_course_write)
+        .or(crate::permission::require_course_moderator(conn, course_id, session.user.id))?;
 
     crate::db::course::moderator::course_moderator_remove(conn, course_id, user_id)?;
     Ok(())
 }
 
+#[derive(Deserialize)]
+pub struct CourseResponsibilityQuery {
+    pub active: Option<WebBool>,
+    pub public: Option<WebBool>,
+}
 
-/// MOD CALLS
-/// 
-/// use axum::extract::State;
-
-use crate::common::{Course, WebBool};
-
-pub fn course_responsibility(
+pub async fn course_responsibility(
     State(state): State<AppState>,
     session: UserSession,
-    active: Option<WebBool>,
-    public: Option<WebBool>,
+    Path(user_id): Path<u64>,
+    Query(query): Query<CourseResponsibilityQuery>,
 ) -> Result<Json<Vec<Course>>> {
     let conn = &mut state.db.get_conn()?;
+    crate::permission::require_right(session.right.right_course_read)
+        .or(crate::permission::is_self(&session, Some(user_id)))?;
+
     let courses = crate::db::course::course_list(
         conn,
-        Some(session.user.id),
-        active.map(|b| b.to_bool()),
-        public.map(|b| b.to_bool()),
+        Some(user_id),
+        query.active.map(|b| b.to_bool()),
+        query.public.map(|b| b.to_bool()),
     )?;
     Ok(Json(courses))
 }
-
-pub fn course_moderator_list(
-    State(state): State<AppState>,
-    session: UserSession,
-    course_id: u32,
-) -> Result<Json<Vec<User>>> {
-    let conn = &mut state.db.get_conn()?;
-    crate::permission::require_course_moderator(conn, course_id, session.user.id)?;
-
-    let moderators = crate::db::course::moderator::course_moderator_list(conn, course_id)?;
-    Ok(Json(moderators))
-}
-
-pub fn course_moderator_add(
-    State(state): State<AppState>,
-    session: UserSession,
-    course_id: u32,
-    user_id: u64,
-) -> Result<()> {
-    let conn = &mut state.db.get_conn()?;
-    crate::permission::require_course_moderator(conn, course_id, session.user.id)?;
-
-    crate::db::course::moderator::course_moderator_add(conn, course_id, user_id)?;
-    Ok(())
-}
-
-pub fn course_moderator_remove(
-    State(state): State<AppState>,
-    session: UserSession,
-    course_id: u32,
-    user_id: u64,
-) -> Result<()> {
-    let conn = &mut state.db.get_conn()?;
-    crate::permission::require_course_moderator(conn, course_id, session.user.id)?;
-
-    crate::db::course::moderator::course_moderator_remove(conn, course_id, user_id)?;
-    Ok(())
-}
-//// END MOD CALLS

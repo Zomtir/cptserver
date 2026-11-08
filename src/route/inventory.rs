@@ -2,10 +2,14 @@ use axum::extract::{Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
 
-use crate::common::{Item, ItemCategory, Possession, WebBool};
+use crate::common::{Item, ItemCategory};
 use crate::error::Result;
 use crate::session::UserSession;
 use crate::AppState;
+
+pub mod club_stock;
+pub mod user_equipment;
+pub mod user_possession;
 
 #[derive(Deserialize)]
 pub struct ItemListQuery {
