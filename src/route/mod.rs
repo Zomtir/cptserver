@@ -1,7 +1,3 @@
-pub mod owner {
-    pub mod event;
-}
-
 pub mod moderator {
     pub mod event;
 }
