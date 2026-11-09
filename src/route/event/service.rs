@@ -24,11 +24,7 @@ pub async fn event_info(State(state): State<AppState>, session: EventSession) ->
     Ok(Json(event))
 }
 
-pub async fn event_note_edit(
-    State(state): State<AppState>,
-    session: EventSession,
-    note: String,
-) -> Result<()> {
+pub async fn event_note_edit(State(state): State<AppState>, session: EventSession, note: String) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::db::event::event_note_edit(conn, session.event_id, &note)?;
     Ok(())
@@ -40,12 +36,8 @@ pub async fn attendance_presence_pool(
     Query(query): Query<EventServiceRoleQuery>,
 ) -> Result<Json<Vec<User>>> {
     let conn = &mut state.db.get_conn()?;
-    let users = crate::db::event::attendance::event_attendance_presence_pool(
-        conn,
-        session.event_id,
-        &query.role,
-        true,
-    )?;
+    let users =
+        crate::db::event::attendance::event_attendance_presence_pool(conn, session.event_id, &query.role, true)?;
     Ok(Json(users))
 }
 
@@ -55,11 +47,7 @@ pub async fn attendance_presence_list(
     Query(query): Query<EventServiceRoleQuery>,
 ) -> Result<Json<Vec<User>>> {
     let conn = &mut state.db.get_conn()?;
-    let users = crate::db::event::attendance::event_attendance_presence_list(
-        conn,
-        session.event_id,
-        &query.role,
-    )?;
+    let users = crate::db::event::attendance::event_attendance_presence_list(conn, session.event_id, &query.role)?;
     Ok(Json(users))
 }
 
@@ -69,23 +57,13 @@ pub async fn attendance_presence_add(
     Query(query): Query<EventServicePresenceQuery>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
-    let pool = crate::db::event::attendance::event_attendance_presence_pool(
-        conn,
-        session.event_id,
-        &query.role,
-        true,
-    )?;
+    let pool = crate::db::event::attendance::event_attendance_presence_pool(conn, session.event_id, &query.role, true)?;
 
     if !pool.iter().any(|user| user.id == query.user_id) {
         return Err(Error::new(ErrorKind::Protected, "User is not in the presence pool"));
     }
 
-    crate::db::event::attendance::event_attendance_presence_add(
-        conn,
-        session.event_id,
-        query.user_id,
-        &query.role,
-    )?;
+    crate::db::event::attendance::event_attendance_presence_add(conn, session.event_id, query.user_id, &query.role)?;
     Ok(())
 }
 
@@ -95,11 +73,6 @@ pub async fn attendance_presence_remove(
     Query(query): Query<EventServicePresenceQuery>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
-    crate::db::event::attendance::event_attendance_presence_remove(
-        conn,
-        session.event_id,
-        query.user_id,
-        &query.role,
-    )?;
+    crate::db::event::attendance::event_attendance_presence_remove(conn, session.event_id, query.user_id, &query.role)?;
     Ok(())
 }

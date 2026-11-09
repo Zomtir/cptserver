@@ -36,11 +36,7 @@ pub fn require_event_moderator(conn: &mut PooledConn, event_id: u64, user_id: u6
     }
 }
 
-pub fn require_course_moderator(
-    conn: &mut PooledConn,
-    course_id: Option<u32>,
-    user_id: Option<u64>,
-) -> Result<()> {
+pub fn require_course_moderator(conn: &mut PooledConn, course_id: Option<u32>, user_id: Option<u64>) -> Result<()> {
     if let (Some(course_id), Some(user_id)) = (course_id, user_id) {
         if crate::db::course::moderator::course_moderator_true(conn, course_id, user_id)? {
             return Ok(());

@@ -159,10 +159,7 @@ async fn main() -> () {
         .route("/skill/list", get(route::skill::skill_list))
         .route("/skill/create", post(route::skill::skill_create))
         .route("/skill/id/{skill_id}/edit", post(route::skill::skill_edit))
-        .route(
-            "/skill/id/{skill_id}/delete",
-            delete(route::skill::skill_delete),
-        )
+        .route("/skill/id/{skill_id}/delete", delete(route::skill::skill_delete))
         .route("/item/list", get(route::inventory::item_list))
         .route("/item/id/{item_id}/info", get(route::inventory::item_info))
         .route("/item/create", post(route::inventory::item_create))
@@ -170,15 +167,15 @@ async fn main() -> () {
         .route("/item/id/{item_id}/delete", delete(route::inventory::item_delete))
         .route("/itemcat/list", get(route::inventory::itemcat_list))
         .route("/itemcat/create", post(route::inventory::itemcat_create))
-        .route(
-            "/itemcat/id/{category_id}/edit",
-            post(route::inventory::itemcat_edit),
-        )
+        .route("/itemcat/id/{category_id}/edit", post(route::inventory::itemcat_edit))
         .route(
             "/itemcat/id/{category_id}/delete",
             delete(route::inventory::itemcat_delete),
         )
-        .route("/equipment/list", get(route::inventory::user_equipment::user_equipment_list))
+        .route(
+            "/equipment/list",
+            get(route::inventory::user_equipment::user_equipment_list),
+        )
         .route(
             "/equipment/id/{equipment_id}/info",
             get(route::inventory::user_equipment::user_equipment_info),
@@ -283,6 +280,10 @@ async fn main() -> () {
             "/club/term/discipline/id/{term_discipline_id}/delete",
             delete(route::club::term_discipline_delete),
         )
+        .route("/course/list", get(route::course::course_list))
+        .route("/course/create", post(route::course::course_create))
+        .route("/course/id/{course_id}/edit", post(route::course::course_edit))
+        .route("/course/id/{course_id}/delete", delete(route::course::course_delete))
         .route(
             "/course/id/{course_id}/moderators",
             get(route::course::moderator::course_moderator_list),
@@ -377,10 +378,7 @@ async fn main() -> () {
             delete(route::event::owner::owner_remove),
         )
         .route("/event/service/info", get(route::event::service::event_info))
-        .route(
-            "/event/service/note/edit",
-            post(route::event::service::event_note_edit),
-        )
+        .route("/event/service/note/edit", post(route::event::service::event_note_edit))
         .route(
             "/event/service/attendance/presence/pool",
             get(route::event::service::attendance_presence_pool),
@@ -639,131 +637,4 @@ async fn main() -> () {
         .await
         .expect("Failed to create Tokio listener");
     axum::serve(listener, app).await.expect("Failed to serve application");
-
-    /*
-    rocket::routes![
-        route::admin::user::user_list,
-        route::admin::user::user_detailed,
-        route::admin::user::user_create,
-        route::admin::user::user_edit,
-        route::admin::user::user_delete,
-        route::admin::user::user_password_info,
-        route::admin::user::user_password_create,
-        route::admin::user::user_password_edit,
-        route::admin::user::user_password_delete,
-        route::admin::user::user_bank_account_create,
-        route::admin::user::user_bank_account_edit,
-        route::admin::user::user_bank_account_delete,
-        route::admin::user::user_license_main_create,
-        route::admin::user::user_license_extra_create,
-        route::admin::user::user_license_main_edit,
-        route::admin::user::user_license_extra_edit,
-        route::admin::user::user_license_main_delete,
-        route::admin::user::user_license_extra_delete,
-        route::regular::user::user_info,
-        route::regular::user::user_right,
-        route::regular::user::user_password_info,
-        route::regular::user::user_password_set,
-        route::regular::user::user_list,
-        route::regular::user::user_image,
-        route::admin::club::club_list,
-        route::admin::club::club_info,
-        route::admin::club::club_create,
-        route::admin::club::club_edit,
-        route::admin::club::club_delete,
-        route::admin::club::statistic_terms,
-        route::admin::club::statistic_members,
-        route::admin::club::statistic_team,
-        route::admin::club::statistic_organisation,
-        route::admin::club::statistic_attendance,
-        route::admin::event::event_list,
-        route::admin::event::event_info,
-        route::admin::event::event_credential,
-        route::event::event_create,
-        route::event::event_edit,
-        route::event::event_password_edit,
-        route::event::event_course_info,
-        route::event::event_course_edit,
-        route::event::event_delete,
-        route::event::statistic_packlist,
-        route::event::statistic_organisation,
-        route::admin::event::owner::owner_list,
-        route::admin::event::owner::owner_add,
-        route::admin::event::owner::owner_remove,
-        route::admin::event::attendance::registration_list,
-        route::admin::event::attendance::filter_list,
-        route::admin::event::attendance::filter_edit,
-        route::admin::event::attendance::filter_remove,
-        route::admin::event::attendance::presence_pool,
-        route::admin::event::attendance::presence_list,
-        route::admin::event::attendance::presence_add,
-        route::admin::event::attendance::presence_remove,
-        route::regular::event::event_list,
-        route::regular::event::event_create,
-        route::regular::event::event_owner_true,
-        route::regular::event::event_moderator_true,
-        route::regular::event::event_attendance_registration_info,
-        route::regular::event::event_attendance_registration_edit,
-        route::regular::event::event_attendance_presence_true,
-        route::regular::event::event_attendance_presence_add,
-        route::regular::event::event_attendance_presence_remove,
-        route::regular::event::event_bookmark_true,
-        route::regular::event::event_bookmark_edit,
-        route::admin::organisation::organisation_list,
-        route::admin::organisation::organisation_info,
-        route::admin::organisation::organisation_create,
-        route::admin::organisation::organisation_edit,
-        route::admin::organisation::organisation_delete,
-        route::admin::organisation::affiliation_list,
-        route::admin::organisation::affiliation_info,
-        route::admin::organisation::affiliation_create,
-        route::admin::organisation::affiliation_edit,
-        route::admin::organisation::affiliation_delete,
-        route::admin::inventory::stock_list,
-        route::admin::inventory::stock_create,
-        route::admin::inventory::stock_edit,
-        route::admin::inventory::stock_delete,
-        route::admin::inventory::item_loan,
-        route::admin::inventory::item_return,
-        route::admin::inventory::item_handout,
-        route::admin::inventory::item_restock
-        route::inventory::user_equipment::user_equipment_list,
-        route::inventory::user_equipment::user_equipment_info,
-        route::inventory::user_equipment::user_equipment_create,
-        route::inventory::user_equipment::user_equipment_edit,
-        route::inventory::user_equipment::user_equipment_delete,
-        route::skill::skill_list,
-        route::skill::skill_create,
-        route::skill::skill_edit,
-        route::skill::skill_delete,
-        route::admin::team::team_list,
-        route::admin::team::team_info,
-        route::admin::team::team_create,
-        route::admin::team::team_edit,
-        route::admin::team::team_right_edit,
-        route::admin::team::team_delete,
-        route::admin::team::team_member_list,
-        route::admin::team::team_member_add,
-        route::admin::team::team_member_remove,
-        route::regular::team::team_list,
-        route::admin::club::term::term_list,
-        route::admin::club::term::term_info,
-        route::admin::club::term::term_create,
-        route::admin::club::term::term_edit,
-        route::admin::club::term::term_delete,
-        route::admin::competence::competence_list,
-        route::admin::competence::competence_info,
-        route::admin::competence::competence_create,
-        route::admin::competence::competence_edit,
-        route::admin::competence::competence_delete,
-        route::regular::competence::competence_list,
-        route::regular::competence::competence_summary,
-        route::event::service::event_info,
-        route::event::service::event_note_edit,
-        route::event::service::attendance_presence_pool,
-        route::event::service::attendance_presence_list,
-        route::event::service::attendance_presence_add,
-        route::event::service::attendance_presence_remove,
-    ],
-     */
 }

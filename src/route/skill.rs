@@ -12,11 +12,7 @@ pub async fn skill_list(State(state): State<AppState>) -> Result<Json<Vec<Skill>
     Ok(Json(skills))
 }
 
-pub async fn skill_create(
-    State(state): State<AppState>,
-    session: UserSession,
-    skill: Json<Skill>,
-) -> Result<String> {
+pub async fn skill_create(State(state): State<AppState>, session: UserSession, skill: Json<Skill>) -> Result<String> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_competence_write)?;
 

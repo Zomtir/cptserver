@@ -40,11 +40,7 @@ pub async fn item_info(
     Ok(Json(item))
 }
 
-pub async fn item_create(
-    State(state): State<AppState>,
-    session: UserSession,
-    item: Json<Item>,
-) -> Result<String> {
+pub async fn item_create(State(state): State<AppState>, session: UserSession, item: Json<Item>) -> Result<String> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
 
@@ -65,11 +61,7 @@ pub async fn item_edit(
     Ok(())
 }
 
-pub async fn item_delete(
-    State(state): State<AppState>,
-    session: UserSession,
-    Path(item_id): Path<u64>,
-) -> Result<()> {
+pub async fn item_delete(State(state): State<AppState>, session: UserSession, Path(item_id): Path<u64>) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_inventory_write)?;
 
@@ -77,10 +69,7 @@ pub async fn item_delete(
     Ok(())
 }
 
-pub async fn itemcat_list(
-    State(state): State<AppState>,
-    _session: UserSession,
-) -> Result<Json<Vec<ItemCategory>>> {
+pub async fn itemcat_list(State(state): State<AppState>, _session: UserSession) -> Result<Json<Vec<ItemCategory>>> {
     let conn = &mut state.db.get_conn()?;
     let item_categories = crate::db::inventory::itemcat_list(conn)?;
     Ok(Json(item_categories))
