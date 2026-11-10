@@ -34,17 +34,24 @@ pub async fn course_list(
     State(state): State<AppState>,
     session: UserSession,
     Query(query): Query<CourseListQuery>,
-
 ) -> Result<Json<Vec<Course>>> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_course_read)?;
 
-    let courses =
-        crate::db::course::course_list(conn, query.mod_id, query.active.map(|b| b.to_bool()), query.public.map(|b| b.to_bool()))?;
+    let courses = crate::db::course::course_list(
+        conn,
+        query.mod_id,
+        query.active.map(|b| b.to_bool()),
+        query.public.map(|b| b.to_bool()),
+    )?;
     Ok(Json(courses))
 }
 
-pub async fn course_create(State(state): State<AppState>, session: UserSession, course: Json<Course>) -> Result<String> {
+pub async fn course_create(
+    State(state): State<AppState>,
+    session: UserSession,
+    course: Json<Course>,
+) -> Result<String> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_course_write)?;
 
@@ -55,7 +62,7 @@ pub async fn course_create(State(state): State<AppState>, session: UserSession, 
 pub async fn course_edit(
     State(state): State<AppState>,
     session: UserSession,
-    course_id: u32,
+    Path(course_id): Path<u32>,
     course: Json<Course>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
@@ -65,7 +72,11 @@ pub async fn course_edit(
     Ok(())
 }
 
-pub async fn course_delete(State(state): State<AppState>, session: UserSession, course_id: u32) -> Result<()> {
+pub async fn course_delete(
+    State(state): State<AppState>,
+    session: UserSession,
+    Path(course_id): Path<u32>,
+) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_course_write)?;
 
@@ -76,7 +87,7 @@ pub async fn course_delete(State(state): State<AppState>, session: UserSession, 
 pub async fn course_event_list(
     State(state): State<AppState>,
     session: UserSession,
-    course_id: u32,
+    Path(course_id): Path<u32>,
 ) -> Result<Json<Vec<Event>>> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_course_read)?;
@@ -98,7 +109,7 @@ pub async fn course_event_list(
 pub async fn course_requirement_list(
     State(state): State<AppState>,
     session: UserSession,
-    course_id: u32,
+    Path(course_id): Path<u32>,
 ) -> Result<Json<Vec<Requirement>>> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_course_read)?;
@@ -110,7 +121,7 @@ pub async fn course_requirement_list(
 pub async fn course_requirement_add(
     State(state): State<AppState>,
     session: UserSession,
-    course_id: u32,
+    Path(course_id): Path<u32>,
     skill_id: u32,
     rank: u32,
 ) -> Result<()> {
@@ -124,7 +135,7 @@ pub async fn course_requirement_add(
 pub async fn course_requirement_remove(
     State(state): State<AppState>,
     session: UserSession,
-    requirement_id: u64,
+    Path(requirement_id): Path<u64>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_course_write)?;
@@ -136,7 +147,7 @@ pub async fn course_requirement_remove(
 pub async fn course_club_info(
     State(state): State<AppState>,
     session: UserSession,
-    course_id: u64,
+    Path(course_id): Path<u64>,
 ) -> Result<Json<Option<u32>>> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_course_read)?;

@@ -105,6 +105,15 @@ async fn main() -> () {
             delete(route::user::user_password_delete),
         )
         .route("/user/id/{user_id}/image", get(route::user::user_image))
+        .route("/user/id/{user_id}/bank_account/create", post(route::user::user_bank_account_create))
+        .route("/user/id/{user_id}/bank_account/edit", post(route::user::user_bank_account_edit))
+        .route("/user/id/{user_id}/bank_account/delete", delete(route::user::user_bank_account_delete))
+        .route("/user/id/{user_id}/license/main/create", post(route::user::user_license_main_create))
+        .route("/user/id/{user_id}/license/main/edit", post(route::user::user_license_main_edit))
+        .route("/user/id/{user_id}/license/main/delete", delete(route::user::user_license_main_delete))
+        .route("/user/id/{user_id}/license/extra/create", post(route::user::user_license_extra_create))
+        .route("/user/id/{user_id}/license/extra/edit", post(route::user::user_license_extra_edit))
+        .route("/user/id/{user_id}/license/extra/delete", delete(route::user::user_license_extra_delete))
         .route("/organisation/list", get(route::organisation::organisation_list))
         .route(
             "/organisation/id/{organisation_id}/info",
@@ -395,6 +404,15 @@ async fn main() -> () {
             "/event/service/attendance/presence/remove",
             delete(route::event::service::attendance_presence_remove),
         )
+        .route("/team/list", get(route::team::team_list))
+        .route("/team/info/{team_id}", get(route::team::team_info))
+        .route("/team/create", post(route::team::team_create))
+        .route("/team/edit/{team_id}", post(route::team::team_edit))
+        .route("/team/right/edit/{team_id}", post(route::team::team_right_edit))
+        .route("/team/delete/{team_id}", delete(route::team::team_delete))
+        .route("/team/member/list/{team_id}", get(route::team::team_member_list))
+        .route("/team/member/add/{team_id}/{user_id}", post(route::team::team_member_add))
+        .route("/team/member/remove/{team_id}/{user_id}", delete(route::team::team_member_remove))
         /*
         route::anon::organisation_list,
         route::anon::club_list,
@@ -561,17 +579,7 @@ async fn main() -> () {
                 data = "<affiliation>"
             )]
             #[rocket::head("/admin/affiliation_delete?<user_id>&<organisation_id>")]
-            #[rocket::post(
-                "/admin/user_bank_account_create?<user_id>",
-                format = "application/json",
-                data = "<bank_account>"
-            )]
-            #[rocket::post(
-                "/admin/user_bank_account_edit?<user_id>",
-                format = "application/json",
-                data = "<bank_account>"
-            )]
-            #[rocket::head("/admin/user_bank_account_delete?<user_id>")]
+
             #[rocket::post(
                 "/admin/user_license_main_create?<user_id>",
                 format = "application/json",

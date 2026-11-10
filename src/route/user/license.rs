@@ -1,4 +1,4 @@
-use axum::extract::State;
+use axum::extract::{Path, Query, State};
 use axum::Json;
 
 use crate::common::License;
@@ -6,10 +6,10 @@ use crate::error::Result;
 use crate::session::UserSession;
 use crate::AppState;
 
-pub fn user_license_main_create(
+pub async fn user_license_main_create(
     State(state): State<AppState>,
     session: UserSession,
-    user_id: u64,
+    Path(user_id): Path<u64>,
     license: Json<License>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
@@ -20,10 +20,10 @@ pub fn user_license_main_create(
     Ok(())
 }
 
-pub fn user_license_extra_create(
+pub async fn user_license_extra_create(
     State(state): State<AppState>,
     session: UserSession,
-    user_id: u64,
+    Path(user_id): Path<u64>,
     license: Json<License>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
@@ -34,10 +34,10 @@ pub fn user_license_extra_create(
     Ok(())
 }
 
-pub fn user_license_main_edit(
+pub async fn user_license_main_edit(
     State(state): State<AppState>,
     session: UserSession,
-    user_id: u64,
+    Path(user_id): Path<u64>,
     license: Json<License>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
@@ -48,10 +48,10 @@ pub fn user_license_main_edit(
     Ok(())
 }
 
-pub fn user_license_extra_edit(
+pub async fn user_license_extra_edit(
     State(state): State<AppState>,
     session: UserSession,
-    user_id: u64,
+    Path(user_id): Path<u64>,
     license: Json<License>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
@@ -62,7 +62,11 @@ pub fn user_license_extra_edit(
     Ok(())
 }
 
-pub fn user_license_main_delete(State(state): State<AppState>, session: UserSession, user_id: u64) -> Result<()> {
+pub async fn user_license_main_delete(
+    State(state): State<AppState>,
+    session: UserSession,
+    Path(user_id): Path<u64>,
+) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_user_write)?;
 
@@ -70,7 +74,11 @@ pub fn user_license_main_delete(State(state): State<AppState>, session: UserSess
     Ok(())
 }
 
-pub fn user_license_extra_delete(State(state): State<AppState>, session: UserSession, user_id: u64) -> Result<()> {
+pub async fn user_license_extra_delete(
+    State(state): State<AppState>,
+    session: UserSession,
+    Path(user_id): Path<u64>,
+) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_user_write)?;
 
