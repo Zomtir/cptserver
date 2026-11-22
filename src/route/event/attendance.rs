@@ -2,7 +2,7 @@ use axum::extract::{Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
 
-use crate::common::User;
+use crate::common::{Confirmation, User};
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
 use crate::AppState;
@@ -13,9 +13,9 @@ pub struct AttendanceRoleQuery {
 }
 
 #[derive(Deserialize)]
-pub struct AttendanceFilterQuery {
-    pub role: String,
+pub struct AttendanceQuery {
     pub user_id: u64,
+    pub role: String,
     pub access: Option<bool>,
 }
 
@@ -65,7 +65,7 @@ pub async fn filter_edit(
     State(state): State<AppState>,
     session: UserSession,
     Path(event_id): Path<u64>,
-    Query(query): Query<AttendanceFilterQuery>,
+    Query(query): Query<AttendanceQuery>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     require_attendance_write(conn, &session, event_id)?;
@@ -81,7 +81,7 @@ pub async fn filter_remove(
     State(state): State<AppState>,
     session: UserSession,
     Path(event_id): Path<u64>,
-    Query(query): Query<AttendanceFilterQuery>,
+    Query(query): Query<AttendanceQuery>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     require_attendance_write(conn, &session, event_id)?;
@@ -120,10 +120,10 @@ pub async fn presence_add(
     State(state): State<AppState>,
     session: UserSession,
     Path(event_id): Path<u64>,
-    Query(query): Query<AttendanceFilterQuery>,
+    Query(query): Query<AttendanceQuery>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
-    require_attendance_write(conn, &session, event_id)?;
+    require_attendance_write(conn, &session, event_id).or(crate::permission::is_self(&session, Some(query.user_id)))?;
 
     let pool = crate::db::event::attendance::event_attendance_presence_pool(conn, event_id, &query.role, true)?;
     if !pool.iter().any(|user| user.id == query.user_id) {
@@ -138,11 +138,66 @@ pub async fn presence_remove(
     State(state): State<AppState>,
     session: UserSession,
     Path(event_id): Path<u64>,
-    Query(query): Query<AttendanceFilterQuery>,
+    Query(query): Query<AttendanceQuery>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
-    require_attendance_write(conn, &session, event_id)?;
+    require_attendance_write(conn, &session, event_id).or(crate::permission::is_self(&session, Some(query.user_id)))?;
 
     crate::db::event::attendance::event_attendance_presence_remove(conn, event_id, query.user_id, &query.role)?;
+    Ok(())
+}
+
+pub async fn presence_true(
+    State(state): State<AppState>,
+    session: UserSession,
+    Path(event_id): Path<u64>,
+    Query(query): Query<AttendanceQuery>,
+) -> Result<Json<bool>> {
+    let conn = &mut state.db.get_conn()?;
+    require_attendance_read(conn, &session, event_id).or(crate::permission::is_self(&session, Some(query.user_id)))?;
+
+    let condition =
+        crate::db::event::attendance::event_attendance_presence_true(conn, event_id, query.user_id, &query.role)?;
+    Ok(Json(condition))
+}
+
+/* WIP */
+
+pub async fn registration_info(
+    State(state): State<AppState>,
+    session: UserSession,
+    event_id: u64,
+    role: String,
+) -> Result<String> {
+    let conn = &mut state.db.get_conn()?;
+    // TODO check if you can register (requirement)
+
+    let status =
+        crate::db::event::attendance::event_attendance_registration_info(conn, event_id, session.user.id, role)?;
+    Ok(status.to_string())
+}
+
+pub fn event_attendance_registration_edit(
+    State(state): State<AppState>,
+    session: UserSession,
+    event_id: u64,
+    role: String,
+    status: Confirmation,
+) -> Result<()> {
+    let conn = &mut state.db.get_conn()?;
+    // TODO check if you can register (requirement)
+
+    match status {
+        Confirmation::Null => {
+            crate::db::event::attendance::event_attendance_registration_remove(conn, event_id, session.user.id, role)?
+        }
+        _ => crate::db::event::attendance::event_attendance_registration_edit(
+            conn,
+            event_id,
+            session.user.id,
+            role,
+            status,
+        )?,
+    }
     Ok(())
 }

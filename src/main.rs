@@ -390,6 +390,7 @@ async fn main() {
         .route("/event/list", get(route::event::event_list))
         .route("/event/id/{event_id}/info", get(route::event::event_info))
         .route("/event/create", post(route::event::event_create))
+        .route("/event/draft", post(route::event::event_draft))
         .route("/event/id/{event_id}/edit", post(route::event::event_edit))
         .route("/event/id/{event_id}/delete", delete(route::event::event_delete))
         .route(
@@ -404,22 +405,41 @@ async fn main() {
             "/event/id/{event_id}/password/edit",
             post(route::event::event_password_edit),
         )
-        .route("/event/id/{event_id}/course/info", get(route::event::event_course_info))
+        .route(
+            "/event/id/{event_id}/bookmark/true",
+            get(route::event::event_bookmark_true),
+        )
+        .route(
+            "/event/id/{event_id}/bookmark/edit",
+            post(route::event::event_bookmark_edit),
+        )
+        .route(
+            "/event/id/{event_id}/course/info",
+            get(route::event::course::course_info),
+        )
         .route(
             "/event/id/{event_id}/course/edit",
-            post(route::event::event_course_edit),
+            post(route::event::course::course_edit),
+        )
+        .route(
+            "/event/id/{event_id}/moderator/true/{user_id}",
+            get(route::event::course::moderator_true),
         )
         .route(
             "/event/id/{event_id}/statistic/packlist",
-            get(route::event::statistic_packlist),
+            get(route::event::statistic::statistic_packlist),
         )
         .route(
             "/event/id/{event_id}/statistic/organisation",
-            get(route::event::statistic_organisation),
+            get(route::event::statistic::statistic_organisation),
         )
         .route(
             "/event/id/{event_id}/attendance/registration/list",
             get(route::event::attendance::registration_list),
+        )
+        .route(
+            "/event/id/{event_id}/attendance/presence/true/{user_id}/{role}",
+            get(route::event::attendance::presence_true),
         )
         .route(
             "/event/id/{event_id}/attendance/filter/list",
@@ -449,15 +469,21 @@ async fn main() {
             "/event/id/{event_id}/attendance/presence/remove",
             delete(route::event::attendance::presence_remove),
         )
+
+        .route(
+            "/event/id/{event_id}/attendance/presence/true",
+            get(route::event::attendance::presence_true),
+        )
         .route("/event/id/{event_id}/submit", post(route::event::event_submit))
         .route("/event/id/{event_id}/withdraw", post(route::event::event_withdraw))
-        .route("/event/id/{event_id}/owners", get(route::event::owner::owner_list))
+        .route("/event/id/{event_id}/owner/list", get(route::event::owner::owner_list))
+        .route("/event/id/{event_id}/owner/true", get(route::event::owner::owner_true))
         .route(
-            "/event/id/{event_id}/owner/id/{user_id}/add",
+            "/event/id/{event_id}/owner/add/{user_id}",
             post(route::event::owner::owner_add),
         )
         .route(
-            "/event/id/{event_id}/owner/id/{user_id}/remove",
+            "/event/id/{event_id}/owner/remove/{user_id}",
             delete(route::event::owner::owner_remove),
         )
         .route("/event/service/info", get(route::event::service::event_info))
@@ -494,225 +520,6 @@ async fn main() {
             "/team/member/remove/{team_id}/{user_id}",
             delete(route::team::team_member_remove),
         )
-        /*
-        route::anon::organisation_list,
-        route::anon::club_list,
-        route::anon::club_image,
-        route::anon::club_banner,
-        route::anon::course_list,
-        //#[rocket::get("/anon/organisation_list")]
-        //#[rocket::get("/anon/skill_list")]
-        //#[rocket::get("/anon/club_list")]
-        //#[rocket::get("/anon/club_image?<club_id>")]
-        //#[rocket::get("/anon/club_banner?<club_id>")]
-        //#[rocket::get("/anon/course_list")]
-        .route("/admin/event_owner_list", get(route::admin::event::owner::owner_list))
-        .route("/admin/event_owner_add", post(route::admin::event::owner::owner_add))
-        .route(
-            "/admin/event_owner_remove",
-            delete(route::admin::event::owner::owner_remove),
-        )
-            #[rocket::get("/admin/discipline_list")]
-            #[rocket::post("/admin/discipline_create", format = "application/json", data = "<discipline>")]
-            #[rocket::post(
-                "/admin/discipline_edit?<discipline_id>",
-                format = "application/json",
-                data = "<discipline>"
-            )]
-            #[rocket::head("/admin/discipline_delete?<discipline_id>")]
-            #[rocket::get("/admin/competence_list?<user_id>&<skill_id>&<min>&<max>")]
-            #[rocket::get("/admin/competence_info?<competence_id>")]
-            #[rocket::post("/admin/competence_create", format = "application/json", data = "<competence>")]
-            #[rocket::post(
-                "/admin/competence_edit?<competence_id>",
-                format = "application/json",
-                data = "<competence>"
-            )]
-            #[rocket::head("/admin/competence_delete?<competence_id>")]
-            #[rocket::get("/admin/skill_list")]
-            #[rocket::post("/admin/skill_create", format = "application/json", data = "<skill>")]
-            #[rocket::post("/admin/skill_edit?<skill_id>", format = "application/json", data = "<skill>")]
-            #[rocket::head("/admin/skill_delete?<skill_id>")]
-            //#[rocket::get("/admin/event_owner_list?<event_id>")]
-            //#[rocket::head("/admin/event_owner_add?<event_id>&<user_id>")]
-            //#[rocket::head("/admin/event_owner_remove?<event_id>&<user_id>")]
-            #[rocket::get("/service/event_info")]
-            #[rocket::post("/service/event_note_edit", format = "text/plain", data = "<note>")]
-            #[rocket::get("/service/event_attendance_presence_pool?<role>")]
-            #[rocket::get("/service/event_attendance_presence_list?<role>")]
-            #[rocket::head("/service/event_attendance_presence_add?<user_id>&<role>")]
-            #[rocket::head("/service/event_attendance_presence_remove?<user_id>&<role>")]
-            #[rocket::get("/regular/user_info")]
-            #[rocket::get("/regular/user_right")]
-            #[rocket::get("/regular/user_password_info")]
-            #[rocket::post("/regular/user_password_edit", format = "application/json", data = "<credit>")]
-            #[rocket::get("/regular/user_image?<user_id>")]
-            #[rocket::get("/regular/user_list")]
-            #[rocket::get("/regular/team_list")]
-            #[rocket::get("/regular/itemcat_list")]
-            #[rocket::get("/regular/possession_list?<owned>&<club_id>")]
-            #[rocket::get("/admin/user_list?<active>")]
-            #[rocket::get("/admin/user_detailed?<user_id>")]
-            #[rocket::post("/admin/user_create", format = "application/json", data = "<user>")]
-            #[rocket::post("/admin/user_edit?<user_id>", format = "application/json", data = "<user>")]
-            #[rocket::head("/admin/user_delete?<user_id>")]
-            #[rocket::get("/admin/user_password_info?<user_id>")]
-            #[rocket::post(
-                "/admin/user_password_create?<user_id>",
-                format = "application/json",
-                data = "<credit>"
-            )]
-            #[rocket::post(
-                "/admin/user_password_edit?<user_id>",
-                format = "application/json",
-                data = "<credit>"
-            )]
-            #[rocket::head("/admin/user_password_delete?<user_id>")]
-            #[rocket::get("/owner/event_list?<begin>&<end>&<location_id>&<occurrence>&<acceptance>")]
-            #[rocket::get("/owner/event_info?<event_id>")]
-            #[rocket::post("/owner/event_edit?<event_id>", format = "application/json", data = "<event>")]
-            #[rocket::post("/owner/event_password_edit?<event_id>", format = "text/plain", data = "<password>")]
-            #[rocket::get("/owner/event_course_info?<event_id>")]
-            #[rocket::head("/owner/event_course_edit?<event_id>&<course_id>")]
-            #[rocket::head("/owner/event_submit?<event_id>")]
-            #[rocket::head("/owner/event_withdraw?<event_id>")]
-            #[rocket::head("/owner/event_delete?<event_id>")]
-            #[rocket::get("/admin/team_list")]
-            #[rocket::get("/admin/team_info?<team_id>")]
-            #[rocket::post("/admin/team_create", format = "application/json", data = "<team>")]
-            #[rocket::post("/admin/team_edit?<team_id>", format = "application/json", data = "<team>")]
-            #[rocket::post("/admin/team_right_edit?<team_id>", format = "application/json", data = "<right>")]
-            #[rocket::head("/admin/team_delete?<team_id>")]
-            #[rocket::get("/admin/team_member_list?<team_id>")]
-            #[rocket::head("/admin/team_member_add?<team_id>&<user_id>")]
-            #[rocket::head("/admin/team_member_remove?<team_id>&<user_id>")]
-            #[rocket::get("/admin/organisation_list")]
-            #[rocket::get("/admin/organisation_info?<organisation_id>")]
-            #[rocket::post("/admin/organisation_create", format = "application/json", data = "<organisation>")]
-            #[rocket::post(
-                "/admin/organisation_edit?<organisation_id>",
-                format = "application/json",
-                data = "<organisation>"
-            )]
-            #[rocket::head("/admin/organisation_delete?<organisation_id>")]
-            #[rocket::get("/admin/stock_list?<club_id>&<item_id>")]
-            #[rocket::post("/admin/stock_create", format = "application/json", data = "<stock>")]
-            #[rocket::post("/admin/stock_edit?<stock_id>", format = "application/json", data = "<stock>")]
-            #[rocket::head("/admin/stock_delete?<stock_id>")]
-            #[rocket::head("/admin/item_loan?<stock_id>&<user_id>")]
-            #[rocket::head("/admin/item_return?<possession_id>")]
-            #[rocket::head("/admin/item_handout?<possession_id>")]
-            #[rocket::head("/admin/item_restock?<possession_id>&<stock_id>")]
-            #[rocket::get("/admin/possession_list?<user_id>&<item_id>&<owned>&<club_id>")]
-            #[rocket::head("/admin/possession_create?<user_id>&<item_id>")]
-            #[rocket::head("/admin/possession_delete?<possession_id>")]
-            #[rocket::get("/admin/course_attendance_sieve_list?<course_id>&<role>")]
-            #[rocket::head("/admin/course_attendance_sieve_edit?<course_id>&<team_id>&<role>&<access>")]
-            #[rocket::head("/admin/course_attendance_sieve_remove?<course_id>&<team_id>&<role>")]
-            #[rocket::get("/admin/course_list?<mod_id>&<active>&<public>")]
-            #[rocket::post("/admin/course_create", format = "application/json", data = "<course>")]
-            #[rocket::post("/admin/course_edit?<course_id>", format = "application/json", data = "<course>")]
-            #[rocket::head("/admin/course_delete?<course_id>")]
-            #[rocket::get("/admin/course_event_list?<course_id>")]
-            #[rocket::get("/admin/course_requirement_list?<course_id>")]
-            #[rocket::head("/admin/course_requirement_add?<course_id>&<skill_id>&<rank>")]
-            #[rocket::head("/admin/course_requirement_remove?<requirement_id>")]
-            #[rocket::get("/admin/course_club_info?<course_id>")]
-            #[rocket::head("/admin/course_club_edit?<course_id>&<club_id>")]]
-            #[rocket::get("/admin/course_moderator_list?<course_id>")]
-            #[rocket::head("/admin/course_moderator_add?<course_id>&<user_id>")]
-            #[rocket::head("/admin/course_moderator_remove?<course_id>&<user_id>")]
-            #[rocket::get("/admin/event_attendance_registration_list?<event_id>&<role>")]
-            #[rocket::get("/admin/event_attendance_filter_list?<event_id>&<role>")]
-            #[rocket::head("/admin/event_attendance_filter_edit?<event_id>&<user_id>&<role>&<access>")]
-            #[rocket::head("/admin/event_attendance_filter_remove?<event_id>&<user_id>&<role>")]
-            #[rocket::get("/admin/event_attendance_presence_pool?<event_id>&<role>")]
-            #[rocket::get("/admin/event_attendance_presence_list?<event_id>&<role>")]
-            #[rocket::head("/admin/event_attendance_presence_add?<event_id>&<user_id>&<role>")]
-            #[rocket::head("/admin/event_attendance_presence_remove?<event_id>&<user_id>&<role>")]
-            #[rocket::get(
-                "/admin/event_list?<begin>&<end>&<location_id>&<occurrence>&<acceptance>&<course_true>&<course_id>&<owner_id>"
-            )]
-            #[rocket::get("/admin/event_info?<event_id>")]
-            #[rocket::get("/admin/event_credential?<event_id>")]
-            #[rocket::post("/admin/event_create?<course_id>", format = "application/json", data = "<event>")]
-            #[rocket::post("/admin/event_edit?<event_id>", format = "application/json", data = "<event>")]
-            #[rocket::post("/admin/event_password_edit?<event_id>", format = "text/plain", data = "<password>")]
-            #[rocket::get("/admin/event_course_info?<event_id>")]
-            #[rocket::head("/admin/event_course_edit?<event_id>&<course_id>")]
-            #[rocket::head("/admin/event_delete?<event_id>")]
-            #[rocket::get("/admin/event_statistic_packlist?<event_id>&<skill_id>")]
-            #[rocket::get("/admin/event_statistic_organisation?<event_id>&<organisation_id>")]
-            #[rocket::get("/admin/user_equipment_list?<user_id>&<skill_id>&<item_id>")]
-            #[rocket::get("/admin/user_equipment_info?<equipment_id>")]
-            #[rocket::head("/admin/user_equipment_create?<user_id>&<skill_id>&<item_id>&<count>")]
-            #[rocket::head("/admin/user_equipment_edit?<equipment_id>&<count>")]
-            #[rocket::head("/admin/user_equipment_delete?<equipment_id>")]
-            #[rocket::get("/admin/affiliation_list?<user_id>&<organisation_id>")]
-            #[rocket::get("/admin/affiliation_info?<user_id>&<organisation_id>")]
-            #[rocket::head("/admin/affiliation_create?<user_id>&<organisation_id>")]
-            #[rocket::post(
-                "/admin/affiliation_edit?<user_id>&<organisation_id>",
-                format = "application/json",
-                data = "<affiliation>"
-            )]
-            #[rocket::head("/admin/affiliation_delete?<user_id>&<organisation_id>")]
-            #[rocket::post(
-                "/admin/user_license_main_create?<user_id>",
-                format = "application/json",
-                data = "<license>"
-            )]
-            #[rocket::post(
-                "/admin/user_license_extra_create?<user_id>",
-                format = "application/json",
-                data = "<license>"
-            )]
-            #[rocket::post(
-                "/admin/user_license_main_edit?<user_id>",
-                format = "application/json",
-                data = "<license>"
-            )]
-            #[rocket::post(
-                "/admin/user_license_extra_edit?<user_id>",
-                format = "application/json",
-                data = "<license>"
-            )]
-            #[rocket::head("/admin/user_license_main_delete?<user_id>")]
-            #[rocket::head("/admin/user_license_extra_delete?<user_id>")]
-            #[rocket::get("/mod/course_responsibility?<active>&<public>")]
-            #[rocket::get("/mod/course_moderator_list?<course_id>")]
-            #[rocket::head("/mod/course_moderator_add?<course_id>&<user_id>")]
-            #[rocket::head("/mod/course_moderator_remove?<course_id>&<user_id>")]
-            #[rocket::get("/mod/event_list?<course_id>")]
-            #[rocket::post("/mod/event_create?<course_id>", format = "application/json", data = "<event>")]
-            #[rocket::post("/mod/event_edit?<event_id>", format = "application/json", data = "<event>")]
-            #[rocket::post("/mod/event_edit_password?<event_id>", format = "text/plain", data = "<password>")]
-            #[rocket::head("/mod/event_delete?<event_id>")]
-            #[rocket::get("/owner/event_attendance_registration_list?<event_id>&<role>")]
-            #[rocket::get("/owner/event_attendance_filter_list?<event_id>&<role>")]
-            #[rocket::head("/owner/event_attendance_filter_edit?<event_id>&<user_id>&<role>&<access>")]
-            #[rocket::head("/owner/event_attendance_filter_remove?<event_id>&<user_id>&<role>")]
-            #[rocket::get("/owner/event_attendance_presence_pool?<event_id>&<role>")]
-            #[rocket::get("/owner/event_attendance_presence_list?<event_id>&<role>")]
-            #[rocket::head("/owner/event_attendance_presence_add?<event_id>&<user_id>&<role>")]
-            #[rocket::head("/owner/event_attendance_presence_remove?<event_id>&<user_id>&<role>")]
-            #[rocket::get("/owner/event_owner_list?<event_id>")]
-            #[rocket::head("/owner/event_owner_add?<event_id>&<user_id>")]
-            #[rocket::head("/owner/event_owner_remove?<event_id>&<user_id>")]
-            #[rocket::get("/regular/event_list?<begin>&<end>&<location_id>&<occurrence>&<acceptance>&<course_true>&<course_id>")]
-            #[rocket::post("/regular/event_create", format = "application/json", data = "<event>")]
-            #[rocket::get("/regular/event_owner_true?<event_id>")]
-            #[rocket::get("/regular/event_moderator_true?<event_id>")]
-            #[rocket::get("/regular/event_attendance_presence_true?<event_id>&<role>")]
-            #[rocket::head("/regular/event_attendance_presence_add?<event_id>&<role>")]
-            #[rocket::head("/regular/event_attendance_presence_remove?<event_id>&<role>")]
-            #[rocket::get("/regular/event_bookmark_true?<event_id>")]
-            #[rocket::head("/regular/event_bookmark_edit?<event_id>&<bookmark>")]
-            #[rocket::get("/regular/event_attendance_registration_info?<event_id>&<role>")]
-            #[rocket::head("/regular/event_attendance_registration_edit?<event_id>&<role>&<status>")]
-            #[rocket::get("/regular/competence_list")]
-            #[rocket::get("/regular/competence_summary")]
-        */
         .with_state(app_state)
         .layer(cors_layer);
 

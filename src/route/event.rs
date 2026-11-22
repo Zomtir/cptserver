@@ -2,14 +2,16 @@ use axum::extract::{Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
 
-use crate::common::{Acceptance, Affiliation, Credential, Event, Item, Occurrence, User, WebBool, WebDateTime};
+use crate::common::{Acceptance, Credential, Event, Occurrence, WebBool, WebDateTime};
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
 use crate::AppState;
 
 pub mod attendance;
+pub mod course;
 pub mod owner;
 pub mod service;
+pub mod statistic;
 
 #[derive(Deserialize)]
 pub struct EventListQuery {
@@ -95,6 +97,19 @@ pub async fn event_create(
     crate::utils::event::validate_event_dates(&mut event)?;
 
     let event_id = crate::db::event::event_create(conn, &event, &Acceptance::Draft, query.course_id)?;
+    Ok(event_id.to_string())
+}
+
+pub async fn event_draft(
+    State(state): State<AppState>,
+    session: UserSession,
+    mut event: Json<Event>,
+) -> Result<String> {
+    crate::utils::event::validate_event_dates(&mut event)?;
+    let conn = &mut state.db.get_conn()?;
+
+    let event_id = crate::db::event::event_create(conn, &event, &Acceptance::Draft, None)?;
+    crate::db::event::owner::event_owner_add(conn, event_id, session.user.id)?;
     Ok(event_id.to_string())
 }
 
@@ -237,88 +252,30 @@ pub async fn event_password_edit(
     Ok(())
 }
 
-pub async fn event_course_info(
+pub async fn event_bookmark_true(
     State(state): State<AppState>,
     session: UserSession,
     Path(event_id): Path<u64>,
-) -> Result<Json<Option<crate::common::Course>>> {
+) -> Result<Json<bool>> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_event_read).or(crate::permission::require_event_owner(
-        conn,
-        event_id,
-        session.user.id,
-    ))?;
+    // TODO check if you can participate
 
-    let course = crate::db::event::event_course_info(conn, event_id)?;
-    Ok(Json(course))
+    let bookmark = crate::db::event::event_bookmark_true(conn, event_id, session.user.id)?;
+    Ok(Json(bookmark))
 }
 
-#[derive(Deserialize)]
-pub struct EventCourseEditQuery {
-    pub course_id: Option<u32>,
-}
-
-pub async fn event_course_edit(
+pub async fn event_bookmark_edit(
     State(state): State<AppState>,
     session: UserSession,
     Path(event_id): Path<u64>,
-    Query(query): Query<EventCourseEditQuery>,
+    Query(bookmark): Query<bool>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_event_write).or(crate::permission::require_event_owner(
-        conn,
-        event_id,
-        session.user.id,
-    ))?;
+    // TODO check if you can participate
 
-    crate::permission::require_right(session.right.right_course_write).or_else(|_| -> Result<()> {
-        if let Some(old_course) = crate::db::event::event_course_info(conn, event_id)? {
-            crate::permission::require_course_moderator(conn, Some(old_course.id), Some(session.user.id))?;
-        }
-
-        if let Some(new_course) = query.course_id {
-            crate::permission::require_course_moderator(conn, Some(new_course), Some(session.user.id))?;
-        }
-
-        Ok(())
-    })?;
-
-    crate::db::event::event_course_edit(conn, event_id, query.course_id)?;
+    match bookmark {
+        true => crate::db::event::event_bookmark_add(conn, event_id, session.user.id)?,
+        false => crate::db::event::event_bookmark_remove(conn, event_id, session.user.id)?,
+    }
     Ok(())
-}
-
-#[derive(Deserialize)]
-pub struct EventStatisticPacklistQuery {
-    pub skill_id: u32,
-}
-
-pub async fn statistic_packlist(
-    State(state): State<AppState>,
-    session: UserSession,
-    Path(event_id): Path<u64>,
-    Query(query): Query<EventStatisticPacklistQuery>,
-) -> Result<Json<Vec<(User, Item, u32, u32, u32)>>> {
-    let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_event_read)?;
-
-    let stats = crate::db::event::event_statistic_packlist(conn, event_id, query.skill_id)?;
-    Ok(Json(stats))
-}
-
-#[derive(Deserialize)]
-pub struct EventStatisticOrganisationQuery {
-    pub organisation_id: u64,
-}
-
-pub async fn statistic_organisation(
-    State(state): State<AppState>,
-    session: UserSession,
-    Path(event_id): Path<u64>,
-    Query(query): Query<EventStatisticOrganisationQuery>,
-) -> Result<Json<Vec<Affiliation>>> {
-    let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_event_read)?;
-
-    let stats = crate::db::event::event_statistic_organisation(conn, event_id, query.organisation_id)?;
-    Ok(Json(stats))
 }

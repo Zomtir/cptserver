@@ -1,7 +1,3 @@
-pub mod regular {
-    pub mod event;
-}
-
 pub mod club;
 pub mod course;
 pub mod discipline;
