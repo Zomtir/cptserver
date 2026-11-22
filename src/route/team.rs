@@ -1,4 +1,4 @@
-use axum::extract::{Path, Query, State};
+use axum::extract::{Path, State};
 use axum::Json;
 
 use crate::common::{Right, Team, User};
@@ -6,7 +6,7 @@ use crate::error::Result;
 use crate::session::UserSession;
 use crate::AppState;
 
-pub async fn team_list(State(state): State<AppState>, session: UserSession) -> Result<Json<Vec<Team>>> {
+pub async fn team_all(State(state): State<AppState>, session: UserSession) -> Result<Json<Vec<Team>>> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_team_read)?;
 
@@ -14,7 +14,18 @@ pub async fn team_list(State(state): State<AppState>, session: UserSession) -> R
     Ok(Json(teams))
 }
 
-pub async fn team_info(State(state): State<AppState>, session: UserSession, Path(team_id): Path<u32>) -> Result<Json<Team>> {
+pub async fn team_list(State(state): State<AppState>) -> Result<Json<Vec<Team>>> {
+    let conn = &mut state.db.get_conn()?;
+
+    let teams = crate::db::team::team_list(conn)?;
+    Ok(Json(teams))
+}
+
+pub async fn team_info(
+    State(state): State<AppState>,
+    session: UserSession,
+    Path(team_id): Path<u32>,
+) -> Result<Json<Team>> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_team_read)?;
 
@@ -30,7 +41,12 @@ pub async fn team_create(State(state): State<AppState>, session: UserSession, te
     Ok(team_id.to_string())
 }
 
-pub async fn team_edit(State(state): State<AppState>, session: UserSession, Path(team_id): Path<u32>, team: Json<Team>) -> Result<()> {
+pub async fn team_edit(
+    State(state): State<AppState>,
+    session: UserSession,
+    Path(team_id): Path<u32>,
+    team: Json<Team>,
+) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_team_write)?;
 
@@ -59,7 +75,11 @@ pub async fn team_delete(State(state): State<AppState>, session: UserSession, Pa
     Ok(())
 }
 
-pub async fn team_member_list(State(state): State<AppState>, session: UserSession, Path(team_id): Path<u32>) -> Result<Json<Vec<User>>> {
+pub async fn team_member_list(
+    State(state): State<AppState>,
+    session: UserSession,
+    Path(team_id): Path<u32>,
+) -> Result<Json<Vec<User>>> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_team_read)?;
 
@@ -67,7 +87,11 @@ pub async fn team_member_list(State(state): State<AppState>, session: UserSessio
     Ok(Json(users))
 }
 
-pub async fn team_member_add(State(state): State<AppState>, session: UserSession, Path((team_id, user_id)): Path<(u32, u32)>) -> Result<()> {
+pub async fn team_member_add(
+    State(state): State<AppState>,
+    session: UserSession,
+    Path((team_id, user_id)): Path<(u32, u32)>,
+) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_team_write)?;
 

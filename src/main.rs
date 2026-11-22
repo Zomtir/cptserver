@@ -30,7 +30,7 @@ struct AppState {
 }
 
 #[tokio::main]
-async fn main() -> () {
+async fn main() {
     let path_home_exe: Option<std::path::PathBuf> = std::env::current_exe()
         .ok()
         .and_then(|p| p.parent().map(|p| p.to_path_buf()));
@@ -84,6 +84,7 @@ async fn main() -> () {
         .route("/course_login/{course_key}", get(route::login::course_login))
         .route("/location_login/{location_key}", get(route::login::location_login))
         .route("/user/{user_key}/salt", get(route::user::user_salt))
+        .route("/user/all", get(route::user::user_all))
         .route("/user/list", get(route::user::user_list))
         .route("/user/create", post(route::user::user_create))
         .route("/user/id/{user_id}/right", get(route::user::user_right))
@@ -105,15 +106,42 @@ async fn main() -> () {
             delete(route::user::user_password_delete),
         )
         .route("/user/id/{user_id}/image", get(route::user::user_image))
-        .route("/user/id/{user_id}/bank_account/create", post(route::user::user_bank_account_create))
-        .route("/user/id/{user_id}/bank_account/edit", post(route::user::user_bank_account_edit))
-        .route("/user/id/{user_id}/bank_account/delete", delete(route::user::user_bank_account_delete))
-        .route("/user/id/{user_id}/license/main/create", post(route::user::user_license_main_create))
-        .route("/user/id/{user_id}/license/main/edit", post(route::user::user_license_main_edit))
-        .route("/user/id/{user_id}/license/main/delete", delete(route::user::user_license_main_delete))
-        .route("/user/id/{user_id}/license/extra/create", post(route::user::user_license_extra_create))
-        .route("/user/id/{user_id}/license/extra/edit", post(route::user::user_license_extra_edit))
-        .route("/user/id/{user_id}/license/extra/delete", delete(route::user::user_license_extra_delete))
+        .route(
+            "/user/id/{user_id}/bank_account/create",
+            post(route::user::user_bank_account_create),
+        )
+        .route(
+            "/user/id/{user_id}/bank_account/edit",
+            post(route::user::user_bank_account_edit),
+        )
+        .route(
+            "/user/id/{user_id}/bank_account/delete",
+            delete(route::user::user_bank_account_delete),
+        )
+        .route(
+            "/user/id/{user_id}/license/main/create",
+            post(route::user::user_license_main_create),
+        )
+        .route(
+            "/user/id/{user_id}/license/main/edit",
+            post(route::user::user_license_main_edit),
+        )
+        .route(
+            "/user/id/{user_id}/license/main/delete",
+            delete(route::user::user_license_main_delete),
+        )
+        .route(
+            "/user/id/{user_id}/license/extra/create",
+            post(route::user::user_license_extra_create),
+        )
+        .route(
+            "/user/id/{user_id}/license/extra/edit",
+            post(route::user::user_license_extra_edit),
+        )
+        .route(
+            "/user/id/{user_id}/license/extra/delete",
+            delete(route::user::user_license_extra_delete),
+        )
         .route("/organisation/list", get(route::organisation::organisation_list))
         .route(
             "/organisation/id/{organisation_id}/info",
@@ -289,10 +317,20 @@ async fn main() -> () {
             "/club/term/discipline/id/{term_discipline_id}/delete",
             delete(route::club::term_discipline_delete),
         )
+        .route("/course/all", get(route::course::course_all))
         .route("/course/list", get(route::course::course_list))
         .route("/course/create", post(route::course::course_create))
         .route("/course/id/{course_id}/edit", post(route::course::course_edit))
         .route("/course/id/{course_id}/delete", delete(route::course::course_delete))
+        .route(
+            "/course/id/{course_id}/event/list",
+            get(route::course::course_event_list),
+        )
+        .route("/course/id/{course_id}/club/info", get(route::course::course_club_info))
+        .route(
+            "/course/id/{course_id}/club/edit",
+            post(route::course::course_club_edit),
+        )
         .route(
             "/course/id/{course_id}/moderators",
             get(route::course::moderator::course_moderator_list),
@@ -306,12 +344,48 @@ async fn main() -> () {
             delete(route::course::moderator::course_moderator_remove),
         )
         .route(
+            "/course/id/{course_id}/attendance/sieve/list",
+            get(route::course::attendance::sieve_list),
+        )
+        .route(
+            "/course/id/{course_id}/attendance/sieve/edit",
+            post(route::course::attendance::sieve_edit),
+        )
+        .route(
+            "/course/id/{course_id}/attendance/sieve/remove",
+            delete(route::course::attendance::sieve_remove),
+        )
+        .route(
+            "/course/id/{course_id}/requirement/list",
+            get(route::course::requirement::course_requirement_list),
+        )
+        .route(
+            "/course/id/{course_id}/requirement/add",
+            post(route::course::requirement::course_requirement_add),
+        )
+        .route(
+            "/course/id/{course_id}/requirement/remove",
+            delete(route::course::requirement::course_requirement_remove),
+        )
+        .route(
             "/course/user/id/{user_id}/responsibility",
-            get(route::course::moderator::course_responsibility),
+            get(route::course::course_responsibility),
         )
         .route(
             "/course/user/id/{user_id}/availability",
             get(route::course::course_availability),
+        )
+        .route(
+            "/course/id/{course_id}/statistic/class",
+            get(route::course::statistic::course_statistic_class),
+        )
+        .route(
+            "/course/id/{course_id}/statistic/attendance",
+            get(route::course::statistic::course_statistic_attendance),
+        )
+        .route(
+            "/course/id/{course_id}/statistic/attendance/user",
+            get(route::course::statistic::course_statistic_attendance_user),
         )
         .route("/event/list", get(route::event::event_list))
         .route("/event/id/{event_id}/info", get(route::event::event_info))
@@ -404,6 +478,7 @@ async fn main() -> () {
             "/event/service/attendance/presence/remove",
             delete(route::event::service::attendance_presence_remove),
         )
+        .route("/team/all", get(route::team::team_all))
         .route("/team/list", get(route::team::team_list))
         .route("/team/info/{team_id}", get(route::team::team_info))
         .route("/team/create", post(route::team::team_create))
@@ -411,8 +486,14 @@ async fn main() -> () {
         .route("/team/right/edit/{team_id}", post(route::team::team_right_edit))
         .route("/team/delete/{team_id}", delete(route::team::team_delete))
         .route("/team/member/list/{team_id}", get(route::team::team_member_list))
-        .route("/team/member/add/{team_id}/{user_id}", post(route::team::team_member_add))
-        .route("/team/member/remove/{team_id}/{user_id}", delete(route::team::team_member_remove))
+        .route(
+            "/team/member/add/{team_id}/{user_id}",
+            post(route::team::team_member_add),
+        )
+        .route(
+            "/team/member/remove/{team_id}/{user_id}",
+            delete(route::team::team_member_remove),
+        )
         /*
         route::anon::organisation_list,
         route::anon::club_list,
@@ -537,10 +618,7 @@ async fn main() -> () {
             #[rocket::head("/admin/course_requirement_add?<course_id>&<skill_id>&<rank>")]
             #[rocket::head("/admin/course_requirement_remove?<requirement_id>")]
             #[rocket::get("/admin/course_club_info?<course_id>")]
-            #[rocket::head("/admin/course_club_edit?<course_id>&<club_id>")]
-            #[rocket::get("/admin/course_statistic_class?<course_id>")]
-            #[rocket::get("/admin/course_statistic_attendance?<course_id>&<role>")]
-            #[rocket::get("/admin/course_statistic_attendance1?<course_id>&<user_id>&<role>")]
+            #[rocket::head("/admin/course_club_edit?<course_id>&<club_id>")]]
             #[rocket::get("/admin/course_moderator_list?<course_id>")]
             #[rocket::head("/admin/course_moderator_add?<course_id>&<user_id>")]
             #[rocket::head("/admin/course_moderator_remove?<course_id>&<user_id>")]
@@ -579,7 +657,6 @@ async fn main() -> () {
                 data = "<affiliation>"
             )]
             #[rocket::head("/admin/affiliation_delete?<user_id>&<organisation_id>")]
-
             #[rocket::post(
                 "/admin/user_license_main_create?<user_id>",
                 format = "application/json",

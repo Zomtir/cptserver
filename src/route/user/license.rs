@@ -1,4 +1,4 @@
-use axum::extract::{Path, Query, State};
+use axum::extract::{Path, State};
 use axum::Json;
 
 use crate::common::License;

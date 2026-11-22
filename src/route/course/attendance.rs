@@ -1,16 +1,22 @@
-use axum::extract::State;
+use axum::extract::{Path, Query, State};
 use axum::Json;
+use serde::Deserialize;
 
 use crate::common::Team;
 use crate::error::Result;
 use crate::session::UserSession;
 use crate::AppState;
 
-pub fn sieve_list(
+#[derive(Deserialize)]
+pub struct SieveListQuery {
+    pub role: String,
+}
+
+pub async fn sieve_list(
     State(state): State<AppState>,
     session: UserSession,
-    course_id: u32,
-    role: String,
+    Path(course_id): Path<u32>,
+    Query(SieveListQuery { role }): Query<SieveListQuery>,
 ) -> Result<Json<Vec<(Team, bool)>>> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_course_read)?;
@@ -19,13 +25,18 @@ pub fn sieve_list(
     Ok(Json(teams))
 }
 
-pub fn sieve_edit(
+#[derive(Deserialize)]
+pub struct SieveEditQuery {
+    pub team_id: u64,
+    pub role: String,
+    pub access: bool,
+}
+
+pub async fn sieve_edit(
     State(state): State<AppState>,
     session: UserSession,
-    course_id: u32,
-    team_id: u64,
-    role: String,
-    access: bool,
+    Path(course_id): Path<u32>,
+    Query(SieveEditQuery { role, team_id, access }): Query<SieveEditQuery>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_course_write)?;
@@ -34,12 +45,17 @@ pub fn sieve_edit(
     Ok(())
 }
 
-pub fn sieve_remove(
+#[derive(Deserialize)]
+pub struct SieveRemoveQuery {
+    pub team_id: u64,
+    pub role: String,
+}
+
+pub async fn sieve_remove(
     State(state): State<AppState>,
     session: UserSession,
-    course_id: u32,
-    team_id: u64,
-    role: String,
+    Path(course_id): Path<u32>,
+    Query(SieveRemoveQuery { team_id, role }): Query<SieveRemoveQuery>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_course_write)?;

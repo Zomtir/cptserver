@@ -178,15 +178,15 @@ pub fn course_requirement_list(conn: &mut PooledConn, course_id: u32) -> Result<
     Ok(reqs)
 }
 
-pub fn course_requirement_add(conn: &mut PooledConn, course_id: u32, skill_id: u32, rank: u32) -> Result<()> {
+pub fn course_requirement_add(conn: &mut PooledConn, course_id: u32, requirement: &Requirement) -> Result<()> {
     let stmt = conn.prep(
         "INSERT INTO course_requirements (course_id, skill_id, rank)
         SELECT :course_id, :skill_id, :rank;",
     )?;
     let params = params! {
         "course_id" => &course_id,
-        "skill_id" => &skill_id,
-        "rank" => &rank,
+        "skill_id" => &requirement.id,
+        "rank" => &requirement.rank,
     };
 
     conn.exec_drop(&stmt, &params)?;
@@ -326,7 +326,7 @@ pub fn course_statistic_attendance(conn: &mut PooledConn, course_id: u32, role: 
     Ok(stats)
 }
 
-pub fn course_statistic_attendance1(
+pub fn course_statistic_attendance_user(
     conn: &mut PooledConn,
     course_id: u32,
     user_id: u64,

@@ -13,7 +13,7 @@ pub use bank_account::*;
 pub use license::*;
 
 #[derive(Deserialize)]
-pub struct UserListQuery {
+pub struct UserAllQuery {
     pub active: Option<WebBool>,
 }
 
@@ -28,16 +28,23 @@ pub async fn user_salt(State(state): State<AppState>, Path(user_key): Path<Strin
     }
 }
 
-pub async fn user_list(
+pub async fn user_all(
     State(state): State<AppState>,
     _session: UserSession,
-    Query(query): Query<UserListQuery>,
+    Query(query): Query<UserAllQuery>,
 ) -> Result<Json<Vec<User>>> {
     let conn = &mut state.db.get_conn()?;
 
     let active = query.active.map(|active| active.to_bool());
 
     let users = crate::db::user::user_list(conn, active)?;
+    Ok(Json(users))
+}
+
+pub async fn user_list(State(state): State<AppState>, _session: UserSession) -> Result<Json<Vec<User>>> {
+    let conn = &mut state.db.get_conn()?;
+
+    let users = crate::db::user::user_list(conn, Some(true))?;
     Ok(Json(users))
 }
 
