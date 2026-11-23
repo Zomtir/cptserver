@@ -5,7 +5,7 @@ use crate::AppState;
 use axum::extract::{Path, State};
 use axum::Json;
 
-pub async fn user_login(State(state): State<AppState>, Json(credit): Json<Credential>) -> Result<String> {
+pub async fn user_login(State(state): State<AppState>, Json(credit): Json<Credential>) -> Result<Json<(u64,String)>> {
     let conn = &mut state.db.get_conn()?;
 
     let user_key: &str = match &credit.login {
@@ -23,7 +23,7 @@ pub async fn user_login(State(state): State<AppState>, Json(credit): Json<Creden
         let adminsession = UserSession::admin(&user);
         let token = crate::common::random_string(30);
         state.user_sessions.lock().unwrap().insert(token.clone(), adminsession);
-        return Ok(token);
+        return Ok(Json((user_id, token)));
     }
 
     let user_hash: Vec<u8> = match &credit.password {
@@ -32,6 +32,7 @@ pub async fn user_login(State(state): State<AppState>, Json(credit): Json<Creden
     };
 
     let user = crate::db::login::user_login(conn, user_key, &user_hash)?;
+    let user_id = user.id.clone();
     let session_token: String = crate::common::random_string(30);
     let session_expiry = chrono::Utc::now() + crate::config::SESSION_DURATION();
 
@@ -48,10 +49,10 @@ pub async fn user_login(State(state): State<AppState>, Json(credit): Json<Creden
         .unwrap()
         .insert(session_token.clone(), session);
 
-    Ok(session_token)
+    Ok(Json((user_id, session_token)))
 }
 
-pub async fn event_login(State(state): State<AppState>, Json(credit): Json<Credential>) -> Result<String> {
+pub async fn event_login(State(state): State<AppState>, Json(credit): Json<Credential>) -> Result<Json<(u64, String)>> {
     let conn = &mut state.db.get_conn()?;
 
     let event_key = match &credit.login {
@@ -97,10 +98,10 @@ pub async fn event_login(State(state): State<AppState>, Json(credit): Json<Crede
         .unwrap()
         .insert(session_token.to_string(), session);
 
-    Ok(session_token)
+    Ok(Json((event_id, session_token)))
 }
 
-pub async fn course_login(State(state): State<AppState>, Path(course_key): Path<String>) -> Result<String> {
+pub async fn course_login(State(state): State<AppState>, Path(course_key): Path<String>) -> Result<Json<(u64, String)>> {
     let conn = &mut state.db.get_conn()?;
     let begin = (chrono::Utc::now() - crate::config::EVENT_LOGIN_BUFFER()).naive_utc();
     let end = (chrono::Utc::now() + crate::config::EVENT_LOGIN_BUFFER()).naive_utc();
@@ -117,7 +118,7 @@ pub async fn course_login(State(state): State<AppState>, Path(course_key): Path<
     event_login(State(state), Json(credentials)).await
 }
 
-pub async fn location_login(State(state): State<AppState>, Path(location_key): Path<String>) -> Result<String> {
+pub async fn location_login(State(state): State<AppState>, Path(location_key): Path<String>) -> Result<Json<(u64, String)>> {
     let conn = &mut state.db.get_conn()?;
     let begin = (chrono::Utc::now() - crate::config::EVENT_LOGIN_BUFFER()).naive_utc();
     let end = (chrono::Utc::now() + crate::config::EVENT_LOGIN_BUFFER()).naive_utc();
