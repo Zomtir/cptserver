@@ -49,7 +49,7 @@ pub fn migrate_scheme(conn: &mut PooledConn, db_name: &str) -> Result<()> {
     // Case 2: Schema info is missing which is taken as indicator of schema version 0
     if !has_info {
         let partial_path = "migrate_0.sql";
-        let full_path = crate::fs::get_sql_path().join(&partial_path);
+        let full_path = crate::fs::get_sql_path().join(partial_path);
 
         // Run the script that makes the version 0 explicit
         let query_migrate0 = std::fs::read_to_string(full_path)

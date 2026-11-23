@@ -34,7 +34,7 @@ async fn main() {
     let path_home_exe: Option<std::path::PathBuf> = std::env::current_exe()
         .ok()
         .and_then(|p| p.parent().map(|p| p.to_path_buf()));
-    let path_home_env = std::env::var("CPT_PATH_HOME").ok().map(|p| std::path::PathBuf::from(p));
+    let path_home_env = std::env::var("CPT_PATH_HOME").ok().map(std::path::PathBuf::from);
     let path_home = path_home_env.or(path_home_exe);
 
     fs::init_paths(path_home);
@@ -83,87 +83,84 @@ async fn main() {
         .route("/event_login", post(route::login::event_login))
         .route("/course_login/{course_key}", get(route::login::course_login))
         .route("/location_login/{location_key}", get(route::login::location_login))
-        .route("/user/{user_key}/salt", get(route::user::user_salt))
+        .route("/user/salt/{user_key}", get(route::user::user_salt))
         .route("/user/all", get(route::user::user_all))
         .route("/user/list", get(route::user::user_list))
         .route("/user/create", post(route::user::user_create))
-        .route("/user/id/{user_id}/right", get(route::user::user_right))
-        .route("/user/id/{user_id}/info", get(route::user::user_info))
-        .route("/user/id/{user_id}/detailed", get(route::user::user_detailed))
-        .route("/user/id/{user_id}/edit", post(route::user::user_edit))
-        .route("/user/id/{user_id}/delete", delete(route::user::user_delete))
-        .route("/user/id/{user_id}/password/info", get(route::user::user_password_info))
+        .route("/user/{user_id}/right", get(route::user::user_right))
+        .route("/user/{user_id}/info", get(route::user::user_info))
+        .route("/user/{user_id}/detailed", get(route::user::user_detailed))
+        .route("/user/{user_id}/edit", post(route::user::user_edit))
+        .route("/user/{user_id}/delete", delete(route::user::user_delete))
+        .route("/user/{user_id}/password/info", get(route::user::user_password_info))
         .route(
-            "/user/id/{user_id}/password/create",
+            "/user/{user_id}/password/create",
             post(route::user::user_password_create),
         )
+        .route("/user/{user_id}/password/edit", post(route::user::user_password_edit))
         .route(
-            "/user/id/{user_id}/password/edit",
-            post(route::user::user_password_edit),
-        )
-        .route(
-            "/user/id/{user_id}/password/delete",
+            "/user/{user_id}/password/delete",
             delete(route::user::user_password_delete),
         )
-        .route("/user/id/{user_id}/image", get(route::user::user_image))
+        .route("/user/{user_id}/image", get(route::user::user_image))
         .route(
-            "/user/id/{user_id}/bank_account/create",
+            "/user/{user_id}/bank_account/create",
             post(route::user::user_bank_account_create),
         )
         .route(
-            "/user/id/{user_id}/bank_account/edit",
+            "/user/{user_id}/bank_account/edit",
             post(route::user::user_bank_account_edit),
         )
         .route(
-            "/user/id/{user_id}/bank_account/delete",
+            "/user/{user_id}/bank_account/delete",
             delete(route::user::user_bank_account_delete),
         )
         .route(
-            "/user/id/{user_id}/license/main/create",
+            "/user/{user_id}/license/main/create",
             post(route::user::user_license_main_create),
         )
         .route(
-            "/user/id/{user_id}/license/main/edit",
+            "/user/{user_id}/license/main/edit",
             post(route::user::user_license_main_edit),
         )
         .route(
-            "/user/id/{user_id}/license/main/delete",
+            "/user/{user_id}/license/main/delete",
             delete(route::user::user_license_main_delete),
         )
         .route(
-            "/user/id/{user_id}/license/extra/create",
+            "/user/{user_id}/license/extra/create",
             post(route::user::user_license_extra_create),
         )
         .route(
-            "/user/id/{user_id}/license/extra/edit",
+            "/user/{user_id}/license/extra/edit",
             post(route::user::user_license_extra_edit),
         )
         .route(
-            "/user/id/{user_id}/license/extra/delete",
+            "/user/{user_id}/license/extra/delete",
             delete(route::user::user_license_extra_delete),
         )
         .route(
-            "/user/id/{user_id}/competence/list",
+            "/user/{user_id}/competence/list",
             get(route::user::competence::competence_list),
         )
         .route(
-            "/user/id/{user_id}/competence/info",
+            "/user/{user_id}/competence/info",
             get(route::user::competence::competence_info),
         )
         .route(
-            "/user/id/{user_id}/competence/summary",
+            "/user/{user_id}/competence/summary",
             get(route::user::competence::competence_summary),
         )
         .route(
-            "/user/id/{user_id}/competence/create",
+            "/user/{user_id}/competence/create",
             post(route::user::competence::competence_create),
         )
         .route(
-            "/user/id/{user_id}/competence/edit/{competence_id}",
+            "/user/{user_id}/competence/edit/{competence_id}",
             post(route::user::competence::competence_edit),
         )
         .route(
-            "/user/id/{user_id}/competence/delete/{competence_id}",
+            "/user/{user_id}/competence/delete/{competence_id}",
             delete(route::user::competence::competence_delete),
         )
         .route("/organisation/list", get(route::organisation::organisation_list))
@@ -202,35 +199,35 @@ async fn main() {
         )
         .route("/location/list", get(route::location::location_list))
         .route("/location/create", post(route::location::location_create))
-        .route("/location/id/{location_id}/edit", post(route::location::location_edit))
+        .route("/location/{location_id}/edit", post(route::location::location_edit))
         .route(
-            "/location/id/{location_id}/delete",
+            "/location/{location_id}/delete",
             delete(route::location::location_delete),
         )
         .route("/discipline/list", get(route::discipline::discipline_list))
         .route("/discipline/create", post(route::discipline::discipline_create))
         .route(
-            "/discipline/id/{discipline_id}/edit",
+            "/discipline/{discipline_id}/edit",
             post(route::discipline::discipline_edit),
         )
         .route(
-            "/discipline/id/{discipline_id}/delete",
+            "/discipline/{discipline_id}/delete",
             delete(route::discipline::discipline_delete),
         )
         .route("/skill/list", get(route::skill::skill_list))
         .route("/skill/create", post(route::skill::skill_create))
-        .route("/skill/id/{skill_id}/edit", post(route::skill::skill_edit))
-        .route("/skill/id/{skill_id}/delete", delete(route::skill::skill_delete))
+        .route("/skill/{skill_id}/edit", post(route::skill::skill_edit))
+        .route("/skill/{skill_id}/delete", delete(route::skill::skill_delete))
         .route("/item/list", get(route::inventory::item_list))
-        .route("/item/id/{item_id}/info", get(route::inventory::item_info))
+        .route("/item/{item_id}/info", get(route::inventory::item_info))
         .route("/item/create", post(route::inventory::item_create))
-        .route("/item/id/{item_id}/edit", post(route::inventory::item_edit))
-        .route("/item/id/{item_id}/delete", delete(route::inventory::item_delete))
+        .route("/item/{item_id}/edit", post(route::inventory::item_edit))
+        .route("/item/{item_id}/delete", delete(route::inventory::item_delete))
         .route("/itemcat/list", get(route::inventory::itemcat_list))
         .route("/itemcat/create", post(route::inventory::itemcat_create))
-        .route("/itemcat/id/{category_id}/edit", post(route::inventory::itemcat_edit))
+        .route("/itemcat/{category_id}/edit", post(route::inventory::itemcat_edit))
         .route(
-            "/itemcat/id/{category_id}/delete",
+            "/itemcat/{category_id}/delete",
             delete(route::inventory::itemcat_delete),
         )
         .route(
@@ -238,7 +235,7 @@ async fn main() {
             get(route::inventory::user_equipment::user_equipment_list),
         )
         .route(
-            "/equipment/id/{equipment_id}/info",
+            "/equipment/{equipment_id}/info",
             get(route::inventory::user_equipment::user_equipment_info),
         )
         .route(
@@ -246,37 +243,31 @@ async fn main() {
             post(route::inventory::user_equipment::user_equipment_create),
         )
         .route(
-            "/equipment/id/{equipment_id}/edit",
+            "/equipment/{equipment_id}/edit",
             post(route::inventory::user_equipment::user_equipment_edit),
         )
         .route(
-            "/equipment/id/{equipment_id}/delete",
+            "/equipment/{equipment_id}/delete",
             delete(route::inventory::user_equipment::user_equipment_delete),
         )
         .route("/stock/list", get(route::inventory::club_stock::stock_list))
         .route("/stock/create", post(route::inventory::club_stock::stock_create))
+        .route("/stock/{stock_id}/edit", post(route::inventory::club_stock::stock_edit))
         .route(
-            "/stock/id/{stock_id}/edit",
-            post(route::inventory::club_stock::stock_edit),
-        )
-        .route(
-            "/stock/id/{stock_id}/delete",
+            "/stock/{stock_id}/delete",
             delete(route::inventory::club_stock::stock_delete),
         )
+        .route("/stock/{stock_id}/loan", post(route::inventory::club_stock::item_loan))
         .route(
-            "/stock/id/{stock_id}/loan",
-            post(route::inventory::club_stock::item_loan),
-        )
-        .route(
-            "/possession/id/{possession_id}/return",
+            "/possession/{possession_id}/return",
             delete(route::inventory::club_stock::item_return),
         )
         .route(
-            "/possession/id/{possession_id}/handout",
+            "/possession/{possession_id}/handout",
             post(route::inventory::club_stock::item_handout),
         )
         .route(
-            "/possession/id/{possession_id}/stock/id/{stock_id}/restock",
+            "/possession/{possession_id}/stock/{stock_id}/restock",
             post(route::inventory::club_stock::item_restock),
         )
         .route(
@@ -288,237 +279,210 @@ async fn main() {
             post(route::inventory::user_possession::possession_create),
         )
         .route(
-            "/possession/id/{possession_id}/delete",
-            delete(route::inventory::user_possession::possession_delete),
-        )
-        .route(
-            "/possession/list",
-            get(route::inventory::user_possession::possession_list),
-        )
-        .route(
-            "/possession/create",
-            post(route::inventory::user_possession::possession_create),
-        )
-        .route(
-            "/possession/id/{possession_id}/delete",
+            "/possession/{possession_id}/delete",
             delete(route::inventory::user_possession::possession_delete),
         )
         .route("/club/list", get(route::club::club_list))
-        .route("/club/id/{club_id}/image", get(route::club::club_image))
-        .route("/club/id/{club_id}/banner", get(route::club::club_banner))
-        .route("/club/id/{club_id}/info", get(route::club::club_info))
+        .route("/club/{club_id}/image", get(route::club::club_image))
+        .route("/club/{club_id}/banner", get(route::club::club_banner))
+        .route("/club/{club_id}/info", get(route::club::club_info))
         .route("/club/create", post(route::club::club_create))
-        .route("/club/id/{club_id}/edit", post(route::club::club_edit))
-        .route("/club/id/{club_id}/delete", delete(route::club::club_delete))
-        .route("/club/id/{club_id}/statistic/terms", get(route::club::statistic_terms))
+        .route("/club/{club_id}/edit", post(route::club::club_edit))
+        .route("/club/{club_id}/delete", delete(route::club::club_delete))
+        .route("/club/{club_id}/statistic/terms", get(route::club::statistic_terms))
+        .route("/club/{club_id}/statistic/members", get(route::club::statistic_members))
+        .route("/club/{club_id}/statistic/team", get(route::club::statistic_team))
         .route(
-            "/club/id/{club_id}/statistic/members",
-            get(route::club::statistic_members),
-        )
-        .route("/club/id/{club_id}/statistic/team", get(route::club::statistic_team))
-        .route(
-            "/club/id/{club_id}/statistic/organisation",
+            "/club/{club_id}/statistic/organisation",
             get(route::club::statistic_organisation),
         )
         .route(
-            "/club/id/{club_id}/statistic/attendance",
+            "/club/{club_id}/statistic/attendance",
             get(route::club::statistic_attendance),
         )
         .route("/club/term/list", get(route::club::term_list))
-        .route("/club/term/id/{term_id}/info", get(route::club::term_info))
+        .route("/club/term/{term_id}/info", get(route::club::term_info))
         .route("/club/term/create", post(route::club::term_create))
-        .route("/club/term/id/{term_id}/edit", post(route::club::term_edit))
-        .route("/club/term/id/{term_id}/delete", delete(route::club::term_delete))
+        .route("/club/term/{term_id}/edit", post(route::club::term_edit))
+        .route("/club/term/{term_id}/delete", delete(route::club::term_delete))
         .route(
-            "/club/term/id/{term_id}/discipline/create",
+            "/club/term/{term_id}/discipline/create",
             post(route::club::term_discipline_create),
         )
         .route(
-            "/club/term/discipline/id/{term_discipline_id}/edit",
+            "/club/term/discipline/{term_discipline_id}/edit",
             post(route::club::term_discipline_edit),
         )
         .route(
-            "/club/term/discipline/id/{term_discipline_id}/delete",
+            "/club/term/discipline/{term_discipline_id}/delete",
             delete(route::club::term_discipline_delete),
         )
         .route("/course/all", get(route::course::course_all))
         .route("/course/list", get(route::course::course_list))
         .route("/course/create", post(route::course::course_create))
-        .route("/course/id/{course_id}/edit", post(route::course::course_edit))
-        .route("/course/id/{course_id}/delete", delete(route::course::course_delete))
+        .route("/course/{course_id}/edit", post(route::course::course_edit))
+        .route("/course/{course_id}/delete", delete(route::course::course_delete))
+        .route("/course/{course_id}/event/list", get(route::course::course_event_list))
+        .route("/course/{course_id}/club/info", get(route::course::course_club_info))
+        .route("/course/{course_id}/club/edit", post(route::course::course_club_edit))
         .route(
-            "/course/id/{course_id}/event/list",
-            get(route::course::course_event_list),
-        )
-        .route("/course/id/{course_id}/club/info", get(route::course::course_club_info))
-        .route(
-            "/course/id/{course_id}/club/edit",
-            post(route::course::course_club_edit),
-        )
-        .route(
-            "/course/id/{course_id}/moderators",
+            "/course/{course_id}/moderators",
             get(route::course::moderator::course_moderator_list),
         )
         .route(
-            "/course/id/{course_id}/moderator/id/{user_id}/add",
+            "/course/{course_id}/moderator/id/{user_id}/add",
             post(route::course::moderator::course_moderator_add),
         )
         .route(
-            "/course/id/{course_id}/moderator/id/{user_id}/remove",
+            "/course/{course_id}/moderator/id/{user_id}/remove",
             delete(route::course::moderator::course_moderator_remove),
         )
         .route(
-            "/course/id/{course_id}/moderator/id/{user_id}/true",
+            "/course/{course_id}/moderator/id/{user_id}/true",
             get(route::course::moderator::course_moderator_true),
         )
         .route(
-            "/course/id/{course_id}/attendance/sieve/list",
+            "/course/{course_id}/attendance/sieve/list",
             get(route::course::attendance::sieve_list),
         )
         .route(
-            "/course/id/{course_id}/attendance/sieve/edit",
+            "/course/{course_id}/attendance/sieve/edit",
             post(route::course::attendance::sieve_edit),
         )
         .route(
-            "/course/id/{course_id}/attendance/sieve/remove",
+            "/course/{course_id}/attendance/sieve/remove",
             delete(route::course::attendance::sieve_remove),
         )
         .route(
-            "/course/id/{course_id}/requirement/list",
+            "/course/{course_id}/requirement/list",
             get(route::course::requirement::course_requirement_list),
         )
         .route(
-            "/course/id/{course_id}/requirement/add",
+            "/course/{course_id}/requirement/add",
             post(route::course::requirement::course_requirement_add),
         )
         .route(
-            "/course/id/{course_id}/requirement/remove",
+            "/course/{course_id}/requirement/remove",
             delete(route::course::requirement::course_requirement_remove),
         )
         .route(
-            "/course/user/id/{user_id}/responsibility",
+            "/course/user/{user_id}/responsibility",
             get(route::course::course_responsibility),
         )
         .route(
-            "/course/user/id/{user_id}/availability",
+            "/course/user/{user_id}/availability",
             get(route::course::course_availability),
         )
         .route(
-            "/course/id/{course_id}/statistic/class",
+            "/course/{course_id}/statistic/class",
             get(route::course::statistic::course_statistic_class),
         )
         .route(
-            "/course/id/{course_id}/statistic/attendance",
+            "/course/{course_id}/statistic/attendance",
             get(route::course::statistic::course_statistic_attendance),
         )
         .route(
-            "/course/id/{course_id}/statistic/attendance/user",
+            "/course/{course_id}/statistic/attendance/user",
             get(route::course::statistic::course_statistic_attendance_user),
         )
         .route("/event/list", get(route::event::event_list))
-        .route("/event/id/{event_id}/info", get(route::event::event_info))
+        .route("/event/{event_id}/info", get(route::event::event_info))
         .route("/event/create", post(route::event::event_create))
         .route("/event/draft", post(route::event::event_draft))
-        .route("/event/id/{event_id}/edit", post(route::event::event_edit))
-        .route("/event/id/{event_id}/delete", delete(route::event::event_delete))
+        .route("/event/{event_id}/edit", post(route::event::event_edit))
+        .route("/event/{event_id}/delete", delete(route::event::event_delete))
         .route(
-            "/event/id/{event_id}/acceptance/edit",
+            "/event/{event_id}/acceptance/edit",
             post(route::event::event_acceptance_edit),
         )
         .route(
-            "/event/id/{event_id}/credential/info",
+            "/event/{event_id}/credential/info",
             get(route::event::event_credential_info),
         )
         .route(
-            "/event/id/{event_id}/password/edit",
+            "/event/{event_id}/password/edit",
             post(route::event::event_password_edit),
         )
         .route(
-            "/event/id/{event_id}/bookmark/true",
+            "/event/{event_id}/bookmark/true",
             get(route::event::event_bookmark_true),
         )
         .route(
-            "/event/id/{event_id}/bookmark/edit",
+            "/event/{event_id}/bookmark/edit",
             post(route::event::event_bookmark_edit),
         )
+        .route("/event/{event_id}/course/info", get(route::event::course::course_info))
+        .route("/event/{event_id}/course/edit", post(route::event::course::course_edit))
         .route(
-            "/event/id/{event_id}/course/info",
-            get(route::event::course::course_info),
-        )
-        .route(
-            "/event/id/{event_id}/course/edit",
-            post(route::event::course::course_edit),
-        )
-        .route(
-            "/event/id/{event_id}/moderator/true/{user_id}",
+            "/event/{event_id}/moderator/true/{user_id}",
             get(route::event::course::moderator_true),
         )
         .route(
-            "/event/id/{event_id}/statistic/packlist",
+            "/event/{event_id}/statistic/packlist",
             get(route::event::statistic::statistic_packlist),
         )
         .route(
-            "/event/id/{event_id}/statistic/organisation",
+            "/event/{event_id}/statistic/organisation",
             get(route::event::statistic::statistic_organisation),
         )
         .route(
-            "/event/id/{event_id}/attendance/registration/list",
+            "/event/{event_id}/attendance/registration/list",
             get(route::event::attendance::registration_list),
         )
         .route(
-            "/event/id/{event_id}/attendance/registration/info",
+            "/event/{event_id}/attendance/registration/info",
             get(route::event::attendance::registration_info),
         )
         .route(
-            "/event/id/{event_id}/attendance/registration/edit",
+            "/event/{event_id}/attendance/registration/edit",
             post(route::event::attendance::registration_edit),
         )
         .route(
-            "/event/id/{event_id}/attendance/presence/true/{user_id}/{role}",
+            "/event/{event_id}/attendance/presence/true/{user_id}/{role}",
             get(route::event::attendance::presence_true),
         )
         .route(
-            "/event/id/{event_id}/attendance/filter/list",
+            "/event/{event_id}/attendance/filter/list",
             get(route::event::attendance::filter_list),
         )
         .route(
-            "/event/id/{event_id}/attendance/filter/edit",
+            "/event/{event_id}/attendance/filter/edit",
             post(route::event::attendance::filter_edit),
         )
         .route(
-            "/event/id/{event_id}/attendance/filter/delete",
+            "/event/{event_id}/attendance/filter/delete",
             delete(route::event::attendance::filter_remove),
         )
         .route(
-            "/event/id/{event_id}/attendance/presence/pool",
+            "/event/{event_id}/attendance/presence/pool",
             get(route::event::attendance::presence_pool),
         )
         .route(
-            "/event/id/{event_id}/attendance/presence/list",
+            "/event/{event_id}/attendance/presence/list",
             get(route::event::attendance::presence_list),
         )
         .route(
-            "/event/id/{event_id}/attendance/presence/add",
+            "/event/{event_id}/attendance/presence/add",
             post(route::event::attendance::presence_add),
         )
         .route(
-            "/event/id/{event_id}/attendance/presence/remove",
+            "/event/{event_id}/attendance/presence/remove",
             delete(route::event::attendance::presence_remove),
         )
         .route(
-            "/event/id/{event_id}/attendance/presence/true",
+            "/event/{event_id}/attendance/presence/true",
             get(route::event::attendance::presence_true),
         )
-        .route("/event/id/{event_id}/submit", post(route::event::event_submit))
-        .route("/event/id/{event_id}/withdraw", post(route::event::event_withdraw))
-        .route("/event/id/{event_id}/owner/list", get(route::event::owner::owner_list))
-        .route("/event/id/{event_id}/owner/true", get(route::event::owner::owner_true))
+        .route("/event/{event_id}/submit", post(route::event::event_submit))
+        .route("/event/{event_id}/withdraw", post(route::event::event_withdraw))
+        .route("/event/{event_id}/owner/list", get(route::event::owner::owner_list))
+        .route("/event/{event_id}/owner/true", get(route::event::owner::owner_true))
         .route(
-            "/event/id/{event_id}/owner/add/{user_id}",
+            "/event/{event_id}/owner/add/{user_id}",
             post(route::event::owner::owner_add),
         )
         .route(
-            "/event/id/{event_id}/owner/remove/{user_id}",
+            "/event/{event_id}/owner/remove/{user_id}",
             delete(route::event::owner::owner_remove),
         )
         .route("/event/service/info", get(route::event::service::event_info))
@@ -543,16 +507,16 @@ async fn main() {
         .route("/team/list", get(route::team::team_list))
         .route("/team/info/{team_id}", get(route::team::team_info))
         .route("/team/create", post(route::team::team_create))
-        .route("/team/edit/{team_id}", post(route::team::team_edit))
-        .route("/team/right/edit/{team_id}", post(route::team::team_right_edit))
-        .route("/team/delete/{team_id}", delete(route::team::team_delete))
-        .route("/team/member/list/{team_id}", get(route::team::team_member_list))
+        .route("/team/{team_id}/edit", post(route::team::team_edit))
+        .route("/team/{team_id}/right/edit", post(route::team::team_right_edit))
+        .route("/team/{team_id}/delete", delete(route::team::team_delete))
+        .route("/team/{team_id}/member/list", get(route::team::team_member_list))
         .route(
-            "/team/member/add/{team_id}/{user_id}",
+            "/team/{team_id}/member/add/{user_id}",
             post(route::team::team_member_add),
         )
         .route(
-            "/team/member/remove/{team_id}/{user_id}",
+            "/team/{team_id}/member/remove/{user_id}",
             delete(route::team::team_member_remove),
         )
         .with_state(app_state)
