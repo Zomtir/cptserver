@@ -31,7 +31,7 @@ pub fn event_attendance_registration_info(
     event_id: u64,
     user_id: u64,
     role: String,
-) -> Result<Confirmation> {
+) -> Result<Option<Confirmation>> {
     let stmt = conn.prep(
         "SELECT r.status
         FROM event_attendance_registrations r
@@ -47,8 +47,8 @@ pub fn event_attendance_registration_info(
     let row = conn.exec_first::<String, _, _>(&stmt, &params)?;
 
     match row {
-        Some(status) => Ok(status.parse()?),
-        None => Ok(Confirmation::Null),
+        Some(status) => Ok(Some(status.parse()?)),
+        None => Ok(None),
     }
 }
 

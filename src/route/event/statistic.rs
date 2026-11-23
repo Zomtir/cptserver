@@ -2,8 +2,8 @@ use axum::extract::{Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
 
-use crate::common::{Affiliation, Confirmation, Credential, Event, Item, Occurrence, User, WebBool, WebDateTime};
-use crate::error::{Error, ErrorKind, Result};
+use crate::common::{Affiliation, Item, User};
+use crate::error::Result;
 use crate::session::UserSession;
 use crate::AppState;
 

@@ -6,7 +6,6 @@ pub enum Confirmation {
     Positive,
     Neutral,
     Negative,
-    Null,
 }
 
 impl Confirmation {
@@ -15,7 +14,6 @@ impl Confirmation {
             Confirmation::Positive => "POSITIVE",
             Confirmation::Neutral => "NEUTRAL",
             Confirmation::Negative => "NEGATIVE",
-            Confirmation::Null => "NULL",
         }
     }
 }
@@ -34,7 +32,6 @@ impl std::str::FromStr for Confirmation {
             "POSITIVE" => Ok(Confirmation::Positive),
             "NEUTRAL" => Ok(Confirmation::Neutral),
             "NEGATIVE" => Ok(Confirmation::Negative),
-            "NULL" => Ok(Confirmation::Null),
             _ => Err(crate::error::Error::new(
                 crate::error::ErrorKind::Parsing,
                 "Invalid confirmation value",
@@ -45,10 +42,7 @@ impl std::str::FromStr for Confirmation {
 
 impl core::convert::From<Confirmation> for mysql_common::Value {
     fn from(s: Confirmation) -> Self {
-        match s {
-            Confirmation::Null => mysql_common::Value::NULL,
-            s => mysql_common::Value::Bytes(s.to_string().into_bytes()),
-        }
+        mysql_common::Value::Bytes(s.to_string().into_bytes())
     }
 }
 

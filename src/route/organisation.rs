@@ -7,12 +7,6 @@ use crate::session::UserSession;
 use crate::AppState;
 use serde::Deserialize;
 
-#[derive(Deserialize)]
-pub struct AffiliationListQuery {
-    pub user_id: Option<u64>,
-    pub organisation_id: Option<u32>,
-}
-
 pub async fn organisation_list(State(state): State<AppState>) -> Result<Json<Vec<Organisation>>> {
     let conn = &mut state.db.get_conn()?;
     let organisations = crate::db::organisation::organisation_list(conn)?;
@@ -68,15 +62,21 @@ pub async fn organisation_delete(
     Ok(())
 }
 
+#[derive(Deserialize)]
+pub struct AffiliationListQuery {
+    pub user_id: Option<u64>,
+}
+
 pub async fn affiliation_list(
     State(state): State<AppState>,
     session: UserSession,
+    Path(organisation_id): Path<u32>,
     Query(query): Query<AffiliationListQuery>,
 ) -> Result<Json<Vec<Affiliation>>> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_organisation_read)?;
 
-    let affiliations = crate::db::organisation::affiliation_list(conn, query.user_id, query.organisation_id)?;
+    let affiliations = crate::db::organisation::affiliation_list(conn, query.user_id, Some(organisation_id))?;
     Ok(Json(affiliations))
 }
 

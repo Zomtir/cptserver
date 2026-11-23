@@ -2,8 +2,7 @@ use axum::extract::{Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
 
-use crate::common::User;
-use crate::error::{Error, ErrorKind, Result};
+use crate::error::Result;
 use crate::session::UserSession;
 use crate::AppState;
 

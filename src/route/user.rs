@@ -7,6 +7,7 @@ use axum::Json;
 use serde::Deserialize;
 
 mod bank_account;
+pub mod competence;
 mod license;
 
 pub use bank_account::*;

@@ -1,34 +1,48 @@
-use axum::extract::State;
+use axum::extract::{Path, Query, State};
 use axum::Json;
+use serde::Deserialize;
 
-use crate::common::Competence;
+use crate::common::{Competence, Skill};
 use crate::error::{Error, ErrorKind, Result};
 use crate::session::UserSession;
 use crate::AppState;
 
-pub fn competence_list(
+#[derive(Deserialize)]
+pub struct CompetenceListQuery {
+    pub skill_id: Option<u64>,
+    pub min: Option<i16>,
+    pub max: Option<i16>,
+}
+
+pub async fn competence_list(
     State(state): State<AppState>,
     session: UserSession,
-    user_id: Option<u64>,
-    skill_id: Option<u64>,
-    min: Option<i16>,
-    max: Option<i16>,
+    Path(user_id): Path<Option<u64>>,
+    Query(query): Query<CompetenceListQuery>,
 ) -> Result<Json<Vec<Competence>>> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_competence_read)?;
+    crate::permission::require_right(session.right.right_competence_read)
+        .or(crate::permission::is_self(&session, user_id))?;
 
-    let competences =
-        crate::db::competence::competence_list(conn, user_id, skill_id, min.unwrap_or(0), max.unwrap_or(10))?;
+    let competences = crate::db::competence::competence_list(
+        conn,
+        user_id,
+        query.skill_id,
+        query.min.unwrap_or(0),
+        query.max.unwrap_or(10),
+    )?;
     Ok(Json(competences))
 }
 
-pub fn competence_info(
+pub async fn competence_info(
     State(state): State<AppState>,
     session: UserSession,
-    competence_id: Option<u64>,
+    Path((user_id, competence_id)): Path<(Option<u64>, Option<u64>)>,
 ) -> Result<Json<Competence>> {
     let conn = &mut state.db.get_conn()?;
-    crate::permission::require_right(session.right.right_competence_read)?;
+
+    crate::permission::require_right(session.right.right_competence_read)
+        .or(crate::permission::is_self(&session, user_id))?;
 
     let competence = crate::db::competence::competence_info(conn, competence_id)?;
 
@@ -38,32 +52,20 @@ pub fn competence_info(
     }
 }
 
-
-//// USER
-/// 
-use axum::extract::State;
-use axum::Json;
-
-use crate::common::{Competence, Skill};
-use crate::error::Result;
-use crate::session::UserSession;
-use crate::AppState;
-
-pub fn competence_list(State(state): State<AppState>, session: UserSession) -> Result<Json<Vec<Competence>>> {
+pub async fn competence_summary(
+    State(state): State<AppState>,
+    session: UserSession,
+    Path(user_id): Path<Option<u64>>,
+) -> Result<Json<Vec<(Skill, i16)>>> {
     let conn = &mut state.db.get_conn()?;
-    let competences = crate::db::competence::competence_list(conn, Some(session.user.id), None, 0, 10)?;
-    Ok(Json(competences))
-}
+    crate::permission::require_right(session.right.right_competence_read)
+        .or(crate::permission::is_self(&session, user_id))?;
 
-pub fn competence_summary(State(state): State<AppState>, session: UserSession) -> Result<Json<Vec<(Skill, i16)>>> {
-    let conn = &mut state.db.get_conn()?;
     let summary = crate::db::competence::competence_summary(conn, session.user.id)?;
     Ok(Json(summary))
 }
 
-/// END USER
-
-pub fn competence_create(
+pub async fn competence_create(
     State(state): State<AppState>,
     session: UserSession,
     competence: Json<Competence>,
@@ -75,10 +77,10 @@ pub fn competence_create(
     Ok(id.to_string())
 }
 
-pub fn competence_edit(
+pub async fn competence_edit(
     State(state): State<AppState>,
     session: UserSession,
-    competence_id: u64,
+    Path(competence_id): Path<u64>,
     competence: Json<Competence>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
@@ -88,7 +90,11 @@ pub fn competence_edit(
     Ok(())
 }
 
-pub fn competence_delete(State(state): State<AppState>, session: UserSession, competence_id: u64) -> Result<()> {
+pub async fn competence_delete(
+    State(state): State<AppState>,
+    session: UserSession,
+    Path(competence_id): Path<u64>,
+) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
     crate::permission::require_right(session.right.right_competence_write)?;
 

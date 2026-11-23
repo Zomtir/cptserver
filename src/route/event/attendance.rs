@@ -8,11 +8,6 @@ use crate::session::UserSession;
 use crate::AppState;
 
 #[derive(Deserialize)]
-pub struct AttendanceRoleQuery {
-    pub role: String,
-}
-
-#[derive(Deserialize)]
 pub struct AttendanceQuery {
     pub user_id: u64,
     pub role: String,
@@ -39,7 +34,7 @@ pub async fn registration_list(
     State(state): State<AppState>,
     session: UserSession,
     Path(event_id): Path<u64>,
-    Query(query): Query<AttendanceRoleQuery>,
+    Query(query): Query<RegistrationQuery>,
 ) -> Result<Json<Vec<User>>> {
     let conn = &mut state.db.get_conn()?;
     require_attendance_read(conn, &session, event_id)?;
@@ -52,7 +47,7 @@ pub async fn filter_list(
     State(state): State<AppState>,
     session: UserSession,
     Path(event_id): Path<u64>,
-    Query(query): Query<AttendanceRoleQuery>,
+    Query(query): Query<AttendanceQuery>,
 ) -> Result<Json<Vec<(User, bool)>>> {
     let conn = &mut state.db.get_conn()?;
     require_attendance_read(conn, &session, event_id)?;
@@ -94,7 +89,7 @@ pub async fn presence_pool(
     State(state): State<AppState>,
     session: UserSession,
     Path(event_id): Path<u64>,
-    Query(query): Query<AttendanceRoleQuery>,
+    Query(query): Query<AttendanceQuery>,
 ) -> Result<Json<Vec<User>>> {
     let conn = &mut state.db.get_conn()?;
     require_attendance_read(conn, &session, event_id)?;
@@ -107,7 +102,7 @@ pub async fn presence_list(
     State(state): State<AppState>,
     session: UserSession,
     Path(event_id): Path<u64>,
-    Query(query): Query<AttendanceRoleQuery>,
+    Query(query): Query<AttendanceQuery>,
 ) -> Result<Json<Vec<User>>> {
     let conn = &mut state.db.get_conn()?;
     require_attendance_read(conn, &session, event_id)?;
@@ -161,42 +156,54 @@ pub async fn presence_true(
     Ok(Json(condition))
 }
 
-/* WIP */
+#[derive(Deserialize)]
+pub struct RegistrationQuery {
+    pub user_id: u64,
+    pub role: String,
+    pub confirmation: Option<Confirmation>,
+}
 
 pub async fn registration_info(
     State(state): State<AppState>,
     session: UserSession,
-    event_id: u64,
-    role: String,
+    Path(event_id): Path<u64>,
+    Query(query): Query<RegistrationQuery>,
 ) -> Result<String> {
     let conn = &mut state.db.get_conn()?;
+    require_attendance_read(conn, &session, event_id).or(crate::permission::is_self(&session, Some(query.user_id)))?;
+
     // TODO check if you can register (requirement)
 
     let status =
-        crate::db::event::attendance::event_attendance_registration_info(conn, event_id, session.user.id, role)?;
-    Ok(status.to_string())
+        crate::db::event::attendance::event_attendance_registration_info(conn, event_id, query.user_id, query.role)?;
+    Ok(status.map(|s| s.to_string()).unwrap_or_else(|| "".into()))
 }
 
-pub fn event_attendance_registration_edit(
+pub async fn registration_edit(
     State(state): State<AppState>,
     session: UserSession,
-    event_id: u64,
-    role: String,
-    status: Confirmation,
+    Path(event_id): Path<u64>,
+    Query(query): Query<RegistrationQuery>,
 ) -> Result<()> {
     let conn = &mut state.db.get_conn()?;
+
+    require_attendance_read(conn, &session, event_id).or(crate::permission::is_self(&session, Some(query.user_id)))?;
+
     // TODO check if you can register (requirement)
 
-    match status {
-        Confirmation::Null => {
-            crate::db::event::attendance::event_attendance_registration_remove(conn, event_id, session.user.id, role)?
-        }
-        _ => crate::db::event::attendance::event_attendance_registration_edit(
+    match query.confirmation {
+        None => crate::db::event::attendance::event_attendance_registration_remove(
             conn,
             event_id,
-            session.user.id,
-            role,
-            status,
+            query.user_id,
+            query.role,
+        )?,
+        Some(confirmation) => crate::db::event::attendance::event_attendance_registration_edit(
+            conn,
+            event_id,
+            query.user_id,
+            query.role,
+            confirmation,
         )?,
     }
     Ok(())

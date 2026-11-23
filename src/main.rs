@@ -142,38 +142,62 @@ async fn main() {
             "/user/id/{user_id}/license/extra/delete",
             delete(route::user::user_license_extra_delete),
         )
+        .route(
+            "/user/id/{user_id}/competence/list",
+            get(route::user::competence::competence_list),
+        )
+        .route(
+            "/user/id/{user_id}/competence/info",
+            get(route::user::competence::competence_info),
+        )
+        .route(
+            "/user/id/{user_id}/competence/summary",
+            get(route::user::competence::competence_summary),
+        )
+        .route(
+            "/user/id/{user_id}/competence/create",
+            post(route::user::competence::competence_create),
+        )
+        .route(
+            "/user/id/{user_id}/competence/edit/{competence_id}",
+            post(route::user::competence::competence_edit),
+        )
+        .route(
+            "/user/id/{user_id}/competence/delete/{competence_id}",
+            delete(route::user::competence::competence_delete),
+        )
         .route("/organisation/list", get(route::organisation::organisation_list))
         .route(
-            "/organisation/id/{organisation_id}/info",
+            "/organisation/{organisation_id}/info",
             get(route::organisation::organisation_info),
         )
         .route("/organisation/create", post(route::organisation::organisation_create))
         .route(
-            "/organisation/id/{organisation_id}/edit",
+            "/organisation/{organisation_id}/edit",
             post(route::organisation::organisation_edit),
         )
         .route(
-            "/organisation/id/{organisation_id}/delete",
+            "/organisation/{organisation_id}/delete",
             delete(route::organisation::organisation_delete),
         )
         .route(
-            "/organisation/affiliation/list",
+            "/organisation/{organisation_id}/affiliation/list",
             get(route::organisation::affiliation_list),
         )
         .route(
-            "/organisation/{organisation_id}/affiliation/user/id/{user_id}/info",
+            "/organisation/{organisation_id}/affiliation/user/{user_id}/info",
             get(route::organisation::affiliation_info),
         )
         .route(
-            "/organisation/{organisation_id}/affiliation/user/id/{user_id}/create",
+            "/organisation/{organisation_id}/affiliation/user/{user_id}/create",
             post(route::organisation::affiliation_create),
         )
         .route(
-            "/organisation/{organisation_id}/affiliation/user/id/{user_id}/edit",
+            "/organisation/{organisation_id}/affiliation/user/{user_id}/edit",
             post(route::organisation::affiliation_edit),
         )
         .route(
-            "/organisation/{organisation_id}/affiliation/user/id/{user_id}/delete",
+            "/organisation/{organisation_id}/affiliation/user/{user_id}/delete",
             delete(route::organisation::affiliation_delete),
         )
         .route("/location/list", get(route::location::location_list))
@@ -344,6 +368,10 @@ async fn main() {
             delete(route::course::moderator::course_moderator_remove),
         )
         .route(
+            "/course/id/{course_id}/moderator/id/{user_id}/true",
+            get(route::course::moderator::course_moderator_true),
+        )
+        .route(
             "/course/id/{course_id}/attendance/sieve/list",
             get(route::course::attendance::sieve_list),
         )
@@ -438,6 +466,14 @@ async fn main() {
             get(route::event::attendance::registration_list),
         )
         .route(
+            "/event/id/{event_id}/attendance/registration/info",
+            get(route::event::attendance::registration_info),
+        )
+        .route(
+            "/event/id/{event_id}/attendance/registration/edit",
+            post(route::event::attendance::registration_edit),
+        )
+        .route(
             "/event/id/{event_id}/attendance/presence/true/{user_id}/{role}",
             get(route::event::attendance::presence_true),
         )
@@ -469,7 +505,6 @@ async fn main() {
             "/event/id/{event_id}/attendance/presence/remove",
             delete(route::event::attendance::presence_remove),
         )
-
         .route(
             "/event/id/{event_id}/attendance/presence/true",
             get(route::event::attendance::presence_true),
