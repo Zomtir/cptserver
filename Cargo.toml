@@ -1,6 +1,6 @@
 [package]
 name = "cptserver"
-version = "1.6.1"
+version = "2.0.0-alpha.1"
 authors = ["Moritz Oberhauser <moritz.oberhauser@gmail.com>"]
 edition = "2021"
 

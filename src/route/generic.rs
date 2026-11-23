@@ -7,3 +7,7 @@ pub async fn index() -> &'static str {
 pub async fn status() -> Result<()> {
     Ok(())
 }
+
+pub async fn version() -> Result<String> {
+    Ok(env!("CARGO_PKG_VERSION").into())
+}
