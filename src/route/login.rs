@@ -52,6 +52,13 @@ pub async fn user_login(State(state): State<AppState>, Json(credit): Json<Creden
     Ok(Json((user_id, session_token)))
 }
 
+pub async fn user_session_right(
+    State(_state): State<AppState>,
+    session: UserSession,
+) -> Result<Json<Right>> {
+    Ok(Json(session.right))
+}
+
 pub async fn event_login(State(state): State<AppState>, Json(credit): Json<Credential>) -> Result<Json<(u64, String)>> {
     let conn = &mut state.db.get_conn()?;
 

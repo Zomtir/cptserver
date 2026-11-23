@@ -81,6 +81,7 @@ async fn main() {
         .route("/status", get(route::generic::status))
         .route("/version", get(route::generic::version))
         .route("/user_login", post(route::login::user_login))
+        .route("/user_session_right", get(route::login::user_session_right))
         .route("/event_login", post(route::login::event_login))
         .route("/course_login/{course_key}", get(route::login::course_login))
         .route("/location_login/{location_key}", get(route::login::location_login))
